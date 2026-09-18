@@ -1,0 +1,14 @@
+{
+  "name": "@studiocar/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./eslint/base": "./eslint/base.mjs",
+    "./typescript/base.json": "./typescript/base.json",
+    "./typescript/nextjs.json": "./typescript/nextjs.json",
+    "./typescript/node.json": "./typescript/node.json",
+    "./typescript/react-library.json": "./typescript/react-library.json"
+  }
+}
+

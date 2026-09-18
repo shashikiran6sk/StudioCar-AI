@@ -1,0 +1,10 @@
+packages:
+  - apps/*
+  - packages/*
+  - workers/*
+
+allowBuilds:
+  unrs-resolver: true
+
+catalog:
+  zod: ^4.1.12

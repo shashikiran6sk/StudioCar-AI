@@ -1,0 +1,5 @@
+{
+  "extends": "@studiocar/config/typescript/react-library.json",
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}
+

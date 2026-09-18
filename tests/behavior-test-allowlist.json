@@ -1,0 +1,35 @@
+[
+  {
+    "source": "apps/web/src/app/layout.tsx",
+    "reason": "Static Next.js root layout and metadata only."
+  },
+  {
+    "source": "packages/contracts/src/index.ts",
+    "reason": "Barrel export with no behavior."
+  },
+  {
+    "source": "packages/database/src/index.ts",
+    "reason": "Barrel export with no behavior."
+  },
+  {
+    "source": "packages/observability/src/index.ts",
+    "reason": "Barrel export with no behavior."
+  },
+  {
+    "source": "packages/processing/src/index.ts",
+    "reason": "Barrel export with no behavior."
+  },
+  {
+    "source": "packages/testing/src/index.ts",
+    "reason": "Barrel export with no behavior."
+  },
+  {
+    "source": "packages/ui/src/index.ts",
+    "reason": "Barrel export with no behavior."
+  },
+  {
+    "source": "workers/image-processing/src/index.ts",
+    "reason": "Barrel export with no behavior."
+  }
+]
+

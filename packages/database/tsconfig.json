@@ -1,0 +1,5 @@
+{
+  "extends": "@studiocar/config/typescript/node.json",
+  "include": ["src/**/*.ts"]
+}
+
