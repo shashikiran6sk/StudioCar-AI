@@ -1,17 +1,9 @@
+@import "@fontsource-variable/manrope";
 @import "tailwindcss";
+@import "@studiocar/ui/styles.css";
 
 :root {
   color-scheme: light;
-  --neutral-0: #ffffff;
-  --neutral-100: #f7f7f5;
-  --neutral-300: #e4e3df;
-  --neutral-600: #6f6d68;
-  --neutral-900: #171716;
-  --neutral-950: #0c0c0b;
-}
-
-* {
-  box-sizing: border-box;
 }
 
 html,
@@ -21,9 +13,9 @@ body {
 
 body {
   margin: 0;
-  background: var(--neutral-100);
-  color: var(--neutral-900);
-  font-family: Manrope, Arial, system-ui, sans-serif;
+  background: var(--sc-neutral-100);
+  color: var(--sc-neutral-900);
+  font-family: var(--sc-font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -35,22 +27,15 @@ body {
   text-align: center;
 }
 
-.brand-mark {
+.foundation-content {
   display: grid;
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 24px;
-  place-content: center;
-  border-radius: 14px;
-  background: var(--neutral-950);
-  color: var(--neutral-0);
-  font-size: 18px;
-  font-weight: 800;
+  width: min(720px, calc(100vw - 40px));
+  justify-items: center;
 }
 
 .eyebrow {
   margin: 0 0 8px;
-  color: var(--neutral-600);
+  color: var(--sc-neutral-600);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -67,8 +52,29 @@ h1 {
 .summary {
   max-width: 560px;
   margin: 20px auto 0;
-  color: var(--neutral-600);
+  color: var(--sc-neutral-600);
   font-size: 15px;
   line-height: 1.7;
 }
 
+.foundation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.foundation-status {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.foundation-card {
+  width: min(420px, 100%);
+  margin-top: 20px;
+  text-align: left;
+}

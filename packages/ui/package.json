@@ -4,12 +4,17 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles.css"
   },
   "scripts": {
-    "build": "tsc --outDir dist",
+    "build": "tsc -p tsconfig.build.json --outDir dist",
     "lint": "eslint . --max-warnings=0",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "1.1.23"
   },
   "devDependencies": {
     "@studiocar/config": "workspace:*"

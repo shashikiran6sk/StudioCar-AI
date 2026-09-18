@@ -10,7 +10,7 @@ export default typescriptEslint.config(
   ...typescriptEslint.configs.strictTypeChecked,
   {
     ...typescriptEslint.configs.disableTypeChecked,
-    files: ["**/*.{js,mjs,cjs}"],
+    files: ["**/*.{js,mjs,cjs}", "**/*.config.{ts,mts,cts}"],
   },
   {
     files: ["**/*.{ts,tsx}"],

@@ -1,5 +1,13 @@
 {
-  "extends": "@studiocar/config/typescript/react-library.json",
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "extends": "../config/typescript/react-library.json",
+  "compilerOptions": {
+    "types": ["vitest/globals", "@testing-library/jest-dom"]
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "vitest.setup.ts",
+    "../../tests/unit/ui/**/*.ts",
+    "../../tests/unit/ui/**/*.tsx"
+  ]
 }
-
