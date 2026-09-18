@@ -23,10 +23,15 @@ export default typescriptEslint.config(
       },
     },
     rules: {
+      "@typescript-eslint/consistent-type-assertions": [
+        "error",
+        { "assertionStyle": "never" }
+      ],
       "@typescript-eslint/consistent-type-imports": [
         "error",
         { "fixStyle": "inline-type-imports" }
       ],
+      "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-import-type-side-effects": "error"
     }
   }
