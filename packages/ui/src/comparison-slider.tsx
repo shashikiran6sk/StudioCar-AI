@@ -2,6 +2,16 @@
 
 import { useState, type CSSProperties, type ReactNode } from "react";
 
+const DEFAULT_AFTER_LABEL = "Processed";
+const DEFAULT_BEFORE_LABEL = "Original";
+const DEFAULT_SPLIT = 50;
+const MAXIMUM_SPLIT = 100;
+const MINIMUM_SPLIT = 0;
+
+type ComparisonStyle = CSSProperties & {
+  "--sc-comparison-split": string;
+};
+
 export interface ComparisonSliderProps {
   after: ReactNode;
   afterLabel?: string;
@@ -14,15 +24,17 @@ export interface ComparisonSliderProps {
 
 export function ComparisonSlider({
   after,
-  afterLabel = "Processed",
+  afterLabel = DEFAULT_AFTER_LABEL,
   before,
-  beforeLabel = "Original",
-  defaultValue = 50,
+  beforeLabel = DEFAULT_BEFORE_LABEL,
+  defaultValue = DEFAULT_SPLIT,
   label,
   summary,
 }: ComparisonSliderProps) {
-  const [split, setSplit] = useState(Math.min(Math.max(defaultValue, 0), 100));
-  const style = { "--sc-comparison-split": `${String(split)}%` } as CSSProperties;
+  const [split, setSplit] = useState(
+    Math.min(Math.max(defaultValue, MINIMUM_SPLIT), MAXIMUM_SPLIT),
+  );
+  const style: ComparisonStyle = { "--sc-comparison-split": `${String(split)}%` };
 
   return (
     <div className="sc-comparison" style={style}>
@@ -36,8 +48,8 @@ export function ComparisonSlider({
       <input
         aria-label={label}
         className="sc-comparison__range"
-        max="100"
-        min="0"
+        max={MAXIMUM_SPLIT}
+        min={MINIMUM_SPLIT}
         onChange={(event) => {
           setSplit(event.currentTarget.valueAsNumber);
         }}
