@@ -4,7 +4,7 @@ Last updated: 2026-09-18
 
 ## Current status
 
-Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe vehicle/session repositories, and opaque session lifecycle are implemented. The next planned product slice is Google OAuth/OIDC authentication.
+Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, and Google OAuth/OIDC are implemented. The next planned product slice is MSG91 phone OTP authentication.
 
 ## Completed
 
@@ -43,6 +43,15 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Added secure production and local-development cookie policies.
 - Added focused unit tests and verified all local quality gates.
 
+### SC007 — Google OAuth/OIDC
+
+- Added Authorization Code authentication with PKCE, state, OIDC nonce, discovery, and verified ID-token claims through `openid-client`.
+- Added short-lived, one-time PostgreSQL OAuth challenges that retain only a state hash and an AES-256-GCM-protected PKCE/nonce payload.
+- Bound each flow to the initiating browser with a short-lived HttpOnly, SameSite=Lax, Secure-in-production state cookie to prevent login CSRF.
+- Added canonical Google identity resolution by `provider + providerSubject`; email is profile data and collisions require explicit authenticated linking.
+- Added opaque application-session issuance after successful identity resolution and thin App Router start/callback endpoints.
+- Added a backward-compatible OAuth challenge migration, concurrency-safe repository behavior, unit/route tests, and real PostgreSQL integration tests.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -52,21 +61,22 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 
 ## Next planned slices
 
-1. **SC007 — Google OAuth/OIDC**: authorization code with PKCE, state, nonce, issuer/audience/expiry/nonce verification, one-time challenge persistence, canonical `AuthIdentity` resolution, routes, and integration tests.
-2. **SC008 — MSG91 phone OTP**: E.164 normalization, send/verify rate limits, adapter boundary, canonical identity resolution, and session issuance without storing raw OTPs.
-3. **SC009 — Authentication UI and authorization shell**: screenshot-aligned sign-in/profile flows, authenticated layout, middleware/server authorization, security controls, and E2E coverage.
-4. **SC010 — Direct S3 upload foundation**: presign and commit endpoints, tenant ownership, immutable keys, HEAD verification, file validation, and S3 adapter tests.
-5. **SC011 — Vehicle creation workflow**: four-step screenshot-derived wizard, direct multi-file upload state, treatment options, review, and server-side validation.
-6. **SC012 — Asynchronous processing**: job state machine, idempotent claims, SQS/DLQ, retry classification/backoff, Lambda worker, and atomic usage completion.
-7. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
-8. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, usage/billing, and profile.
-9. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
+1. **SC008 — MSG91 phone OTP**: E.164 normalization, send/verify rate limits, adapter boundary, canonical identity resolution, and session issuance without storing raw OTPs.
+2. **SC009 — Authentication UI and authorization shell**: screenshot-aligned sign-in/profile flows, authenticated layout, middleware/server authorization, security controls, and E2E coverage.
+3. **SC010 — Direct S3 upload foundation**: presign and commit endpoints, tenant ownership, immutable keys, HEAD verification, file validation, and S3 adapter tests.
+4. **SC011 — Vehicle creation workflow**: four-step screenshot-derived wizard, direct multi-file upload state, treatment options, review, and server-side validation.
+5. **SC012 — Asynchronous processing**: job state machine, idempotent claims, SQS/DLQ, retry classification/backoff, Lambda worker, and atomic usage completion.
+6. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
+7. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, usage/billing, and profile.
+8. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
 
 ## Important implementation notes
 
 - Do not modify the committed initial migration after it has been applied; add a new backward-compatible migration for every schema change.
 - Prisma CLI validation/generation can run without secrets; migration and integration commands require `DATABASE_URL`.
-- Real PostgreSQL integration tests currently cover schema constraints, tenant-scoped vehicle operations, and session lifecycle behavior.
+- Real PostgreSQL integration tests currently cover schema constraints, tenant-scoped vehicle operations, sessions, one-time OAuth challenges, and canonical Google identity resolution.
+- Google OAuth requires an exact registered `GOOGLE_REDIRECT_URI`; production must use HTTPS. OAuth challenge TTL defaults to 10 minutes and is bounded to 1–15 minutes.
+- The `/auth/error` presentation route and interactive sign-in UI remain part of SC009; SC007 establishes the stable callback error-code contract.
 - `apps/web/next-env.d.ts` is generated by Next.js and intentionally untracked.
 - Processing progress must use truthful stages unless a provider exposes meaningful progress.
 - All future work follows the branch → PR → required CI → merge workflow in `/AGENTS.md`.

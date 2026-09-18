@@ -7,6 +7,25 @@ const PostgresUrlSchema = z.url().refine(
   "DATABASE_URL must use the postgres or postgresql protocol.",
 );
 
+const OAuthChallengeTtlSchema = z.coerce
+  .number()
+  .int()
+  .min(60)
+  .max(900)
+  .default(600);
+
+export const GoogleAuthEnvironmentSchema = z
+  .object({
+    NODE_ENV: EnvironmentNameSchema.default("development"),
+    DATABASE_URL: PostgresUrlSchema,
+    SESSION_SECRET: z.string().min(32),
+    GOOGLE_CLIENT_ID: z.string().trim().min(1),
+    GOOGLE_CLIENT_SECRET: z.string().trim().min(1),
+    GOOGLE_REDIRECT_URI: z.url(),
+    OAUTH_CHALLENGE_TTL_SECONDS: OAuthChallengeTtlSchema,
+  })
+  .strip();
+
 export const BackgroundRemovalProviderSchema = z.enum([
   "removebg",
   "fal",
@@ -21,6 +40,7 @@ export const ServerEnvironmentSchema = z
     GOOGLE_CLIENT_ID: z.string().trim().min(1),
     GOOGLE_CLIENT_SECRET: z.string().trim().min(1),
     GOOGLE_REDIRECT_URI: z.url(),
+    OAUTH_CHALLENGE_TTL_SECONDS: OAuthChallengeTtlSchema,
     MSG91_AUTH_KEY: z.string().trim().min(1),
     MSG91_TEMPLATE_ID: z.string().trim().min(1),
     RESEND_API_KEY: z.string().trim().min(1),
@@ -76,6 +96,7 @@ export const ClientEnvironmentSchema = z
 
 export type ServerEnvironment = z.infer<typeof ServerEnvironmentSchema>;
 export type ClientEnvironment = z.infer<typeof ClientEnvironmentSchema>;
+export type GoogleAuthEnvironment = z.infer<typeof GoogleAuthEnvironmentSchema>;
 
 export function parseServerEnvironment(
   environment: Record<string, string | undefined>,
@@ -87,4 +108,10 @@ export function parseClientEnvironment(
   environment: Record<string, string | undefined>,
 ): ClientEnvironment {
   return ClientEnvironmentSchema.parse(environment);
+}
+
+export function parseGoogleAuthEnvironment(
+  environment: Record<string, string | undefined>,
+): GoogleAuthEnvironment {
+  return GoogleAuthEnvironmentSchema.parse(environment);
 }

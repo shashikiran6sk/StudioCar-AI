@@ -4,6 +4,18 @@
     "reason": "Static Next.js root layout and metadata only."
   },
   {
+    "source": "apps/web/src/server/auth/google/google-auth.constants.ts",
+    "reason": "Static authentication constants and enum values only."
+  },
+  {
+    "source": "apps/web/src/server/auth/google/google-auth-runtime.ts",
+    "reason": "Composition root that wires separately tested services and adapters."
+  },
+  {
+    "source": "apps/web/src/server/auth/google/google-auth.types.ts",
+    "reason": "Type-only application port definitions with no runtime behavior."
+  },
+  {
     "source": "packages/config/src/index.ts",
     "reason": "Barrel export with no behavior."
   },
