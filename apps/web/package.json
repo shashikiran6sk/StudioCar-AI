@@ -13,9 +13,12 @@
   },
   "dependencies": {
     "@fontsource-variable/manrope": "5.3.0",
+    "@studiocar/config": "workspace:*",
     "@studiocar/contracts": "workspace:*",
+    "@studiocar/database": "workspace:*",
     "@studiocar/ui": "workspace:*",
     "next": "16.3.5",
+    "openid-client": "catalog:",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   }

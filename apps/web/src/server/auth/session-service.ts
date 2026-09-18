@@ -1,15 +1,13 @@
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
+import type { AuthUser } from "@studiocar/contracts";
+
+import { hashAuthSecret } from "./hash-auth-secret";
 
 const SESSION_TOKEN_BYTES = 32;
 const SESSION_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 const DEFAULT_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1_000;
 
-export interface SessionUser {
-  id: string;
-  displayName: string | null;
-  primaryEmail: string | null;
-  primaryPhone: string | null;
-}
+export type SessionUser = AuthUser;
 
 export interface ActiveSession {
   id: string;
@@ -53,7 +51,7 @@ export function createSecureSessionToken(): string {
 }
 
 export function hashSessionToken(token: string): string {
-  return createHash("sha256").update(token, "utf8").digest("hex");
+  return hashAuthSecret(token);
 }
 
 function isSessionToken(token: string): boolean {

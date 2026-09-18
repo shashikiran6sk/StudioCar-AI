@@ -111,6 +111,19 @@ model AuthIdentity {
   @@index([userId, provider])
 }
 
+model OAuthChallenge {
+  id               String       @id @default(uuid()) @db.Uuid
+  provider         AuthProvider
+  stateHash        String       @unique @db.Char(64)
+  protectedPayload String       @db.Text
+  returnTo         String       @db.VarChar(2048)
+  expiresAt        DateTime     @db.Timestamptz(3)
+  consumedAt       DateTime?    @db.Timestamptz(3)
+  createdAt        DateTime     @default(now()) @db.Timestamptz(3)
+
+  @@index([provider, expiresAt, consumedAt])
+}
+
 model Session {
   id                   String    @id @default(uuid()) @db.Uuid
   userId               String    @db.Uuid

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   parseClientEnvironment,
+  parseGoogleAuthEnvironment,
   parseServerEnvironment,
 } from "../../../packages/config/src/environment";
 
@@ -64,6 +65,18 @@ describe("environment validation", () => {
     ).toEqual({
       NODE_ENV: "production",
       NEXT_PUBLIC_APP_URL: "https://app.studiocar.example",
+    });
+  });
+
+  it("validates the focused Google authentication runtime environment", () => {
+    expect(parseGoogleAuthEnvironment(validEnvironment)).toEqual({
+      NODE_ENV: "test",
+      DATABASE_URL: validEnvironment.DATABASE_URL,
+      SESSION_SECRET: validEnvironment.SESSION_SECRET,
+      GOOGLE_CLIENT_ID: validEnvironment.GOOGLE_CLIENT_ID,
+      GOOGLE_CLIENT_SECRET: validEnvironment.GOOGLE_CLIENT_SECRET,
+      GOOGLE_REDIRECT_URI: validEnvironment.GOOGLE_REDIRECT_URI,
+      OAUTH_CHALLENGE_TTL_SECONDS: 600,
     });
   });
 });

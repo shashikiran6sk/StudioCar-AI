@@ -14,4 +14,5 @@ catalog:
   '@types/pg': 8.23.1
   pg: 8.23.0
   prisma: 7.10.0
+  openid-client: 6.8.8
   zod: 4.6.5
