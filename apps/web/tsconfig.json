@@ -15,7 +15,9 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "../../tests/unit/app/**/*.ts",
-    "../../tests/unit/app/**/*.tsx"
+    "../../tests/unit/app/**/*.tsx",
+    "../../tests/unit/server/**/*.ts",
+    "../../tests/unit/server/**/*.tsx"
   ],
   "exclude": ["node_modules"]
 }
