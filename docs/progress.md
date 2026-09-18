@@ -4,7 +4,7 @@ Last updated: 2026-09-18
 
 ## Current status
 
-Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, and Google OAuth/OIDC are implemented. The next planned product slice is MSG91 phone OTP authentication.
+Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, and MSG91 phone OTP authentication are implemented. The next planned product slice is the authentication UI and authorization shell.
 
 ## Completed
 
@@ -52,6 +52,16 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Added opaque application-session issuance after successful identity resolution and thin App Router start/callback endpoints.
 - Added a backward-compatible OAuth challenge migration, concurrency-safe repository behavior, unit/route tests, and real PostgreSQL integration tests.
 
+### SC008 — MSG91 phone OTP
+
+- Added Indian mobile-number normalization to canonical E.164 values and validated public start/verify response contracts.
+- Added browser-bound, expiring PostgreSQL OTP challenges and verification attempts without storing raw OTP values.
+- Added transaction-level advisory locks for concurrent per-phone/per-IP send limits, per-challenge attempt caps, and per-IP verification limits.
+- Added an MSG91 V5 adapter behind a provider port; credentials stay server-side and provider response/error semantics do not leak into product routes.
+- Added same-origin enforcement, opaque client-address hashing, stable API errors, Retry-After responses, secure binding cookies, and separate start/verify App Router endpoints.
+- Added canonical `PHONE + E.164 number` identity resolution and atomic challenge consumption, identity creation/update, and opaque session creation.
+- Added a backward-compatible migration, unit/route tests, and real PostgreSQL integration tests for concurrent limiting, identity conflicts, and exactly-once session completion.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -61,21 +71,22 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 
 ## Next planned slices
 
-1. **SC008 — MSG91 phone OTP**: E.164 normalization, send/verify rate limits, adapter boundary, canonical identity resolution, and session issuance without storing raw OTPs.
-2. **SC009 — Authentication UI and authorization shell**: screenshot-aligned sign-in/profile flows, authenticated layout, middleware/server authorization, security controls, and E2E coverage.
-3. **SC010 — Direct S3 upload foundation**: presign and commit endpoints, tenant ownership, immutable keys, HEAD verification, file validation, and S3 adapter tests.
-4. **SC011 — Vehicle creation workflow**: four-step screenshot-derived wizard, direct multi-file upload state, treatment options, review, and server-side validation.
-5. **SC012 — Asynchronous processing**: job state machine, idempotent claims, SQS/DLQ, retry classification/backoff, Lambda worker, and atomic usage completion.
-6. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
-7. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, usage/billing, and profile.
-8. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
+1. **SC009 — Authentication UI and authorization shell**: screenshot-aligned sign-in/profile flows, authenticated layout, middleware/server authorization, security controls, and E2E coverage.
+2. **SC010 — Direct S3 upload foundation**: presign and commit endpoints, tenant ownership, immutable keys, HEAD verification, file validation, and S3 adapter tests.
+3. **SC011 — Vehicle creation workflow**: four-step screenshot-derived wizard, direct multi-file upload state, treatment options, review, and server-side validation.
+4. **SC012 — Asynchronous processing**: job state machine, idempotent claims, SQS/DLQ, retry classification/backoff, Lambda worker, and atomic usage completion.
+5. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
+6. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, usage/billing, and profile.
+7. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
 
 ## Important implementation notes
 
 - Do not modify the committed initial migration after it has been applied; add a new backward-compatible migration for every schema change.
 - Prisma CLI validation/generation can run without secrets; migration and integration commands require `DATABASE_URL`.
-- Real PostgreSQL integration tests currently cover schema constraints, tenant-scoped vehicle operations, sessions, one-time OAuth challenges, and canonical Google identity resolution.
+- Real PostgreSQL integration tests currently cover schema constraints, tenant-scoped vehicle operations, sessions, one-time OAuth challenges, canonical Google identities, OTP throttling, canonical phone identities, and atomic phone-session completion.
 - Google OAuth requires an exact registered `GOOGLE_REDIRECT_URI`; production must use HTTPS. OAuth challenge TTL defaults to 10 minutes and is bounded to 1–15 minutes.
+- MSG91 uses its server-side V5 OTP endpoints. Configure an approved template and tune the bounded OTP TTL/rate-limit environment values for production traffic; raw OTPs are never persisted or logged.
+- Expired OTP challenge and verification-attempt cleanup is intentionally deferred to the production cleanup-jobs slice; indexes support bounded deletion without affecting authentication correctness.
 - The `/auth/error` presentation route and interactive sign-in UI remain part of SC009; SC007 establishes the stable callback error-code contract.
 - `apps/web/next-env.d.ts` is generated by Next.js and intentionally untracked.
 - Processing progress must use truthful stages unless a provider exposes meaningful progress.

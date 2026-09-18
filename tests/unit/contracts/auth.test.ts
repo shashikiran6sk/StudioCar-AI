@@ -5,20 +5,53 @@ import {
   GoogleIdTokenClaimsSchema,
   GoogleOAuthCallbackSchema,
   GoogleOAuthChallengePayloadSchema,
+  Msg91OtpResponseSchema,
+  PhoneAuthenticationStatus,
   PhoneStartSchema,
+  PhoneStartResponseSchema,
   PhoneVerifySchema,
+  PhoneVerifyResponseSchema,
 } from "../../../packages/contracts/src/auth";
 
 const oauthValue = "a".repeat(43);
 
 describe("phone authentication contracts", () => {
-  it("requires a normalized Indian E.164 number", () => {
-    expect(PhoneStartSchema.safeParse({ phoneNumber: "+919876543210" }).success).toBe(
-      true,
-    );
-    expect(PhoneStartSchema.safeParse({ phoneNumber: "9876543210" }).success).toBe(
-      false,
-    );
+  it("normalizes common Indian mobile formats to E.164", () => {
+    expect(PhoneStartSchema.parse({ phoneNumber: "+91 98765 43210" })).toEqual({
+      phoneNumber: "+919876543210",
+    });
+    expect(PhoneStartSchema.parse({ phoneNumber: "09876543210" })).toEqual({
+      phoneNumber: "+919876543210",
+    });
+    expect(PhoneStartSchema.safeParse({ phoneNumber: "12345" }).success).toBe(false);
+  });
+
+  it("validates public start, verify, and MSG91 response envelopes", () => {
+    expect(
+      PhoneStartResponseSchema.safeParse({
+        status: PhoneAuthenticationStatus.ChallengeSent,
+        challengeId: "4f9d4891-157f-49ed-aa5a-c026abc0a768",
+        expiresAt: "2026-09-18T12:10:00.000Z",
+      }).success,
+    ).toBe(true);
+    expect(
+      PhoneVerifyResponseSchema.safeParse({
+        status: PhoneAuthenticationStatus.Authenticated,
+        user: {
+          id: "user-1",
+          displayName: null,
+          primaryEmail: null,
+          primaryPhone: "+919876543210",
+        },
+      }).success,
+    ).toBe(true);
+    expect(
+      Msg91OtpResponseSchema.parse({
+        type: "SUCCESS",
+        request_id: "provider-request",
+        extra: true,
+      }),
+    ).toMatchObject({ type: "success", request_id: "provider-request" });
   });
 
   it("keeps OTP verification tied to a challenge and numeric code", () => {

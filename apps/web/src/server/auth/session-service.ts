@@ -40,6 +40,12 @@ export interface IssuedSession {
   session: ActiveSession;
 }
 
+export interface PreparedSession {
+  token: string;
+  tokenHash: string;
+  expiresAt: Date;
+}
+
 export interface SessionServiceOptions {
   now?: () => Date;
   generateToken?: () => string;
@@ -77,15 +83,27 @@ export class SessionService {
   }
 
   public async issue(userId: string): Promise<IssuedSession> {
-    const token = this.nextToken();
-    const expiresAt = new Date(this.now().getTime() + this.ttlMs);
+    const prepared = this.prepareIssue();
     const session = await this.store.create({
       userId,
-      tokenHash: hashSessionToken(token),
-      expiresAt,
+      tokenHash: prepared.tokenHash,
+      expiresAt: prepared.expiresAt,
     });
 
-    return { token, expiresAt, session };
+    return {
+      token: prepared.token,
+      expiresAt: prepared.expiresAt,
+      session,
+    };
+  }
+
+  public prepareIssue(): PreparedSession {
+    const token = this.nextToken();
+    return {
+      token,
+      tokenHash: hashSessionToken(token),
+      expiresAt: new Date(this.now().getTime() + this.ttlMs),
+    };
   }
 
   public async authenticate(token: string): Promise<ActiveSession | null> {

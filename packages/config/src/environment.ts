@@ -14,6 +14,39 @@ const OAuthChallengeTtlSchema = z.coerce
   .max(900)
   .default(600);
 
+const PhoneOtpChallengeTtlSchema = z.coerce
+  .number()
+  .int()
+  .min(60)
+  .max(900)
+  .default(600);
+
+const PhoneOtpRateLimitWindowSchema = z.coerce
+  .number()
+  .int()
+  .min(60)
+  .max(3_600)
+  .default(600);
+
+const PhoneOtpLimitSchema = z.coerce.number().int().min(1);
+
+export const PhoneAuthEnvironmentSchema = z
+  .object({
+    NODE_ENV: EnvironmentNameSchema.default("development"),
+    DATABASE_URL: PostgresUrlSchema,
+    SESSION_SECRET: z.string().min(32),
+    MSG91_AUTH_KEY: z.string().trim().min(1),
+    MSG91_TEMPLATE_ID: z.string().trim().min(1),
+    MSG91_TIMEOUT_MS: z.coerce.number().int().min(500).max(15_000).default(5_000),
+    PHONE_OTP_CHALLENGE_TTL_SECONDS: PhoneOtpChallengeTtlSchema,
+    PHONE_OTP_RATE_LIMIT_WINDOW_SECONDS: PhoneOtpRateLimitWindowSchema,
+    PHONE_OTP_SEND_MAX_PER_PHONE: PhoneOtpLimitSchema.max(10).default(3),
+    PHONE_OTP_SEND_MAX_PER_IP: PhoneOtpLimitSchema.max(100).default(10),
+    PHONE_OTP_VERIFY_MAX_PER_CHALLENGE: PhoneOtpLimitSchema.max(10).default(5),
+    PHONE_OTP_VERIFY_MAX_PER_IP: PhoneOtpLimitSchema.max(300).default(30),
+  })
+  .strip();
+
 export const GoogleAuthEnvironmentSchema = z
   .object({
     NODE_ENV: EnvironmentNameSchema.default("development"),
@@ -43,6 +76,13 @@ export const ServerEnvironmentSchema = z
     OAUTH_CHALLENGE_TTL_SECONDS: OAuthChallengeTtlSchema,
     MSG91_AUTH_KEY: z.string().trim().min(1),
     MSG91_TEMPLATE_ID: z.string().trim().min(1),
+    MSG91_TIMEOUT_MS: z.coerce.number().int().min(500).max(15_000).default(5_000),
+    PHONE_OTP_CHALLENGE_TTL_SECONDS: PhoneOtpChallengeTtlSchema,
+    PHONE_OTP_RATE_LIMIT_WINDOW_SECONDS: PhoneOtpRateLimitWindowSchema,
+    PHONE_OTP_SEND_MAX_PER_PHONE: PhoneOtpLimitSchema.max(10).default(3),
+    PHONE_OTP_SEND_MAX_PER_IP: PhoneOtpLimitSchema.max(100).default(10),
+    PHONE_OTP_VERIFY_MAX_PER_CHALLENGE: PhoneOtpLimitSchema.max(10).default(5),
+    PHONE_OTP_VERIFY_MAX_PER_IP: PhoneOtpLimitSchema.max(300).default(30),
     RESEND_API_KEY: z.string().trim().min(1),
     EMAIL_FROM: z.string().trim().min(3),
     AWS_REGION: z.string().trim().min(1),
@@ -97,6 +137,7 @@ export const ClientEnvironmentSchema = z
 export type ServerEnvironment = z.infer<typeof ServerEnvironmentSchema>;
 export type ClientEnvironment = z.infer<typeof ClientEnvironmentSchema>;
 export type GoogleAuthEnvironment = z.infer<typeof GoogleAuthEnvironmentSchema>;
+export type PhoneAuthEnvironment = z.infer<typeof PhoneAuthEnvironmentSchema>;
 
 export function parseServerEnvironment(
   environment: Record<string, string | undefined>,
@@ -114,4 +155,10 @@ export function parseGoogleAuthEnvironment(
   environment: Record<string, string | undefined>,
 ): GoogleAuthEnvironment {
   return GoogleAuthEnvironmentSchema.parse(environment);
+}
+
+export function parsePhoneAuthEnvironment(
+  environment: Record<string, string | undefined>,
+): PhoneAuthEnvironment {
+  return PhoneAuthEnvironmentSchema.parse(environment);
 }

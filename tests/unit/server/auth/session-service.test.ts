@@ -57,6 +57,20 @@ describe("SessionService", () => {
     expect(JSON.stringify(vi.mocked(store.create).mock.calls)).not.toContain(currentToken);
   });
 
+  it("prepares token material for an atomic external transaction", () => {
+    const service = new SessionService(sessionStore(), {
+      now: () => now,
+      generateToken: () => currentToken,
+      ttlMs: 60_000,
+    });
+
+    expect(service.prepareIssue()).toEqual({
+      token: currentToken,
+      tokenHash: hashSessionToken(currentToken),
+      expiresAt: new Date("2026-09-18T12:01:00.000Z"),
+    });
+  });
+
   it("rejects malformed tokens without touching persistence", async () => {
     const store = sessionStore();
     const service = new SessionService(store, { now: () => now });
