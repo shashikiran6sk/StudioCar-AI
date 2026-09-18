@@ -7,4 +7,4 @@ allowBuilds:
   unrs-resolver: true
 
 catalog:
-  zod: ^4.1.12
+  zod: 4.6.5

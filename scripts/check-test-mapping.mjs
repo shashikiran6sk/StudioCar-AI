@@ -12,6 +12,10 @@ function filesBelow(directory) {
   if (!existsSync(directory)) return [];
 
   return readdirSync(directory).flatMap((entry) => {
+    if ([".turbo", "coverage", "dist", "node_modules"].includes(entry)) {
+      return [];
+    }
+
     const absolute = path.join(directory, entry);
     return statSync(absolute).isDirectory() ? filesBelow(absolute) : [absolute];
   });
@@ -59,4 +63,3 @@ if (missing.length > 0) {
   for (const source of missing) console.error(`- ${path.relative(root, source)}`);
   process.exitCode = 1;
 }
-

@@ -4,11 +4,21 @@
   "private": true,
   "type": "module",
   "exports": {
+    ".": "./src/index.ts",
+    "./environment": "./src/environment.ts",
     "./eslint/base": "./eslint/base.mjs",
     "./typescript/base.json": "./typescript/base.json",
     "./typescript/nextjs.json": "./typescript/nextjs.json",
     "./typescript/node.json": "./typescript/node.json",
     "./typescript/react-library.json": "./typescript/react-library.json"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json --outDir dist",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "catalog:"
   }
 }
-

@@ -4,6 +4,10 @@
     "reason": "Static Next.js root layout and metadata only."
   },
   {
+    "source": "packages/config/src/index.ts",
+    "reason": "Barrel export with no behavior."
+  },
+  {
     "source": "packages/contracts/src/index.ts",
     "reason": "Barrel export with no behavior."
   },
@@ -32,4 +36,3 @@
     "reason": "Barrel export with no behavior."
   }
 ]
-

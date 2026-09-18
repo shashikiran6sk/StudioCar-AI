@@ -105,6 +105,12 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    zod:
+      specifier: 4.6.5
+      version: 4.6.5
+
 importers:
 
   .:
@@ -191,9 +197,17 @@ importers:
         specifier: 19.3.0
         version: 19.3.0(react@19.3.0)
 
-  packages/config: {}
+  packages/config:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.5
 
   packages/contracts:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.5
     devDependencies:
       '@studiocar/config':
         specifier: workspace:*

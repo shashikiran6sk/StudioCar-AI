@@ -1,0 +1,69 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  parseClientEnvironment,
+  parseServerEnvironment,
+} from "../../../packages/config/src/environment";
+
+const validEnvironment = {
+  NODE_ENV: "test",
+  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/studiocar_test",
+  SESSION_SECRET: "a-secure-session-secret-at-least-32-characters",
+  GOOGLE_CLIENT_ID: "google-client",
+  GOOGLE_CLIENT_SECRET: "google-secret",
+  GOOGLE_REDIRECT_URI: "http://localhost:3000/api/auth/google/callback",
+  MSG91_AUTH_KEY: "msg91-key",
+  MSG91_TEMPLATE_ID: "template-id",
+  RESEND_API_KEY: "resend-key",
+  EMAIL_FROM: "StudioCar <hello@studiocar.example>",
+  AWS_REGION: "ap-south-1",
+  S3_BUCKET: "studiocar-assets-test",
+  SQS_IMAGE_QUEUE_URL: "https://sqs.ap-south-1.amazonaws.com/123/images",
+  SQS_EMAIL_QUEUE_URL: "https://sqs.ap-south-1.amazonaws.com/123/email",
+  BACKGROUND_REMOVAL_PROVIDER: "removebg",
+  REMOVEBG_API_KEY: "remove-bg-key",
+} satisfies Record<string, string>;
+
+describe("environment validation", () => {
+  it("coerces bounded operational defaults", () => {
+    expect(parseServerEnvironment(validEnvironment)).toMatchObject({
+      MAX_UPLOAD_BYTES: 25 * 1024 * 1024,
+      PRESIGNED_URL_TTL_SECONDS: 300,
+      BACKGROUND_REMOVAL_PROVIDER: "removebg",
+    });
+  });
+
+  it.each([
+    ["fal", "FAL_KEY"],
+    ["birefnet", "SELF_HOSTED_BIREFNET_ENDPOINT"],
+  ])("requires the configured %s provider credential", (provider, key) => {
+    const result = (() => {
+      try {
+        parseServerEnvironment({
+          ...validEnvironment,
+          BACKGROUND_REMOVAL_PROVIDER: provider,
+          REMOVEBG_API_KEY: undefined,
+        });
+        return undefined;
+      } catch (error) {
+        return error;
+      }
+    })();
+
+    expect(result).toBeDefined();
+    expect(String(result)).toContain(key);
+  });
+
+  it("exposes only explicitly public client values", () => {
+    expect(
+      parseClientEnvironment({
+        NODE_ENV: "production",
+        NEXT_PUBLIC_APP_URL: "https://app.studiocar.example",
+        SESSION_SECRET: "must-not-cross-the-client-boundary",
+      }),
+    ).toEqual({
+      NODE_ENV: "production",
+      NEXT_PUBLIC_APP_URL: "https://app.studiocar.example",
+    });
+  });
+});
