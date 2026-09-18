@@ -3,6 +3,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
-    include: ["../../tests/integration/web/**/*.test.ts"],
+    include: ["../../tests/integration/database/**/*.test.ts"],
+    maxWorkers: 1,
   },
 });

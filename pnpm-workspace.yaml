@@ -4,7 +4,14 @@ packages:
   - workers/*
 
 allowBuilds:
+  '@prisma/engines': true
+  prisma: true
   unrs-resolver: true
 
 catalog:
+  '@prisma/adapter-pg': 7.10.0
+  '@prisma/client': 7.10.0
+  '@types/pg': 8.23.1
+  pg: 8.23.0
+  prisma: 7.10.0
   zod: 4.6.5

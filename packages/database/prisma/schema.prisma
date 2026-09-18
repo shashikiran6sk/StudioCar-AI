@@ -1,0 +1,327 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AuthProvider {
+  GOOGLE
+  PHONE
+}
+
+enum VehicleStatus {
+  DRAFT
+  UPLOADING
+  PROCESSING
+  READY
+  PARTIALLY_FAILED
+  ARCHIVED
+}
+
+enum ImageAssetStatus {
+  PENDING_UPLOAD
+  UPLOADED
+  INVALID
+  DELETED
+}
+
+enum ProcessingJobStatus {
+  CREATED
+  QUEUED
+  PROCESSING
+  RETRYING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ProcessingProvider {
+  REMOVEBG
+  FAL
+  BIREFNET
+}
+
+enum ProcessingAttemptStatus {
+  CLAIMED
+  STARTED
+  SUCCEEDED
+  FAILED
+}
+
+enum OutputFormat {
+  JPEG
+  PNG
+  WEBP
+}
+
+enum UsageEventType {
+  BACKGROUND_REMOVAL_COMPLETED
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+}
+
+enum WebhookProcessingStatus {
+  RECEIVED
+  PROCESSED
+  FAILED
+  IGNORED
+}
+
+model User {
+  id                String             @id @default(uuid()) @db.Uuid
+  displayName       String?            @db.VarChar(120)
+  primaryEmail      String?            @unique @db.VarChar(320)
+  primaryPhone      String?            @unique @db.VarChar(20)
+  createdAt         DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime           @updatedAt @db.Timestamptz(3)
+  authIdentities    AuthIdentity[]
+  sessions          Session[]
+  vehicles          Vehicle[]
+  imageAssets       ImageAsset[]
+  processingJobs    ProcessingJob[]
+  processedAssets   ProcessedAsset[]
+  usageEvents       UsageEvent[]
+  planSubscriptions PlanSubscription[]
+  auditLogs         AuditLog[]
+}
+
+model AuthIdentity {
+  id                  String       @id @default(uuid()) @db.Uuid
+  userId              String       @db.Uuid
+  provider            AuthProvider
+  providerSubject     String       @db.VarChar(255)
+  email               String?      @db.VarChar(320)
+  phoneNumber         String?      @db.VarChar(20)
+  emailVerifiedAt     DateTime?    @db.Timestamptz(3)
+  lastAuthenticatedAt DateTime?    @db.Timestamptz(3)
+  createdAt           DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime     @updatedAt @db.Timestamptz(3)
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerSubject])
+  @@index([userId, provider])
+}
+
+model Session {
+  id                   String    @id @default(uuid()) @db.Uuid
+  userId               String    @db.Uuid
+  tokenHash            String    @unique @db.Char(64)
+  expiresAt            DateTime  @db.Timestamptz(3)
+  lastUsedAt           DateTime? @db.Timestamptz(3)
+  revokedAt            DateTime? @db.Timestamptz(3)
+  rotatedFromSessionId String?   @unique @db.Uuid
+  createdAt            DateTime  @default(now()) @db.Timestamptz(3)
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rotatedFrom          Session?  @relation("SessionRotation", fields: [rotatedFromSessionId], references: [id], onDelete: SetNull)
+  rotatedTo            Session?  @relation("SessionRotation")
+
+  @@index([userId, expiresAt])
+  @@index([expiresAt, revokedAt])
+}
+
+model Vehicle {
+  id              String           @id @default(uuid()) @db.Uuid
+  userId          String           @db.Uuid
+  name            String           @db.VarChar(120)
+  brand           String?          @db.VarChar(80)
+  model           String?          @db.VarChar(80)
+  variant         String?          @db.VarChar(80)
+  year            Int?
+  stockId         String?          @db.VarChar(80)
+  internalId      String?          @db.VarChar(80)
+  notes           String?          @db.VarChar(2000)
+  status          VehicleStatus    @default(DRAFT)
+  archivedAt      DateTime?        @db.Timestamptz(3)
+  createdAt       DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime         @updatedAt @db.Timestamptz(3)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  imageAssets     ImageAsset[]
+  processingJobs  ProcessingJob[]
+  processedAssets ProcessedAsset[]
+
+  @@unique([userId, stockId])
+  @@unique([userId, internalId])
+  @@index([userId, createdAt])
+  @@index([userId, status, createdAt])
+}
+
+model ImageAsset {
+  id                String           @id @default(uuid()) @db.Uuid
+  userId            String           @db.Uuid
+  vehicleId         String           @db.Uuid
+  status            ImageAssetStatus @default(PENDING_UPLOAD)
+  originalObjectKey String           @unique @db.VarChar(1024)
+  originalFilename  String           @db.VarChar(255)
+  mimeType          String           @db.VarChar(100)
+  sizeBytes         BigInt
+  checksumSha256    String?          @db.Char(64)
+  width             Int?
+  height            Int?
+  displayOrder      Int              @default(0)
+  uploadExpiresAt   DateTime         @db.Timestamptz(3)
+  uploadedAt        DateTime?        @db.Timestamptz(3)
+  invalidReason     String?          @db.VarChar(500)
+  createdAt         DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime         @updatedAt @db.Timestamptz(3)
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicle           Vehicle          @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  processingJobs    ProcessingJob[]
+
+  @@index([vehicleId, createdAt])
+  @@index([userId, status, createdAt])
+}
+
+model ProcessingJob {
+  id                String              @id @default(uuid()) @db.Uuid
+  userId            String              @db.Uuid
+  vehicleId         String              @db.Uuid
+  imageAssetId      String              @db.Uuid
+  status            ProcessingJobStatus @default(CREATED)
+  provider          ProcessingProvider
+  options           Json
+  idempotencyKey    String              @db.VarChar(128)
+  providerRequestId String?             @db.VarChar(255)
+  attemptCount      Int                 @default(0)
+  maxAttempts       Int                 @default(5)
+  claimedAt         DateTime?           @db.Timestamptz(3)
+  claimExpiresAt    DateTime?           @db.Timestamptz(3)
+  workerId          String?             @db.VarChar(255)
+  queuedAt          DateTime?           @db.Timestamptz(3)
+  startedAt         DateTime?           @db.Timestamptz(3)
+  completedAt       DateTime?           @db.Timestamptz(3)
+  failedAt          DateTime?           @db.Timestamptz(3)
+  cancelledAt       DateTime?           @db.Timestamptz(3)
+  errorCode         String?             @db.VarChar(80)
+  errorMessage      String?             @db.VarChar(1000)
+  createdAt         DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime            @updatedAt @db.Timestamptz(3)
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicle           Vehicle             @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  imageAsset        ImageAsset          @relation(fields: [imageAssetId], references: [id], onDelete: Restrict)
+  attempts          ProcessingAttempt[]
+  processedAsset    ProcessedAsset?
+  usageEvents       UsageEvent[]
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, status, createdAt])
+  @@index([status, claimExpiresAt])
+  @@index([imageAssetId, createdAt])
+}
+
+model ProcessingAttempt {
+  id                String                  @id @default(uuid()) @db.Uuid
+  jobId             String                  @db.Uuid
+  attemptNumber     Int
+  provider          ProcessingProvider
+  status            ProcessingAttemptStatus @default(CLAIMED)
+  providerRequestId String?                 @db.VarChar(255)
+  startedAt         DateTime                @default(now()) @db.Timestamptz(3)
+  finishedAt        DateTime?               @db.Timestamptz(3)
+  retryable         Boolean?
+  errorCode         String?                 @db.VarChar(80)
+  errorMessage      String?                 @db.VarChar(1000)
+  providerLatencyMs Int?
+  createdAt         DateTime                @default(now()) @db.Timestamptz(3)
+  job               ProcessingJob           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, attemptNumber])
+  @@unique([provider, providerRequestId])
+}
+
+model ProcessedAsset {
+  id               String        @id @default(uuid()) @db.Uuid
+  userId           String        @db.Uuid
+  vehicleId        String        @db.Uuid
+  jobId            String        @unique @db.Uuid
+  objectKey        String        @unique @db.VarChar(1024)
+  previewObjectKey String        @unique @db.VarChar(1024)
+  outputFormat     OutputFormat
+  mimeType         String        @db.VarChar(100)
+  sizeBytes        BigInt
+  checksumSha256   String?       @db.Char(64)
+  width            Int
+  height           Int
+  createdAt        DateTime      @default(now()) @db.Timestamptz(3)
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicle          Vehicle       @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  job              ProcessingJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
+
+  @@index([vehicleId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model UsageEvent {
+  id               String         @id @default(uuid()) @db.Uuid
+  userId           String         @db.Uuid
+  jobId            String?        @db.Uuid
+  type             UsageEventType
+  quantity         Int
+  billingPeriodKey String         @db.Char(7)
+  idempotencyKey   String         @unique @db.VarChar(128)
+  occurredAt       DateTime       @default(now()) @db.Timestamptz(3)
+  createdAt        DateTime       @default(now()) @db.Timestamptz(3)
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job              ProcessingJob? @relation(fields: [jobId], references: [id], onDelete: Restrict)
+
+  @@unique([jobId, type])
+  @@index([userId, billingPeriodKey, type])
+  @@index([userId, occurredAt])
+}
+
+model PlanSubscription {
+  id                     String             @id @default(uuid()) @db.Uuid
+  userId                 String             @db.Uuid
+  provider               String?            @db.VarChar(50)
+  providerSubscriptionId String?            @unique @db.VarChar(255)
+  planKey                String             @db.VarChar(80)
+  status                 SubscriptionStatus
+  currentPeriodStart     DateTime           @db.Timestamptz(3)
+  currentPeriodEnd       DateTime           @db.Timestamptz(3)
+  cancelAtPeriodEnd      Boolean            @default(false)
+  createdAt              DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime           @updatedAt @db.Timestamptz(3)
+  user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, currentPeriodEnd])
+}
+
+model WebhookEvent {
+  id                String                  @id @default(uuid()) @db.Uuid
+  provider          String                  @db.VarChar(50)
+  externalId        String                  @db.VarChar(255)
+  eventType         String                  @db.VarChar(120)
+  payload           Json
+  signatureVerified Boolean
+  status            WebhookProcessingStatus @default(RECEIVED)
+  errorMessage      String?                 @db.VarChar(1000)
+  receivedAt        DateTime                @default(now()) @db.Timestamptz(3)
+  processedAt       DateTime?               @db.Timestamptz(3)
+
+  @@unique([provider, externalId])
+  @@index([status, receivedAt])
+}
+
+model AuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String?  @db.Uuid
+  action       String   @db.VarChar(120)
+  resourceType String   @db.VarChar(80)
+  resourceId   String?  @db.VarChar(255)
+  requestId    String?  @db.VarChar(128)
+  metadata     Json?
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([resourceType, resourceId, createdAt])
+  @@index([requestId])
+}

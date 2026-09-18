@@ -1,4 +1,3 @@
 import baseConfig from "@studiocar/config/eslint/base";
 
-export default baseConfig;
-
+export default [{ ignores: ["generated/**"] }, ...baseConfig];

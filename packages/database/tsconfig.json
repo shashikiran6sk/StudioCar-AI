@@ -1,5 +1,13 @@
 {
-  "extends": "@studiocar/config/typescript/node.json",
-  "include": ["src/**/*.ts"]
+  "extends": "../config/typescript/node.json",
+  "compilerOptions": {
+    "types": ["vitest/globals"]
+  },
+  "include": [
+    "src/**/*.ts",
+    "generated/**/*.ts",
+    "prisma.config.ts",
+    "../../tests/unit/database/**/*.ts",
+    "../../tests/integration/database/**/*.ts"
+  ]
 }
-

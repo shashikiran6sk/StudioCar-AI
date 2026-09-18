@@ -17,6 +17,22 @@ jobs:
   quality:
     name: Lint typecheck and test
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: studiocar_test
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d studiocar_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/studiocar_test
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
@@ -34,6 +50,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Validate Prisma schema
+        run: pnpm db:validate
+
+      - name: Apply and verify migrations
+        run: pnpm db:migrate:deploy && pnpm db:migrate:status
 
       - name: Lint
         run: pnpm lint
@@ -81,4 +103,3 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report
           if-no-files-found: ignore
-

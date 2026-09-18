@@ -8,6 +8,10 @@
   "packageManager": "pnpm@12.3.4",
   "scripts": {
     "build": "turbo run build",
+    "db:generate": "pnpm --filter @studiocar/database db:generate",
+    "db:migrate:deploy": "pnpm --filter @studiocar/database db:migrate:deploy",
+    "db:migrate:status": "pnpm --filter @studiocar/database db:migrate:status",
+    "db:validate": "pnpm --filter @studiocar/database db:validate",
     "dev": "turbo run dev",
     "e2e": "turbo run e2e",
     "lint": "turbo run lint",
