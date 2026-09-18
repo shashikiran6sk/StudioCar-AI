@@ -48,6 +48,7 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Added mandatory repository-wide agent instructions and repository context.
 - Enforced no explicit `any` and no TypeScript type assertions in shared lint configuration.
 - Ignored the generated Next.js `next-env.d.ts` file.
+- Made Prisma client generation an explicit CI prerequisite for type-aware linting on clean runners.
 
 ## Next planned slices
 
