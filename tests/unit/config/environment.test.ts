@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   parseClientEnvironment,
   parseGoogleAuthEnvironment,
+  parsePhoneAuthEnvironment,
   parseServerEnvironment,
 } from "../../../packages/config/src/environment";
 
@@ -77,6 +78,23 @@ describe("environment validation", () => {
       GOOGLE_CLIENT_SECRET: validEnvironment.GOOGLE_CLIENT_SECRET,
       GOOGLE_REDIRECT_URI: validEnvironment.GOOGLE_REDIRECT_URI,
       OAUTH_CHALLENGE_TTL_SECONDS: 600,
+    });
+  });
+
+  it("validates bounded phone authentication defaults", () => {
+    expect(parsePhoneAuthEnvironment(validEnvironment)).toEqual({
+      NODE_ENV: "test",
+      DATABASE_URL: validEnvironment.DATABASE_URL,
+      SESSION_SECRET: validEnvironment.SESSION_SECRET,
+      MSG91_AUTH_KEY: validEnvironment.MSG91_AUTH_KEY,
+      MSG91_TEMPLATE_ID: validEnvironment.MSG91_TEMPLATE_ID,
+      MSG91_TIMEOUT_MS: 5_000,
+      PHONE_OTP_CHALLENGE_TTL_SECONDS: 600,
+      PHONE_OTP_RATE_LIMIT_WINDOW_SECONDS: 600,
+      PHONE_OTP_SEND_MAX_PER_PHONE: 3,
+      PHONE_OTP_SEND_MAX_PER_IP: 10,
+      PHONE_OTP_VERIFY_MAX_PER_CHALLENGE: 5,
+      PHONE_OTP_VERIFY_MAX_PER_IP: 30,
     });
   });
 });

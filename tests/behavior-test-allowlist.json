@@ -16,6 +16,18 @@
     "reason": "Type-only application port definitions with no runtime behavior."
   },
   {
+    "source": "apps/web/src/server/auth/phone/phone-auth.constants.ts",
+    "reason": "Static authentication constants and enum values only."
+  },
+  {
+    "source": "apps/web/src/server/auth/phone/phone-auth-runtime.ts",
+    "reason": "Composition root that wires separately tested services and adapters."
+  },
+  {
+    "source": "apps/web/src/server/auth/phone/phone-auth.types.ts",
+    "reason": "Type-only application port definitions with no runtime behavior."
+  },
+  {
     "source": "packages/config/src/index.ts",
     "reason": "Barrel export with no behavior."
   },

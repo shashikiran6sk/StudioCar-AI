@@ -3,6 +3,7 @@ export * from "./auth";
 export * from "./common";
 export * from "./jobs";
 export * from "./processing";
+export * from "./phone-number";
 export * from "./upload";
 export * from "./usage";
 export * from "./vehicle";
