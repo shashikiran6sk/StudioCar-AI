@@ -236,6 +236,9 @@ importers:
       '@prisma/client':
         specifier: 'catalog:'
         version: 7.10.0(prisma@7.10.0(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@studiocar/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       pg:
         specifier: 'catalog:'
         version: 8.23.0

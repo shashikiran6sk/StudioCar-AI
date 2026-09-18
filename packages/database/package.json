@@ -20,6 +20,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "catalog:",
     "@prisma/client": "catalog:",
+    "@studiocar/contracts": "workspace:*",
     "pg": "catalog:"
   },
   "devDependencies": {
