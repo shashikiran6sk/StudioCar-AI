@@ -4,7 +4,7 @@ Last updated: 2026-09-19
 
 ## Current status
 
-Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 uploads, and the end-to-end four-step vehicle submission path through durable SQS enqueue are implemented. The next planned slice implements the idempotent worker lifecycle without changing the product command boundary.
+Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 uploads, and the end-to-end four-step vehicle submission path through durable SQS enqueue are implemented. The provider-independent worker lifecycle is also implemented; the next planned slice supplies the concrete image-storage executor and remove.bg provider adapter behind that boundary.
 
 ## Completed
 
@@ -143,6 +143,15 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Mounted the existing screenshot-derived four-step vehicle dialog from the dashboard Upload Vehicle action. The modal now preserves a distinct processing idempotency key across retries, submits uploaded asset IDs and normalized treatment options, closes only after command acceptance, and keeps drafts/originals intact on failure.
 - Added service, provider mapping, token authentication, handler, route, environment, client-boundary, launcher, and orchestration tests; the public UI no longer simulates processing success.
 
+### SC012C — Idempotent worker lifecycle
+
+- Added conditional job claims with expiring worker leases, monotonic attempt records, duplicate-delivery suppression, exhausted-lease failure handling, and explicit `QUEUED → PROCESSING → COMPLETED`, retry, and terminal failure transitions.
+- Added a provider-independent worker service that classifies retryable network, timeout, 429, and 5xx failures separately from terminal image, request, and authorization failures, with bounded exponential backoff and jitter.
+- Made retry scheduling durable by atomically moving the job to `RETRYING` and resetting its existing outbox record. The dispatcher now republishes due retry records and changes them back to `QUEUED` only after SQS acknowledges publication.
+- Made completion atomic across `ProcessedAsset`, the successful `ProcessingAttempt`, the `ProcessingJob`, the vehicle aggregate status, and exactly one immutable `BACKGROUND_REMOVAL_COMPLETED` usage event.
+- Added stable SQS event contracts and a Lambda-compatible partial-batch handler. Malformed records and unexpected infrastructure exceptions are retried by SQS; terminal, completed, duplicate, and durably rescheduled records are acknowledged.
+- Added a backward-compatible retry-scheduling migration, pure retry/classification tests, worker handler tests, and real-PostgreSQL integration coverage for competing claims, duplicate completion, retry republish, usage idempotency, invalid-image failure, and vehicle status reconciliation.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -152,9 +161,9 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 
 ## Next planned slices
 
-1. **SC012C — Worker lifecycle**: idempotent claims, explicit transitions, retry classification/backoff, Lambda orchestration, and atomic processing completion/usage accounting.
-2. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
-3. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, and usage/billing.
+1. **SC013 — Provider and storage execution**: stable `BackgroundRemovalProvider`, private-S3 input/output adapter, full decoder validation, remove.bg adapter, configuration-selected fal.ai/self-hosted extension boundaries, and the concrete Lambda composition root.
+2. **SC014 — Processing status UX**: tenant-safe batched status endpoint, adaptive visibility-aware polling, truthful stages, and retry/failure presentation.
+3. **SC015+ — Product surfaces**: homepage, dashboard data, inventory, portfolio/detail, and usage/billing implemented screenshot-by-screenshot.
 4. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
 
 ## Important implementation notes
@@ -175,6 +184,8 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Processing reservation moves the vehicle from `DRAFT` to `PROCESSING` only in the same transaction that creates every job and its outbox message. SC012B2 may expose this command only through the dispatcher and scheduled recovery path established on top of that durable intent.
 - Publishing an outbox message and marking its job `QUEUED` cannot be one cross-system transaction. The dispatcher therefore retains the database claim until SQS acknowledges the message, updates outbox and job state atomically afterward, and safely republishes after a crash; the worker must treat duplicate `jobId` deliveries as harmless.
 - `PROCESSING_DISPATCH_TOKEN` protects the recovery endpoint and must be distinct, randomly generated, and server-only. A trusted scheduler must invoke recovery at least once per minute; the endpoint returns only aggregate dispatch counts and never queue payloads or errors.
+- Worker retries are new durable outbox publications, not in-process loops. The original SQS delivery is acknowledged only after the retry intent is committed; the dispatcher later republishes when `nextAttemptAt` becomes due.
+- The worker core deliberately depends on a `ProcessingJobExecutorPort`. SC013 must perform full decode validation, deterministic private-S3 output storage, preview generation, and provider execution behind that port before exposing a deployable Lambda entry point.
 - `apps/web/next-env.d.ts` is generated by Next.js and intentionally untracked.
 - Processing progress must use truthful stages unless a provider exposes meaningful progress.
 - All future work follows the branch → PR → required CI → merge workflow in `/AGENTS.md`.

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { WorkerMessageSchema } from "../../../packages/contracts/src/worker";
+import {
+  SqsWorkerEventSchema,
+  WorkerMessageSchema,
+} from "../../../packages/contracts/src/worker";
 
 describe("worker message contract", () => {
   it("accepts only the stable versioned image-processing envelope", () => {
@@ -16,5 +19,22 @@ describe("worker message contract", () => {
     expect(WorkerMessageSchema.safeParse({ version: 2, ...baseMessage }).success).toBe(
       false,
     );
+  });
+
+  it("validates and strips an AWS SQS event to the worker boundary", () => {
+    const result = SqsWorkerEventSchema.parse({
+      Records: [
+        {
+          messageId: "sqs-message-1",
+          body: "{}",
+          receiptHandle: "sensitive-transport-detail",
+        },
+      ],
+    });
+
+    expect(result).toEqual({
+      Records: [{ messageId: "sqs-message-1", body: "{}" }],
+    });
+    expect(SqsWorkerEventSchema.safeParse({ Records: [] }).success).toBe(false);
   });
 });

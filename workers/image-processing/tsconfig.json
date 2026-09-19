@@ -1,5 +1,7 @@
 {
-  "extends": "@studiocar/config/typescript/node.json",
-  "include": ["src/**/*.ts"]
+  "extends": "../../packages/config/typescript/node.json",
+  "compilerOptions": {
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src/**/*.ts", "../../tests/unit/workers/image-processing/**/*.ts"]
 }
-

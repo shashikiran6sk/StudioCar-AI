@@ -164,6 +164,14 @@
     "reason": "Type-only processing outbox port definitions with no runtime behavior."
   },
   {
+    "source": "packages/processing/src/processing-worker.constants.ts",
+    "reason": "Static processing worker bounds, keys, and error-code constants only."
+  },
+  {
+    "source": "packages/processing/src/processing-worker.types.ts",
+    "reason": "Type-only processing worker port definitions with no runtime behavior."
+  },
+  {
     "source": "packages/testing/src/index.ts",
     "reason": "Barrel export with no behavior."
   },
@@ -174,5 +182,9 @@
   {
     "source": "workers/image-processing/src/index.ts",
     "reason": "Barrel export with no behavior."
+  },
+  {
+    "source": "workers/image-processing/src/processing-message-handler.types.ts",
+    "reason": "Type-only processing message handler port with no runtime behavior."
   }
 ]

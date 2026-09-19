@@ -9,9 +9,13 @@
   "scripts": {
     "build": "tsc --outDir dist",
     "lint": "eslint . --max-warnings=0",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@studiocar/config": "workspace:*"
+    "@studiocar/config": "workspace:*",
+    "@studiocar/contracts": "workspace:*",
+    "@studiocar/processing": "workspace:*",
+    "vitest": "5.0.1"
   }
 }

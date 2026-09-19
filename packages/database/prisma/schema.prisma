@@ -262,6 +262,7 @@ model ProcessingJob {
   maxAttempts         Int                 @default(5)
   claimedAt           DateTime?           @db.Timestamptz(3)
   claimExpiresAt      DateTime?           @db.Timestamptz(3)
+  nextAttemptAt       DateTime?           @db.Timestamptz(3)
   workerId            String?             @db.VarChar(255)
   queuedAt            DateTime?           @db.Timestamptz(3)
   startedAt           DateTime?           @db.Timestamptz(3)
@@ -285,6 +286,7 @@ model ProcessingJob {
   @@index([userId, status, createdAt])
   @@index([userId, batchIdempotencyKey])
   @@index([status, claimExpiresAt])
+  @@index([status, nextAttemptAt])
   @@index([imageAssetId, createdAt])
 }
 

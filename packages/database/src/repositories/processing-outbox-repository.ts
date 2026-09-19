@@ -71,7 +71,14 @@ export class PrismaProcessingOutboxRepository {
       where: {
         publishedAt: null,
         nextAttemptAt: { lte: command.now },
-        job: { status: ProcessingJobStatus.CREATED },
+        job: {
+          status: {
+            in: [
+              ProcessingJobStatus.CREATED,
+              ProcessingJobStatus.RETRYING,
+            ],
+          },
+        },
         ...(command.jobIds ? { jobId: { in: command.jobIds } } : {}),
         OR: [
           { claimExpiresAt: null },
@@ -131,9 +138,15 @@ export class PrismaProcessingOutboxRepository {
         const queued = await transaction.processingJob.updateMany({
           where: {
             id: message.jobId,
-            status: ProcessingJobStatus.CREATED,
+            status: {
+              in: [
+                ProcessingJobStatus.CREATED,
+                ProcessingJobStatus.RETRYING,
+              ],
+            },
           },
           data: {
+            nextAttemptAt: null,
             queuedAt: command.publishedAt,
             status: ProcessingJobStatus.QUEUED,
           },
