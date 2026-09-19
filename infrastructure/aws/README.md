@@ -25,3 +25,12 @@ replaced; removing retained data is an explicit operational action.
 Both the storage bucket and processing queues are retained if their stacks are
 deleted or replaced. Removing retained customer data or queued work is an
 explicit operational action.
+
+`image-processing-worker.yml` deploys the Node.js 24 Lambda runtime from an
+immutable, reviewed archive in a private artifact bucket. The archive must place
+`handler.mjs` and its production dependencies (including the Linux arm64 Sharp
+binary) at its root. The stack resolves database and remove.bg credentials from
+Secrets Manager, grants only tenant-prefix object access, caps both reserved and
+SQS event-source concurrency, and enables `ReportBatchItemFailures`. Configure
+alarm actions and ensure the queue visibility timeout is longer than the Lambda
+timeout before production deployment.

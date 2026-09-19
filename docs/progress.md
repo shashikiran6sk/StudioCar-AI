@@ -4,7 +4,7 @@ Last updated: 2026-09-19
 
 ## Current status
 
-Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 uploads, and the end-to-end four-step vehicle submission path through durable SQS enqueue are implemented. The provider-independent worker lifecycle and remove.bg adapter are also implemented; the next planned slice supplies private-S3 execution, full image decoding, output transformation, and the concrete Lambda runtime.
+Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 uploads, and the end-to-end four-step vehicle submission path through durable SQS enqueue are implemented. The provider-independent worker lifecycle, remove.bg adapter, private-S3 execution, full decoder validation, deterministic output recovery, preview transformation, and bounded Lambda runtime are implemented; the next planned slice is the tenant-safe processing status API and truthful adaptive polling UX.
 
 ## Completed
 
@@ -159,6 +159,15 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Normalized 429, 5xx, credential/billing, invalid-request, timeout, network, and malformed-success outcomes into the worker failure taxonomy so retry policy remains outside the adapter.
 - Added focused option validation, response ID, HTTP failure, shadow mapping, multipart request, response-boundary, and network-failure tests. No remove.bg credential enters the product application or client bundle.
 
+### SC013B — Private-S3 execution and Lambda runtime
+
+- Added a concrete provider-independent job executor that reads committed originals from private S3, verifies authoritative size and SHA-256 metadata, enforces the remove.bg 22 MB input ceiling, and forces a full bounded Sharp decode before any provider request.
+- Added deterministic tenant-prefixed provider-result, processed-output, and WebP-preview keys. Provider results are checksum-tagged and persisted before final rendering so retries after output/database finalization failures reuse the previously charged result instead of invoking the provider again.
+- Added output treatment for normalized background, crop, padding, enhancement, format, and quality options, plus bounded inventory previews. Final and preview objects carry job/checksum metadata and remain private; PostgreSQL stores only their immutable keys.
+- Added a bounded S3 adapter, worker-only Zod environment, configuration-selected provider factory that fails closed for unimplemented fal.ai/BiRefNet adapters, warm Lambda composition root, and a Node.js 24 handler using the stable partial-batch queue contract.
+- Added a deployable CloudFormation worker stack with least-privilege S3/SQS access, Secrets Manager dynamic references, reserved/event-source concurrency limits, `ReportBatchItemFailures`, and a Lambda error alarm.
+- Added focused configuration, decoder, transform, checksum, object-key, executor recovery/tamper, S3 adapter, missing-object, and provider-factory tests. The worker build now emits a bundled Lambda entry module while leaving production-native dependencies explicit for Linux arm64 packaging.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -168,10 +177,9 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 
 ## Next planned slices
 
-1. **SC013B — Storage execution and Lambda runtime**: private-S3 input/output adapter, full decoder validation, deterministic recovery objects, output/preview transformation, validated worker environment, configuration-selected provider composition, and the concrete Lambda entry point.
-2. **SC014 — Processing status UX**: tenant-safe batched status endpoint, adaptive visibility-aware polling, truthful stages, and retry/failure presentation.
-3. **SC015+ — Product surfaces**: homepage, dashboard data, inventory, portfolio/detail, and usage/billing implemented screenshot-by-screenshot.
-4. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
+1. **SC014 — Processing status UX**: tenant-safe batched status endpoint, adaptive visibility-aware polling, truthful stages, and retry/failure presentation.
+2. **SC015+ — Product surfaces**: homepage, dashboard data, inventory, portfolio/detail, and usage/billing implemented screenshot-by-screenshot.
+3. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
 
 ## Important implementation notes
 
@@ -194,6 +202,9 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Worker retries are new durable outbox publications, not in-process loops. The original SQS delivery is acknowledged only after the retry intent is committed; the dispatcher later republishes when `nextAttemptAt` becomes due.
 - The worker core deliberately depends on a `ProcessingJobExecutorPort`. SC013 must perform full decode validation, deterministic private-S3 output storage, preview generation, and provider execution behind that port before exposing a deployable Lambda entry point.
 - The remove.bg adapter requests transparent WebP because the current provider supports WebP up to 50 megapixels while PNG transparency is limited to 10 megapixels. Worker-side validation must still enforce the configured 22 MB provider input limit and safe pixel bounds before invoking it.
+- The Lambda artifact must place `handler.mjs` plus external production dependencies and the Linux arm64 Sharp binary at the archive root. The checked-in worker stack deliberately accepts an immutable artifact key rather than building mutable source during deployment.
+- Persisting the synchronous remove.bg response before transformation closes the common provider-success/finalization-failure retry path. A process termination during the external HTTP exchange remains an inherently uncertain provider outcome because remove.bg does not expose a true idempotency-key/reconciliation API; provider tags are supplied for correlation, and migration to an asynchronous provider must reconcile its external request ID inside the adapter.
+- Plate-privacy detection is not fabricated by the Sharp treatment pipeline; a dedicated detection/redaction adapter remains required before that option can be truthfully advertised as enforced in production.
 - `apps/web/next-env.d.ts` is generated by Next.js and intentionally untracked.
 - Processing progress must use truthful stages unless a provider exposes meaningful progress.
 - All future work follows the branch → PR → required CI → merge workflow in `/AGENTS.md`.

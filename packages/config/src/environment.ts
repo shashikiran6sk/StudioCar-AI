@@ -10,6 +10,14 @@ const DEFAULT_PROCESSING_OUTBOX_BATCH_SIZE = 20;
 const DEFAULT_PROCESSING_OUTBOX_CLAIM_TTL_MS = 30_000;
 const DEFAULT_PROCESSING_OUTBOX_RETRY_BASE_MS = 1_000;
 const DEFAULT_PROCESSING_OUTBOX_RETRY_MAX_MS = 60_000;
+const DEFAULT_IMAGE_WORKER_CLAIM_TTL_MS = 120_000;
+const DEFAULT_IMAGE_WORKER_RETRY_BASE_MS = 5_000;
+const DEFAULT_IMAGE_WORKER_RETRY_MAX_MS = 300_000;
+const DEFAULT_REMOVEBG_TIMEOUT_MS = 60_000;
+const DEFAULT_PROVIDER_INPUT_BYTES = 22 * 1024 * 1024;
+const DEFAULT_PROVIDER_OUTPUT_BYTES = 100 * 1024 * 1024;
+const DEFAULT_WORKER_IMAGE_PIXELS = 50_000_000;
+const DEFAULT_PREVIEW_MAX_WIDTH = 720;
 
 const PostgresUrlSchema = z.url().refine(
   (value) => /^postgres(?:ql)?:\/\//.test(value),
@@ -159,6 +167,92 @@ export const ProcessingEnvironmentSchema = z
     },
   );
 
+export const ImageWorkerEnvironmentSchema = z
+  .object({
+    DATABASE_URL: PostgresUrlSchema,
+    AWS_REGION: z.string().trim().min(1),
+    S3_BUCKET: z.string().trim().min(3).max(63),
+    BACKGROUND_REMOVAL_PROVIDER: BackgroundRemovalProviderSchema,
+    REMOVEBG_API_KEY: z.string().trim().min(1).optional(),
+    FAL_KEY: z.string().trim().min(1).optional(),
+    SELF_HOSTED_BIREFNET_ENDPOINT: z.url().optional(),
+    IMAGE_WORKER_CLAIM_TTL_MS: z.coerce
+      .number()
+      .int()
+      .min(30_000)
+      .max(900_000)
+      .default(DEFAULT_IMAGE_WORKER_CLAIM_TTL_MS),
+    PROCESSING_RETRY_BASE_MS: z.coerce
+      .number()
+      .int()
+      .min(100)
+      .max(3_600_000)
+      .default(DEFAULT_IMAGE_WORKER_RETRY_BASE_MS),
+    PROCESSING_RETRY_MAX_MS: z.coerce
+      .number()
+      .int()
+      .min(100)
+      .max(3_600_000)
+      .default(DEFAULT_IMAGE_WORKER_RETRY_MAX_MS),
+    REMOVEBG_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(300_000)
+      .default(DEFAULT_REMOVEBG_TIMEOUT_MS),
+    MAX_PROVIDER_INPUT_BYTES: z.coerce
+      .number()
+      .int()
+      .min(1_048_576)
+      .max(DEFAULT_PROVIDER_INPUT_BYTES)
+      .default(DEFAULT_PROVIDER_INPUT_BYTES),
+    MAX_PROVIDER_OUTPUT_BYTES: z.coerce
+      .number()
+      .int()
+      .min(1_048_576)
+      .max(250 * 1024 * 1024)
+      .default(DEFAULT_PROVIDER_OUTPUT_BYTES),
+    MAX_WORKER_IMAGE_PIXELS: z.coerce
+      .number()
+      .int()
+      .min(1_000_000)
+      .max(DEFAULT_WORKER_IMAGE_PIXELS)
+      .default(DEFAULT_WORKER_IMAGE_PIXELS),
+    PREVIEW_MAX_WIDTH: z.coerce
+      .number()
+      .int()
+      .min(320)
+      .max(2_048)
+      .default(DEFAULT_PREVIEW_MAX_WIDTH),
+  })
+  .strip()
+  .superRefine((value, context) => {
+    if (value.PROCESSING_RETRY_MAX_MS < value.PROCESSING_RETRY_BASE_MS) {
+      context.addIssue({
+        code: "custom",
+        message: "Processing retry maximum must be at least the retry base.",
+        path: ["PROCESSING_RETRY_MAX_MS"],
+      });
+    }
+
+    const providerKey: Record<
+      z.infer<typeof BackgroundRemovalProviderSchema>,
+      keyof typeof value
+    > = {
+      removebg: "REMOVEBG_API_KEY",
+      fal: "FAL_KEY",
+      birefnet: "SELF_HOSTED_BIREFNET_ENDPOINT",
+    };
+    const requiredKey = providerKey[value.BACKGROUND_REMOVAL_PROVIDER];
+    if (!value[requiredKey]) {
+      context.addIssue({
+        code: "custom",
+        message: `${requiredKey} is required for ${value.BACKGROUND_REMOVAL_PROVIDER}.`,
+        path: [requiredKey],
+      });
+    }
+  });
+
 export const ServerEnvironmentSchema = z
   .object({
     NODE_ENV: EnvironmentNameSchema.default("development"),
@@ -224,6 +318,9 @@ export type UploadEnvironment = z.infer<typeof UploadEnvironmentSchema>;
 export type ProcessingEnvironment = z.infer<
   typeof ProcessingEnvironmentSchema
 >;
+export type ImageWorkerEnvironment = z.infer<
+  typeof ImageWorkerEnvironmentSchema
+>;
 export type BackgroundRemovalProvider = z.infer<
   typeof BackgroundRemovalProviderSchema
 >;
@@ -268,4 +365,10 @@ export function parseProcessingEnvironment(
   environment: Record<string, string | undefined>,
 ): ProcessingEnvironment {
   return ProcessingEnvironmentSchema.parse(environment);
+}
+
+export function parseImageWorkerEnvironment(
+  environment: Record<string, string | undefined>,
+): ImageWorkerEnvironment {
+  return ImageWorkerEnvironmentSchema.parse(environment);
 }

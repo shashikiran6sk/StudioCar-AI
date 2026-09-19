@@ -198,5 +198,45 @@
   {
     "source": "workers/image-processing/src/providers/remove-bg-provider.types.ts",
     "reason": "Type-only remove.bg provider configuration with no runtime behavior."
+  },
+  {
+    "source": "workers/image-processing/src/execution/image-execution.constants.ts",
+    "reason": "Static image execution messages, metadata keys, and bounded dimensions only."
+  },
+  {
+    "source": "workers/image-processing/src/execution/image-execution.types.ts",
+    "reason": "Type-only validated and rendered image definitions with no runtime behavior."
+  },
+  {
+    "source": "workers/image-processing/src/execution/processing-job-executor.types.ts",
+    "reason": "Type-only processing executor configuration with no runtime behavior."
+  },
+  {
+    "source": "workers/image-processing/src/storage/processing-object-storage.types.ts",
+    "reason": "Type-only private object storage ports with no runtime behavior."
+  },
+  {
+    "source": "workers/image-processing/src/storage/s3-processing-object-storage.constants.ts",
+    "reason": "Static private object storage error messages only."
+  },
+  {
+    "source": "workers/image-processing/src/storage/missing-processing-object-error.ts",
+    "reason": "Named storage error class with no branching application behavior."
+  },
+  {
+    "source": "workers/image-processing/src/runtime/image-worker-runtime.constants.ts",
+    "reason": "Static worker provider configuration errors only."
+  },
+  {
+    "source": "workers/image-processing/src/runtime/create-image-processing-worker.ts",
+    "reason": "Composition root that wires separately tested worker services and adapters."
+  },
+  {
+    "source": "workers/image-processing/src/runtime/get-image-processing-worker.ts",
+    "reason": "Warm Lambda composition cache around the separately tested runtime factory."
+  },
+  {
+    "source": "workers/image-processing/src/handler.ts",
+    "reason": "Thin Lambda entry point delegating to the separately tested queue handler and composition root."
   }
 ]
