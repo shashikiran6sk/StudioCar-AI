@@ -57,3 +57,4 @@ export const ProcessingOptionsSchema = z
 export type ProcessingOptions = z.infer<typeof ProcessingOptionsSchema>;
 export type BackgroundTreatment = z.infer<typeof BackgroundTreatmentSchema>;
 export type CropMode = z.infer<typeof CropModeSchema>;
+export type ShadowTreatment = z.infer<typeof ShadowTreatmentSchema>;

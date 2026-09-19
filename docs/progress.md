@@ -4,7 +4,7 @@ Last updated: 2026-09-19
 
 ## Current status
 
-Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 uploads, and the end-to-end four-step vehicle submission path through durable SQS enqueue are implemented. The provider-independent worker lifecycle is also implemented; the next planned slice supplies the concrete image-storage executor and remove.bg provider adapter behind that boundary.
+Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 uploads, and the end-to-end four-step vehicle submission path through durable SQS enqueue are implemented. The provider-independent worker lifecycle and remove.bg adapter are also implemented; the next planned slice supplies private-S3 execution, full image decoding, output transformation, and the concrete Lambda runtime.
 
 ## Completed
 
@@ -152,6 +152,13 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Added stable SQS event contracts and a Lambda-compatible partial-batch handler. Malformed records and unexpected infrastructure exceptions are retried by SQS; terminal, completed, duplicate, and durably rescheduled records are acknowledged.
 - Added a backward-compatible retry-scheduling migration, pure retry/classification tests, worker handler tests, and real-PostgreSQL integration coverage for competing claims, duplicate completion, retry republish, usage idempotency, invalid-image failure, and vehicle status reconciliation.
 
+### SC013A — Background-removal provider boundary and remove.bg adapter
+
+- Added the stable `BackgroundRemovalProvider` port with provider-independent binary input, normalized shadow treatment, idempotency tag, timing, request identity, and discriminated success/failure results.
+- Added a server-only remove.bg adapter using the official multipart API, `type=car`, transparent WebP output for high-resolution support, current `shadow_type` values, a bounded abort timeout, bounded response bytes, and no provider response-body leakage.
+- Normalized 429, 5xx, credential/billing, invalid-request, timeout, network, and malformed-success outcomes into the worker failure taxonomy so retry policy remains outside the adapter.
+- Added focused option validation, response ID, HTTP failure, shadow mapping, multipart request, response-boundary, and network-failure tests. No remove.bg credential enters the product application or client bundle.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -161,7 +168,7 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 
 ## Next planned slices
 
-1. **SC013 — Provider and storage execution**: stable `BackgroundRemovalProvider`, private-S3 input/output adapter, full decoder validation, remove.bg adapter, configuration-selected fal.ai/self-hosted extension boundaries, and the concrete Lambda composition root.
+1. **SC013B — Storage execution and Lambda runtime**: private-S3 input/output adapter, full decoder validation, deterministic recovery objects, output/preview transformation, validated worker environment, configuration-selected provider composition, and the concrete Lambda entry point.
 2. **SC014 — Processing status UX**: tenant-safe batched status endpoint, adaptive visibility-aware polling, truthful stages, and retry/failure presentation.
 3. **SC015+ — Product surfaces**: homepage, dashboard data, inventory, portfolio/detail, and usage/billing implemented screenshot-by-screenshot.
 4. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
@@ -186,6 +193,7 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - `PROCESSING_DISPATCH_TOKEN` protects the recovery endpoint and must be distinct, randomly generated, and server-only. A trusted scheduler must invoke recovery at least once per minute; the endpoint returns only aggregate dispatch counts and never queue payloads or errors.
 - Worker retries are new durable outbox publications, not in-process loops. The original SQS delivery is acknowledged only after the retry intent is committed; the dispatcher later republishes when `nextAttemptAt` becomes due.
 - The worker core deliberately depends on a `ProcessingJobExecutorPort`. SC013 must perform full decode validation, deterministic private-S3 output storage, preview generation, and provider execution behind that port before exposing a deployable Lambda entry point.
+- The remove.bg adapter requests transparent WebP because the current provider supports WebP up to 50 megapixels while PNG transparency is limited to 10 megapixels. Worker-side validation must still enforce the configured 22 MB provider input limit and safe pixel bounds before invoking it.
 - `apps/web/next-env.d.ts` is generated by Next.js and intentionally untracked.
 - Processing progress must use truthful stages unless a provider exposes meaningful progress.
 - All future work follows the branch → PR → required CI → merge workflow in `/AGENTS.md`.
