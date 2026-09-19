@@ -187,6 +187,16 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Added contract, service, storage adapter, utility, component, page, real-PostgreSQL repository, and desktop/mobile Playwright coverage. Corrected Turborepo E2E environment pass-through so authenticated browser tests execute instead of silently skipping.
 - Verified lint, strict typecheck, unit/source-mapping tests, all migrations, Prisma validation, 14 real-PostgreSQL integration files, production build, and the complete five-test Playwright suite locally.
 
+### SC015B — Vehicle portfolio and authorized asset delivery
+
+- Added a canonical portfolio contract containing normalized processing options, vehicle identity, truthful completion status, and a bounded set of authorized original, processed, preview, and download URLs.
+- Added a dedicated tenant-scoped PostgreSQL portfolio repository that returns only an operational owned vehicle and its latest completed processing batch. Processing, draft, missing-output, and cross-tenant records resolve to no portfolio.
+- Added an application service that validates persisted processing options, derives completion metadata, and signs only the private object keys selected by the owned repository. Original, processed, preview, and attachment responses use short-lived S3 GET signatures; object keys never enter the client contract.
+- Added the screenshot-derived `/inventory/[vehicleId]` Server Component with back navigation, vehicle/treatment summary, partial-success notice, draggable original/processed comparison, selectable thumbnail rail, per-image authorized download, full-screen keyboard viewer, treatment facts, and responsive desktop/mobile layouts.
+- Added working portfolio links to Inventory cards only when at least one completed output exists. Edit, reprocess, hero selection, and ZIP download controls remain absent until their mutation/archive boundaries exist.
+- Added contract, filename, status mapping, service, S3 signer, utility, component, route-state, inventory-link, real-PostgreSQL latest-batch/tenant-ownership, and authenticated desktop/mobile Playwright coverage.
+- Verified source mapping, lint, strict typecheck, 158 web unit/component files with 271 tests, Prisma validation, all migrations, 15 real-PostgreSQL integration files with 30 tests, production build, and the complete five-test Playwright suite locally.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -196,8 +206,8 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 
 ## Next planned slices
 
-1. **SC015B — Vehicle portfolio/detail**: tenant-safe vehicle portfolio read model, authorized original/processed signing, screenshot-derived comparison/gallery, and download boundaries.
-2. **SC016+ — Remaining product surfaces**: homepage, dashboard data, and usage/billing implemented screenshot-by-screenshot.
+1. **SC016A — Homepage**: screenshot-derived marketing navigation, hero comparison, workflow, feature, pricing, CTA, and footer using the established design system.
+2. **SC016B+ — Remaining product surfaces**: dashboard data and usage/billing implemented screenshot-by-screenshot.
 3. **Later hardening**: asynchronous email, security review, performance optimization, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
 
 ## Important implementation notes
@@ -229,8 +239,10 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - The global activity store contains only transient job IDs and the latest server response; it is not canonical and intentionally does not survive a full browser restart. Processing continues independently, and the inventory/dashboard server queries must rediscover active vehicle state from PostgreSQL.
 - Batched status polling pauses completely for hidden tabs, refreshes immediately when visible, and removes terminal IDs from future poll requests. Terminal results remain in the activity panel until dismissed so failures are not silently lost.
 - Inventory is a separate optimized read model rather than an extension of draft mutation endpoints. It exposes only operational vehicle batches and computes visible progress from completed image jobs; it never invents provider-level progress.
-- Inventory preview URLs are signed at render time from tenant-scoped preview object keys and expire according to the bounded presigned URL configuration. Full-resolution processed/original downloads remain deferred to the portfolio authorization slice.
-- Favorites and portfolio/download card actions remain intentionally absent until their canonical persistence/authorization flows exist; the Inventory UI does not expose controls that would falsely imply those mutations or downloads are implemented.
+- Inventory preview URLs are signed at render time from tenant-scoped preview object keys and expire according to the bounded presigned URL configuration. Full-resolution asset signing is isolated to the tenant-authorized portfolio service.
+- Portfolio URLs are signed only after the tenant-scoped detail repository selects the latest completed batch. Originals use inline signed responses, processed outputs have separate inline and attachment signatures, and all URLs expire according to the bounded presigned URL configuration.
+- Favorites, edit, reprocess, hero selection, and ZIP actions remain intentionally absent until their canonical persistence, mutation, and archive-generation flows exist; the UI does not expose controls that would falsely imply those operations are implemented.
+- Browser portfolio tests use explicit non-production AWS credentials solely to exercise local SigV4 generation and intercept the private S3 host before any network request; CI does not require or expose production AWS credentials.
 - Turborepo's E2E task explicitly passes only `DATABASE_URL`, `AWS_REGION`, and `S3_BUCKET`; this ensures authenticated Playwright tests actually execute while keeping unrelated secrets out of the browser-test task.
 - All future work follows the branch → PR → required CI → merge workflow in `/AGENTS.md`.
 

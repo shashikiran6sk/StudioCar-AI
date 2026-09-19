@@ -90,7 +90,9 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
+      AWS_ACCESS_KEY_ID: studiocar-ci-test-access-key
       AWS_REGION: ap-south-1
+      AWS_SECRET_ACCESS_KEY: studiocar-ci-test-secret-key
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/studiocar_e2e
       S3_BUCKET: studiocar-ci-private
     steps:

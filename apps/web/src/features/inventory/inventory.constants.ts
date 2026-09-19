@@ -29,6 +29,7 @@ export const INVENTORY_IMAGE_SINGULAR_LABEL = "image";
 export const INVENTORY_IMAGE_PLURAL_LABEL = "images";
 export const INVENTORY_COMPLETE_COUNT_LABEL = "complete";
 export const INVENTORY_ATTENTION_COUNT_LABEL = "need attention";
+export const INVENTORY_OPEN_PORTFOLIO_LABEL = "Open portfolio";
 
 export const INVENTORY_FILTERS: readonly {
   countKey: "all" | "processing" | "completed" | "failed" | "archived";

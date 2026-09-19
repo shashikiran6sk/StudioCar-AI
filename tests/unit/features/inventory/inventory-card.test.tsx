@@ -44,5 +44,9 @@ describe("InventoryCard", () => {
     expect(screen.getByText("Needs attention")).toBeVisible();
     expect(screen.getByText(/18 of 20 images complete/)).toBeVisible();
     expect(screen.getByText(/2 images need attention/)).toBeVisible();
+    expect(screen.getByRole("link", { name: /Open portfolio/ })).toHaveAttribute(
+      "href",
+      `/inventory/${BASE_ITEM.id}`,
+    );
   });
 });

@@ -13,7 +13,13 @@
     "e2e": {
       "dependsOn": ["build"],
       "cache": false,
-      "env": ["AWS_REGION", "DATABASE_URL", "S3_BUCKET"],
+      "env": [
+        "AWS_ACCESS_KEY_ID",
+        "AWS_REGION",
+        "AWS_SECRET_ACCESS_KEY",
+        "DATABASE_URL",
+        "S3_BUCKET"
+      ],
       "outputs": ["playwright-report/**", "test-results/**"]
     },
     "lint": {

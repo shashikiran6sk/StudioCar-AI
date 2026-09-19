@@ -1,0 +1,47 @@
+import type { VehiclePortfolio } from "../../../../packages/contracts/src/portfolio";
+
+export const PORTFOLIO_TEST_DATA = {
+  brand: "BMW",
+  completedAt: "2026-09-19T10:30:00.000Z",
+  id: "4bb7fa89-c907-4458-9786-8aafc2235728",
+  images: [
+    {
+      displayOrder: 0,
+      downloadUrl: "https://assets.example.test/processed-01-download.webp",
+      height: 720,
+      id: "6b8bc4df-b9eb-4205-8815-fc099505aa91",
+      originalFilename: "front.jpg",
+      originalUrl: "https://assets.example.test/front-original.jpg",
+      previewUrl: "https://assets.example.test/front-preview.webp",
+      processedUrl: "https://assets.example.test/front-processed.webp",
+      width: 1280,
+    },
+    {
+      displayOrder: 1,
+      downloadUrl: "https://assets.example.test/processed-02-download.webp",
+      height: 720,
+      id: "db38c0b7-a72a-427e-9e92-243f19ae0aa7",
+      originalFilename: "rear.jpg",
+      originalUrl: "https://assets.example.test/rear-original.jpg",
+      previewUrl: "https://assets.example.test/rear-preview.webp",
+      processedUrl: "https://assets.example.test/rear-processed.webp",
+      width: 1280,
+    },
+  ],
+  model: "3 Series",
+  name: "2022 BMW 3 Series",
+  options: {
+    background: "PREMIUM_WHITE",
+    crop: "MAINTAIN_COMPOSITION",
+    enhancement: true,
+    outputFormat: "WEBP",
+    paddingPercent: 8,
+    platePrivacy: true,
+    quality: 90,
+    shadow: "NATURAL",
+  },
+  status: "COMPLETED",
+  stockId: "NL-3429",
+  variant: null,
+  year: 2022,
+} satisfies VehiclePortfolio;
