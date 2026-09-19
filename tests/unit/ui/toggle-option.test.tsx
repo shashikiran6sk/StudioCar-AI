@@ -9,6 +9,7 @@ describe("ToggleOption", () => {
     render(
       <ToggleOption
         checked={false}
+        description="Automatically mask visible plates"
         label="Hide number plate"
         onCheckedChange={onCheckedChange}
       />,
@@ -20,4 +21,3 @@ describe("ToggleOption", () => {
     expect(onCheckedChange).toHaveBeenCalledWith(true);
   });
 });
-

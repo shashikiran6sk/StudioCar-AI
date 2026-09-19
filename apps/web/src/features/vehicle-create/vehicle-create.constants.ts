@@ -1,13 +1,21 @@
+import type { ProcessingOptions } from "@studiocar/contracts";
+
 import type { VehicleDetailsValues } from "./vehicle-details.types";
+import {
+  DEFAULT_BACKGROUND_TREATMENT,
+  MAINTAIN_COMPOSITION_CROP,
+} from "./processing-option.constants";
 
 export const VEHICLE_DETAILS_CONTINUE_LABEL = "Continue to photos";
 export const VEHICLE_DETAILS_PENDING_LABEL = "Saving…";
 export const VEHICLE_DETAILS_GENERIC_ERROR =
   "Check the vehicle details and try again.";
 export const VEHICLE_DETAILS_STEP_LABEL = "Step 1 of 4";
-export const VEHICLE_DETAILS_STEP = 1;
-export const VEHICLE_PHOTOS_STEP = 2;
-export const VEHICLE_CUSTOMIZE_STEP = 3;
+export const VEHICLE_DETAILS_TITLE = "Vehicle details";
+export const VEHICLE_CREATE_EYEBROW = "New vehicle batch";
+export const VEHICLE_CREATE_DESCRIPTION =
+  "Create a vehicle, upload its photos, and choose a studio treatment.";
+export const VEHICLE_CREATE_TOTAL_STEPS = 4;
 export const VEHICLE_NOTES_MAX_LENGTH = 2_000;
 export const FREE_PLAN_PHOTO_LIMIT = 3;
 export const PHOTO_UPLOAD_TITLE = "Upload photos";
@@ -47,6 +55,49 @@ export const PHOTO_UPLOAD_ETAG_HEADER = "etag";
 export const PHOTO_UPLOAD_ACCEPT = "image/jpeg,image/png,image/webp";
 export const PHOTO_UPLOAD_MIN_PROGRESS = 0;
 export const PHOTO_UPLOAD_MAX_PROGRESS = 100;
+export const CUSTOMIZE_TREATMENT_TITLE = "Customize treatment";
+export const CUSTOMIZE_BACK_LABEL = "← Back";
+export const CUSTOMIZE_CONTINUE_LABEL = "Review batch →";
+export const CUSTOMIZE_BACKGROUND_HEADING = "Choose a studio background";
+export const CUSTOMIZE_PRESERVATION_NOTE =
+  "Preview updates preserve the original photo. You can compare and re-process later.";
+export const PLATE_PRIVACY_LABEL = "Hide Number Plate";
+export const PLATE_PRIVACY_DESCRIPTION = "Automatically mask visible plates";
+export const ENHANCEMENT_LABEL = "Image Enhancement";
+export const ENHANCEMENT_DESCRIPTION = "Refine lighting, clarity, and colour";
+export const STUDIO_BACKGROUND_LABEL = "Studio Background";
+export const STUDIO_BACKGROUND_DESCRIPTION =
+  "Apply a consistent premium setting";
+export const MAINTAIN_COMPOSITION_LABEL = "Maintain Composition";
+export const MAINTAIN_COMPOSITION_DESCRIPTION =
+  "Preserve crop and vehicle position";
+export const CUSTOM_BACKGROUND_UNAVAILABLE_LABEL = "Custom background unavailable";
+export const REVIEW_PROCESS_TITLE = "Review & process";
+export const REVIEW_BACK_LABEL = "← Back";
+export const REVIEW_PROCESS_LABEL = "Process Photos";
+export const REVIEW_PROCESS_PENDING_LABEL = "Starting…";
+export const REVIEW_PROCESS_ERROR =
+  "Processing could not be started. Your draft and originals are preserved.";
+export const REVIEW_IMAGE_LABEL = "Images";
+export const REVIEW_PLATE_PRIVACY_LABEL = "Plate privacy";
+export const REVIEW_BACKGROUND_LABEL = "Background";
+export const REVIEW_ENHANCEMENT_LABEL = "Enhancement";
+export const REVIEW_ESTIMATED_USAGE_LABEL = "Estimated usage";
+export const REVIEW_ENABLED_LABEL = "Enabled";
+export const REVIEW_DISABLED_LABEL = "Disabled";
+export const REVIEW_CREDIT_LABEL = "image credits";
+export const REVIEW_PHOTO_SINGULAR_LABEL = "photo";
+export const REVIEW_PHOTO_PLURAL_LABEL = "photos";
+export const REVIEW_PRESERVATION_NOTE =
+  "Your originals are always preserved. Processing continues if you leave this screen.";
+export const VEHICLE_CREATE_ROUTE = "/api/vehicles";
+export const VEHICLE_CREATE_METHOD = "POST";
+export const VEHICLE_UPDATE_METHOD = "PATCH";
+export const VEHICLE_CREATE_CONTENT_TYPE_HEADER = "content-type";
+export const VEHICLE_CREATE_JSON_CONTENT_TYPE = "application/json";
+export const VEHICLE_CREATE_IDEMPOTENCY_HEADER = "idempotency-key";
+export const VEHICLE_CREATE_GENERIC_ERROR =
+  "The vehicle draft could not be saved. Try again.";
 export const VEHICLE_DETAILS_LABELS = {
   name: "Vehicle name",
   brand: "Brand",
@@ -76,4 +127,14 @@ export const EMPTY_VEHICLE_DETAILS: VehicleDetailsValues = {
   stockId: "",
   variant: "",
   year: "",
+};
+export const DEFAULT_PROCESSING_OPTIONS: ProcessingOptions = {
+  background: DEFAULT_BACKGROUND_TREATMENT,
+  crop: MAINTAIN_COMPOSITION_CROP,
+  enhancement: true,
+  outputFormat: "JPEG",
+  paddingPercent: 8,
+  platePrivacy: true,
+  quality: 90,
+  shadow: "NATURAL",
 };

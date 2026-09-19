@@ -4,7 +4,7 @@ Last updated: 2026-09-19
 
 ## Current status
 
-Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 upload infrastructure, the vehicle-draft persistence boundary, and the first two vehicle-wizard steps are implemented. The next planned slice completes the screenshot-derived customization and review steps before activating the end-to-end modal.
+Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 upload infrastructure, the vehicle-draft persistence boundary, and all four vehicle-wizard UI steps are implemented. The next planned slice creates and enqueues processing jobs, then mounts the complete wizard against that real command boundary.
 
 ## Completed
 
@@ -110,6 +110,14 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Extended transient Zustand wizard state with per-photo progress, failure, authoritative asset metadata, ordering, removal, and object-URL cleanup while PostgreSQL and S3 remain authoritative.
 - Added focused orchestration, API-boundary, progress transport, validation, store, row, and component tests, including partial-failure preservation. The step remains unmounted until customize/review can complete the modal without a dead end.
 
+### SC011B3 — Customize and review steps
+
+- Extended the canonical processing-options contract with normalized plate-privacy and enhancement flags plus an explicit original-background treatment; product state remains independent of provider semantics.
+- Added the screenshot-derived customization surface with four accessible switches, selectable studio presets, preserved originals messaging, responsive behavior, and a deliberately disabled custom-background choice until an authorized background-asset flow exists.
+- Added the screenshot-derived review summary with vehicle identity, original preview, photo count, treatment summary, truthful estimated image-credit usage, preserved-original messaging, pending/error states, and a typed processing-command callback.
+- Added a complete controlled four-step dialog orchestrator that creates or updates the authoritative vehicle draft, preserves an idempotency key across retries, advances through direct uploads and normalized options, resets transient state on close, and ignores late draft responses after dismissal.
+- Added focused contract, API-client, utility, store, accessibility, component, error, and full wizard-orchestration tests. The dialog remains intentionally unmounted until SC012 supplies the real asynchronous processing command; the product will not present a fake successful Process Photos action.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -119,11 +127,10 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 
 ## Next planned slices
 
-1. **SC011B3 — Customize and review steps**: normalized treatment controls, summary/review validation, draft API orchestration, and activation of the complete screenshot-derived modal.
-2. **SC012 — Asynchronous processing**: final review command, job state machine, idempotent claims, SQS/DLQ, retry classification/backoff, Lambda worker, and atomic usage completion.
-3. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
-4. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, and usage/billing.
-5. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
+1. **SC012 — Asynchronous processing**: final review command, job state machine, idempotent claims, SQS/DLQ, retry classification/backoff, Lambda worker, atomic usage completion, and activation of the complete vehicle wizard.
+2. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
+3. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, and usage/billing.
+4. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
 
 ## Important implementation notes
 
@@ -139,6 +146,7 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Upload commits perform bounded structural header validation in Next.js. The processing worker must perform a full decoder validation before any provider call; malformed or unsupported images must transition to `INVALID` without a provider charge.
 - Pending assets and invalid private objects are retained for deterministic retry/audit behavior; bounded cleanup jobs are deferred to production hardening.
 - Vehicle creation requires an `Idempotency-Key`; exact retries return the original draft, while reuse with different normalized details returns a conflict. Only `DRAFT` vehicles can be changed through the creation workflow update endpoint.
+- The complete four-step wizard is ready for composition but remains unmounted until SC012 implements its real job-creation/enqueue callback. Custom studio backgrounds are visible but disabled until a private background-asset upload and ownership flow is implemented.
 - `apps/web/next-env.d.ts` is generated by Next.js and intentionally untracked.
 - Processing progress must use truthful stages unless a provider exposes meaningful progress.
 - All future work follows the branch → PR → required CI → merge workflow in `/AGENTS.md`.

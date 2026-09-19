@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const BackgroundTreatmentSchema = z.enum([
+  "ORIGINAL",
   "PREMIUM_WHITE",
   "DARK_STUDIO",
   "GREY_STUDIO",
@@ -25,6 +26,8 @@ export const OutputFormatSchema = z.enum(["JPEG", "PNG", "WEBP"]);
 export const ProcessingOptionsSchema = z
   .object({
     background: BackgroundTreatmentSchema.default("PREMIUM_WHITE"),
+    enhancement: z.boolean().default(true),
+    platePrivacy: z.boolean().default(true),
     shadow: ShadowTreatmentSchema.default("NATURAL"),
     crop: CropModeSchema.default("MAINTAIN_COMPOSITION"),
     paddingPercent: z.number().int().min(0).max(40).default(8),
@@ -52,3 +55,5 @@ export const ProcessingOptionsSchema = z
   });
 
 export type ProcessingOptions = z.infer<typeof ProcessingOptionsSchema>;
+export type BackgroundTreatment = z.infer<typeof BackgroundTreatmentSchema>;
+export type CropMode = z.infer<typeof CropModeSchema>;
