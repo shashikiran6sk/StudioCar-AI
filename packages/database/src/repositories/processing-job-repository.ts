@@ -149,23 +149,25 @@ export class PrismaProcessingJobRepository {
 
     const jobs: ProcessingJobRecord[] = [];
     for (const job of command.jobs) {
-      jobs.push(
-        await transaction.processingJob.create({
-          data: {
-            userId: command.userId,
-            vehicleId: command.vehicleId,
-            imageAssetId: job.assetId,
-            status: ProcessingJobStatus.CREATED,
-            provider: command.provider,
-            options: toProcessingOptionsJson(command.options),
-            idempotencyKey: job.idempotencyKey,
-            batchIdempotencyKey: command.batchIdempotencyKey,
-            batchRequestHash: command.batchRequestHash,
-            displayOrder: job.displayOrder,
-          },
-          select: processingJobSelect,
-        }),
-      );
+      const processingJob = await transaction.processingJob.create({
+        data: {
+          userId: command.userId,
+          vehicleId: command.vehicleId,
+          imageAssetId: job.assetId,
+          status: ProcessingJobStatus.CREATED,
+          provider: command.provider,
+          options: toProcessingOptionsJson(command.options),
+          idempotencyKey: job.idempotencyKey,
+          batchIdempotencyKey: command.batchIdempotencyKey,
+          batchRequestHash: command.batchRequestHash,
+          displayOrder: job.displayOrder,
+        },
+        select: processingJobSelect,
+      });
+      await transaction.processingOutboxMessage.create({
+        data: { jobId: processingJob.id },
+      });
+      jobs.push(processingJob);
     }
     return { kind: "CREATED", jobs };
   }
