@@ -277,6 +277,7 @@ model ProcessingJob {
   imageAsset          ImageAsset          @relation(fields: [imageAssetId], references: [id], onDelete: Restrict)
   attempts            ProcessingAttempt[]
   processedAsset      ProcessedAsset?
+  outboxMessage       ProcessingOutboxMessage?
   usageEvents         UsageEvent[]
 
   @@unique([userId, idempotencyKey])
@@ -285,6 +286,25 @@ model ProcessingJob {
   @@index([userId, batchIdempotencyKey])
   @@index([status, claimExpiresAt])
   @@index([imageAssetId, createdAt])
+}
+
+model ProcessingOutboxMessage {
+  id             String        @id @default(uuid()) @db.Uuid
+  jobId          String        @unique @db.Uuid
+  attemptCount   Int           @default(0)
+  nextAttemptAt  DateTime      @default(now()) @db.Timestamptz(3)
+  claimedAt      DateTime?     @db.Timestamptz(3)
+  claimExpiresAt DateTime?     @db.Timestamptz(3)
+  claimToken     String?       @db.VarChar(64)
+  publishedAt    DateTime?     @db.Timestamptz(3)
+  queueMessageId String?       @db.VarChar(255)
+  lastErrorCode  String?       @db.VarChar(80)
+  createdAt      DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime      @updatedAt @db.Timestamptz(3)
+  job            ProcessingJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([publishedAt, nextAttemptAt, createdAt])
+  @@index([claimExpiresAt])
 }
 
 model ProcessingAttempt {

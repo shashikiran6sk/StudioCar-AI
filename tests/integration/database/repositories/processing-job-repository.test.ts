@@ -113,6 +113,11 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
     await expect(
       database.processingJob.count({ where: { vehicleId: vehicle.id } }),
     ).resolves.toBe(2);
+    await expect(
+      database.processingOutboxMessage.count({
+        where: { job: { vehicleId: vehicle.id } },
+      }),
+    ).resolves.toBe(2);
   });
 
   it("leaves the draft unchanged when any requested asset is not uploaded", async () => {

@@ -1,0 +1,164 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: StudioCar AI image-processing queue, dead-letter queue, IAM policies, and alarms
+
+Parameters:
+  QueueName:
+    Type: String
+    Default: studiocar-image-processing
+    AllowedPattern: ^[A-Za-z0-9_-]{1,70}$
+    Description: Base name for the standard image-processing queue
+  MessageRetentionSeconds:
+    Type: Number
+    Default: 1209600
+    MinValue: 60
+    MaxValue: 1209600
+  VisibilityTimeoutSeconds:
+    Type: Number
+    Default: 180
+    MinValue: 30
+    MaxValue: 43200
+  MaximumReceiveCount:
+    Type: Number
+    Default: 5
+    MinValue: 1
+    MaxValue: 100
+  QueueDepthAlarmThreshold:
+    Type: Number
+    Default: 1000
+    MinValue: 1
+  OldestMessageAgeAlarmSeconds:
+    Type: Number
+    Default: 300
+    MinValue: 60
+
+Resources:
+  ImageProcessingDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      QueueName: !Sub ${QueueName}-dlq
+      MessageRetentionPeriod: !Ref MessageRetentionSeconds
+      SqsManagedSseEnabled: true
+
+  ImageProcessingQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      QueueName: !Ref QueueName
+      MessageRetentionPeriod: !Ref MessageRetentionSeconds
+      ReceiveMessageWaitTimeSeconds: 20
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt ImageProcessingDeadLetterQueue.Arn
+        maxReceiveCount: !Ref MaximumReceiveCount
+      SqsManagedSseEnabled: true
+      VisibilityTimeout: !Ref VisibilityTimeoutSeconds
+
+  ProcessingQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref ImageProcessingQueue
+        - !Ref ImageProcessingDeadLetterQueue
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: sqs:*
+            Resource:
+              - !GetAtt ImageProcessingQueue.Arn
+              - !GetAtt ImageProcessingDeadLetterQueue.Arn
+            Condition:
+              Bool:
+                aws:SecureTransport: "false"
+
+  ProcessingPublisherPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Publish StudioCar processing jobs from the application outbox
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: PublishProcessingJobs
+            Effect: Allow
+            Action: sqs:SendMessage
+            Resource: !GetAtt ImageProcessingQueue.Arn
+
+  ProcessingWorkerPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Consume StudioCar processing jobs with least-privilege queue access
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: ConsumeProcessingJobs
+            Effect: Allow
+            Action:
+              - sqs:ChangeMessageVisibility
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+              - sqs:ReceiveMessage
+            Resource: !GetAtt ImageProcessingQueue.Arn
+
+  QueueDepthAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Image-processing queue depth is above the configured capacity threshold
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt ImageProcessingQueue.QueueName
+      EvaluationPeriods: 2
+      MetricName: ApproximateNumberOfMessagesVisible
+      Namespace: AWS/SQS
+      Period: 60
+      Statistic: Maximum
+      Threshold: !Ref QueueDepthAlarmThreshold
+      TreatMissingData: notBreaching
+
+  OldestMessageAgeAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Oldest image-processing message exceeds the latency threshold
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt ImageProcessingQueue.QueueName
+      EvaluationPeriods: 2
+      MetricName: ApproximateAgeOfOldestMessage
+      Namespace: AWS/SQS
+      Period: 60
+      Statistic: Maximum
+      Threshold: !Ref OldestMessageAgeAlarmSeconds
+      TreatMissingData: notBreaching
+
+  DeadLetterQueueAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: At least one image-processing message is in the dead-letter queue
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt ImageProcessingDeadLetterQueue.QueueName
+      EvaluationPeriods: 1
+      MetricName: ApproximateNumberOfMessagesVisible
+      Namespace: AWS/SQS
+      Period: 60
+      Statistic: Maximum
+      Threshold: 0
+      TreatMissingData: notBreaching
+
+Outputs:
+  ImageProcessingQueueArn:
+    Value: !GetAtt ImageProcessingQueue.Arn
+  ImageProcessingQueueUrl:
+    Value: !Ref ImageProcessingQueue
+  ImageProcessingDeadLetterQueueArn:
+    Value: !GetAtt ImageProcessingDeadLetterQueue.Arn
+  ProcessingPublisherPolicyArn:
+    Value: !Ref ProcessingPublisherPolicy
+  ProcessingWorkerPolicyArn:
+    Value: !Ref ProcessingWorkerPolicy

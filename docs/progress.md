@@ -4,7 +4,7 @@ Last updated: 2026-09-19
 
 ## Current status
 
-Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 upload infrastructure, the four-step vehicle wizard, and atomic processing-batch reservation are implemented. The next planned slice adds the SQS outbox/enqueue boundary and exposes the real processing command to the wizard.
+Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 upload infrastructure, the four-step vehicle wizard, atomic processing-batch reservation, and its durable SQS outbox foundation are implemented. The next planned slice exposes the authenticated processing command and activates the wizard against the proven enqueue boundary.
 
 ## Completed
 
@@ -127,6 +127,14 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Made concurrent duplicate reservations harmless: one transaction creates the jobs and exact competitors resolve to the same ordered records; reused keys with different semantics conflict, and incomplete/cross-tenant inputs create nothing.
 - Added contract, hashing, JSON normalization, and real-PostgreSQL integration coverage. No route is exposed yet because accepting a processing command before the durable enqueue/outbox boundary would risk stranded work.
 
+### SC012B1 — Durable processing outbox and queue infrastructure
+
+- Added one processing outbox message per job in the same PostgreSQL transaction that reserves the batch and freezes the vehicle, including a backward-compatible migration that backfills any pre-existing `CREATED` jobs.
+- Added concurrency-safe bounded claims, expiring leases, attempt tracking, retry scheduling, and an atomic outbox-published plus `CREATED` to `QUEUED` transition. A database or application crash cannot erase accepted enqueue intent.
+- Added a provider-independent dispatcher that publishes the stable versioned worker contract, applies bounded exponential backoff with jitter after SQS failures, and never persists raw exception details.
+- Added an AWS SDK SQS adapter behind the processing queue port and a deployable CloudFormation stack with encrypted standard queue, retained DLQ, redrive policy, separate least-privilege publisher/consumer policies, and queue-depth, age, and DLQ alarms.
+- Added dispatcher, retry, validation, adapter, migration, and real-PostgreSQL outbox coverage. The user-facing command remains closed until SC012B2 composes reservation and dispatch behind authenticated handlers and a scheduled recovery entry point.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -136,7 +144,7 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 
 ## Next planned slices
 
-1. **SC012B — Durable enqueue command**: transactional outbox, SQS/DLQ infrastructure, enqueue recovery, job transition to `QUEUED`, authenticated route, and activation of the complete vehicle wizard.
+1. **SC012B2 — Processing command activation**: processing application service, authenticated batch route, scheduled outbox recovery, and activation of the complete vehicle wizard.
 2. **SC012C — Worker lifecycle**: idempotent claims, explicit transitions, retry classification/backoff, Lambda orchestration, and atomic processing completion/usage accounting.
 3. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
 4. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, and usage/billing.
@@ -157,7 +165,8 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Pending assets and invalid private objects are retained for deterministic retry/audit behavior; bounded cleanup jobs are deferred to production hardening.
 - Vehicle creation requires an `Idempotency-Key`; exact retries return the original draft, while reuse with different normalized details returns a conflict. Only `DRAFT` vehicles can be changed through the creation workflow update endpoint.
 - The complete four-step wizard is ready for composition but remains unmounted until SC012 implements its real job-creation/enqueue callback. Custom studio backgrounds are visible but disabled until a private background-asset upload and ownership flow is implemented.
-- Processing reservation moves the vehicle from `DRAFT` to `PROCESSING` only in the same transaction that creates every job. SC012B must durably persist enqueue intent before exposing the route so a successful command cannot leave jobs permanently in `CREATED` after a process crash.
+- Processing reservation moves the vehicle from `DRAFT` to `PROCESSING` only in the same transaction that creates every job and its outbox message. SC012B2 may expose this command only through the dispatcher and scheduled recovery path established on top of that durable intent.
+- Publishing an outbox message and marking its job `QUEUED` cannot be one cross-system transaction. The dispatcher therefore retains the database claim until SQS acknowledges the message, updates outbox and job state atomically afterward, and safely republishes after a crash; the worker must treat duplicate `jobId` deliveries as harmless.
 - `apps/web/next-env.d.ts` is generated by Next.js and intentionally untracked.
 - Processing progress must use truthful stages unless a provider exposes meaningful progress.
 - All future work follows the branch → PR → required CI → merge workflow in `/AGENTS.md`.

@@ -88,6 +88,10 @@
     "reason": "Type-only profile application port definitions with no runtime behavior."
   },
   {
+    "source": "apps/web/src/server/jobs/processing-queue.constants.ts",
+    "reason": "Static processing queue error constants only."
+  },
+  {
     "source": "apps/web/src/server/uploads/image-validation/image-metadata.types.ts",
     "reason": "Type-only validated image metadata definitions with no runtime behavior."
   },
@@ -138,6 +142,14 @@
   {
     "source": "packages/processing/src/index.ts",
     "reason": "Barrel export with no behavior."
+  },
+  {
+    "source": "packages/processing/src/processing-outbox.constants.ts",
+    "reason": "Static outbox bounds and message constants only."
+  },
+  {
+    "source": "packages/processing/src/processing-outbox.types.ts",
+    "reason": "Type-only processing outbox port definitions with no runtime behavior."
   },
   {
     "source": "packages/testing/src/index.ts",
