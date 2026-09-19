@@ -5,6 +5,7 @@ export * from "./inventory";
 export * from "./jobs";
 export * from "./processing";
 export * from "./phone-number";
+export * from "./portfolio";
 export * from "./profile";
 export * from "./upload";
 export * from "./usage";
