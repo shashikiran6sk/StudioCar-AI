@@ -42,8 +42,10 @@ databaseDescribe("PrismaVehicleRepository", () => {
 
     await expect(repository.findOwnedById(otherUser.id, vehicle.id)).resolves.toBeNull();
     await expect(
-      repository.updateOwned(otherUser.id, vehicle.id, { name: "Stolen update" }),
-    ).resolves.toBeNull();
+      repository.updateDraftOwned(otherUser.id, vehicle.id, {
+        name: "Stolen update",
+      }),
+    ).resolves.toEqual({ kind: "NOT_FOUND" });
     await expect(
       repository.listOwned(
         otherUser.id,
@@ -92,5 +94,75 @@ databaseDescribe("PrismaVehicleRepository", () => {
     );
     expect(search.items).toHaveLength(1);
     expect(search.items[0]?.brand).toBe("BMW");
+  });
+
+  it("reserves one draft per tenant idempotency key", async () => {
+    const [owner, otherUser] = await Promise.all([
+      database.user.create({ data: { primaryEmail: ownerEmail } }),
+      database.user.create({ data: { primaryEmail: otherEmail } }),
+    ]);
+    const command = {
+      name: "Porsche 911 Carrera",
+      stockId: "SC-IDEMPOTENT-001",
+    };
+
+    const first = await repository.reserveDraftOwned(
+      owner.id,
+      "vehicle-integration-0001",
+      command,
+    );
+    const replay = await repository.reserveDraftOwned(
+      owner.id,
+      "vehicle-integration-0001",
+      command,
+    );
+    const otherTenant = await repository.reserveDraftOwned(
+      otherUser.id,
+      "vehicle-integration-0001",
+      command,
+    );
+
+    expect(first).toMatchObject({ kind: "CREATED" });
+    expect(replay).toMatchObject({ kind: "EXISTING" });
+    expect(otherTenant).toMatchObject({ kind: "CREATED" });
+    if (
+      first.kind === "CONFLICT" ||
+      replay.kind === "CONFLICT" ||
+      otherTenant.kind === "CONFLICT"
+    ) {
+      throw new Error("Expected successful tenant-scoped draft reservations.");
+    }
+    expect(replay.vehicle.id).toBe(first.vehicle.id);
+    expect(otherTenant.vehicle.id).not.toBe(first.vehicle.id);
+  });
+
+  it("returns deterministic duplicate-reference and non-draft update outcomes", async () => {
+    const owner = await database.user.create({
+      data: { primaryEmail: ownerEmail },
+    });
+    const first = await repository.reserveDraftOwned(
+      owner.id,
+      "vehicle-integration-0002",
+      { name: "First", stockId: "SC-UNIQUE-001" },
+    );
+    const duplicate = await repository.reserveDraftOwned(
+      owner.id,
+      "vehicle-integration-0003",
+      { name: "Duplicate", stockId: "SC-UNIQUE-001" },
+    );
+    if (first.kind === "CONFLICT") {
+      throw new Error("Expected the first vehicle reservation to succeed.");
+    }
+
+    expect(duplicate).toEqual({ kind: "CONFLICT" });
+    await database.vehicle.update({
+      where: { id: first.vehicle.id },
+      data: { status: "UPLOADING" },
+    });
+    await expect(
+      repository.updateDraftOwned(owner.id, first.vehicle.id, {
+        name: "Late mutation",
+      }),
+    ).resolves.toEqual({ kind: "NOT_FOUND" });
   });
 });

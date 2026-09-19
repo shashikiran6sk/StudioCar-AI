@@ -190,27 +190,29 @@ model PhoneOtpAttempt {
 }
 
 model Vehicle {
-  id              String           @id @default(uuid()) @db.Uuid
-  userId          String           @db.Uuid
-  name            String           @db.VarChar(120)
-  brand           String?          @db.VarChar(80)
-  model           String?          @db.VarChar(80)
-  variant         String?          @db.VarChar(80)
-  year            Int?
-  stockId         String?          @db.VarChar(80)
-  internalId      String?          @db.VarChar(80)
-  notes           String?          @db.VarChar(2000)
-  status          VehicleStatus    @default(DRAFT)
-  archivedAt      DateTime?        @db.Timestamptz(3)
-  createdAt       DateTime         @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime         @updatedAt @db.Timestamptz(3)
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  imageAssets     ImageAsset[]
-  processingJobs  ProcessingJob[]
-  processedAssets ProcessedAsset[]
+  id                     String           @id @default(uuid()) @db.Uuid
+  userId                 String           @db.Uuid
+  creationIdempotencyKey String?          @db.VarChar(128)
+  name                   String           @db.VarChar(120)
+  brand                  String?          @db.VarChar(80)
+  model                  String?          @db.VarChar(80)
+  variant                String?          @db.VarChar(80)
+  year                   Int?
+  stockId                String?          @db.VarChar(80)
+  internalId             String?          @db.VarChar(80)
+  notes                  String?          @db.VarChar(2000)
+  status                 VehicleStatus    @default(DRAFT)
+  archivedAt             DateTime?        @db.Timestamptz(3)
+  createdAt              DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime         @updatedAt @db.Timestamptz(3)
+  user                   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  imageAssets            ImageAsset[]
+  processingJobs         ProcessingJob[]
+  processedAssets        ProcessedAsset[]
 
   @@unique([userId, stockId])
   @@unique([userId, internalId])
+  @@unique([userId, creationIdempotencyKey])
   @@index([userId, createdAt])
   @@index([userId, status, createdAt])
 }
