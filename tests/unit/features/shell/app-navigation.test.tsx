@@ -7,7 +7,7 @@ import { AppNavigation } from "../../../../apps/web/src/features/shell/app-navig
 vi.mock("next/navigation", () => ({ usePathname: vi.fn() }));
 
 describe("AppNavigation", () => {
-  it("marks the current available route and does not link future routes", () => {
+  it("marks the current available route and links delivered product routes", () => {
     vi.mocked(usePathname).mockReturnValue("/dashboard");
 
     render(<AppNavigation />);
@@ -16,10 +16,10 @@ describe("AppNavigation", () => {
       "aria-current",
       "page",
     );
-    expect(screen.queryByRole("link", { name: /Inventory/ })).toBeNull();
-    expect(screen.getByText("Inventory").closest("span")).toHaveAttribute(
-      "aria-disabled",
-      "true",
+    expect(screen.getByRole("link", { name: /Inventory/ })).toHaveAttribute(
+      "href",
+      "/inventory",
     );
+    expect(screen.queryByRole("link", { name: /Portfolio/ })).toBeNull();
   });
 });

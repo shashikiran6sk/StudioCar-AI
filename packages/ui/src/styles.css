@@ -29,10 +29,12 @@
   --sc-font-sans: Manrope, Arial, system-ui, sans-serif;
   --sc-radius-control: 10px;
   --sc-radius-card: 14px;
+  --sc-radius-vehicle: 15px;
   --sc-radius-panel: 16px;
   --sc-radius-modal: 20px;
   --sc-radius-pill: 999px;
   --sc-shadow-panel: 0 14px 38px rgb(20 20 18 / 10%);
+  --sc-shadow-card: 0 2px 6px rgb(20 20 18 / 2.5%);
 }
 
 *,

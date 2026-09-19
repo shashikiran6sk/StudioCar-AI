@@ -254,5 +254,21 @@
   {
     "source": "apps/web/src/features/processing/processing-polling.constants.ts",
     "reason": "Static adaptive polling intervals, routes, and presentation labels only."
+  },
+  {
+    "source": "apps/web/src/server/inventory/inventory.constants.ts",
+    "reason": "Static private preview response constants only."
+  },
+  {
+    "source": "apps/web/src/server/inventory/inventory.types.ts",
+    "reason": "Type-only inventory application port definitions with no runtime behavior."
+  },
+  {
+    "source": "apps/web/src/server/inventory/inventory-runtime.ts",
+    "reason": "Composition root that wires separately tested inventory services and adapters."
+  },
+  {
+    "source": "apps/web/src/features/inventory/inventory.constants.ts",
+    "reason": "Static inventory labels, filter presentation, and bounded page configuration only."
   }
 ]

@@ -10,7 +10,7 @@ const SESSION_TOKEN = "p".repeat(43);
 const OTHER_SESSION_TOKEN = "o".repeat(43);
 const PROFILE_EMAIL = "profile-e2e@studiocar.test";
 const SESSION_COOKIE_NAME = "__Host-studiocar_session";
-const APPLICATION_URL = "http://127.0.0.1:3100";
+const SESSION_COOKIE_SCOPE_URL = "https://localhost:3100";
 
 interface DisplayNameRow extends QueryResultRow {
   displayName: string | null;
@@ -60,7 +60,7 @@ profileTest(
         {
           name: SESSION_COOKIE_NAME,
           value: SESSION_TOKEN,
-          url: APPLICATION_URL,
+          url: SESSION_COOKIE_SCOPE_URL,
           httpOnly: true,
           sameSite: "Lax",
           secure: true,
@@ -72,7 +72,8 @@ profileTest(
       await expect(
         page.getByRole("heading", { name: "Profile & security" }),
       ).toBeVisible();
-      await expect(page.getByText(PROFILE_EMAIL).first()).toBeVisible();
+      await expect(page.locator("dd").filter({ hasText: PROFILE_EMAIL }))
+        .toBeVisible();
       await expect(page.getByText("2", { exact: true })).toBeVisible();
 
       await page.getByLabel("Display name").fill("Updated Profile User");

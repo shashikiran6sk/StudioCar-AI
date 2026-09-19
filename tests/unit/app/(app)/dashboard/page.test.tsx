@@ -8,6 +8,10 @@ vi.mock("../../../../../apps/web/src/server/auth/get-current-session", () => ({
   getCurrentSession: vi.fn(),
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+}));
+
 describe("DashboardPage", () => {
   afterEach(() => {
     vi.useRealTimers();
