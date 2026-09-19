@@ -95,6 +95,13 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Added a provider-independent vehicle application service and separate same-origin authenticated create/update App Router endpoints. Route handlers validate canonical Zod input and never contain persistence logic.
 - Added contract, mapping, service, handler, route, and real-PostgreSQL repository coverage for exact replays, reused-key conflicts, duplicate stock references, cross-tenant access, and non-draft mutation prevention.
 
+### SC011B1 — Vehicle details UI foundation
+
+- Added the screenshot-derived Vehicle Details form with the required two-column desktop layout, responsive single-column behavior, inline Zod validation, pending/error states, and the exact Step 1 action hierarchy.
+- Added a focused reusable textarea primitive with accessible hint/error associations.
+- Added transient Zustand wizard state for draft identity, step navigation, and editable vehicle details; PostgreSQL remains authoritative after draft creation.
+- Added form normalization, component accessibility, validation, error recovery, store, and textarea tests. The form remains intentionally unmounted until the remaining wizard steps can be delivered without exposing a dead-end workflow.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -104,11 +111,12 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 
 ## Next planned slices
 
-1. **SC011B — Vehicle creation wizard**: four-step screenshot-derived UI, transient Zustand state, direct multi-file uploads, treatment options, review, and accessible responsive behavior.
-2. **SC012 — Asynchronous processing**: final review command, job state machine, idempotent claims, SQS/DLQ, retry classification/backoff, Lambda worker, and atomic usage completion.
-3. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
-4. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, and usage/billing.
-5. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
+1. **SC011B2 — Photo upload step**: mount draft creation and direct multi-file upload orchestration with measured progress, retry/remove/reorder behavior, and partial-failure preservation.
+2. **SC011B3 — Customize and review steps**: normalized treatment controls, summary/review validation, and activation of the complete screenshot-derived modal.
+3. **SC012 — Asynchronous processing**: final review command, job state machine, idempotent claims, SQS/DLQ, retry classification/backoff, Lambda worker, and atomic usage completion.
+4. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
+5. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, and usage/billing.
+6. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
 
 ## Important implementation notes
 

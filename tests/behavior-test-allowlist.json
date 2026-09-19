@@ -16,6 +16,14 @@
     "reason": "Static profile provider presentation configuration only."
   },
   {
+    "source": "apps/web/src/features/vehicle-create/vehicle-create.constants.ts",
+    "reason": "Static vehicle wizard labels and initial values only."
+  },
+  {
+    "source": "apps/web/src/features/vehicle-create/vehicle-details.types.ts",
+    "reason": "Type-only transient form definitions with no runtime behavior."
+  },
+  {
     "source": "apps/web/src/server/auth/google/google-auth.constants.ts",
     "reason": "Static authentication constants and enum values only."
   },
