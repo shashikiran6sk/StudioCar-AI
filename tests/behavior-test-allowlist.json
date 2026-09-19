@@ -24,6 +24,22 @@
     "reason": "Type-only transient form definitions with no runtime behavior."
   },
   {
+    "source": "apps/web/src/features/vehicle-create/background-treatment-choice.types.ts",
+    "reason": "Type-only background treatment presentation definitions with no runtime behavior."
+  },
+  {
+    "source": "apps/web/src/features/vehicle-create/background-treatment.constants.ts",
+    "reason": "Static background treatment labels and visual configuration only."
+  },
+  {
+    "source": "apps/web/src/features/vehicle-create/processing-option.constants.ts",
+    "reason": "Static canonical processing option values only."
+  },
+  {
+    "source": "apps/web/src/features/vehicle-create/vehicle-create-step.ts",
+    "reason": "Static vehicle wizard step enum with no application behavior."
+  },
+  {
     "source": "apps/web/src/features/vehicle-create/photo-upload.types.ts",
     "reason": "Type-only transient photo upload definitions with no runtime behavior."
   },

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useVehicleCreateStore } from "../../../../apps/web/src/features/vehicle-create/vehicle-create-store";
 import type { PhotoUploadItem } from "../../../../apps/web/src/features/vehicle-create/photo-upload.types";
 import { PhotoUploadStatus } from "../../../../apps/web/src/features/vehicle-create/photo-upload-status";
+import { VehicleCreateStep } from "../../../../apps/web/src/features/vehicle-create/vehicle-create-step";
 
 describe("useVehicleCreateStore", () => {
   beforeEach(() => {
@@ -21,7 +22,7 @@ describe("useVehicleCreateStore", () => {
 
     expect(useVehicleCreateStore.getState()).toMatchObject({
       details: { name: "Porsche 911 Carrera" },
-      step: 2,
+      step: VehicleCreateStep.Photos,
       vehicleId: "0e879f46-1193-4d77-b785-057fe026d998",
     });
   });
@@ -32,7 +33,12 @@ describe("useVehicleCreateStore", () => {
 
     expect(useVehicleCreateStore.getState()).toMatchObject({
       details: { brand: "", name: "" },
-      step: 1,
+      options: {
+        background: "PREMIUM_WHITE",
+        enhancement: true,
+        platePrivacy: true,
+      },
+      step: VehicleCreateStep.Details,
       vehicleId: null,
     });
   });

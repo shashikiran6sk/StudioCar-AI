@@ -603,6 +603,203 @@ body {
   border-top: 1px solid var(--sc-neutral-300);
 }
 
+.customize-treatment-step,
+.review-process-step {
+  display: grid;
+  gap: 18px;
+}
+
+.customize-treatment-step__toggles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.customize-treatment-step__toggles .sc-toggle-option {
+  min-height: 58px;
+  padding: 10px 12px;
+  border-color: var(--sc-neutral-700);
+}
+
+.customize-treatment-step__backgrounds {
+  display: grid;
+  gap: 10px;
+}
+
+.customize-treatment-step__backgrounds h3 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.background-treatment-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.background-treatment-card {
+  display: grid;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--sc-neutral-300);
+  border-radius: var(--sc-radius-control);
+  background: var(--sc-neutral-0);
+  color: var(--sc-neutral-900);
+  cursor: pointer;
+  font: 800 9px/1.2 var(--sc-font-sans);
+  text-align: left;
+}
+
+.background-treatment-card[aria-pressed="true"] {
+  border-color: var(--sc-neutral-950);
+  box-shadow: inset 0 0 0 1px var(--sc-neutral-950);
+}
+
+.background-treatment-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.background-treatment-card > span:last-child {
+  overflow: hidden;
+  padding: 8px 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.background-treatment-card__visual {
+  display: grid;
+  height: 58px;
+  place-content: center;
+  border-bottom: 1px solid var(--sc-neutral-300);
+  color: var(--sc-neutral-500);
+  font-size: 28px;
+  font-weight: 400;
+}
+
+.background-treatment-card__visual--white {
+  background: linear-gradient(160deg, #fff 0%, #f2f1ed 100%);
+}
+
+.background-treatment-card__visual--dark {
+  background: radial-gradient(circle at center, #454744 0%, #101211 70%);
+}
+
+.background-treatment-card__visual--grey {
+  background: linear-gradient(145deg, #f1f1ef 0%, #b8b8b7 100%);
+}
+
+.background-treatment-card__visual--dealership {
+  background: linear-gradient(135deg, #eef3f5 0 55%, #b8c3c8 55% 100%);
+}
+
+.background-treatment-card__visual--custom {
+  background: var(--sc-neutral-50);
+}
+
+.vehicle-create-note {
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: var(--sc-radius-control);
+  background: var(--sc-blue-50);
+  color: var(--sc-blue-600);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.vehicle-create-step-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--sc-neutral-300);
+}
+
+.review-process-step__summary {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 20px;
+}
+
+.review-process-step__image {
+  width: 190px;
+  height: 132px;
+  border-radius: var(--sc-radius-card);
+  background: var(--sc-neutral-150);
+  object-fit: cover;
+}
+
+.review-process-step__details {
+  display: grid;
+  gap: 13px;
+}
+
+.review-process-step__details h3 {
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+
+.review-process-step__details p {
+  margin: 0;
+  color: var(--sc-neutral-600);
+  font-size: 12px;
+}
+
+.review-process-step__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--sc-neutral-300);
+  border-radius: var(--sc-radius-control);
+}
+
+.review-process-step__facts > div {
+  display: grid;
+  gap: 5px;
+  padding: 11px 12px;
+  border-right: 1px solid var(--sc-neutral-300);
+  border-bottom: 1px solid var(--sc-neutral-300);
+}
+
+.review-process-step__facts > div:nth-child(2n) {
+  border-right: 0;
+}
+
+.review-process-step__facts > div:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.review-process-step__facts dt {
+  color: var(--sc-neutral-500);
+  font-size: 9px;
+}
+
+.review-process-step__facts dd {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.review-process-step__usage {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 12px;
+  border-radius: var(--sc-radius-control);
+  background: var(--sc-neutral-100);
+  font-size: 10px;
+}
+
+.review-process-step__error {
+  margin: 0;
+  color: var(--sc-error);
+  font-size: 11px;
+}
+
 .profile-page {
   display: grid;
   gap: 26px;
@@ -863,6 +1060,19 @@ body {
 
   .photo-upload-item__copy {
     flex-basis: calc(100% - 130px);
+  }
+
+  .customize-treatment-step__toggles,
+  .review-process-step__summary {
+    grid-template-columns: 1fr;
+  }
+
+  .background-treatment-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .review-process-step__image {
+    width: 100%;
   }
 
   .profile-section-card {

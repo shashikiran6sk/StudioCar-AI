@@ -1,10 +1,11 @@
 import { create } from "zustand";
+import type { ProcessingOptions } from "@studiocar/contracts";
 
 import {
+  DEFAULT_PROCESSING_OPTIONS,
   EMPTY_VEHICLE_DETAILS,
-  VEHICLE_DETAILS_STEP,
-  VEHICLE_PHOTOS_STEP,
 } from "./vehicle-create.constants";
+import { VehicleCreateStep } from "./vehicle-create-step";
 import type {
   VehicleDetailsField,
   VehicleDetailsValues,
@@ -13,13 +14,16 @@ import type { PhotoUploadItem } from "./photo-upload.types";
 
 interface VehicleCreateState {
   details: VehicleDetailsValues;
+  options: ProcessingOptions;
   photos: PhotoUploadItem[];
-  step: number;
+  step: VehicleCreateStep;
   vehicleId: string | null;
   reset: () => void;
   addPhotos: (photos: PhotoUploadItem[]) => void;
   movePhoto: (clientId: string, offset: -1 | 1) => void;
   removePhoto: (clientId: string) => void;
+  setOptions: (options: ProcessingOptions) => void;
+  setStep: (step: VehicleCreateStep) => void;
   setDetailsField: (field: VehicleDetailsField, value: string) => void;
   setDraft: (vehicleId: string) => void;
   updatePhoto: (
@@ -55,16 +59,18 @@ function updateVehicleDetails(
 
 export const useVehicleCreateStore = create<VehicleCreateState>((set) => ({
   details: EMPTY_VEHICLE_DETAILS,
+  options: DEFAULT_PROCESSING_OPTIONS,
   photos: [],
-  step: VEHICLE_DETAILS_STEP,
+  step: VehicleCreateStep.Details,
   vehicleId: null,
   reset: () =>
     set((state) => {
       state.photos.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
       return {
         details: EMPTY_VEHICLE_DETAILS,
+        options: DEFAULT_PROCESSING_OPTIONS,
         photos: [],
-        step: VEHICLE_DETAILS_STEP,
+        step: VehicleCreateStep.Details,
         vehicleId: null,
       };
     }),
@@ -103,7 +109,9 @@ export const useVehicleCreateStore = create<VehicleCreateState>((set) => ({
     set((state) => ({
       details: updateVehicleDetails(state.details, field, value),
     })),
-  setDraft: (vehicleId) => set({ step: VEHICLE_PHOTOS_STEP, vehicleId }),
+  setDraft: (vehicleId) => set({ step: VehicleCreateStep.Photos, vehicleId }),
+  setOptions: (options) => set({ options }),
+  setStep: (step) => set({ step }),
   updatePhoto: (clientId, update) =>
     set((state) => ({
       photos: state.photos.map((photo) =>

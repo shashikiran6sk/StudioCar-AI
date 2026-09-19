@@ -24,6 +24,7 @@ export function ToggleOption({
   return (
     <button
       aria-checked={checked}
+      aria-label={label}
       className={cx("sc-toggle-option", className)}
       disabled={disabled}
       onClick={() => {

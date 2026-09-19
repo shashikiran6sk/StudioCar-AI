@@ -7,8 +7,10 @@ describe("processing contracts", () => {
     expect(ProcessingOptionsSchema.parse({})).toEqual({
       background: "PREMIUM_WHITE",
       crop: "MAINTAIN_COMPOSITION",
+      enhancement: true,
       outputFormat: "JPEG",
       paddingPercent: 8,
+      platePrivacy: true,
       quality: 90,
       shadow: "NATURAL",
     });
