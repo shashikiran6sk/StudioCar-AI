@@ -4,7 +4,7 @@ Last updated: 2026-09-19
 
 ## Current status
 
-Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 upload infrastructure, and the vehicle-draft persistence boundary are implemented. The next planned slice is the screenshot-derived vehicle creation wizard built on those authoritative draft and upload APIs.
+Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 upload infrastructure, the vehicle-draft persistence boundary, and the first two vehicle-wizard steps are implemented. The next planned slice completes the screenshot-derived customization and review steps before activating the end-to-end modal.
 
 ## Completed
 
@@ -102,6 +102,14 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Added transient Zustand wizard state for draft identity, step navigation, and editable vehicle details; PostgreSQL remains authoritative after draft creation.
 - Added form normalization, component accessibility, validation, error recovery, store, and textarea tests. The form remains intentionally unmounted until the remaining wizard steps can be delivered without exposing a dead-end workflow.
 
+### SC011B2 — Direct photo upload step
+
+- Added the screenshot-derived upload dropzone, free-plan limit messaging, ordered image rows, local thumbnails, accessible reorder/remove controls, retry actions, responsive layout, and truthful upload statuses.
+- Added per-file selection validation so unsupported, oversized, and excess images are rejected independently without discarding valid or already uploaded work.
+- Added browser SHA-256 calculation, authenticated presign calls, direct browser-to-S3 XHR uploads with measured byte progress, and authoritative upload commit validation. Image bytes never pass through Next.js.
+- Extended transient Zustand wizard state with per-photo progress, failure, authoritative asset metadata, ordering, removal, and object-URL cleanup while PostgreSQL and S3 remain authoritative.
+- Added focused orchestration, API-boundary, progress transport, validation, store, row, and component tests, including partial-failure preservation. The step remains unmounted until customize/review can complete the modal without a dead end.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -111,12 +119,11 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 
 ## Next planned slices
 
-1. **SC011B2 — Photo upload step**: mount draft creation and direct multi-file upload orchestration with measured progress, retry/remove/reorder behavior, and partial-failure preservation.
-2. **SC011B3 — Customize and review steps**: normalized treatment controls, summary/review validation, and activation of the complete screenshot-derived modal.
-3. **SC012 — Asynchronous processing**: final review command, job state machine, idempotent claims, SQS/DLQ, retry classification/backoff, Lambda worker, and atomic usage completion.
-4. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
-5. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, and usage/billing.
-6. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
+1. **SC011B3 — Customize and review steps**: normalized treatment controls, summary/review validation, draft API orchestration, and activation of the complete screenshot-derived modal.
+2. **SC012 — Asynchronous processing**: final review command, job state machine, idempotent claims, SQS/DLQ, retry classification/backoff, Lambda worker, and atomic usage completion.
+3. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
+4. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, and usage/billing.
+5. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
 
 ## Important implementation notes
 
