@@ -246,38 +246,43 @@ model ImageAsset {
 }
 
 model ProcessingJob {
-  id                String              @id @default(uuid()) @db.Uuid
-  userId            String              @db.Uuid
-  vehicleId         String              @db.Uuid
-  imageAssetId      String              @db.Uuid
-  status            ProcessingJobStatus @default(CREATED)
-  provider          ProcessingProvider
-  options           Json
-  idempotencyKey    String              @db.VarChar(128)
-  providerRequestId String?             @db.VarChar(255)
-  attemptCount      Int                 @default(0)
-  maxAttempts       Int                 @default(5)
-  claimedAt         DateTime?           @db.Timestamptz(3)
-  claimExpiresAt    DateTime?           @db.Timestamptz(3)
-  workerId          String?             @db.VarChar(255)
-  queuedAt          DateTime?           @db.Timestamptz(3)
-  startedAt         DateTime?           @db.Timestamptz(3)
-  completedAt       DateTime?           @db.Timestamptz(3)
-  failedAt          DateTime?           @db.Timestamptz(3)
-  cancelledAt       DateTime?           @db.Timestamptz(3)
-  errorCode         String?             @db.VarChar(80)
-  errorMessage      String?             @db.VarChar(1000)
-  createdAt         DateTime            @default(now()) @db.Timestamptz(3)
-  updatedAt         DateTime            @updatedAt @db.Timestamptz(3)
-  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  vehicle           Vehicle             @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  imageAsset        ImageAsset          @relation(fields: [imageAssetId], references: [id], onDelete: Restrict)
-  attempts          ProcessingAttempt[]
-  processedAsset    ProcessedAsset?
-  usageEvents       UsageEvent[]
+  id                  String              @id @default(uuid()) @db.Uuid
+  userId              String              @db.Uuid
+  vehicleId           String              @db.Uuid
+  imageAssetId        String              @db.Uuid
+  status              ProcessingJobStatus @default(CREATED)
+  provider            ProcessingProvider
+  options             Json
+  idempotencyKey      String              @db.VarChar(128)
+  batchIdempotencyKey String?             @db.VarChar(128)
+  batchRequestHash    String?             @db.Char(64)
+  displayOrder        Int                 @default(0)
+  providerRequestId   String?             @db.VarChar(255)
+  attemptCount        Int                 @default(0)
+  maxAttempts         Int                 @default(5)
+  claimedAt           DateTime?           @db.Timestamptz(3)
+  claimExpiresAt      DateTime?           @db.Timestamptz(3)
+  workerId            String?             @db.VarChar(255)
+  queuedAt            DateTime?           @db.Timestamptz(3)
+  startedAt           DateTime?           @db.Timestamptz(3)
+  completedAt         DateTime?           @db.Timestamptz(3)
+  failedAt            DateTime?           @db.Timestamptz(3)
+  cancelledAt         DateTime?           @db.Timestamptz(3)
+  errorCode           String?             @db.VarChar(80)
+  errorMessage        String?             @db.VarChar(1000)
+  createdAt           DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime            @updatedAt @db.Timestamptz(3)
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicle             Vehicle             @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  imageAsset          ImageAsset          @relation(fields: [imageAssetId], references: [id], onDelete: Restrict)
+  attempts            ProcessingAttempt[]
+  processedAsset      ProcessedAsset?
+  usageEvents         UsageEvent[]
 
   @@unique([userId, idempotencyKey])
+  @@unique([userId, batchIdempotencyKey, imageAssetId])
   @@index([userId, status, createdAt])
+  @@index([userId, batchIdempotencyKey])
   @@index([status, claimExpiresAt])
   @@index([imageAssetId, createdAt])
 }

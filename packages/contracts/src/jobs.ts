@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 import { EntityIdSchema, IsoDateTimeSchema } from "./common";
+import { ProcessingOptionsSchema } from "./processing";
+
+export const MAX_PROCESSING_BATCH_ASSETS = 20;
 
 export const JobStateSchema = z.enum([
   "CREATED",
@@ -72,7 +75,46 @@ export const JobStatusQuerySchema = z
   })
   .strict();
 
+export const CreateProcessingBatchSchema = z
+  .object({
+    vehicleId: EntityIdSchema,
+    assetIds: z
+      .array(EntityIdSchema)
+      .min(1)
+      .max(MAX_PROCESSING_BATCH_ASSETS)
+      .refine(
+        (assetIds) => new Set(assetIds).size === assetIds.length,
+        "Asset IDs must be unique.",
+      ),
+    options: ProcessingOptionsSchema,
+  })
+  .strict();
+
+export const ProcessingJobReservationSchema = z
+  .object({
+    jobId: EntityIdSchema,
+    assetId: EntityIdSchema,
+    state: JobStateSchema,
+  })
+  .strict();
+
+export const CreateProcessingBatchResponseSchema = z
+  .object({
+    jobs: z.array(ProcessingJobReservationSchema).min(1),
+    replayed: z.boolean(),
+  })
+  .strict();
+
 export type JobState = z.infer<typeof JobStateSchema>;
 export type ProcessingStage = z.infer<typeof ProcessingStageSchema>;
 export type JobStatus = z.infer<typeof JobStatusSchema>;
 export type JobStatusQuery = z.infer<typeof JobStatusQuerySchema>;
+export type CreateProcessingBatch = z.infer<
+  typeof CreateProcessingBatchSchema
+>;
+export type ProcessingJobReservation = z.infer<
+  typeof ProcessingJobReservationSchema
+>;
+export type CreateProcessingBatchResponse = z.infer<
+  typeof CreateProcessingBatchResponseSchema
+>;

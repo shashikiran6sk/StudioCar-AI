@@ -9,9 +9,14 @@
   "scripts": {
     "build": "tsc --outDir dist",
     "lint": "eslint . --max-warnings=0",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@studiocar/contracts": "workspace:*"
+  },
   "devDependencies": {
-    "@studiocar/config": "workspace:*"
+    "@studiocar/config": "workspace:*",
+    "@types/node": "26.6.1"
   }
 }
