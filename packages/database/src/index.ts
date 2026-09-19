@@ -5,6 +5,7 @@ export * from "./repositories/image-asset-repository";
 export * from "./repositories/phone-otp-challenge-repository";
 export * from "./repositories/phone-otp-completion-repository";
 export * from "./repositories/processing-job-repository";
+export * from "./repositories/processing-job-status-repository";
 export * from "./repositories/processing-outbox-repository";
 export * from "./repositories/processing-worker-repository";
 export * from "./repositories/profile-repository";

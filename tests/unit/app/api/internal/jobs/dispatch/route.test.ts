@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { POST } from "../../../../../../../apps/web/src/app/api/internal/jobs/dispatch/route";
 import { handleDispatchProcessingOutbox } from "../../../../../../../apps/web/src/server/jobs/dispatch-processing-outbox-handler";
 import { ProcessingJobService } from "../../../../../../../apps/web/src/server/jobs/processing-job-service";
+import { ProcessingStatusService } from "../../../../../../../apps/web/src/server/jobs/processing-status-service";
 import { getProcessingRuntime } from "../../../../../../../apps/web/src/server/jobs/processing-runtime";
 import { ProcessingProvider } from "../../../../../../../packages/database/generated/prisma/client";
 import { ProcessingOutboxDispatcher } from "../../../../../../../packages/processing/src/processing-outbox-dispatcher";
@@ -48,6 +49,7 @@ describe("POST /api/internal/jobs/dispatch", () => {
       dispatchToken,
       dispatcher,
       service,
+      statusService: new ProcessingStatusService({ findOwned: vi.fn() }),
     });
     const request = new Request(
       "https://app.studiocar.test/api/internal/jobs/dispatch",
