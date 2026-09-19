@@ -30,6 +30,7 @@ export interface VehicleCreateDialogProps {
     vehicleId: string,
     assetIds: string[],
     options: ProcessingOptions,
+    idempotencyKey: string,
   ) => Promise<void>;
   trigger: ReactElement;
   updateDraft?: typeof requestUpdateVehicleDraft;
@@ -47,6 +48,9 @@ export function VehicleCreateDialog({
   const [idempotencyKey, setIdempotencyKey] = useState(() =>
     crypto.randomUUID(),
   );
+  const [processingIdempotencyKey, setProcessingIdempotencyKey] = useState(
+    () => crypto.randomUUID(),
+  );
   const wizardSession = useRef(0);
   const step = useVehicleCreateStore((state) => state.step);
   const vehicleId = useVehicleCreateStore((state) => state.vehicleId);
@@ -59,6 +63,7 @@ export function VehicleCreateDialog({
     setOpen(false);
     reset();
     setIdempotencyKey(crypto.randomUUID());
+    setProcessingIdempotencyKey(crypto.randomUUID());
   }
 
   function changeOpen(nextOpen: boolean) {
@@ -88,7 +93,12 @@ export function VehicleCreateDialog({
     options: ProcessingOptions,
   ) {
     const activeSession = wizardSession.current;
-    await onProcess(persistedVehicleId, assetIds, options);
+    await onProcess(
+      persistedVehicleId,
+      assetIds,
+      options,
+      processingIdempotencyKey,
+    );
     if (wizardSession.current !== activeSession) return;
     closeWizard();
   }

@@ -36,5 +36,8 @@ describe("DashboardPage", () => {
       .toBeInTheDocument();
     expect(screen.getByText("Saturday, 19 September")).toBeInTheDocument();
     expect(screen.getByText("Your workspace is ready")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "+ Upload Vehicle" }),
+    ).toBeInTheDocument();
   });
 });

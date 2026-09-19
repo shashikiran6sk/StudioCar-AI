@@ -4,6 +4,7 @@ import {
   parseClientEnvironment,
   parseGoogleAuthEnvironment,
   parsePhoneAuthEnvironment,
+  parseProcessingEnvironment,
   parseSessionEnvironment,
   parseServerEnvironment,
   parseUploadEnvironment,
@@ -25,6 +26,7 @@ const validEnvironment = {
   SQS_IMAGE_QUEUE_URL: "https://sqs.ap-south-1.amazonaws.com/123/images",
   SQS_EMAIL_QUEUE_URL: "https://sqs.ap-south-1.amazonaws.com/123/email",
   BACKGROUND_REMOVAL_PROVIDER: "removebg",
+  PROCESSING_DISPATCH_TOKEN: "processing-dispatch-token-at-least-32-characters",
   REMOVEBG_API_KEY: "remove-bg-key",
 } satisfies Record<string, string>;
 
@@ -124,5 +126,19 @@ describe("environment validation", () => {
         MAX_IMAGE_DIMENSION: "70000",
       }),
     ).toThrow();
+  });
+
+  it("validates bounded processing dispatch settings", () => {
+    expect(parseProcessingEnvironment(validEnvironment)).toEqual({
+      DATABASE_URL: validEnvironment.DATABASE_URL,
+      AWS_REGION: validEnvironment.AWS_REGION,
+      SQS_IMAGE_QUEUE_URL: validEnvironment.SQS_IMAGE_QUEUE_URL,
+      BACKGROUND_REMOVAL_PROVIDER: "removebg",
+      PROCESSING_DISPATCH_TOKEN: validEnvironment.PROCESSING_DISPATCH_TOKEN,
+      PROCESSING_OUTBOX_BATCH_SIZE: 20,
+      PROCESSING_OUTBOX_CLAIM_TTL_MS: 30_000,
+      PROCESSING_OUTBOX_RETRY_BASE_MS: 1_000,
+      PROCESSING_OUTBOX_RETRY_MAX_MS: 60_000,
+    });
   });
 });

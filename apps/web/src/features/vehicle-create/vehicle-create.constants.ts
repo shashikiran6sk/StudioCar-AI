@@ -98,6 +98,12 @@ export const VEHICLE_CREATE_JSON_CONTENT_TYPE = "application/json";
 export const VEHICLE_CREATE_IDEMPOTENCY_HEADER = "idempotency-key";
 export const VEHICLE_CREATE_GENERIC_ERROR =
   "The vehicle draft could not be saved. Try again.";
+export const PROCESSING_BATCH_ROUTE = "/api/jobs";
+export const PROCESSING_BATCH_METHOD = "POST";
+export const PROCESSING_BATCH_IDEMPOTENCY_HEADER = "idempotency-key";
+export const PROCESSING_BATCH_GENERIC_ERROR =
+  "Processing could not be started. Your draft and originals are preserved.";
+export const VEHICLE_CREATE_TRIGGER_LABEL = "+ Upload Vehicle";
 export const VEHICLE_DETAILS_LABELS = {
   name: "Vehicle name",
   brand: "Brand",

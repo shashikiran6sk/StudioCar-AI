@@ -83,6 +83,7 @@ describe("VehicleCreateDialog", () => {
       "0e879f46-1193-4d77-b785-057fe026d998",
       ["331a1e25-b9d8-4b1a-a398-8351a58f8c24"],
       expect.objectContaining({ background: "DARK_STUDIO" }),
+      expect.any(String),
     );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(useVehicleCreateStore.getState().vehicleId).toBeNull();

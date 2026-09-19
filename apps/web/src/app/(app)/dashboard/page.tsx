@@ -3,6 +3,7 @@ import { StatePanel } from "@studiocar/ui";
 import { dashboardDate } from "../../../features/dashboard/dashboard-date";
 import { dashboardGreeting } from "../../../features/dashboard/dashboard-greeting";
 import { userDisplayName } from "../../../features/shell/user-display-name";
+import { VehicleCreateLauncher } from "../../../features/vehicle-create/vehicle-create-launcher";
 import { getCurrentSession } from "../../../server/auth/get-current-session";
 
 const DASHBOARD_DESCRIPTION =
@@ -27,6 +28,7 @@ export default async function DashboardPage() {
           </h1>
           <p>{DASHBOARD_DESCRIPTION}</p>
         </div>
+        <VehicleCreateLauncher />
       </header>
       <StatePanel
         description={EMPTY_DESCRIPTION}
