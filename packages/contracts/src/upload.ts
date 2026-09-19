@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { EntityIdSchema } from "./common";
+import { EntityIdSchema, IsoDateTimeSchema } from "./common";
 
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
@@ -8,6 +8,13 @@ export const SupportedImageMimeTypeSchema = z.enum([
   "image/jpeg",
   "image/png",
   "image/webp",
+]);
+
+export const ImageAssetStatusSchema = z.enum([
+  "PENDING_UPLOAD",
+  "UPLOADED",
+  "INVALID",
+  "DELETED",
 ]);
 
 const SafeFilenameSchema = z
@@ -33,24 +40,56 @@ export const CreateUploadIntentSchema = z
     sizeBytes: z.number().int().positive().max(MAX_UPLOAD_BYTES),
     checksumSha256: z
       .string()
-      .regex(/^[a-f0-9]{64}$/i, "Expected a SHA-256 hex digest.")
-      .optional(),
+      .regex(/^[a-f0-9]{64}$/i, "Expected a SHA-256 hex digest."),
   })
   .strict();
 
 export const CommitUploadSchema = z
   .object({
-    assetId: EntityIdSchema,
     etag: z.string().trim().min(1).max(256).optional(),
-    checksumSha256: z
-      .string()
-      .regex(/^[a-f0-9]{64}$/i, "Expected a SHA-256 hex digest.")
-      .optional(),
+  })
+  .strict();
+
+export const CommitUploadPathSchema = z
+  .object({ assetId: EntityIdSchema })
+  .strict();
+
+export const UploadRequestHeadersSchema = z.record(
+  z.string().trim().min(1),
+  z.string().trim().min(1),
+);
+
+export const CreateUploadIntentResponseSchema = z
+  .object({
+    assetId: EntityIdSchema,
+    uploadUrl: z.url(),
+    method: z.literal("PUT"),
+    headers: UploadRequestHeadersSchema,
+    expiresAt: IsoDateTimeSchema,
+  })
+  .strict();
+
+export const CommitUploadResponseSchema = z
+  .object({
+    assetId: EntityIdSchema,
+    status: z.literal("UPLOADED"),
+    mimeType: SupportedImageMimeTypeSchema,
+    sizeBytes: z.number().int().positive().max(MAX_UPLOAD_BYTES),
+    width: z.number().int().positive(),
+    height: z.number().int().positive(),
   })
   .strict();
 
 export type SupportedImageMimeType = z.infer<
   typeof SupportedImageMimeTypeSchema
 >;
+export type ImageAssetStatus = z.infer<typeof ImageAssetStatusSchema>;
 export type CreateUploadIntent = z.infer<typeof CreateUploadIntentSchema>;
 export type CommitUpload = z.infer<typeof CommitUploadSchema>;
+export type CommitUploadPath = z.infer<typeof CommitUploadPathSchema>;
+export type CreateUploadIntentResponse = z.infer<
+  typeof CreateUploadIntentResponseSchema
+>;
+export type CommitUploadResponse = z.infer<
+  typeof CommitUploadResponseSchema
+>;

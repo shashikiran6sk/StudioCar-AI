@@ -225,6 +225,7 @@ model ImageAsset {
   mimeType          String           @db.VarChar(100)
   sizeBytes         BigInt
   checksumSha256    String?          @db.Char(64)
+  idempotencyKey    String?          @db.VarChar(128)
   width             Int?
   height            Int?
   displayOrder      Int              @default(0)
@@ -239,6 +240,7 @@ model ImageAsset {
 
   @@index([vehicleId, createdAt])
   @@index([userId, status, createdAt])
+  @@unique([userId, idempotencyKey])
 }
 
 model ProcessingJob {

@@ -1,6 +1,11 @@
 import { z } from "zod";
 
 const EnvironmentNameSchema = z.enum(["development", "test", "production"]);
+const DEFAULT_MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+const MAX_CONFIGURED_UPLOAD_BYTES = DEFAULT_MAX_UPLOAD_BYTES;
+const DEFAULT_PRESIGNED_URL_TTL_SECONDS = 300;
+const DEFAULT_MAX_IMAGE_DIMENSION = 16_384;
+const DEFAULT_MAX_IMAGE_PIXELS = 100_000_000;
 
 const PostgresUrlSchema = z.url().refine(
   (value) => /^postgres(?:ql)?:\/\//.test(value),
@@ -65,6 +70,42 @@ export const GoogleAuthEnvironmentSchema = z
   })
   .strip();
 
+const UploadConfigurationSchema = z.object({
+  AWS_REGION: z.string().trim().min(1),
+  S3_BUCKET: z.string().trim().min(3).max(63),
+  MAX_UPLOAD_BYTES: z.coerce
+    .number()
+    .int()
+    .min(1_048_576)
+    .max(MAX_CONFIGURED_UPLOAD_BYTES)
+    .default(DEFAULT_MAX_UPLOAD_BYTES),
+  PRESIGNED_URL_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(60)
+    .max(900)
+    .default(DEFAULT_PRESIGNED_URL_TTL_SECONDS),
+  MAX_IMAGE_DIMENSION: z.coerce
+    .number()
+    .int()
+    .min(1_024)
+    .max(65_535)
+    .default(DEFAULT_MAX_IMAGE_DIMENSION),
+  MAX_IMAGE_PIXELS: z.coerce
+    .number()
+    .int()
+    .min(1_000_000)
+    .max(500_000_000)
+    .default(DEFAULT_MAX_IMAGE_PIXELS),
+});
+
+export const UploadEnvironmentSchema = z
+  .object({
+    DATABASE_URL: PostgresUrlSchema,
+    ...UploadConfigurationSchema.shape,
+  })
+  .strip();
+
 export const BackgroundRemovalProviderSchema = z.enum([
   "removebg",
   "fal",
@@ -91,26 +132,13 @@ export const ServerEnvironmentSchema = z
     PHONE_OTP_VERIFY_MAX_PER_IP: PhoneOtpLimitSchema.max(300).default(30),
     RESEND_API_KEY: z.string().trim().min(1),
     EMAIL_FROM: z.string().trim().min(3),
-    AWS_REGION: z.string().trim().min(1),
-    S3_BUCKET: z.string().trim().min(3),
+    ...UploadConfigurationSchema.shape,
     SQS_IMAGE_QUEUE_URL: z.url(),
     SQS_EMAIL_QUEUE_URL: z.url(),
     BACKGROUND_REMOVAL_PROVIDER: BackgroundRemovalProviderSchema,
     REMOVEBG_API_KEY: z.string().trim().min(1).optional(),
     FAL_KEY: z.string().trim().min(1).optional(),
     SELF_HOSTED_BIREFNET_ENDPOINT: z.url().optional(),
-    MAX_UPLOAD_BYTES: z.coerce
-      .number()
-      .int()
-      .min(1_048_576)
-      .max(100 * 1024 * 1024)
-      .default(25 * 1024 * 1024),
-    PRESIGNED_URL_TTL_SECONDS: z.coerce
-      .number()
-      .int()
-      .min(60)
-      .max(900)
-      .default(300),
   })
   .strip()
   .superRefine((value, context) => {
@@ -145,6 +173,7 @@ export type ClientEnvironment = z.infer<typeof ClientEnvironmentSchema>;
 export type GoogleAuthEnvironment = z.infer<typeof GoogleAuthEnvironmentSchema>;
 export type PhoneAuthEnvironment = z.infer<typeof PhoneAuthEnvironmentSchema>;
 export type SessionEnvironment = z.infer<typeof SessionEnvironmentSchema>;
+export type UploadEnvironment = z.infer<typeof UploadEnvironmentSchema>;
 
 export function parseServerEnvironment(
   environment: Record<string, string | undefined>,
@@ -174,4 +203,10 @@ export function parseSessionEnvironment(
   environment: Record<string, string | undefined>,
 ): SessionEnvironment {
   return SessionEnvironmentSchema.parse(environment);
+}
+
+export function parseUploadEnvironment(
+  environment: Record<string, string | undefined>,
+): UploadEnvironment {
+  return UploadEnvironmentSchema.parse(environment);
 }
