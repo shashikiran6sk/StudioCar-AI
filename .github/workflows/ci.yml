@@ -75,6 +75,22 @@ jobs:
   build-and-e2e:
     name: Build and end-to-end smoke test
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: studiocar_e2e
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d studiocar_e2e"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/studiocar_e2e
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
@@ -92,6 +108,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Apply migrations for authenticated browser tests
+        run: pnpm db:migrate:deploy
 
       - name: Build
         run: pnpm build

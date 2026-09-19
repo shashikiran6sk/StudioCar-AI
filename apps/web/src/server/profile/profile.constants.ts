@@ -1,0 +1,12 @@
+export const PROFILE_BAD_REQUEST_STATUS = 400;
+export const PROFILE_UNAUTHENTICATED_STATUS = 401;
+export const PROFILE_FORBIDDEN_STATUS = 403;
+export const PROFILE_NOT_FOUND_STATUS = 404;
+export const PROFILE_BAD_REQUEST_CODE = "BAD_REQUEST";
+export const PROFILE_UNAUTHENTICATED_CODE = "UNAUTHENTICATED";
+export const PROFILE_FORBIDDEN_CODE = "FORBIDDEN";
+export const PROFILE_NOT_FOUND_CODE = "NOT_FOUND";
+export const PROFILE_INVALID_REQUEST_MESSAGE = "Enter a valid profile.";
+export const PROFILE_UNAUTHENTICATED_MESSAGE = "Sign in to update your profile.";
+export const PROFILE_FORBIDDEN_MESSAGE = "The request origin is not allowed.";
+export const PROFILE_NOT_FOUND_MESSAGE = "The profile could not be found.";

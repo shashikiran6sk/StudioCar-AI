@@ -4,7 +4,7 @@ Last updated: 2026-09-19
 
 ## Current status
 
-Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, and the first authenticated web shell are implemented. The next planned product slice is profile and session-security UI.
+Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, and authenticated account surfaces are implemented. The next planned product slice is direct private-S3 upload infrastructure.
 
 ## Completed
 
@@ -70,6 +70,13 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Added the shared link-button primitive and forwarded input refs required for accessible form focus behavior.
 - Expanded web component-test discovery and TypeScript coverage, added focused route/service/component tests, and added desktop/mobile Playwright coverage for the unauthenticated redirect and sign-in UI.
 
+### SC009B — Profile and session security
+
+- Added a canonical profile contract and tenant-scoped repository for display details, linked Google/phone identities, and active-session counts without exposing provider subjects or session tokens.
+- Added a responsive profile surface for display-name editing, verified contact details, linked sign-in status, current-session expiry, current-device logout, and all-device revocation.
+- Added a same-origin authenticated profile update endpoint and a separate same-origin logout-all endpoint that revokes every active database session and clears the browser cookie.
+- Added unit, component, route, and real-PostgreSQL repository coverage. The CI browser job now provisions PostgreSQL and applies migrations for an authenticated Playwright profile/update/logout-all flow.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -79,13 +86,12 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 
 ## Next planned slices
 
-1. **SC009B — Profile and session security**: screenshot-aligned profile details, linked-identity status, logout-everywhere controls, and authenticated E2E coverage.
-2. **SC010 — Direct S3 upload foundation**: presign and commit endpoints, tenant ownership, immutable keys, HEAD verification, file validation, and S3 adapter tests.
-3. **SC011 — Vehicle creation workflow**: four-step screenshot-derived wizard, direct multi-file upload state, treatment options, review, and server-side validation.
-4. **SC012 — Asynchronous processing**: job state machine, idempotent claims, SQS/DLQ, retry classification/backoff, Lambda worker, and atomic usage completion.
-5. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
-6. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, usage/billing, and profile.
-7. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
+1. **SC010 — Direct S3 upload foundation**: presign and commit endpoints, tenant ownership, immutable keys, HEAD verification, file validation, and S3 adapter tests.
+2. **SC011 — Vehicle creation workflow**: four-step screenshot-derived wizard, direct multi-file upload state, treatment options, review, and server-side validation.
+3. **SC012 — Asynchronous processing**: job state machine, idempotent claims, SQS/DLQ, retry classification/backoff, Lambda worker, and atomic usage completion.
+4. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
+5. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, and usage/billing.
+6. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
 
 ## Important implementation notes
 
@@ -97,6 +103,7 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Expired OTP challenge and verification-attempt cleanup is intentionally deferred to the production cleanup-jobs slice; indexes support bounded deletion without affecting authentication correctness.
 - The authenticated route group enforces session authorization on the server. Future API handlers and repositories must still perform their own authentication, tenant authorization, and ownership checks.
 - Product navigation entries remain non-interactive until their corresponding slices land; this prevents dead routes while preserving the screenshot-derived application shell.
+- Profile updates are limited to the display name. Verified email and phone values remain identity-owned and can change only through a future explicit re-verification/linking flow.
 - `apps/web/next-env.d.ts` is generated by Next.js and intentionally untracked.
 - Processing progress must use truthful stages unless a provider exposes meaningful progress.
 - All future work follows the branch → PR → required CI → merge workflow in `/AGENTS.md`.

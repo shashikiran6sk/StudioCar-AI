@@ -21,6 +21,9 @@ describe("AccountMenu", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("PS")).toBeInTheDocument();
     expect(screen.getByText("priya@example.com")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Profile & security" }),
+    ).toHaveAttribute("href", "/settings/profile");
     expect(screen.getByRole("button", { name: "Log out" }).closest("form"))
       .toHaveAttribute("action", "/api/auth/logout");
   });

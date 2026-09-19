@@ -12,6 +12,10 @@
     "reason": "Static navigation configuration only."
   },
   {
+    "source": "apps/web/src/features/profile/profile.constants.ts",
+    "reason": "Static profile provider presentation configuration only."
+  },
+  {
     "source": "apps/web/src/server/auth/google/google-auth.constants.ts",
     "reason": "Static authentication constants and enum values only."
   },
@@ -38,6 +42,18 @@
   {
     "source": "apps/web/src/server/auth/session-runtime.ts",
     "reason": "Composition root that wires separately tested services and adapters."
+  },
+  {
+    "source": "apps/web/src/server/profile/profile-runtime.ts",
+    "reason": "Composition root that wires separately tested services and adapters."
+  },
+  {
+    "source": "apps/web/src/server/profile/profile.constants.ts",
+    "reason": "Static profile endpoint constants only."
+  },
+  {
+    "source": "apps/web/src/server/profile/profile.types.ts",
+    "reason": "Type-only profile application port definitions with no runtime behavior."
   },
   {
     "source": "packages/config/src/index.ts",

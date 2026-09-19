@@ -4,6 +4,7 @@ export * from "./common";
 export * from "./jobs";
 export * from "./processing";
 export * from "./phone-number";
+export * from "./profile";
 export * from "./upload";
 export * from "./usage";
 export * from "./vehicle";
