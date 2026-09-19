@@ -92,6 +92,18 @@
     "reason": "Static processing queue error constants only."
   },
   {
+    "source": "apps/web/src/server/jobs/processing-job.constants.ts",
+    "reason": "Static processing endpoint constants only."
+  },
+  {
+    "source": "apps/web/src/server/jobs/processing-job.types.ts",
+    "reason": "Type-only processing application port definitions with no runtime behavior."
+  },
+  {
+    "source": "apps/web/src/server/jobs/processing-runtime.ts",
+    "reason": "Composition root that wires separately tested processing services and adapters."
+  },
+  {
     "source": "apps/web/src/server/uploads/image-validation/image-metadata.types.ts",
     "reason": "Type-only validated image metadata definitions with no runtime behavior."
   },

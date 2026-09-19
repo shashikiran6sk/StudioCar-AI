@@ -6,6 +6,10 @@ const MAX_CONFIGURED_UPLOAD_BYTES = DEFAULT_MAX_UPLOAD_BYTES;
 const DEFAULT_PRESIGNED_URL_TTL_SECONDS = 300;
 const DEFAULT_MAX_IMAGE_DIMENSION = 16_384;
 const DEFAULT_MAX_IMAGE_PIXELS = 100_000_000;
+const DEFAULT_PROCESSING_OUTBOX_BATCH_SIZE = 20;
+const DEFAULT_PROCESSING_OUTBOX_CLAIM_TTL_MS = 30_000;
+const DEFAULT_PROCESSING_OUTBOX_RETRY_BASE_MS = 1_000;
+const DEFAULT_PROCESSING_OUTBOX_RETRY_MAX_MS = 60_000;
 
 const PostgresUrlSchema = z.url().refine(
   (value) => /^postgres(?:ql)?:\/\//.test(value),
@@ -112,6 +116,49 @@ export const BackgroundRemovalProviderSchema = z.enum([
   "birefnet",
 ]);
 
+export const ProcessingEnvironmentSchema = z
+  .object({
+    DATABASE_URL: PostgresUrlSchema,
+    AWS_REGION: z.string().trim().min(1),
+    SQS_IMAGE_QUEUE_URL: z.url(),
+    BACKGROUND_REMOVAL_PROVIDER: BackgroundRemovalProviderSchema,
+    PROCESSING_DISPATCH_TOKEN: z.string().min(32),
+    PROCESSING_OUTBOX_BATCH_SIZE: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .default(DEFAULT_PROCESSING_OUTBOX_BATCH_SIZE),
+    PROCESSING_OUTBOX_CLAIM_TTL_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(300_000)
+      .default(DEFAULT_PROCESSING_OUTBOX_CLAIM_TTL_MS),
+    PROCESSING_OUTBOX_RETRY_BASE_MS: z.coerce
+      .number()
+      .int()
+      .min(100)
+      .max(3_600_000)
+      .default(DEFAULT_PROCESSING_OUTBOX_RETRY_BASE_MS),
+    PROCESSING_OUTBOX_RETRY_MAX_MS: z.coerce
+      .number()
+      .int()
+      .min(100)
+      .max(3_600_000)
+      .default(DEFAULT_PROCESSING_OUTBOX_RETRY_MAX_MS),
+  })
+  .strip()
+  .refine(
+    (value) =>
+      value.PROCESSING_OUTBOX_RETRY_MAX_MS >=
+      value.PROCESSING_OUTBOX_RETRY_BASE_MS,
+    {
+      message: "Processing retry maximum must be at least the retry base.",
+      path: ["PROCESSING_OUTBOX_RETRY_MAX_MS"],
+    },
+  );
+
 export const ServerEnvironmentSchema = z
   .object({
     NODE_ENV: EnvironmentNameSchema.default("development"),
@@ -174,6 +221,12 @@ export type GoogleAuthEnvironment = z.infer<typeof GoogleAuthEnvironmentSchema>;
 export type PhoneAuthEnvironment = z.infer<typeof PhoneAuthEnvironmentSchema>;
 export type SessionEnvironment = z.infer<typeof SessionEnvironmentSchema>;
 export type UploadEnvironment = z.infer<typeof UploadEnvironmentSchema>;
+export type ProcessingEnvironment = z.infer<
+  typeof ProcessingEnvironmentSchema
+>;
+export type BackgroundRemovalProvider = z.infer<
+  typeof BackgroundRemovalProviderSchema
+>;
 
 export function parseServerEnvironment(
   environment: Record<string, string | undefined>,
@@ -209,4 +262,10 @@ export function parseUploadEnvironment(
   environment: Record<string, string | undefined>,
 ): UploadEnvironment {
   return UploadEnvironmentSchema.parse(environment);
+}
+
+export function parseProcessingEnvironment(
+  environment: Record<string, string | undefined>,
+): ProcessingEnvironment {
+  return ProcessingEnvironmentSchema.parse(environment);
 }

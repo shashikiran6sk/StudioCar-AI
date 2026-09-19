@@ -1,0 +1,14 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+
+import { VehicleCreateLauncher } from "../../../../apps/web/src/features/vehicle-create/vehicle-create-launcher";
+
+describe("VehicleCreateLauncher", () => {
+  it("opens the screenshot-derived vehicle workflow from the dashboard CTA", () => {
+    render(<VehicleCreateLauncher />);
+
+    fireEvent.click(screen.getByRole("button", { name: "+ Upload Vehicle" }));
+
+    expect(screen.getByRole("dialog", { name: "Vehicle details" })).toBeVisible();
+  });
+});

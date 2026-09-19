@@ -4,7 +4,7 @@ Last updated: 2026-09-19
 
 ## Current status
 
-Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 upload infrastructure, the four-step vehicle wizard, atomic processing-batch reservation, and its durable SQS outbox foundation are implemented. The next planned slice exposes the authenticated processing command and activates the wizard against the proven enqueue boundary.
+Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 uploads, and the end-to-end four-step vehicle submission path through durable SQS enqueue are implemented. The next planned slice implements the idempotent worker lifecycle without changing the product command boundary.
 
 ## Completed
 
@@ -135,6 +135,14 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Added an AWS SDK SQS adapter behind the processing queue port and a deployable CloudFormation stack with encrypted standard queue, retained DLQ, redrive policy, separate least-privilege publisher/consumer policies, and queue-depth, age, and DLQ alarms.
 - Added dispatcher, retry, validation, adapter, migration, and real-PostgreSQL outbox coverage. The user-facing command remains closed until SC012B2 composes reservation and dispatch behind authenticated handlers and a scheduled recovery entry point.
 
+### SC012B2 — Processing command activation
+
+- Added a provider-selected processing application service that derives deterministic batch/job hashes, reserves every owned job and outbox record atomically, and immediately attempts durable dispatch without leaking provider semantics into the request contract.
+- Added a same-origin, authenticated `POST /api/jobs` endpoint with canonical Zod validation, idempotency enforcement, tenant-safe failure mapping, private no-store responses, and deterministic retry behavior.
+- Added a secret-protected internal outbox recovery endpoint and bounded environment configuration for leases, batches, and backoff. Deployments must schedule the recovery call at least once per minute so accepted work survives application or SQS interruptions.
+- Mounted the existing screenshot-derived four-step vehicle dialog from the dashboard Upload Vehicle action. The modal now preserves a distinct processing idempotency key across retries, submits uploaded asset IDs and normalized treatment options, closes only after command acceptance, and keeps drafts/originals intact on failure.
+- Added service, provider mapping, token authentication, handler, route, environment, client-boundary, launcher, and orchestration tests; the public UI no longer simulates processing success.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -144,11 +152,10 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 
 ## Next planned slices
 
-1. **SC012B2 — Processing command activation**: processing application service, authenticated batch route, scheduled outbox recovery, and activation of the complete vehicle wizard.
-2. **SC012C — Worker lifecycle**: idempotent claims, explicit transitions, retry classification/backoff, Lambda orchestration, and atomic processing completion/usage accounting.
-3. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
-4. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, and usage/billing.
-5. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
+1. **SC012C — Worker lifecycle**: idempotent claims, explicit transitions, retry classification/backoff, Lambda orchestration, and atomic processing completion/usage accounting.
+2. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
+3. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, and usage/billing.
+4. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
 
 ## Important implementation notes
 
@@ -164,9 +171,10 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Upload commits perform bounded structural header validation in Next.js. The processing worker must perform a full decoder validation before any provider call; malformed or unsupported images must transition to `INVALID` without a provider charge.
 - Pending assets and invalid private objects are retained for deterministic retry/audit behavior; bounded cleanup jobs are deferred to production hardening.
 - Vehicle creation requires an `Idempotency-Key`; exact retries return the original draft, while reuse with different normalized details returns a conflict. Only `DRAFT` vehicles can be changed through the creation workflow update endpoint.
-- The complete four-step wizard is ready for composition but remains unmounted until SC012 implements its real job-creation/enqueue callback. Custom studio backgrounds are visible but disabled until a private background-asset upload and ownership flow is implemented.
+- The complete four-step wizard is mounted from the dashboard and submits only through the real authenticated processing command. Custom studio backgrounds are visible but disabled until a private background-asset upload and ownership flow is implemented.
 - Processing reservation moves the vehicle from `DRAFT` to `PROCESSING` only in the same transaction that creates every job and its outbox message. SC012B2 may expose this command only through the dispatcher and scheduled recovery path established on top of that durable intent.
 - Publishing an outbox message and marking its job `QUEUED` cannot be one cross-system transaction. The dispatcher therefore retains the database claim until SQS acknowledges the message, updates outbox and job state atomically afterward, and safely republishes after a crash; the worker must treat duplicate `jobId` deliveries as harmless.
+- `PROCESSING_DISPATCH_TOKEN` protects the recovery endpoint and must be distinct, randomly generated, and server-only. A trusted scheduler must invoke recovery at least once per minute; the endpoint returns only aggregate dispatch counts and never queue payloads or errors.
 - `apps/web/next-env.d.ts` is generated by Next.js and intentionally untracked.
 - Processing progress must use truthful stages unless a provider exposes meaningful progress.
 - All future work follows the branch → PR → required CI → merge workflow in `/AGENTS.md`.
