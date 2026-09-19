@@ -6,6 +6,7 @@ import {
   parsePhoneAuthEnvironment,
   parseSessionEnvironment,
   parseServerEnvironment,
+  parseUploadEnvironment,
 } from "../../../packages/config/src/environment";
 
 const validEnvironment = {
@@ -32,6 +33,8 @@ describe("environment validation", () => {
     expect(parseServerEnvironment(validEnvironment)).toMatchObject({
       MAX_UPLOAD_BYTES: 25 * 1024 * 1024,
       PRESIGNED_URL_TTL_SECONDS: 300,
+      MAX_IMAGE_DIMENSION: 16_384,
+      MAX_IMAGE_PIXELS: 100_000_000,
       BACKGROUND_REMOVAL_PROVIDER: "removebg",
     });
   });
@@ -103,5 +106,23 @@ describe("environment validation", () => {
     expect(
       parseSessionEnvironment({ DATABASE_URL: validEnvironment.DATABASE_URL }),
     ).toEqual({ DATABASE_URL: validEnvironment.DATABASE_URL });
+  });
+
+  it("validates the focused upload runtime and bounded image limits", () => {
+    expect(parseUploadEnvironment(validEnvironment)).toEqual({
+      DATABASE_URL: validEnvironment.DATABASE_URL,
+      AWS_REGION: validEnvironment.AWS_REGION,
+      S3_BUCKET: validEnvironment.S3_BUCKET,
+      MAX_UPLOAD_BYTES: 25 * 1024 * 1024,
+      PRESIGNED_URL_TTL_SECONDS: 300,
+      MAX_IMAGE_DIMENSION: 16_384,
+      MAX_IMAGE_PIXELS: 100_000_000,
+    });
+    expect(() =>
+      parseUploadEnvironment({
+        ...validEnvironment,
+        MAX_IMAGE_DIMENSION: "70000",
+      }),
+    ).toThrow();
   });
 });

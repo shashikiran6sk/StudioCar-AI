@@ -12,6 +12,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "catalog:",
+    "@aws-sdk/s3-request-presigner": "catalog:",
     "@fontsource-variable/manrope": "5.3.0",
     "@studiocar/config": "workspace:*",
     "@studiocar/contracts": "workspace:*",

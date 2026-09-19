@@ -56,6 +56,26 @@
     "reason": "Type-only profile application port definitions with no runtime behavior."
   },
   {
+    "source": "apps/web/src/server/uploads/image-validation/image-metadata.types.ts",
+    "reason": "Type-only validated image metadata definitions with no runtime behavior."
+  },
+  {
+    "source": "apps/web/src/server/uploads/image-validation/image-validation.constants.ts",
+    "reason": "Static image-validation limits and messages only."
+  },
+  {
+    "source": "apps/web/src/server/uploads/upload-runtime.ts",
+    "reason": "Composition root that wires separately tested upload services and adapters."
+  },
+  {
+    "source": "apps/web/src/server/uploads/upload.constants.ts",
+    "reason": "Static upload endpoint, metadata, and response constants only."
+  },
+  {
+    "source": "apps/web/src/server/uploads/upload.types.ts",
+    "reason": "Type-only upload application port definitions with no runtime behavior."
+  },
+  {
     "source": "packages/config/src/index.ts",
     "reason": "Barrel export with no behavior."
   },

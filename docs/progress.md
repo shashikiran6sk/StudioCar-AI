@@ -4,7 +4,7 @@ Last updated: 2026-09-19
 
 ## Current status
 
-Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, and authenticated account surfaces are implemented. The next planned product slice is direct private-S3 upload infrastructure.
+Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, and direct private-S3 upload infrastructure are implemented. The next planned product slice is the screenshot-derived vehicle creation workflow.
 
 ## Completed
 
@@ -77,6 +77,16 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Added a same-origin authenticated profile update endpoint and a separate same-origin logout-all endpoint that revokes every active database session and clears the browser cookie.
 - Added unit, component, route, and real-PostgreSQL repository coverage. The CI browser job now provisions PostgreSQL and applies migrations for an authenticated Playwright profile/update/logout-all flow.
 
+### SC010 — Direct private-S3 uploads
+
+- Added canonical presign/commit request and response contracts with required SHA-256 integrity, immutable tenant-prefixed object keys, and replay-safe upload-intent idempotency.
+- Added a tenant-scoped image-asset repository and backward-compatible idempotency migration. Duplicate intent reservations and upload commits resolve to the same authoritative PostgreSQL asset.
+- Added separate same-origin authenticated presign and commit endpoints behind application services and storage/repository ports; browser image bytes travel directly to private S3 and never through Next.js.
+- Added an AWS SDK v3 S3 adapter that binds content length, SHA-256, and ownership metadata to short-lived PUT requests. Commit verifies S3 HEAD metadata and a bounded range of image bytes before the `PENDING_UPLOAD` to `UPLOADED` transition.
+- Added JPEG, PNG, and WebP magic-byte/dimension parsing with configured axis and total-pixel limits, deterministic invalid states, and no fabricated browser trust.
+- Added a deployable CloudFormation template for retained, encrypted, versioned, public-access-blocked storage, exact-origin CORS, TLS enforcement, lifecycle cleanup for replaced object versions, and a least-privilege application policy.
+- Added contract, configuration, parser, service, handler, route, S3 adapter, and real-PostgreSQL repository tests.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -86,12 +96,11 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 
 ## Next planned slices
 
-1. **SC010 — Direct S3 upload foundation**: presign and commit endpoints, tenant ownership, immutable keys, HEAD verification, file validation, and S3 adapter tests.
-2. **SC011 — Vehicle creation workflow**: four-step screenshot-derived wizard, direct multi-file upload state, treatment options, review, and server-side validation.
-3. **SC012 — Asynchronous processing**: job state machine, idempotent claims, SQS/DLQ, retry classification/backoff, Lambda worker, and atomic usage completion.
-4. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
-5. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, and usage/billing.
-6. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
+1. **SC011 — Vehicle creation workflow**: four-step screenshot-derived wizard, direct multi-file upload state, treatment options, review, and server-side validation.
+2. **SC012 — Asynchronous processing**: job state machine, idempotent claims, SQS/DLQ, retry classification/backoff, Lambda worker, and atomic usage completion.
+3. **SC013 — Provider abstraction**: stable `BackgroundRemovalProvider`, remove.bg adapter, and configuration-selected fal.ai/self-hosted extension boundaries.
+4. **SC014+ — Product surfaces**: adaptive polling/status UX followed incrementally by homepage, dashboard, inventory, portfolio/detail, and usage/billing.
+5. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
 
 ## Important implementation notes
 
@@ -104,6 +113,8 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - The authenticated route group enforces session authorization on the server. Future API handlers and repositories must still perform their own authentication, tenant authorization, and ownership checks.
 - Product navigation entries remain non-interactive until their corresponding slices land; this prevents dead routes while preserving the screenshot-derived application shell.
 - Profile updates are limited to the display name. Verified email and phone values remain identity-owned and can change only through a future explicit re-verification/linking flow.
+- Upload commits perform bounded structural header validation in Next.js. The processing worker must perform a full decoder validation before any provider call; malformed or unsupported images must transition to `INVALID` without a provider charge.
+- Pending assets and invalid private objects are retained for deterministic retry/audit behavior; bounded cleanup jobs are deferred to production hardening.
 - `apps/web/next-env.d.ts` is generated by Next.js and intentionally untracked.
 - Processing progress must use truthful stages unless a provider exposes meaningful progress.
 - All future work follows the branch → PR → required CI → merge workflow in `/AGENTS.md`.

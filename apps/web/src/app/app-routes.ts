@@ -13,4 +13,5 @@ export const PHONE_AUTH_VERIFY_PATH = "/api/auth/phone/verify";
 export const LOGOUT_PATH = "/api/auth/logout";
 export const LOGOUT_ALL_PATH = "/api/auth/logout-all";
 export const PROFILE_API_PATH = "/api/profile";
+export const UPLOAD_PRESIGN_PATH = "/api/uploads/presign";
 export const RETURN_TO_QUERY_KEY = "returnTo";

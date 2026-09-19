@@ -1,0 +1,99 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Private StudioCar AI image storage and application upload policy
+
+Parameters:
+  BucketName:
+    Type: String
+    MinLength: 3
+    MaxLength: 63
+    Description: Globally unique private image bucket name
+  WebApplicationOrigin:
+    Type: String
+    AllowedPattern: ^https://[^/]+$
+    Description: Exact HTTPS origin allowed to upload directly from the browser
+
+Resources:
+  ImageBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Ref BucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - content-type
+              - x-amz-checksum-sha256
+              - x-amz-meta-asset-id
+              - x-amz-meta-user-id
+              - x-amz-meta-vehicle-id
+            AllowedMethods:
+              - PUT
+            AllowedOrigins:
+              - !Ref WebApplicationOrigin
+            ExposedHeaders:
+              - ETag
+              - x-amz-checksum-sha256
+            MaxAge: 300
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireNoncurrentUploadVersions
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 7
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+
+  ImageBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ImageBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: s3:*
+            Resource:
+              - !GetAtt ImageBucket.Arn
+              - !Sub ${ImageBucket.Arn}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: "false"
+
+  UploadApplicationPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Presign uploads and validate private StudioCar image objects
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: ReadAndWriteImmutableImageObjects
+            Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+            Resource: !Sub ${ImageBucket.Arn}/users/*
+          - Sid: ResolveImageBucketRegion
+            Effect: Allow
+            Action: s3:GetBucketLocation
+            Resource: !GetAtt ImageBucket.Arn
+
+Outputs:
+  BucketName:
+    Value: !Ref ImageBucket
+  UploadApplicationPolicyArn:
+    Value: !Ref UploadApplicationPolicy
