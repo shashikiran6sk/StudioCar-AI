@@ -1,0 +1,15 @@
+import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
+
+import { LOGIN_PATH } from "../app-routes";
+import { AppShell } from "../../features/shell/app-shell";
+import { getCurrentSession } from "../../server/auth/get-current-session";
+
+export default async function AuthenticatedLayout({
+  children,
+}: Readonly<{ children: ReactNode }>) {
+  const session = await getCurrentSession();
+  if (!session) redirect(LOGIN_PATH);
+
+  return <AppShell user={session.user}>{children}</AppShell>;
+}

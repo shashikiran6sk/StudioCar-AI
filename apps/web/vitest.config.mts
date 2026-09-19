@@ -10,11 +10,12 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(directory, "src"),
+      next: path.resolve(directory, "node_modules/next"),
     },
   },
   test: {
     environment: "jsdom",
-    include: ["../../tests/unit/{app,server}/**/*.test.{ts,tsx}"],
+    include: ["../../tests/unit/{app,features,server}/**/*.test.{ts,tsx}"],
     setupFiles: ["./vitest.setup.ts"],
   },
 });

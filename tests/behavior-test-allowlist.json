@@ -4,6 +4,14 @@
     "reason": "Static Next.js root layout and metadata only."
   },
   {
+    "source": "apps/web/src/app/app-routes.ts",
+    "reason": "Static application route constants only."
+  },
+  {
+    "source": "apps/web/src/features/shell/app-navigation.constants.ts",
+    "reason": "Static navigation configuration only."
+  },
+  {
     "source": "apps/web/src/server/auth/google/google-auth.constants.ts",
     "reason": "Static authentication constants and enum values only."
   },
@@ -26,6 +34,10 @@
   {
     "source": "apps/web/src/server/auth/phone/phone-auth.types.ts",
     "reason": "Type-only application port definitions with no runtime behavior."
+  },
+  {
+    "source": "apps/web/src/server/auth/session-runtime.ts",
+    "reason": "Composition root that wires separately tested services and adapters."
   },
   {
     "source": "packages/config/src/index.ts",
