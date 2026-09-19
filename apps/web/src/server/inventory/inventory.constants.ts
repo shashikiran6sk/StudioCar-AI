@@ -1,0 +1,2 @@
+export const INVENTORY_PREVIEW_RESPONSE_CONTENT_TYPE = "image/webp";
+export const INVENTORY_PREVIEW_RESPONSE_DISPOSITION = "inline";

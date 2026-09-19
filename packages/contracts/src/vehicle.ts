@@ -94,4 +94,5 @@ export type CreateVehicleResponse = z.infer<
 export type UpdateVehicleResponse = z.infer<
   typeof UpdateVehicleResponseSchema
 >;
+export type VehicleSort = z.infer<typeof VehicleSortSchema>;
 export type VehicleListQuery = z.infer<typeof VehicleListQuerySchema>;

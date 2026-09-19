@@ -4,7 +4,7 @@ Last updated: 2026-09-19
 
 ## Current status
 
-Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 uploads, and the end-to-end four-step vehicle submission path through durable SQS enqueue are implemented. The provider-independent worker lifecycle, remove.bg adapter, private-S3 execution, full decoder validation, deterministic output recovery, preview transformation, bounded Lambda runtime, tenant-safe status API, and truthful adaptive processing UI are implemented; the next planned slice is the screenshot-derived inventory data surface.
+Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 uploads, and the end-to-end four-step vehicle submission path through durable SQS enqueue are implemented. The provider-independent worker lifecycle, remove.bg adapter, private-S3 execution, full decoder validation, deterministic output recovery, preview transformation, bounded Lambda runtime, tenant-safe status API, truthful adaptive processing UI, and the screenshot-derived inventory foundation are implemented; the next planned slice is the vehicle portfolio/detail surface.
 
 ## Completed
 
@@ -177,6 +177,16 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Added the screenshot-derived compact top-bar activity indicator and bounded activity panel with redundant dot/text status, truthful stage labels, refresh errors, terminal failure presentation, accessible expansion/dismiss controls, and no synthetic progress bars or percentages.
 - Added contract, repository integration, service, mapping, handler, route, store, request, interval, visibility, terminal-state, stage-label, and component accessibility tests.
 
+### SC015A — Inventory foundation
+
+- Added canonical inventory query, filter, view, aggregate item, and page contracts with bounded cursor pagination and shareable URL state.
+- Added a dedicated tenant-scoped inventory read repository that excludes unfinished drafts, searches vehicle name/brand/model/stock/internal reference, applies status filters and deterministic sorting, derives search-aware filter counts, validates cursors inside the active tenant/filter scope, and selects only bounded job/output fields.
+- Added an inventory application service and private-S3 preview signer. Only preview object keys returned by the owned repository are signed, URLs are short-lived, and PostgreSQL/S3 keys remain authoritative.
+- Added the screenshot-derived authorized Inventory route with search, sorting, status filters, grid/list views, responsive four/three/two/one-column cards, truthful count-derived processing progress, loading/error/empty/no-result states, cursor continuation, and a working upload CTA.
+- Enabled Inventory navigation and routed accepted vehicle-processing submissions to Inventory with an immediate server refresh while retaining the transient global activity store.
+- Added contract, service, storage adapter, utility, component, page, real-PostgreSQL repository, and desktop/mobile Playwright coverage. Corrected Turborepo E2E environment pass-through so authenticated browser tests execute instead of silently skipping.
+- Verified lint, strict typecheck, unit/source-mapping tests, all migrations, Prisma validation, 14 real-PostgreSQL integration files, production build, and the complete five-test Playwright suite locally.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -186,9 +196,9 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 
 ## Next planned slices
 
-1. **SC015A — Inventory foundation**: screenshot-derived inventory route, tenant-safe cursor pagination/search/filter/sort, private preview signing, status aggregation, and responsive vehicle cards.
-2. **SC015B+ — Remaining product surfaces**: homepage, dashboard data, portfolio/detail, and usage/billing implemented screenshot-by-screenshot.
-3. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
+1. **SC015B — Vehicle portfolio/detail**: tenant-safe vehicle portfolio read model, authorized original/processed signing, screenshot-derived comparison/gallery, and download boundaries.
+2. **SC016+ — Remaining product surfaces**: homepage, dashboard data, and usage/billing implemented screenshot-by-screenshot.
+3. **Later hardening**: asynchronous email, security review, performance optimization, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
 
 ## Important implementation notes
 
@@ -218,6 +228,10 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Processing progress must use truthful stages unless a provider exposes meaningful progress.
 - The global activity store contains only transient job IDs and the latest server response; it is not canonical and intentionally does not survive a full browser restart. Processing continues independently, and the inventory/dashboard server queries must rediscover active vehicle state from PostgreSQL.
 - Batched status polling pauses completely for hidden tabs, refreshes immediately when visible, and removes terminal IDs from future poll requests. Terminal results remain in the activity panel until dismissed so failures are not silently lost.
+- Inventory is a separate optimized read model rather than an extension of draft mutation endpoints. It exposes only operational vehicle batches and computes visible progress from completed image jobs; it never invents provider-level progress.
+- Inventory preview URLs are signed at render time from tenant-scoped preview object keys and expire according to the bounded presigned URL configuration. Full-resolution processed/original downloads remain deferred to the portfolio authorization slice.
+- Favorites and portfolio/download card actions remain intentionally absent until their canonical persistence/authorization flows exist; the Inventory UI does not expose controls that would falsely imply those mutations or downloads are implemented.
+- Turborepo's E2E task explicitly passes only `DATABASE_URL`, `AWS_REGION`, and `S3_BUCKET`; this ensures authenticated Playwright tests actually execute while keeping unrelated secrets out of the browser-test task.
 - All future work follows the branch → PR → required CI → merge workflow in `/AGENTS.md`.
 
 ## Per-slice update checklist

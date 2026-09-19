@@ -7,7 +7,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: [["html", { open: "never" }]],
   use: {
-    baseURL: "http://127.0.0.1:3100",
+    baseURL: "http://localhost:3100",
     channel: "chrome",
     trace: "on-first-retry",
     viewport: { height: 960, width: 1440 },

@@ -90,7 +90,9 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
+      AWS_REGION: ap-south-1
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/studiocar_e2e
+      S3_BUCKET: studiocar-ci-private
     steps:
       - name: Check out repository
         uses: actions/checkout@v5

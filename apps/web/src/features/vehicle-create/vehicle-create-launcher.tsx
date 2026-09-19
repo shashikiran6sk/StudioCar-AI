@@ -2,24 +2,34 @@
 
 import type { ProcessingOptions } from "@studiocar/contracts";
 import { Button } from "@studiocar/ui";
+import { useRouter } from "next/navigation";
 
-import { requestProcessingBatch } from "./request-processing-batch";
+import { INVENTORY_PATH } from "../../app/app-routes";
+import { completeProcessingBatch } from "./complete-processing-batch";
 import { useProcessingStatusStore } from "../processing/processing-status-store";
 import { VehicleCreateDialog } from "./vehicle-create-dialog";
 import { VEHICLE_CREATE_TRIGGER_LABEL } from "./vehicle-create.constants";
 
 export function VehicleCreateLauncher() {
+  const router = useRouter();
+
   async function processBatch(
     vehicleId: string,
     assetIds: string[],
     options: ProcessingOptions,
     idempotencyKey: string,
   ): Promise<void> {
-    const result = await requestProcessingBatch(
-      { vehicleId, assetIds, options },
+    await completeProcessingBatch(
+      vehicleId,
+      assetIds,
+      options,
       idempotencyKey,
+      {
+        navigateToInventory: () => router.push(INVENTORY_PATH),
+        refresh: () => router.refresh(),
+        register: (jobs) => useProcessingStatusStore.getState().register(jobs),
+      },
     );
-    useProcessingStatusStore.getState().register(result.jobs);
   }
 
   return (
