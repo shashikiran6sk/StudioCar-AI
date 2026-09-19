@@ -1,3 +1,4 @@
+export * from "./background-removal-provider.types";
 export * from "./calculate-processing-outbox-retry-delay";
 export * from "./calculate-processing-retry-delay";
 export * from "./classify-processing-failure";

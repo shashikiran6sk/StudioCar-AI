@@ -152,6 +152,10 @@
     "reason": "Barrel export with no behavior."
   },
   {
+    "source": "packages/processing/src/background-removal-provider.types.ts",
+    "reason": "Type-only background-removal provider boundary with no runtime behavior."
+  },
+  {
     "source": "packages/processing/src/index.ts",
     "reason": "Barrel export with no behavior."
   },
@@ -186,5 +190,13 @@
   {
     "source": "workers/image-processing/src/processing-message-handler.types.ts",
     "reason": "Type-only processing message handler port with no runtime behavior."
+  },
+  {
+    "source": "workers/image-processing/src/providers/remove-bg-provider.constants.ts",
+    "reason": "Static remove.bg endpoint, field, limit, and message constants only."
+  },
+  {
+    "source": "workers/image-processing/src/providers/remove-bg-provider.types.ts",
+    "reason": "Type-only remove.bg provider configuration with no runtime behavior."
   }
 ]
