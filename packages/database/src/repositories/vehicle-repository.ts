@@ -1,34 +1,30 @@
 import type {
   CreateVehicle,
   UpdateVehicle,
+  Vehicle,
   VehicleListQuery,
 } from "@studiocar/contracts";
 
-import type { Prisma, PrismaClient } from "../../generated/prisma/client";
-
-const vehicleSelect = {
-  id: true,
-  name: true,
-  brand: true,
-  model: true,
-  variant: true,
-  year: true,
-  stockId: true,
-  internalId: true,
-  notes: true,
-  status: true,
-  createdAt: true,
-  updatedAt: true,
-} satisfies Prisma.VehicleSelect;
-
-export type VehicleRecord = Prisma.VehicleGetPayload<{
-  select: typeof vehicleSelect;
-}>;
+import type { PrismaClient } from "../../generated/prisma/client";
+import { Prisma, VehicleStatus } from "../../generated/prisma/client";
+import { toVehicleCreateData } from "./to-vehicle-create-data";
+import { toVehicleUpdateData } from "./to-vehicle-update-data";
+import { toVehicle, vehicleSelect } from "./to-vehicle";
 
 export interface VehiclePage {
-  items: VehicleRecord[];
+  items: Vehicle[];
   nextCursor: string | null;
 }
+
+export type ReserveVehicleResult =
+  | { kind: "CREATED"; vehicle: Vehicle }
+  | { kind: "EXISTING"; vehicle: Vehicle }
+  | { kind: "CONFLICT" };
+
+export type UpdateVehicleResult =
+  | { kind: "UPDATED"; vehicle: Vehicle }
+  | { kind: "NOT_FOUND" }
+  | { kind: "CONFLICT" };
 
 function vehicleOrderBy(
   sort: VehicleListQuery["sort"],
@@ -51,58 +47,97 @@ export class PrismaVehicleRepository {
   public async createOwned(
     userId: string,
     command: CreateVehicle,
-  ): Promise<VehicleRecord> {
-    return this.database.vehicle.create({
-      data: {
-        userId,
-        name: command.name,
-        ...(command.brand === undefined ? {} : { brand: command.brand }),
-        ...(command.model === undefined ? {} : { model: command.model }),
-        ...(command.variant === undefined ? {} : { variant: command.variant }),
-        ...(command.year === undefined ? {} : { year: command.year }),
-        ...(command.stockId === undefined ? {} : { stockId: command.stockId }),
-        ...(command.internalId === undefined
-          ? {}
-          : { internalId: command.internalId }),
-        ...(command.notes === undefined ? {} : { notes: command.notes }),
-      },
+  ): Promise<Vehicle> {
+    const record = await this.database.vehicle.create({
+      data: toVehicleCreateData(userId, command),
       select: vehicleSelect,
     });
+    return toVehicle(record);
+  }
+
+  public async reserveDraftOwned(
+    userId: string,
+    idempotencyKey: string,
+    command: CreateVehicle,
+  ): Promise<ReserveVehicleResult> {
+    const existing = await this.findByCreationIdempotencyKey(
+      userId,
+      idempotencyKey,
+    );
+    if (existing) return { kind: "EXISTING", vehicle: existing };
+
+    try {
+      const record = await this.database.vehicle.create({
+        data: toVehicleCreateData(userId, command, idempotencyKey),
+        select: vehicleSelect,
+      });
+      return { kind: "CREATED", vehicle: toVehicle(record) };
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        const raced = await this.findByCreationIdempotencyKey(
+          userId,
+          idempotencyKey,
+        );
+        if (raced) return { kind: "EXISTING", vehicle: raced };
+        return { kind: "CONFLICT" };
+      }
+      throw error;
+    }
   }
 
   public async findOwnedById(
     userId: string,
     vehicleId: string,
-  ): Promise<VehicleRecord | null> {
-    return this.database.vehicle.findFirst({
+  ): Promise<Vehicle | null> {
+    const record = await this.database.vehicle.findFirst({
       where: { id: vehicleId, userId },
       select: vehicleSelect,
     });
+    return record ? toVehicle(record) : null;
   }
 
   public async updateOwned(
     userId: string,
     vehicleId: string,
     command: UpdateVehicle,
-  ): Promise<VehicleRecord | null> {
+  ): Promise<Vehicle | null> {
     const result = await this.database.vehicle.updateMany({
       where: { id: vehicleId, userId },
-      data: {
-        ...(command.name === undefined ? {} : { name: command.name }),
-        ...(command.brand === undefined ? {} : { brand: command.brand }),
-        ...(command.model === undefined ? {} : { model: command.model }),
-        ...(command.variant === undefined ? {} : { variant: command.variant }),
-        ...(command.year === undefined ? {} : { year: command.year }),
-        ...(command.stockId === undefined ? {} : { stockId: command.stockId }),
-        ...(command.internalId === undefined
-          ? {}
-          : { internalId: command.internalId }),
-        ...(command.notes === undefined ? {} : { notes: command.notes }),
-      },
+      data: toVehicleUpdateData(command),
     });
 
     if (result.count === 0) return null;
     return this.findOwnedById(userId, vehicleId);
+  }
+
+  public async updateDraftOwned(
+    userId: string,
+    vehicleId: string,
+    command: UpdateVehicle,
+  ): Promise<UpdateVehicleResult> {
+    try {
+      const result = await this.database.vehicle.updateMany({
+        where: { id: vehicleId, userId, status: VehicleStatus.DRAFT },
+        data: toVehicleUpdateData(command),
+      });
+      if (result.count === 0) return { kind: "NOT_FOUND" };
+
+      const vehicle = await this.findOwnedById(userId, vehicleId);
+      return vehicle
+        ? { kind: "UPDATED", vehicle }
+        : { kind: "NOT_FOUND" };
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        return { kind: "CONFLICT" };
+      }
+      throw error;
+    }
   }
 
   public async listOwned(
@@ -118,7 +153,7 @@ export class PrismaVehicleRepository {
       if (!cursorIsOwned) return { items: [], nextCursor: null };
     }
 
-    const items = await this.database.vehicle.findMany({
+    const records = await this.database.vehicle.findMany({
       where: {
         userId,
         ...(query.status === undefined ? {} : { status: query.status }),
@@ -138,13 +173,25 @@ export class PrismaVehicleRepository {
       ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
       select: vehicleSelect,
     });
-    const hasNextPage = items.length > query.limit;
+    const hasNextPage = records.length > query.limit;
 
-    if (hasNextPage) items.pop();
+    if (hasNextPage) records.pop();
+    const items = records.map(toVehicle);
 
     return {
       items,
       nextCursor: hasNextPage ? (items.at(-1)?.id ?? null) : null,
     };
+  }
+
+  private async findByCreationIdempotencyKey(
+    userId: string,
+    idempotencyKey: string,
+  ): Promise<Vehicle | null> {
+    const record = await this.database.vehicle.findFirst({
+      where: { userId, creationIdempotencyKey: idempotencyKey },
+      select: vehicleSelect,
+    });
+    return record ? toVehicle(record) : null;
   }
 }

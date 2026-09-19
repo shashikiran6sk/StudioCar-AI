@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CreateVehicleResponseSchema,
   CreateVehicleSchema,
   UpdateVehicleSchema,
   VehicleListQuerySchema,
+  VehiclePathSchema,
 } from "../../../packages/contracts/src/vehicle";
 
 describe("vehicle contracts", () => {
@@ -25,5 +27,29 @@ describe("vehicle contracts", () => {
       limit: 24,
       sort: "CREATED_DESC",
     });
+  });
+
+  it("validates vehicle paths and serialized draft responses", () => {
+    const vehicleId = "0e879f46-1193-4d77-b785-057fe026d998";
+    expect(VehiclePathSchema.parse({ vehicleId })).toEqual({ vehicleId });
+    expect(
+      CreateVehicleResponseSchema.parse({
+        replayed: false,
+        vehicle: {
+          id: vehicleId,
+          name: "Porsche 911 Carrera",
+          brand: "Porsche",
+          model: "911",
+          variant: null,
+          year: 2026,
+          stockId: null,
+          internalId: null,
+          notes: null,
+          status: "DRAFT",
+          createdAt: "2026-09-19T12:00:00.000Z",
+          updatedAt: "2026-09-19T12:00:00.000Z",
+        },
+      }),
+    ).toMatchObject({ replayed: false, vehicle: { id: vehicleId } });
   });
 });

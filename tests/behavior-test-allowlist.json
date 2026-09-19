@@ -76,6 +76,18 @@
     "reason": "Type-only upload application port definitions with no runtime behavior."
   },
   {
+    "source": "apps/web/src/server/vehicles/vehicle-runtime.ts",
+    "reason": "Composition root that wires separately tested vehicle services and adapters."
+  },
+  {
+    "source": "apps/web/src/server/vehicles/vehicle.constants.ts",
+    "reason": "Static vehicle endpoint constants only."
+  },
+  {
+    "source": "apps/web/src/server/vehicles/vehicle.types.ts",
+    "reason": "Type-only vehicle application port definitions with no runtime behavior."
+  },
+  {
     "source": "packages/config/src/index.ts",
     "reason": "Barrel export with no behavior."
   },
