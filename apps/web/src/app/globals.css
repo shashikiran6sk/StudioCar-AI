@@ -434,6 +434,175 @@ body {
   font-weight: 700;
 }
 
+.photo-upload-step {
+  display: grid;
+  gap: 14px;
+}
+
+.photo-dropzone {
+  display: grid;
+  min-height: 128px;
+  place-items: center;
+  align-content: center;
+  gap: 7px;
+  padding: 16px;
+  border: 1.5px dashed var(--sc-neutral-400);
+  border-radius: var(--sc-radius-card);
+  background: var(--sc-neutral-50);
+  text-align: center;
+}
+
+.photo-dropzone--active {
+  border-color: var(--sc-blue-500);
+  background: var(--sc-blue-50);
+}
+
+.photo-dropzone__icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.photo-dropzone strong {
+  font-size: 13px;
+}
+
+.photo-dropzone > span:not(.photo-dropzone__icon) {
+  color: var(--sc-neutral-600);
+  font-size: 10px;
+}
+
+.photo-upload-step__limit {
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: var(--sc-radius-control);
+  background: var(--sc-blue-50);
+  color: var(--sc-blue-600);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.photo-upload-step__rejections,
+.photo-upload-step__error {
+  margin: 0;
+  color: var(--sc-error);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.photo-upload-step__rejections {
+  display: grid;
+  gap: 3px;
+  padding-left: 18px;
+}
+
+.photo-upload-list {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.photo-upload-item {
+  display: flex;
+  min-width: 0;
+  min-height: 56px;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--sc-neutral-300);
+  border-radius: var(--sc-radius-control);
+  background: var(--sc-neutral-0);
+}
+
+.photo-upload-item__reorder {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 1px;
+}
+
+.photo-upload-item__reorder button {
+  width: 24px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--sc-neutral-500);
+  cursor: pointer;
+}
+
+.photo-upload-item__reorder button:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+.photo-upload-item__thumbnail {
+  width: 60px;
+  height: 40px;
+  flex: 0 0 auto;
+  border-radius: 7px;
+  object-fit: cover;
+}
+
+.photo-upload-item__copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 3px;
+}
+
+.photo-upload-item__copy strong {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.photo-upload-item__copy span {
+  color: var(--sc-neutral-500);
+  font-size: 9px;
+}
+
+.photo-upload-item__copy .photo-upload-item__error {
+  color: var(--sc-error);
+}
+
+.photo-upload-item__status {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border-radius: var(--sc-radius-pill);
+  background: var(--sc-neutral-150);
+  color: var(--sc-neutral-700);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.photo-upload-item__status--uploading,
+.photo-upload-item__status--preparing,
+.photo-upload-item__status--finalizing {
+  background: var(--sc-blue-50);
+  color: var(--sc-blue-600);
+}
+
+.photo-upload-item__status--uploaded {
+  background: var(--sc-success-bg);
+  color: var(--sc-success);
+}
+
+.photo-upload-item__status--failed {
+  background: var(--sc-error-bg);
+  color: var(--sc-error);
+}
+
+.photo-upload-step__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--sc-neutral-300);
+}
+
 .profile-page {
   display: grid;
   gap: 26px;
@@ -686,6 +855,14 @@ body {
   .profile-security-summary,
   .vehicle-details-form__grid {
     grid-template-columns: 1fr;
+  }
+
+  .photo-upload-item {
+    flex-wrap: wrap;
+  }
+
+  .photo-upload-item__copy {
+    flex-basis: calc(100% - 130px);
   }
 
   .profile-section-card {
