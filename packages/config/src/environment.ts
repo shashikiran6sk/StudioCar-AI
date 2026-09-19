@@ -14,6 +14,12 @@ const OAuthChallengeTtlSchema = z.coerce
   .max(900)
   .default(600);
 
+export const SessionEnvironmentSchema = z
+  .object({
+    DATABASE_URL: PostgresUrlSchema,
+  })
+  .strip();
+
 const PhoneOtpChallengeTtlSchema = z.coerce
   .number()
   .int()
@@ -138,6 +144,7 @@ export type ServerEnvironment = z.infer<typeof ServerEnvironmentSchema>;
 export type ClientEnvironment = z.infer<typeof ClientEnvironmentSchema>;
 export type GoogleAuthEnvironment = z.infer<typeof GoogleAuthEnvironmentSchema>;
 export type PhoneAuthEnvironment = z.infer<typeof PhoneAuthEnvironmentSchema>;
+export type SessionEnvironment = z.infer<typeof SessionEnvironmentSchema>;
 
 export function parseServerEnvironment(
   environment: Record<string, string | undefined>,
@@ -161,4 +168,10 @@ export function parsePhoneAuthEnvironment(
   environment: Record<string, string | undefined>,
 ): PhoneAuthEnvironment {
   return PhoneAuthEnvironmentSchema.parse(environment);
+}
+
+export function parseSessionEnvironment(
+  environment: Record<string, string | undefined>,
+): SessionEnvironment {
+  return SessionEnvironmentSchema.parse(environment);
 }

@@ -4,6 +4,7 @@ import {
   parseClientEnvironment,
   parseGoogleAuthEnvironment,
   parsePhoneAuthEnvironment,
+  parseSessionEnvironment,
   parseServerEnvironment,
 } from "../../../packages/config/src/environment";
 
@@ -96,5 +97,11 @@ describe("environment validation", () => {
       PHONE_OTP_VERIFY_MAX_PER_CHALLENGE: 5,
       PHONE_OTP_VERIFY_MAX_PER_IP: 30,
     });
+  });
+
+  it("validates the focused session runtime without unrelated credentials", () => {
+    expect(
+      parseSessionEnvironment({ DATABASE_URL: validEnvironment.DATABASE_URL }),
+    ).toEqual({ DATABASE_URL: validEnvironment.DATABASE_URL });
   });
 });

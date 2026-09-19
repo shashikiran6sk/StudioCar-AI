@@ -1,0 +1,13 @@
+export const HOME_PATH = "/";
+export const LOGIN_PATH = "/login";
+export const DASHBOARD_PATH = "/dashboard";
+export const INVENTORY_PATH = "/inventory";
+export const PORTFOLIO_PATH = "/portfolio";
+export const USAGE_PATH = "/settings/usage";
+export const BILLING_PATH = "/settings/billing";
+export const HELP_PATH = "/help";
+export const GOOGLE_AUTH_START_PATH = "/api/auth/google/start";
+export const PHONE_AUTH_START_PATH = "/api/auth/phone/start";
+export const PHONE_AUTH_VERIFY_PATH = "/api/auth/phone/verify";
+export const LOGOUT_PATH = "/api/auth/logout";
+export const RETURN_TO_QUERY_KEY = "returnTo";

@@ -64,6 +64,7 @@
   color: var(--sc-neutral-900);
   cursor: pointer;
   font: 800 12px/1 var(--sc-font-sans);
+  text-decoration: none;
   transition: background 120ms ease-out, border-color 120ms ease-out, transform 120ms ease-out;
 }
 

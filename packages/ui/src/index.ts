@@ -1,5 +1,6 @@
 export * from "./brand-mark";
 export * from "./button";
+export * from "./button-link";
 export * from "./card";
 export * from "./comparison-slider";
 export * from "./dialog";
@@ -12,4 +13,3 @@ export * from "./status-badge";
 export * from "./stepper";
 export * from "./toggle-option";
 export * from "./utils";
-

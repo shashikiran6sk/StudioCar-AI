@@ -3,9 +3,10 @@
   "compilerOptions": {
     "baseUrl": ".",
     "incremental": true,
-    "types": ["vitest/globals", "@testing-library/jest-dom"],
+    "types": ["vitest/globals", "@testing-library/jest-dom/vitest"],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "next/*": ["./node_modules/next/*"]
     },
     "plugins": [{ "name": "next" }]
   },
@@ -16,6 +17,8 @@
     "src/**/*.tsx",
     "../../tests/unit/app/**/*.ts",
     "../../tests/unit/app/**/*.tsx",
+    "../../tests/unit/features/**/*.ts",
+    "../../tests/unit/features/**/*.tsx",
     "../../tests/unit/server/**/*.ts",
     "../../tests/unit/server/**/*.tsx"
   ],
