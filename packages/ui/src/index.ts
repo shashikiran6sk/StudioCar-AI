@@ -11,5 +11,6 @@ export * from "./skeleton";
 export * from "./state-panel";
 export * from "./status-badge";
 export * from "./stepper";
+export * from "./textarea";
 export * from "./toggle-option";
 export * from "./utils";
