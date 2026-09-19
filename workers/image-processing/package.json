@@ -6,16 +6,22 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "dependencies": {
+    "@aws-sdk/client-s3": "catalog:",
+    "@studiocar/config": "workspace:*",
+    "@studiocar/contracts": "workspace:*",
+    "@studiocar/database": "workspace:*",
+    "@studiocar/processing": "workspace:*",
+    "sharp": "catalog:"
+  },
   "scripts": {
-    "build": "tsc --outDir dist",
+    "build": "tsc --noEmit && esbuild src/handler.ts --bundle --platform=node --target=node24 --format=esm --external:sharp --external:@aws-sdk/client-s3 --external:@prisma/adapter-pg --external:@prisma/client --external:pg --outfile=dist/handler.mjs",
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@studiocar/config": "workspace:*",
-    "@studiocar/contracts": "workspace:*",
-    "@studiocar/processing": "workspace:*",
+    "esbuild": "catalog:",
     "vitest": "5.0.1"
   }
 }

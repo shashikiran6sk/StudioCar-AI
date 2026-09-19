@@ -41,6 +41,7 @@
     "pg": "catalog:",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "sharp": "catalog:",
     "tailwindcss": "4.3.3",
     "turbo": "2.10.13",
     "typescript": "5.9.3",

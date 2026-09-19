@@ -1,0 +1,145 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: StudioCar AI bounded image-processing Lambda worker and SQS event source
+
+Parameters:
+  ArtifactBucket:
+    Type: String
+    Description: Private S3 bucket containing the reviewed worker deployment archive
+  ArtifactKey:
+    Type: String
+    Description: Immutable S3 key for the reviewed worker deployment archive
+  DatabaseSecretArn:
+    Type: String
+    Description: Secrets Manager ARN containing DATABASE_URL as a JSON property
+  RemoveBgSecretArn:
+    Type: String
+    Description: Secrets Manager ARN containing REMOVEBG_API_KEY as a JSON property
+  ImageBucketName:
+    Type: String
+    Description: Private StudioCar image bucket name
+  ImageProcessingQueueArn:
+    Type: String
+    Description: ARN exported by the image-processing queue stack
+  MaximumConcurrency:
+    Type: Number
+    Default: 10
+    MinValue: 2
+    MaxValue: 1000
+  MemorySize:
+    Type: Number
+    Default: 2048
+    MinValue: 1024
+    MaxValue: 10240
+  TimeoutSeconds:
+    Type: Number
+    Default: 120
+    MinValue: 30
+    MaxValue: 900
+  MaximumImagePixels:
+    Type: Number
+    Default: 50000000
+    MinValue: 1000000
+    MaxValue: 50000000
+
+Resources:
+  ImageProcessingWorkerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: image-processing-runtime
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: WriteStructuredLogs
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*
+              - Sid: ConsumeProcessingQueue
+                Effect: Allow
+                Action:
+                  - sqs:ChangeMessageVisibility
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                  - sqs:ReceiveMessage
+                Resource: !Ref ImageProcessingQueueArn
+              - Sid: ReadWritePrivateImages
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: !Sub arn:${AWS::Partition}:s3:::${ImageBucketName}/users/*
+
+  ImageProcessingWorker:
+    Type: AWS::Lambda::Function
+    Properties:
+      Architectures:
+        - arm64
+      Code:
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Ref ArtifactKey
+      Description: Claims and executes StudioCar image-processing jobs
+      Environment:
+        Variables:
+          AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
+          BACKGROUND_REMOVAL_PROVIDER: removebg
+          DATABASE_URL: !Sub '{{resolve:secretsmanager:${DatabaseSecretArn}:SecretString:DATABASE_URL}}'
+          IMAGE_WORKER_CLAIM_TTL_MS: "120000"
+          MAX_PROVIDER_INPUT_BYTES: "23068672"
+          MAX_PROVIDER_OUTPUT_BYTES: "104857600"
+          MAX_WORKER_IMAGE_PIXELS: !Ref MaximumImagePixels
+          PREVIEW_MAX_WIDTH: "720"
+          PROCESSING_RETRY_BASE_MS: "5000"
+          PROCESSING_RETRY_MAX_MS: "300000"
+          REMOVEBG_API_KEY: !Sub '{{resolve:secretsmanager:${RemoveBgSecretArn}:SecretString:REMOVEBG_API_KEY}}'
+          REMOVEBG_TIMEOUT_MS: "60000"
+          S3_BUCKET: !Ref ImageBucketName
+      Handler: handler.handler
+      MemorySize: !Ref MemorySize
+      ReservedConcurrentExecutions: !Ref MaximumConcurrency
+      Role: !GetAtt ImageProcessingWorkerRole.Arn
+      Runtime: nodejs24.x
+      Timeout: !Ref TimeoutSeconds
+
+  ImageProcessingEventSource:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 5
+      Enabled: true
+      EventSourceArn: !Ref ImageProcessingQueueArn
+      FunctionName: !Ref ImageProcessingWorker
+      FunctionResponseTypes:
+        - ReportBatchItemFailures
+      ScalingConfig:
+        MaximumConcurrency: !Ref MaximumConcurrency
+
+  ImageProcessingWorkerErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Image-processing Lambda has invocation errors
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref ImageProcessingWorker
+      EvaluationPeriods: 1
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      Threshold: 0
+      TreatMissingData: notBreaching
+
+Outputs:
+  ImageProcessingWorkerArn:
+    Value: !GetAtt ImageProcessingWorker.Arn
+  ImageProcessingWorkerRoleArn:
+    Value: !GetAtt ImageProcessingWorkerRole.Arn

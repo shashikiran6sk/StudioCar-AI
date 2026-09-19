@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   parseClientEnvironment,
   parseGoogleAuthEnvironment,
+  parseImageWorkerEnvironment,
   parsePhoneAuthEnvironment,
   parseProcessingEnvironment,
   parseSessionEnvironment,
@@ -140,5 +141,31 @@ describe("environment validation", () => {
       PROCESSING_OUTBOX_RETRY_BASE_MS: 1_000,
       PROCESSING_OUTBOX_RETRY_MAX_MS: 60_000,
     });
+  });
+
+  it("validates bounded image worker settings and provider credentials", () => {
+    expect(parseImageWorkerEnvironment(validEnvironment)).toEqual({
+      DATABASE_URL: validEnvironment.DATABASE_URL,
+      AWS_REGION: validEnvironment.AWS_REGION,
+      S3_BUCKET: validEnvironment.S3_BUCKET,
+      BACKGROUND_REMOVAL_PROVIDER: "removebg",
+      REMOVEBG_API_KEY: validEnvironment.REMOVEBG_API_KEY,
+      IMAGE_WORKER_CLAIM_TTL_MS: 120_000,
+      PROCESSING_RETRY_BASE_MS: 5_000,
+      PROCESSING_RETRY_MAX_MS: 300_000,
+      REMOVEBG_TIMEOUT_MS: 60_000,
+      MAX_PROVIDER_INPUT_BYTES: 22 * 1024 * 1024,
+      MAX_PROVIDER_OUTPUT_BYTES: 100 * 1024 * 1024,
+      MAX_WORKER_IMAGE_PIXELS: 50_000_000,
+      PREVIEW_MAX_WIDTH: 720,
+    });
+
+    expect(() =>
+      parseImageWorkerEnvironment({
+        ...validEnvironment,
+        PROCESSING_RETRY_BASE_MS: "5000",
+        PROCESSING_RETRY_MAX_MS: "1000",
+      }),
+    ).toThrow();
   });
 });
