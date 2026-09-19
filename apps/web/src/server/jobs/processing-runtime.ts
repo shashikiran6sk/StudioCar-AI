@@ -3,11 +3,13 @@ import { parseProcessingEnvironment } from "@studiocar/config";
 import {
   createDatabaseClient,
   PrismaProcessingJobRepository,
+  PrismaProcessingJobStatusRepository,
   PrismaProcessingOutboxRepository,
 } from "@studiocar/database";
 import { ProcessingOutboxDispatcher } from "@studiocar/processing";
 
 import { ProcessingJobService } from "./processing-job-service";
+import { ProcessingStatusService } from "./processing-status-service";
 import { SqsProcessingQueue } from "./sqs-processing-queue";
 import { toProcessingProvider } from "./to-processing-provider";
 
@@ -15,6 +17,7 @@ export interface ProcessingRuntime {
   dispatchToken: string;
   dispatcher: ProcessingOutboxDispatcher;
   service: ProcessingJobService;
+  statusService: ProcessingStatusService;
 }
 
 let processingRuntime: ProcessingRuntime | undefined;
@@ -47,6 +50,9 @@ export function getProcessingRuntime(): ProcessingRuntime {
       new PrismaProcessingJobRepository(database),
       dispatcher,
       toProcessingProvider(environment.BACKGROUND_REMOVAL_PROVIDER),
+    ),
+    statusService: new ProcessingStatusService(
+      new PrismaProcessingJobStatusRepository(database),
     ),
   };
   return processingRuntime;

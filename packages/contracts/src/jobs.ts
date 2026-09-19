@@ -26,6 +26,8 @@ export const ProcessingStageSchema = z.enum([
 const JobStatusBaseSchema = z.object({
   jobId: EntityIdSchema,
   assetId: EntityIdSchema,
+  vehicleId: EntityIdSchema,
+  vehicleName: z.string().trim().min(1).max(120),
   updatedAt: IsoDateTimeSchema,
 });
 
@@ -75,6 +77,10 @@ export const JobStatusQuerySchema = z
   })
   .strict();
 
+export const JobStatusResponseSchema = z
+  .object({ jobs: z.array(JobStatusSchema).max(100) })
+  .strict();
+
 export const CreateProcessingBatchSchema = z
   .object({
     vehicleId: EntityIdSchema,
@@ -109,6 +115,7 @@ export type JobState = z.infer<typeof JobStateSchema>;
 export type ProcessingStage = z.infer<typeof ProcessingStageSchema>;
 export type JobStatus = z.infer<typeof JobStatusSchema>;
 export type JobStatusQuery = z.infer<typeof JobStatusQuerySchema>;
+export type JobStatusResponse = z.infer<typeof JobStatusResponseSchema>;
 export type CreateProcessingBatch = z.infer<
   typeof CreateProcessingBatchSchema
 >;

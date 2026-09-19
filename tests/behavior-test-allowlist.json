@@ -238,5 +238,21 @@
   {
     "source": "workers/image-processing/src/handler.ts",
     "reason": "Thin Lambda entry point delegating to the separately tested queue handler and composition root."
+  },
+  {
+    "source": "apps/web/src/server/jobs/processing-status.constants.ts",
+    "reason": "Static processing status API messages, codes, and parameter names only."
+  },
+  {
+    "source": "apps/web/src/server/jobs/processing-status.types.ts",
+    "reason": "Type-only processing status application and repository ports with no runtime behavior."
+  },
+  {
+    "source": "apps/web/src/features/processing/active-processing-job.types.ts",
+    "reason": "Type-only transient processing activity definitions with no runtime behavior."
+  },
+  {
+    "source": "apps/web/src/features/processing/processing-polling.constants.ts",
+    "reason": "Static adaptive polling intervals, routes, and presentation labels only."
   }
 ]

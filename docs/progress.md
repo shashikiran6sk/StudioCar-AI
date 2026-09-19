@@ -4,7 +4,7 @@ Last updated: 2026-09-19
 
 ## Current status
 
-Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 uploads, and the end-to-end four-step vehicle submission path through durable SQS enqueue are implemented. The provider-independent worker lifecycle, remove.bg adapter, private-S3 execution, full decoder validation, deterministic output recovery, preview transformation, and bounded Lambda runtime are implemented; the next planned slice is the tenant-safe processing status API and truthful adaptive polling UX.
+Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 uploads, and the end-to-end four-step vehicle submission path through durable SQS enqueue are implemented. The provider-independent worker lifecycle, remove.bg adapter, private-S3 execution, full decoder validation, deterministic output recovery, preview transformation, bounded Lambda runtime, tenant-safe status API, and truthful adaptive processing UI are implemented; the next planned slice is the screenshot-derived inventory data surface.
 
 ## Completed
 
@@ -168,6 +168,15 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Added a deployable CloudFormation worker stack with least-privilege S3/SQS access, Secrets Manager dynamic references, reserved/event-source concurrency limits, `ReportBatchItemFailures`, and a Lambda error alarm.
 - Added focused configuration, decoder, transform, checksum, object-key, executor recovery/tamper, S3 adapter, missing-object, and provider-factory tests. The worker build now emits a bundled Lambda entry module while leaving production-native dependencies explicit for Linux arm64 packaging.
 
+### SC014 — Batched processing status and adaptive polling UX
+
+- Extended the canonical job-status contract with owned vehicle identity and a bounded response envelope while preserving explicit states and truthful stages without fabricated provider percentages.
+- Added a dedicated tenant-scoped PostgreSQL status repository that returns all requested jobs in request order or no result when any ID is missing or belongs to another tenant. Completed output identity and the latest attempt's retryability are selected without loading unrelated relations.
+- Added a processing status application service and authenticated `GET /api/jobs?ids=...` behavior with strict UUID validation, a 100-job batch bound, private no-store responses, stable API errors, and no partial ownership disclosure.
+- Added a transient Zustand activity store populated from accepted processing commands, a single batched poller with 1/2/5/10-second adaptive intervals, immediate refresh on visibility, complete pause while hidden, cancellation-safe requests, and immediate per-job polling stop for completed, failed, or cancelled states.
+- Added the screenshot-derived compact top-bar activity indicator and bounded activity panel with redundant dot/text status, truthful stage labels, refresh errors, terminal failure presentation, accessible expansion/dismiss controls, and no synthetic progress bars or percentages.
+- Added contract, repository integration, service, mapping, handler, route, store, request, interval, visibility, terminal-state, stage-label, and component accessibility tests.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -177,8 +186,8 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 
 ## Next planned slices
 
-1. **SC014 — Processing status UX**: tenant-safe batched status endpoint, adaptive visibility-aware polling, truthful stages, and retry/failure presentation.
-2. **SC015+ — Product surfaces**: homepage, dashboard data, inventory, portfolio/detail, and usage/billing implemented screenshot-by-screenshot.
+1. **SC015A — Inventory foundation**: screenshot-derived inventory route, tenant-safe cursor pagination/search/filter/sort, private preview signing, status aggregation, and responsive vehicle cards.
+2. **SC015B+ — Remaining product surfaces**: homepage, dashboard data, portfolio/detail, and usage/billing implemented screenshot-by-screenshot.
 3. **Later hardening**: asynchronous email, security review, performance/preview generation, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
 
 ## Important implementation notes
@@ -207,6 +216,8 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Plate-privacy detection is not fabricated by the Sharp treatment pipeline; a dedicated detection/redaction adapter remains required before that option can be truthfully advertised as enforced in production.
 - `apps/web/next-env.d.ts` is generated by Next.js and intentionally untracked.
 - Processing progress must use truthful stages unless a provider exposes meaningful progress.
+- The global activity store contains only transient job IDs and the latest server response; it is not canonical and intentionally does not survive a full browser restart. Processing continues independently, and the inventory/dashboard server queries must rediscover active vehicle state from PostgreSQL.
+- Batched status polling pauses completely for hidden tabs, refreshes immediately when visible, and removes terminal IDs from future poll requests. Terminal results remain in the activity panel until dismissed so failures are not silently lost.
 - All future work follows the branch → PR → required CI → merge workflow in `/AGENTS.md`.
 
 ## Per-slice update checklist

@@ -272,6 +272,124 @@ body {
   font-size: 12px;
 }
 
+.app-topbar__activity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.processing-indicator {
+  position: relative;
+}
+
+.processing-indicator__trigger {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--sc-radius-pill);
+  background: var(--sc-blue-50);
+  color: var(--sc-blue-600);
+  cursor: pointer;
+  font: 800 11px/1 var(--font-manrope), sans-serif;
+}
+
+.processing-indicator__trigger--error {
+  background: var(--sc-error-bg);
+  color: var(--sc-error);
+}
+
+.processing-indicator__dot {
+  width: 7px;
+  height: 7px;
+  border: 2px solid rgb(49 92 245 / 22%);
+  border-radius: 50%;
+  background: var(--sc-blue-500);
+}
+
+.processing-indicator__trigger--error .processing-indicator__dot {
+  border-color: rgb(217 45 32 / 22%);
+  background: var(--sc-error);
+}
+
+.processing-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 20;
+  width: min(340px, calc(100vw - 32px));
+  max-height: 390px;
+  overflow-y: auto;
+  padding: 15px;
+  border: 1px solid var(--sc-neutral-300);
+  border-radius: var(--sc-radius-panel);
+  background: var(--sc-neutral-0);
+  box-shadow: var(--sc-shadow-panel);
+}
+
+.processing-panel h2 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.processing-panel ul {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.processing-panel li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--sc-neutral-300);
+}
+
+.processing-panel li > span {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.processing-panel strong {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.processing-panel small {
+  color: var(--sc-neutral-600);
+  font-size: 10px;
+}
+
+.processing-panel li > button {
+  min-height: 32px;
+  padding: 0 9px;
+  border: 1px solid var(--sc-neutral-300);
+  border-radius: var(--sc-radius-control);
+  background: var(--sc-neutral-0);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.processing-panel__error {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: var(--sc-radius-control);
+  background: var(--sc-error-bg);
+  color: var(--sc-error);
+  font-size: 10px;
+}
+
 .account-menu {
   position: relative;
 }
