@@ -299,10 +299,17 @@ importers:
         version: link:../config
 
   packages/processing:
+    dependencies:
+      '@studiocar/contracts':
+        specifier: workspace:*
+        version: link:../contracts
     devDependencies:
       '@studiocar/config':
         specifier: workspace:*
         version: link:../config
+      '@types/node':
+        specifier: 26.6.1
+        version: 26.6.1
 
   packages/testing:
     devDependencies:

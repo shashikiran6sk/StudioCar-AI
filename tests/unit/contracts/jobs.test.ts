@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CreateProcessingBatchSchema,
   JobStatusQuerySchema,
   JobStatusSchema,
 } from "../../../packages/contracts/src/jobs";
@@ -37,5 +38,30 @@ describe("job contracts", () => {
     expect(JobStatusQuerySchema.safeParse({ ids: [jobId, jobId] }).success).toBe(
       false,
     );
+  });
+
+  it("validates a normalized processing batch and rejects duplicate assets", () => {
+    const vehicleId = "0e879f46-1193-4d77-b785-057fe026d998";
+
+    expect(
+      CreateProcessingBatchSchema.parse({
+        vehicleId,
+        assetIds: [assetId],
+        options: {},
+      }),
+    ).toMatchObject({
+      options: {
+        background: "PREMIUM_WHITE",
+        enhancement: true,
+        platePrivacy: true,
+      },
+    });
+    expect(
+      CreateProcessingBatchSchema.safeParse({
+        vehicleId,
+        assetIds: [assetId, assetId],
+        options: {},
+      }).success,
+    ).toBe(false);
   });
 });
