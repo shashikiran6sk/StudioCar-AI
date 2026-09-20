@@ -177,6 +177,26 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
         select: { status: true },
       }),
     ).resolves.toEqual({ status: "READY" });
+    await expect(
+      database.emailOutboxMessage.findMany({
+        where: { vehicleId: record.vehicleId },
+        select: {
+          batchIdempotencyKey: true,
+          recipient: true,
+          status: true,
+          type: true,
+          vehicleName: true,
+        },
+      }),
+    ).resolves.toEqual([
+      {
+        batchIdempotencyKey: "worker-completion-batch",
+        recipient: OWNER_EMAIL,
+        status: "PENDING",
+        type: "PROCESSING_COMPLETED",
+        vehicleName: "Worker lifecycle vehicle",
+      },
+    ]);
   });
 
   it("republishes retryable work and terminally rejects an invalid image", async () => {
@@ -270,6 +290,11 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
           jobId: record.jobId,
           type: "BACKGROUND_REMOVAL_COMPLETED",
         },
+      }),
+    ).resolves.toBe(0);
+    await expect(
+      database.emailOutboxMessage.count({
+        where: { vehicleId: record.vehicleId },
       }),
     ).resolves.toBe(0);
   });
