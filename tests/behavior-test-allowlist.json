@@ -124,6 +124,14 @@
     "reason": "Static browser security header names, values, and CSP directives only."
   },
   {
+    "source": "apps/web/src/server/security/command-rate-limiter.constants.ts",
+    "reason": "Static command rate-limit bounds and response constants only."
+  },
+  {
+    "source": "apps/web/src/server/security/command-rate-limiter.types.ts",
+    "reason": "Type-only command rate-limit policy, decision, and persistence ports."
+  },
+  {
     "source": "apps/web/src/server/uploads/image-validation/image-metadata.types.ts",
     "reason": "Type-only validated image metadata definitions with no runtime behavior."
   },

@@ -8,6 +8,11 @@ import { createApiErrorResponse } from "../auth/create-api-error-response";
 import { isSameOriginRequest } from "../auth/is-same-origin-request";
 import type { ActiveSession } from "../auth/session-service";
 import {
+  COMMAND_RATE_LIMITED_CODE,
+  COMMAND_RATE_LIMITED_STATUS,
+} from "../security/command-rate-limiter.constants";
+import type { CommandRateLimiterPort } from "../security/command-rate-limiter.types";
+import {
   IDEMPOTENCY_HEADER,
   CACHE_CONTROL_HEADER,
   PRIVATE_RESPONSE_CACHE_CONTROL,
@@ -24,6 +29,7 @@ import {
   UPLOAD_LIMIT_EXCEEDED_MESSAGE,
   UPLOAD_NOT_FOUND_CODE,
   UPLOAD_NOT_FOUND_STATUS,
+  UPLOAD_RATE_LIMITED_MESSAGE,
   UPLOAD_UNAUTHENTICATED_CODE,
   UPLOAD_UNAUTHENTICATED_MESSAGE,
   UPLOAD_UNAUTHENTICATED_STATUS,
@@ -40,6 +46,7 @@ export async function handleCreateUploadIntent(
   request: Request,
   session: ActiveSession | null,
   uploads: UploadApplication,
+  rateLimiter: CommandRateLimiterPort,
   createRequestId: () => string = randomUUID,
 ): Promise<Response> {
   if (!isSameOriginRequest(request)) {
@@ -94,6 +101,17 @@ export async function handleCreateUploadIntent(
   }
 
   try {
+    const rateLimit = await rateLimiter.consume(session.userId);
+    if (!rateLimit.allowed) {
+      return createApiErrorResponse({
+        status: COMMAND_RATE_LIMITED_STATUS,
+        code: COMMAND_RATE_LIMITED_CODE,
+        message: UPLOAD_RATE_LIMITED_MESSAGE,
+        requestId: createRequestId(),
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      });
+    }
+
     const result = await uploads.createIntent(
       session.userId,
       idempotencyKey.data,

@@ -5,7 +5,11 @@ import { handleDispatchProcessingOutbox } from "../../../../../../../apps/web/sr
 import { ProcessingJobService } from "../../../../../../../apps/web/src/server/jobs/processing-job-service";
 import { ProcessingStatusService } from "../../../../../../../apps/web/src/server/jobs/processing-status-service";
 import { getProcessingRuntime } from "../../../../../../../apps/web/src/server/jobs/processing-runtime";
-import { ProcessingProvider } from "../../../../../../../packages/database/generated/prisma/client";
+import { CommandRateLimiter } from "../../../../../../../apps/web/src/server/security/command-rate-limiter";
+import {
+  CommandRateLimitScope,
+  ProcessingProvider,
+} from "../../../../../../../packages/database/generated/prisma/client";
 import { ProcessingOutboxDispatcher } from "../../../../../../../packages/processing/src/processing-outbox-dispatcher";
 import type {
   ProcessingOutboxRepositoryPort,
@@ -45,9 +49,18 @@ describe("POST /api/internal/jobs/dispatch", () => {
       ProcessingProvider.REMOVEBG,
     );
     const dispatchToken = "processing-dispatch-token-at-least-32-characters";
+    const rateLimiter = new CommandRateLimiter(
+      { consume: vi.fn() },
+      {
+        scope: CommandRateLimitScope.PROCESSING_BATCH,
+        maximumRequests: 20,
+        windowMilliseconds: 60_000,
+      },
+    );
     vi.mocked(getProcessingRuntime).mockReturnValue({
       dispatchToken,
       dispatcher,
+      rateLimiter,
       service,
       statusService: new ProcessingStatusService({ findOwned: vi.fn() }),
     });

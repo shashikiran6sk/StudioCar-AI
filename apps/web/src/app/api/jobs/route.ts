@@ -16,9 +16,11 @@ export async function GET(request: Request): Promise<Response> {
 
 export async function POST(request: Request): Promise<Response> {
   const session = await getCurrentSession();
+  const runtime = getProcessingRuntime();
   return handleCreateProcessingBatch(
     request,
     session,
-    getProcessingRuntime().service,
+    runtime.service,
+    runtime.rateLimiter,
   );
 }

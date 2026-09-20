@@ -4,7 +4,7 @@ Last updated: 2026-09-20
 
 ## Current status
 
-The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and durable transactional email are implemented. Browser response hardening and a blocking production dependency audit are also in place. Payment checkout remains intentionally unavailable until a billing provider is selected.
+The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and durable transactional email are implemented. Browser response hardening, a blocking production dependency audit, and durable authenticated command limits are also in place. Payment checkout remains intentionally unavailable until a billing provider is selected.
 
 ## Completed
 
@@ -265,6 +265,15 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Added unit coverage for production/development CSP behavior and the full header set, plus browser-level assertions against the built application response.
 - Verified a clean moderate-or-higher production dependency audit, source mapping, Prisma generation/validation, all ten migrations, lint, strict typecheck, the complete unit/component suite including 197 web files with 317 tests, 19 real-PostgreSQL integration files with 35 tests, production builds for all eleven packages, and the five-test Playwright suite locally.
 
+### SC018A2a — Durable authenticated command limits
+
+- Added an exact sliding-window command limiter backed by PostgreSQL rather than process memory, so limits remain consistent across Vercel instances and cold starts.
+- Serialized consumption with tenant-and-scope advisory locks and persisted only successful allowance events. Concurrent requests cannot exceed the configured bound, while upload-presign and processing-batch budgets remain isolated.
+- Applied configurable per-user limits to the cost-bearing upload-presign and processing-batch commands after authentication and validation but before S3 signing, database reservation, or queue dispatch.
+- Added stable `429 RATE_LIMITED` responses with bounded `Retry-After` values. Storage transfer and asynchronous worker concurrency remain governed by their existing data-plane controls rather than this control-plane limit.
+- Added the eleventh backward-compatible migration plus unit, route, configuration, and real-PostgreSQL concurrency/window-expiry coverage. Cleanup of expired limiter events is intentionally part of the lifecycle-retention slice.
+- Verified a clean production dependency audit, source mapping, Prisma generation/validation, all eleven migrations, lint, strict typecheck, the complete web unit/component suite with 321 tests, 20 real-PostgreSQL integration files with 37 tests, production builds for all eleven packages, and the five-test Playwright suite.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -274,7 +283,7 @@ The production foundation, authentication, private direct uploads, asynchronous 
 
 ## Next planned slices
 
-1. **SC018A2 — Abuse controls and secret isolation**: add shared authenticated command limits beyond OTP, formalize deployment secret scopes, and add webhook signature infrastructure before any webhook endpoint is exposed.
+1. **SC018A2b — Secret isolation and webhook verification foundation**: formalize runtime-specific deployment secret scopes and add a provider-neutral signed-webhook verification boundary before any webhook endpoint is exposed.
 2. **SC018B — Performance and lifecycle hardening**: query/index review, cleanup jobs, polling/load verification, and bounded data-retention operations.
 3. **Later hardening**: observability/alerts, full E2E completion, AWS deployment, DLQ replay/backups, and BiRefNet substitution proof.
 

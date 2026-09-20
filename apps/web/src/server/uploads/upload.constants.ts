@@ -42,5 +42,7 @@ export const UPLOAD_ASSET_INVALID_MESSAGE =
   "The image upload was previously marked invalid.";
 export const UPLOAD_UNAVAILABLE_MESSAGE =
   "Image storage is temporarily unavailable. Please try again.";
+export const UPLOAD_RATE_LIMITED_MESSAGE =
+  "Too many upload requests. Wait before trying again.";
 export const INVALID_UPLOAD_INTENT_REASON =
   "The upload intent contains invalid image metadata.";
