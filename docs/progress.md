@@ -280,7 +280,7 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Added a deployment ownership matrix for the Next.js control plane, processing and email dispatchers, independent workers, and trusted schedulers. The matrix requires workload identities, separate dispatch tokens, selected-provider-only credentials, and prohibits copying the local environment union into production runtimes.
 - Added a provider-neutral `WebhookSignatureVerifier` boundary and a raw-body HMAC-SHA256 adapter with validated header configuration, bounded timestamp tolerance, constant-time digest comparison, malformed-header bounds, and two-secret rotation support.
 - Documented the mandatory future webhook admission order: bounded raw bytes, provider-selected verifier, freshness/signature verification, Zod parsing, and unique provider/external-ID persistence. No public webhook route was exposed because no selected provider signature contract currently justifies one.
-- Added focused parser, digest, option-validation, adapter, configuration-isolation, and rotation/tamper/freshness tests. Source mapping, lint, strict typecheck, and the complete web suite with 203 files and 327 tests pass before the remaining repository gates.
+- Added focused parser, digest, option-validation, adapter, configuration-isolation, and rotation/tamper/freshness tests. Verified a clean dependency audit, source mapping, all eleven migrations, lint, strict typecheck, the complete web suite with 203 files and 327 tests, 20 real-PostgreSQL integration files with 37 tests, production builds for all eleven packages, and the five-test Playwright suite.
 
 ### Repository governance
 
