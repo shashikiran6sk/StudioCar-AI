@@ -4,7 +4,7 @@ Last updated: 2026-09-20
 
 ## Current status
 
-The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived inventory, portfolio, dashboard, marketing, and immutable-event-backed Usage & Billing surfaces are implemented. The independent email delivery queue/worker boundary is implemented; the next slice will add the durable application outbox and processing-completion producer. Payment checkout remains intentionally unavailable until a billing provider is selected.
+The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived inventory, portfolio, dashboard, marketing, and immutable-event-backed Usage & Billing surfaces are implemented. The independent email delivery plane and atomic processing-completion outbox reservation are implemented; the next slice will dispatch and durably execute those messages. Payment checkout remains intentionally unavailable until a billing provider is selected.
 
 ## Completed
 
@@ -236,6 +236,15 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Generalized behavior-source mapping discovery so every worker workspace is covered automatically, and added contract, renderer, escaping, retry-classification, adapter, handler, and composition tests.
 - Verified source mapping, lint, strict typecheck, the complete unit/component suite, the worker's six focused test files with 15 tests, Prisma validation, all nine migrations, 17 real-PostgreSQL integration files with 32 tests, production builds for all ten packages, and the five-test Playwright suite locally. Database-backed producer, delivery audit, and end-to-end dispatch remain intentionally closed until SC017B.
 
+### SC017B1 — Atomic processing-completion email reservation
+
+- Added a durable `EmailOutboxMessage` lifecycle with explicit pending, queued, processing, delivered, and failed states; separate publish and delivery claims; attempt counts; provider/queue identifiers; terminal timestamps; and indexes for bounded recovery scans.
+- Snapshot the verified primary recipient and vehicle name for a versioned processing-completion notification, keyed uniquely by user, processing-batch idempotency key, and message type.
+- Reserve the email outbox record in the same PostgreSQL transaction that persists the final processed asset, immutable usage event, successful attempt, completed job, and vehicle `READY` transition. Phone-only users and partially failed batches do not create an inapplicable success email.
+- Serialized terminal vehicle evaluation with a transaction-scoped advisory lock so concurrent final-job transactions cannot both miss the `READY` transition or reserve duplicate notifications.
+- Added a backward-compatible tenth migration and real-PostgreSQL assertions for successful outbox reservation and absence on terminal image failure. Queue publication and worker delivery claims remain closed until SC017B2.
+- Verified source mapping, lint, strict typecheck, the complete unit/component suite, Prisma validation, all ten migrations, 17 real-PostgreSQL integration files with 32 tests, production builds for all ten packages, and the five-test Playwright suite locally.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -245,7 +254,7 @@ The production foundation, authentication, private direct uploads, asynchronous 
 
 ## Next planned slices
 
-1. **SC017B — Durable email outbox**: atomically create processing-completion notifications, dispatch them to the independent queue, and persist delivery claims/results without request-path delivery.
+1. **SC017B2 — Email dispatch and durable delivery**: dispatch pending email outbox rows to the independent queue, recover publication failures, and make the worker claim/finalize PostgreSQL delivery state.
 2. **SC018 — Security and performance hardening**: secure headers, CSRF/rate-limit audit, query/index review, cleanup, and load verification.
 3. **Later hardening**: observability/alerts, full E2E completion, AWS deployment, DLQ replay/backups, and BiRefNet substitution proof.
 
@@ -281,6 +290,7 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - `BillingPort` is intentionally unimplemented until a payment provider is selected. UI upgrade controls disclose this state and never return fake checkout URLs, mutate subscriptions, or claim payment success.
 - The email worker consumes only the stable `EmailWorkerMessage` contract and treats delivery as an independent data plane. No application request publishes directly to SQS or waits for Resend; SC017B must add a transactional outbox and recovery dispatcher before the worker is connected to product events.
 - Resend retains idempotency keys for a bounded provider window. SC017B must also persist application delivery claims and terminal outcomes so later DLQ replay is governed by durable PostgreSQL state rather than provider retention alone.
+- Processing-completion email reservation occurs only when the vehicle atomically transitions from `PROCESSING` to `READY`, a verified primary email is present, and the job belongs to a keyed batch. The email row snapshots delivery-facing values so later profile edits cannot change an already accepted notification.
 - Batched status polling pauses completely for hidden tabs, refreshes immediately when visible, and removes terminal IDs from future poll requests. Terminal results remain in the activity panel until dismissed so failures are not silently lost.
 - Inventory is a separate optimized read model rather than an extension of draft mutation endpoints. It exposes only operational vehicle batches and computes visible progress from completed image jobs; it never invents provider-level progress.
 - Inventory preview URLs are signed at render time from tenant-scoped preview object keys and expire according to the bounded presigned URL configuration. Full-resolution asset signing is isolated to the tenant-authorized portfolio service.

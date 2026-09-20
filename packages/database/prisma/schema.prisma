@@ -86,22 +86,35 @@ enum WebhookProcessingStatus {
   IGNORED
 }
 
+enum EmailMessageType {
+  PROCESSING_COMPLETED
+}
+
+enum EmailDeliveryStatus {
+  PENDING
+  QUEUED
+  PROCESSING
+  DELIVERED
+  FAILED
+}
+
 model User {
-  id                String             @id @default(uuid()) @db.Uuid
-  displayName       String?            @db.VarChar(120)
-  primaryEmail      String?            @unique @db.VarChar(320)
-  primaryPhone      String?            @unique @db.VarChar(20)
-  createdAt         DateTime           @default(now()) @db.Timestamptz(3)
-  updatedAt         DateTime           @updatedAt @db.Timestamptz(3)
-  authIdentities    AuthIdentity[]
-  sessions          Session[]
-  vehicles          Vehicle[]
-  imageAssets       ImageAsset[]
-  processingJobs    ProcessingJob[]
-  processedAssets   ProcessedAsset[]
-  usageEvents       UsageEvent[]
-  planSubscriptions PlanSubscription[]
-  auditLogs         AuditLog[]
+  id                  String               @id @default(uuid()) @db.Uuid
+  displayName         String?              @db.VarChar(120)
+  primaryEmail        String?              @unique @db.VarChar(320)
+  primaryPhone        String?              @unique @db.VarChar(20)
+  createdAt           DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime             @updatedAt @db.Timestamptz(3)
+  authIdentities      AuthIdentity[]
+  sessions            Session[]
+  vehicles            Vehicle[]
+  imageAssets         ImageAsset[]
+  processingJobs      ProcessingJob[]
+  processedAssets     ProcessedAsset[]
+  usageEvents         UsageEvent[]
+  planSubscriptions   PlanSubscription[]
+  auditLogs           AuditLog[]
+  emailOutboxMessages EmailOutboxMessage[]
 }
 
 model AuthIdentity {
@@ -135,17 +148,17 @@ model OAuthChallenge {
 }
 
 model Session {
-  id                   String    @id @default(uuid()) @db.Uuid
-  userId               String    @db.Uuid
-  tokenHash            String    @unique @db.Char(64)
-  expiresAt            DateTime  @db.Timestamptz(3)
-  lastUsedAt           DateTime? @db.Timestamptz(3)
-  revokedAt            DateTime? @db.Timestamptz(3)
-  rotatedFromSessionId String?   @unique @db.Uuid
-  createdAt            DateTime  @default(now()) @db.Timestamptz(3)
-  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  rotatedFrom          Session?  @relation("SessionRotation", fields: [rotatedFromSessionId], references: [id], onDelete: SetNull)
-  rotatedTo            Session?  @relation("SessionRotation")
+  id                   String             @id @default(uuid()) @db.Uuid
+  userId               String             @db.Uuid
+  tokenHash            String             @unique @db.Char(64)
+  expiresAt            DateTime           @db.Timestamptz(3)
+  lastUsedAt           DateTime?          @db.Timestamptz(3)
+  revokedAt            DateTime?          @db.Timestamptz(3)
+  rotatedFromSessionId String?            @unique @db.Uuid
+  createdAt            DateTime           @default(now()) @db.Timestamptz(3)
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rotatedFrom          Session?           @relation("SessionRotation", fields: [rotatedFromSessionId], references: [id], onDelete: SetNull)
+  rotatedTo            Session?           @relation("SessionRotation")
   phoneOtpChallenge    PhoneOtpChallenge?
 
   @@index([userId, expiresAt])
@@ -191,25 +204,26 @@ model PhoneOtpAttempt {
 }
 
 model Vehicle {
-  id                     String           @id @default(uuid()) @db.Uuid
-  userId                 String           @db.Uuid
-  creationIdempotencyKey String?          @db.VarChar(128)
-  name                   String           @db.VarChar(120)
-  brand                  String?          @db.VarChar(80)
-  model                  String?          @db.VarChar(80)
-  variant                String?          @db.VarChar(80)
+  id                     String               @id @default(uuid()) @db.Uuid
+  userId                 String               @db.Uuid
+  creationIdempotencyKey String?              @db.VarChar(128)
+  name                   String               @db.VarChar(120)
+  brand                  String?              @db.VarChar(80)
+  model                  String?              @db.VarChar(80)
+  variant                String?              @db.VarChar(80)
   year                   Int?
-  stockId                String?          @db.VarChar(80)
-  internalId             String?          @db.VarChar(80)
-  notes                  String?          @db.VarChar(2000)
-  status                 VehicleStatus    @default(DRAFT)
-  archivedAt             DateTime?        @db.Timestamptz(3)
-  createdAt              DateTime         @default(now()) @db.Timestamptz(3)
-  updatedAt              DateTime         @updatedAt @db.Timestamptz(3)
-  user                   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stockId                String?              @db.VarChar(80)
+  internalId             String?              @db.VarChar(80)
+  notes                  String?              @db.VarChar(2000)
+  status                 VehicleStatus        @default(DRAFT)
+  archivedAt             DateTime?            @db.Timestamptz(3)
+  createdAt              DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime             @updatedAt @db.Timestamptz(3)
+  user                   User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   imageAssets            ImageAsset[]
   processingJobs         ProcessingJob[]
   processedAssets        ProcessedAsset[]
+  emailOutboxMessages    EmailOutboxMessage[]
 
   @@unique([userId, stockId])
   @@unique([userId, internalId])
@@ -241,42 +255,42 @@ model ImageAsset {
   vehicle           Vehicle          @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   processingJobs    ProcessingJob[]
 
+  @@unique([userId, idempotencyKey])
   @@index([vehicleId, createdAt])
   @@index([userId, status, createdAt])
-  @@unique([userId, idempotencyKey])
 }
 
 model ProcessingJob {
-  id                  String              @id @default(uuid()) @db.Uuid
-  userId              String              @db.Uuid
-  vehicleId           String              @db.Uuid
-  imageAssetId        String              @db.Uuid
-  status              ProcessingJobStatus @default(CREATED)
+  id                  String                   @id @default(uuid()) @db.Uuid
+  userId              String                   @db.Uuid
+  vehicleId           String                   @db.Uuid
+  imageAssetId        String                   @db.Uuid
+  status              ProcessingJobStatus      @default(CREATED)
   provider            ProcessingProvider
   options             Json
-  idempotencyKey      String              @db.VarChar(128)
-  batchIdempotencyKey String?             @db.VarChar(128)
-  batchRequestHash    String?             @db.Char(64)
-  displayOrder        Int                 @default(0)
-  providerRequestId   String?             @db.VarChar(255)
-  attemptCount        Int                 @default(0)
-  maxAttempts         Int                 @default(5)
-  claimedAt           DateTime?           @db.Timestamptz(3)
-  claimExpiresAt      DateTime?           @db.Timestamptz(3)
-  nextAttemptAt       DateTime?           @db.Timestamptz(3)
-  workerId            String?             @db.VarChar(255)
-  queuedAt            DateTime?           @db.Timestamptz(3)
-  startedAt           DateTime?           @db.Timestamptz(3)
-  completedAt         DateTime?           @db.Timestamptz(3)
-  failedAt            DateTime?           @db.Timestamptz(3)
-  cancelledAt         DateTime?           @db.Timestamptz(3)
-  errorCode           String?             @db.VarChar(80)
-  errorMessage        String?             @db.VarChar(1000)
-  createdAt           DateTime            @default(now()) @db.Timestamptz(3)
-  updatedAt           DateTime            @updatedAt @db.Timestamptz(3)
-  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  vehicle             Vehicle             @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  imageAsset          ImageAsset          @relation(fields: [imageAssetId], references: [id], onDelete: Restrict)
+  idempotencyKey      String                   @db.VarChar(128)
+  batchIdempotencyKey String?                  @db.VarChar(128)
+  batchRequestHash    String?                  @db.Char(64)
+  displayOrder        Int                      @default(0)
+  providerRequestId   String?                  @db.VarChar(255)
+  attemptCount        Int                      @default(0)
+  maxAttempts         Int                      @default(5)
+  claimedAt           DateTime?                @db.Timestamptz(3)
+  claimExpiresAt      DateTime?                @db.Timestamptz(3)
+  nextAttemptAt       DateTime?                @db.Timestamptz(3)
+  workerId            String?                  @db.VarChar(255)
+  queuedAt            DateTime?                @db.Timestamptz(3)
+  startedAt           DateTime?                @db.Timestamptz(3)
+  completedAt         DateTime?                @db.Timestamptz(3)
+  failedAt            DateTime?                @db.Timestamptz(3)
+  cancelledAt         DateTime?                @db.Timestamptz(3)
+  errorCode           String?                  @db.VarChar(80)
+  errorMessage        String?                  @db.VarChar(1000)
+  createdAt           DateTime                 @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime                 @updatedAt @db.Timestamptz(3)
+  user                User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicle             Vehicle                  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  imageAsset          ImageAsset               @relation(fields: [imageAssetId], references: [id], onDelete: Restrict)
   attempts            ProcessingAttempt[]
   processedAsset      ProcessedAsset?
   outboxMessage       ProcessingOutboxMessage?
@@ -401,6 +415,42 @@ model WebhookEvent {
 
   @@unique([provider, externalId])
   @@index([status, receivedAt])
+}
+
+model EmailOutboxMessage {
+  id                     String              @id @default(uuid()) @db.Uuid
+  userId                 String              @db.Uuid
+  vehicleId              String              @db.Uuid
+  batchIdempotencyKey    String              @db.VarChar(128)
+  type                   EmailMessageType
+  recipient              String              @db.VarChar(320)
+  vehicleName            String              @db.VarChar(120)
+  status                 EmailDeliveryStatus @default(PENDING)
+  publishAttemptCount    Int                 @default(0)
+  publishNextAttemptAt   DateTime            @default(now()) @db.Timestamptz(3)
+  publishClaimedAt       DateTime?           @db.Timestamptz(3)
+  publishClaimExpiresAt  DateTime?           @db.Timestamptz(3)
+  publishClaimToken      String?             @db.VarChar(64)
+  publishedAt            DateTime?           @db.Timestamptz(3)
+  queueMessageId         String?             @db.VarChar(255)
+  deliveryAttemptCount   Int                 @default(0)
+  deliveryClaimedAt      DateTime?           @db.Timestamptz(3)
+  deliveryClaimExpiresAt DateTime?           @db.Timestamptz(3)
+  deliveryClaimToken     String?             @db.VarChar(64)
+  providerMessageId      String?             @db.VarChar(255)
+  deliveredAt            DateTime?           @db.Timestamptz(3)
+  failedAt               DateTime?           @db.Timestamptz(3)
+  lastErrorCode          String?             @db.VarChar(80)
+  createdAt              DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime            @updatedAt @db.Timestamptz(3)
+  user                   User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicle                Vehicle             @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, batchIdempotencyKey, type])
+  @@index([status, publishNextAttemptAt, createdAt])
+  @@index([publishClaimExpiresAt])
+  @@index([deliveryClaimExpiresAt])
+  @@index([userId, createdAt])
 }
 
 model AuditLog {
