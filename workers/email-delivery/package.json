@@ -1,0 +1,19 @@
+{
+  "name": "@studiocar/email-delivery-worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@studiocar/config": "workspace:*",
+    "@studiocar/contracts": "workspace:*",
+    "zod": "catalog:"
+  },
+  "scripts": {
+    "build": "tsc --noEmit && esbuild src/handler.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/handler.mjs",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": { "esbuild": "catalog:", "vitest": "5.0.1" }
+}

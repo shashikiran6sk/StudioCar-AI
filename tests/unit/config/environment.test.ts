@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   parseClientEnvironment,
+  parseEmailWorkerEnvironment,
   parseGoogleAuthEnvironment,
   parseImageWorkerEnvironment,
   parsePhoneAuthEnvironment,
@@ -167,5 +168,20 @@ describe("environment validation", () => {
         PROCESSING_RETRY_MAX_MS: "1000",
       }),
     ).toThrow();
+  });
+
+  it("validates the isolated email worker secrets and timeout", () => {
+    expect(
+      parseEmailWorkerEnvironment({
+        EMAIL_FROM: "mail@studiocar.example",
+        RESEND_API_KEY: "resend-secret",
+      }),
+    ).toEqual({
+      EMAIL_FROM: "mail@studiocar.example",
+      RESEND_API_KEY: "resend-secret",
+      RESEND_TIMEOUT_MS: 8_000,
+    });
+
+    expect(() => parseEmailWorkerEnvironment({})).toThrow();
   });
 });

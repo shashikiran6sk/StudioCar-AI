@@ -26,7 +26,9 @@ const roots = [
   ...filesBelow(path.join(root, "packages"))
     .filter((file) => file.endsWith(`${path.sep}src${path.sep}index.ts`))
     .map((file) => path.dirname(file)),
-  path.join(root, "workers", "image-processing", "src"),
+  ...filesBelow(path.join(root, "workers"))
+    .filter((file) => file.endsWith(`${path.sep}src${path.sep}index.ts`))
+    .map((file) => path.dirname(file)),
 ];
 
 const sources = roots

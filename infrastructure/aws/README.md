@@ -34,3 +34,21 @@ Secrets Manager, grants only tenant-prefix object access, caps both reserved and
 SQS event-source concurrency, and enables `ReportBatchItemFailures`. Configure
 alarm actions and ensure the queue visibility timeout is longer than the Lambda
 timeout before production deployment.
+
+`email-delivery-queue.yml` provisions a separate encrypted standard queue,
+retained dead-letter queue, least-privilege publisher and consumer policies,
+and queue-depth, oldest-message-age, and non-empty-DLQ alarms for transactional
+email. Attach only its publisher policy to the future email outbox dispatcher;
+the image-processing worker must never publish or deliver email directly.
+
+`email-delivery-worker.yml` deploys the Node.js 24 email worker from an
+immutable reviewed archive whose root contains `handler.mjs`. It resolves the
+Resend API key from Secrets Manager, requires a verified sender address, uses
+partial batch failure reporting, and caps reserved plus event-source
+concurrency independently from image processing. Keep the queue visibility
+timeout longer than the Lambda timeout and connect every alarm to the
+environment's incident-notification topic.
+
+Application events and the durable email outbox producer are intentionally a
+separate deployment slice. Do not publish to the email queue synchronously from
+a user-facing request or block request completion on Resend.
