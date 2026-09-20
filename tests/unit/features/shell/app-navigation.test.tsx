@@ -20,6 +20,10 @@ describe("AppNavigation", () => {
       "href",
       "/inventory",
     );
+    expect(screen.getByRole("link", { name: /Packs & Billing/ })).toHaveAttribute(
+      "href",
+      "/settings/billing",
+    );
     expect(screen.queryByRole("link", { name: /Portfolio/ })).toBeNull();
   });
 });

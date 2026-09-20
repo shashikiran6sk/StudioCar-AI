@@ -72,6 +72,8 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       batchIdempotencyKey: batchKey,
       batchRequestHash: createProcessingBatchRequestHash(request),
       provider: ProcessingProvider.REMOVEBG,
+      usageBillingPeriodKey: "2099-09",
+      usageIdempotencyKey: `usage:upload-session:${batchKey}`,
       options,
       jobs: [
         {
@@ -159,7 +161,12 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       }),
     ).resolves.toEqual({ kind: "TERMINAL" });
     await expect(
-      database.usageEvent.count({ where: { jobId: record.jobId } }),
+      database.usageEvent.count({
+        where: {
+          jobId: record.jobId,
+          type: "BACKGROUND_REMOVAL_COMPLETED",
+        },
+      }),
     ).resolves.toBe(1);
     await expect(
       database.processedAsset.count({ where: { jobId: record.jobId } }),
@@ -258,7 +265,12 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       }),
     ).resolves.toEqual({ status: "PARTIALLY_FAILED" });
     await expect(
-      database.usageEvent.count({ where: { jobId: record.jobId } }),
+      database.usageEvent.count({
+        where: {
+          jobId: record.jobId,
+          type: "BACKGROUND_REMOVAL_COMPLETED",
+        },
+      }),
     ).resolves.toBe(0);
   });
 });

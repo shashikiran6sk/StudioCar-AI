@@ -6,9 +6,13 @@ import {
   Prisma,
   ProcessingJobStatus,
   type ProcessingProvider,
+  UsageEventType,
   VehicleStatus,
 } from "../../generated/prisma/client";
 import { toProcessingOptionsJson } from "./to-processing-options-json";
+
+const MISSING_USAGE_JOB_ERROR =
+  "A processing batch must contain a usage-accounting job.";
 
 const processingJobSelect = {
   id: true,
@@ -42,6 +46,8 @@ export interface ReserveProcessingBatchCommand {
   jobs: ProcessingJobReservationInput[];
   options: ProcessingOptions;
   provider: ProcessingProvider;
+  usageBillingPeriodKey: string;
+  usageIdempotencyKey: string;
   userId: string;
   vehicleId: string;
 }
@@ -121,6 +127,7 @@ export class PrismaProcessingJobRepository {
     }
 
     const uniqueAssetIds = new Set(command.jobs.map((job) => job.assetId));
+    if (command.jobs.length === 0) return { kind: "ASSETS_NOT_READY" };
     if (uniqueAssetIds.size !== command.jobs.length) {
       return { kind: "ASSETS_NOT_READY" };
     }
@@ -169,6 +176,18 @@ export class PrismaProcessingJobRepository {
       });
       jobs.push(processingJob);
     }
+    const usageJob = jobs[0];
+    if (!usageJob) throw new Error(MISSING_USAGE_JOB_ERROR);
+    await transaction.usageEvent.create({
+      data: {
+        billingPeriodKey: command.usageBillingPeriodKey,
+        idempotencyKey: command.usageIdempotencyKey,
+        jobId: usageJob.id,
+        quantity: 1,
+        type: UsageEventType.VEHICLE_PROCESSING_BATCH_CREATED,
+        userId: command.userId,
+      },
+    });
     return { kind: "CREATED", jobs };
   }
 

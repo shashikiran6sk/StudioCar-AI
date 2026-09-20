@@ -76,6 +76,8 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
       batchIdempotencyKey,
       batchRequestHash: createProcessingBatchRequestHash(request),
       provider: ProcessingProvider.REMOVEBG,
+      usageBillingPeriodKey: "2026-09",
+      usageIdempotencyKey: "usage:upload-session:processing-integration-batch-1",
       options,
       jobs: assetIds.map((assetId, displayOrder) => ({
         assetId,
@@ -118,6 +120,18 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
         where: { job: { vehicleId: vehicle.id } },
       }),
     ).resolves.toBe(2);
+    await expect(
+      database.usageEvent.findMany({
+        where: { userId: owner.id },
+        select: { billingPeriodKey: true, quantity: true, type: true },
+      }),
+    ).resolves.toEqual([
+      {
+        billingPeriodKey: "2026-09",
+        quantity: 1,
+        type: "VEHICLE_PROCESSING_BATCH_CREATED",
+      },
+    ]);
   });
 
   it("leaves the draft unchanged when any requested asset is not uploaded", async () => {
@@ -137,6 +151,8 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
         batchIdempotencyKey: "processing-integration-batch-2",
         batchRequestHash: "a".repeat(64),
         provider: ProcessingProvider.REMOVEBG,
+        usageBillingPeriodKey: "2026-09",
+        usageIdempotencyKey: "usage:upload-session:processing-integration-batch-2",
         options,
         jobs: [
           {

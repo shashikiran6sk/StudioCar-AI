@@ -2,6 +2,7 @@ import type { PrismaClient } from "../../generated/prisma/client";
 import {
   ImageAssetStatus,
   ProcessingJobStatus,
+  UsageEventType,
   VehicleStatus,
 } from "../../generated/prisma/client";
 
@@ -77,11 +78,15 @@ export class PrismaDashboardRepository {
         where: { status: { in: UNSUCCESSFUL_JOB_STATUSES }, userId },
       }),
       this.database.usageEvent.aggregate({
-        where: { userId },
+        where: { type: UsageEventType.BACKGROUND_REMOVAL_COMPLETED, userId },
         _sum: { quantity: true },
       }),
       this.database.usageEvent.aggregate({
-        where: { billingPeriodKey, userId },
+        where: {
+          billingPeriodKey,
+          type: UsageEventType.BACKGROUND_REMOVAL_COMPLETED,
+          userId,
+        },
         _sum: { quantity: true },
       }),
       this.database.imageAsset.aggregate({

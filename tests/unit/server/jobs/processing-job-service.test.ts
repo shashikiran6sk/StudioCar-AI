@@ -57,6 +57,7 @@ describe("ProcessingJobService", () => {
       repository,
       dispatcher,
       ProcessingProvider.REMOVEBG,
+      () => NOW,
     );
 
     await expect(
@@ -73,6 +74,12 @@ describe("ProcessingJobService", () => {
       },
     });
     expect(dispatcher.dispatch).toHaveBeenCalledWith({ jobIds: [JOB_ID] });
+    expect(repository.reserveBatchOwned).toHaveBeenCalledWith(
+      expect.objectContaining({
+        usageBillingPeriodKey: "2026-09",
+        usageIdempotencyKey: "usage:upload-session:processing-request-0001",
+      }),
+    );
   });
 
   it("does not dispatch an invalid owned reservation", async () => {

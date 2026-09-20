@@ -126,6 +126,17 @@ inventoryTest(
           "inventory-e2e-job-1",
         ],
       );
+      await database.query(
+        'INSERT INTO "UsageEvent" ("id", "userId", "type", "quantity", "billingPeriodKey", "idempotencyKey") VALUES ($1, $2, $3, $4, $5, $6)',
+        [
+          randomUUID(),
+          userId,
+          "VEHICLE_PROCESSING_BATCH_CREATED",
+          1,
+          "2026-09",
+          "inventory-e2e-upload-session",
+        ],
+      );
 
       await page.goto("/dashboard");
       await expect(
@@ -150,6 +161,20 @@ inventoryTest(
         path: testInfo.outputPath("mobile-dashboard.png"),
       });
       await page.setViewportSize({ height: 720, width: 1280 });
+
+      await page.goto("/settings/billing");
+      await expect(page.getByRole("heading", { name: "Usage & Billing" }))
+        .toBeVisible();
+      await expect(page.getByText("1 / 3")).toBeVisible();
+      await page.getByRole("button", { name: "Upgrade plan" }).click();
+      await expect(page.getByRole("dialog")).toContainText(
+        "No payment has been made",
+      );
+      await page.getByRole("button", { name: "Return to usage" }).click();
+      await page.screenshot({
+        fullPage: true,
+        path: testInfo.outputPath("desktop-usage-billing.png"),
+      });
 
       await page.goto("/inventory");
       await expect(page.getByRole("heading", { name: "2026 Audi Q5" }))
