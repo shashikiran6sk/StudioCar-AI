@@ -152,6 +152,18 @@
     "reason": "Composition root wiring the tested lifecycle service and database adapter."
   },
   {
+    "source": "apps/web/src/server/storage-cleanup/storage-cleanup.constants.ts",
+    "reason": "Static storage retention time, error, response, and cache constants only."
+  },
+  {
+    "source": "apps/web/src/server/storage-cleanup/storage-cleanup.types.ts",
+    "reason": "Type-only storage cleanup options, result, application, storage, and repository ports."
+  },
+  {
+    "source": "apps/web/src/server/storage-cleanup/storage-cleanup-runtime.ts",
+    "reason": "Composition root wiring the tested storage cleanup service and adapters."
+  },
+  {
     "source": "apps/web/src/server/uploads/image-validation/image-metadata.types.ts",
     "reason": "Type-only validated image metadata definitions with no runtime behavior."
   },
@@ -194,6 +206,18 @@
   {
     "source": "packages/database/src/index.ts",
     "reason": "Barrel export with no behavior."
+  },
+  {
+    "source": "packages/database/src/repositories/storage-deletion-record.ts",
+    "reason": "Static typed Prisma selection and derived persistence record only."
+  },
+  {
+    "source": "packages/database/src/repositories/storage-deletion-repository.constants.ts",
+    "reason": "Static storage deletion bounds and expiry reason constants only."
+  },
+  {
+    "source": "packages/database/src/repositories/storage-deletion-repository.types.ts",
+    "reason": "Type-only storage deletion repository commands."
   },
   {
     "source": "packages/email/src/email.constants.ts",

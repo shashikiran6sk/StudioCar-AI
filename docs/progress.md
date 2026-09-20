@@ -4,7 +4,7 @@ Last updated: 2026-09-20
 
 ## Current status
 
-The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and durable transactional email are implemented. Browser response hardening, a blocking production dependency audit, durable authenticated command limits, runtime secret isolation, signed-webhook verification, and bounded database retention are also in place. Payment checkout remains intentionally unavailable until a billing provider is selected.
+The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and durable transactional email are implemented. Browser response hardening, a blocking production dependency audit, durable authenticated command limits, runtime secret isolation, signed-webhook verification, bounded database retention, and durable abandoned-upload cleanup are also in place. Payment checkout remains intentionally unavailable until a billing provider is selected.
 
 ## Completed
 
@@ -291,6 +291,14 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Documented the trusted scheduler contract and kept the root environment file local-only. The cleanup response contains aggregate counts only and is private/no-store.
 - Added service, handler, route, configuration, and real-PostgreSQL cutoff/batch coverage. Verified a clean production dependency audit, source mapping, Prisma generation/validation, all twelve migrations, lint, strict typecheck, the complete web suite with 206 files and 331 tests, 21 integration files with 39 tests, production builds for all eleven packages, and the five-test Playwright suite.
 
+### SC018B1b — Durable abandoned-upload cleanup
+
+- Added a durable storage-deletion outbox and atomic `PENDING_UPLOAD` to `DELETED` reservation, so PostgreSQL never loses retry authority before a private S3 object is removed.
+- Restricted eligibility to upload intents older than a configurable post-expiry grace period. Committed `UPLOADED` originals, invalid assets, processed outputs, and customer history are never selected.
+- Added ordered skip-locked batches, expiring deletion leases, idempotent S3 deletes, bounded exponential retry with jitter, terminal failure state, and aggregate conflict/failure reporting for operational alerts.
+- Added a separately authenticated private storage-cleanup command, focused configuration, least-privilege `s3:DeleteObject` permission under the existing tenant object prefix, and a trusted scheduler contract.
+- Added service, retry, handler, route, S3 adapter, configuration, and real-PostgreSQL reservation/claim/idempotency coverage. Verified a clean production dependency audit, source mapping, Prisma generation/validation, all thirteen migrations, lint, strict typecheck, the complete web suite with 211 files and 339 tests, 22 integration files with 41 tests, production builds for all eleven packages, and the five-test Playwright suite.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -300,9 +308,9 @@ The production foundation, authentication, private direct uploads, asynchronous 
 
 ## Next planned slices
 
-1. **SC018B1b — Abandoned upload object cleanup**: add a durable private-S3 deletion outbox so expired upload intents and orphaned bytes can be reconciled without unsafe cross-system deletion.
-2. **SC018B2 — Query and load hardening**: complete query/index review plus polling and burst-load verification.
-3. **Later hardening**: observability/alerts, full E2E completion, AWS deployment, DLQ replay/backups, and BiRefNet substitution proof.
+1. **SC018B2 — Query and load hardening**: complete query/index review plus polling and burst-load verification.
+2. **SC018C — Observability and alerts**: emit correlated operational metrics and alarms for lifecycle/storage cleanup, worker/provider health, and cost/storage growth.
+3. **Later hardening**: full E2E completion, AWS deployment, DLQ replay/backups, and BiRefNet substitution proof.
 
 ## Important implementation notes
 
@@ -316,7 +324,7 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Product navigation entries remain non-interactive until their corresponding slices land; this prevents dead routes while preserving the screenshot-derived application shell.
 - Profile updates are limited to the display name. Verified email and phone values remain identity-owned and can change only through a future explicit re-verification/linking flow.
 - Upload commits perform bounded structural header validation in Next.js. The processing worker must perform a full decoder validation before any provider call; malformed or unsupported images must transition to `INVALID` without a provider charge.
-- Pending assets and invalid private objects are retained for deterministic retry/audit behavior; bounded cleanup jobs are deferred to production hardening.
+- Expired pending-upload objects are deleted only through the durable storage-deletion outbox after the configured grace period. Invalid objects remain retained for deterministic audit behavior until a separately reviewed retention policy exists.
 - Vehicle creation requires an `Idempotency-Key`; exact retries return the original draft, while reuse with different normalized details returns a conflict. Only `DRAFT` vehicles can be changed through the creation workflow update endpoint.
 - The complete four-step wizard is mounted from the dashboard and submits only through the real authenticated processing command. Custom studio backgrounds are visible but disabled until a private background-asset upload and ownership flow is implemented.
 - Processing reservation moves the vehicle from `DRAFT` to `PROCESSING` only in the same transaction that creates every job and its outbox message. SC012B2 may expose this command only through the dispatcher and scheduled recovery path established on top of that durable intent.
@@ -352,7 +360,7 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - CI runs `pnpm audit --prod --audit-level moderate`. The workspace overrides for `deepmerge-ts` and `mysql2` are temporary reviewed transitive remediations for Prisma 7.10 and must be removed once Prisma pins patched versions upstream.
 - Production credential ownership is defined in `docs/security.md`. The root `.env.example` is a local-development union only; focused runtime parsers and deployment configuration must prevent unrelated secrets from crossing process boundaries.
 - No webhook route may trust parsed JSON before verifying the provider's signature over the exact raw bytes. The generic HMAC-SHA256 adapter may be selected only for a provider whose official protocol matches it; other protocols require their own verifier adapter.
-- Lifecycle cleanup deletes only records strictly older than configured cutoffs in bounded, skip-locked batches. It deliberately excludes image records and S3 bytes until SC018B1b provides a durable deletion outbox; database-only deletion would otherwise orphan uploaded objects or lose retry authority.
+- Lifecycle cleanup deletes only records strictly older than configured cutoffs in bounded, skip-locked batches. Image bytes use the separate storage-deletion outbox: the asset status change and deletion intent are atomic, S3 deletion is idempotent, and exhausted failures remain queryable for explicit replay rather than being silently discarded.
 
 ## Per-slice update checklist
 

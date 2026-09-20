@@ -37,6 +37,12 @@ enum ImageAssetStatus {
   DELETED
 }
 
+enum StorageDeletionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
 enum ProcessingJobStatus {
   CREATED
   QUEUED
@@ -251,31 +257,54 @@ model Vehicle {
 }
 
 model ImageAsset {
-  id                String           @id @default(uuid()) @db.Uuid
-  userId            String           @db.Uuid
-  vehicleId         String           @db.Uuid
-  status            ImageAssetStatus @default(PENDING_UPLOAD)
-  originalObjectKey String           @unique @db.VarChar(1024)
-  originalFilename  String           @db.VarChar(255)
-  mimeType          String           @db.VarChar(100)
+  id                String                        @id @default(uuid()) @db.Uuid
+  userId            String                        @db.Uuid
+  vehicleId         String                        @db.Uuid
+  status            ImageAssetStatus              @default(PENDING_UPLOAD)
+  originalObjectKey String                        @unique @db.VarChar(1024)
+  originalFilename  String                        @db.VarChar(255)
+  mimeType          String                        @db.VarChar(100)
   sizeBytes         BigInt
-  checksumSha256    String?          @db.Char(64)
-  idempotencyKey    String?          @db.VarChar(128)
+  checksumSha256    String?                       @db.Char(64)
+  idempotencyKey    String?                       @db.VarChar(128)
   width             Int?
   height            Int?
-  displayOrder      Int              @default(0)
-  uploadExpiresAt   DateTime         @db.Timestamptz(3)
-  uploadedAt        DateTime?        @db.Timestamptz(3)
-  invalidReason     String?          @db.VarChar(500)
-  createdAt         DateTime         @default(now()) @db.Timestamptz(3)
-  updatedAt         DateTime         @updatedAt @db.Timestamptz(3)
-  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  vehicle           Vehicle          @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  displayOrder      Int                           @default(0)
+  uploadExpiresAt   DateTime                      @db.Timestamptz(3)
+  uploadedAt        DateTime?                     @db.Timestamptz(3)
+  invalidReason     String?                       @db.VarChar(500)
+  createdAt         DateTime                      @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime                      @updatedAt @db.Timestamptz(3)
+  user              User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicle           Vehicle                       @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   processingJobs    ProcessingJob[]
+  storageDeletion   StorageDeletionOutboxMessage?
 
   @@unique([userId, idempotencyKey])
   @@index([vehicleId, createdAt])
   @@index([userId, status, createdAt])
+  @@index([status, uploadExpiresAt, id])
+}
+
+model StorageDeletionOutboxMessage {
+  id             String                @id @default(uuid()) @db.Uuid
+  imageAssetId   String                @unique @db.Uuid
+  objectKey      String                @unique @db.VarChar(1024)
+  status         StorageDeletionStatus @default(PENDING)
+  attemptCount   Int                   @default(0)
+  nextAttemptAt  DateTime              @default(now()) @db.Timestamptz(3)
+  claimedAt      DateTime?             @db.Timestamptz(3)
+  claimExpiresAt DateTime?             @db.Timestamptz(3)
+  claimToken     String?               @db.VarChar(64)
+  deletedAt      DateTime?             @db.Timestamptz(3)
+  failedAt       DateTime?             @db.Timestamptz(3)
+  lastErrorCode  String?               @db.VarChar(80)
+  createdAt      DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime              @updatedAt @db.Timestamptz(3)
+  imageAsset     ImageAsset            @relation(fields: [imageAssetId], references: [id], onDelete: Restrict)
+
+  @@index([status, nextAttemptAt, createdAt])
+  @@index([claimExpiresAt])
 }
 
 model ProcessingJob {
