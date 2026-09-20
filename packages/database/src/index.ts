@@ -7,6 +7,7 @@ export * from "./repositories/google-identity-repository";
 export * from "./repositories/google-oauth-challenge-repository";
 export * from "./repositories/image-asset-repository";
 export * from "./repositories/inventory-repository";
+export * from "./repositories/lifecycle-cleanup-repository";
 export * from "./repositories/phone-otp-challenge-repository";
 export * from "./repositories/phone-otp-completion-repository";
 export * from "./repositories/portfolio-repository";

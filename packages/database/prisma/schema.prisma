@@ -162,6 +162,7 @@ model OAuthChallenge {
   createdAt        DateTime     @default(now()) @db.Timestamptz(3)
 
   @@index([provider, expiresAt, consumedAt])
+  @@index([expiresAt])
 }
 
 model Session {

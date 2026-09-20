@@ -26,6 +26,10 @@ const DEFAULT_PREVIEW_MAX_WIDTH = 720;
 const DEFAULT_COMMAND_RATE_LIMIT_WINDOW_SECONDS = 60;
 const DEFAULT_UPLOAD_PRESIGN_MAX_PER_WINDOW = 120;
 const DEFAULT_PROCESSING_BATCH_MAX_PER_WINDOW = 20;
+const DEFAULT_LIFECYCLE_CLEANUP_BATCH_SIZE = 100;
+const DEFAULT_SESSION_RETENTION_DAYS = 30;
+const DEFAULT_AUTH_CHALLENGE_RETENTION_DAYS = 7;
+const DEFAULT_COMMAND_RATE_LIMIT_RETENTION_HOURS = 24;
 
 const PostgresUrlSchema = z.url().refine(
   (value) => /^postgres(?:ql)?:\/\//.test(value),
@@ -201,6 +205,37 @@ export const EmailDispatchEnvironmentSchema = z
     },
   );
 
+export const LifecycleCleanupEnvironmentSchema = z
+  .object({
+    DATABASE_URL: PostgresUrlSchema,
+    LIFECYCLE_CLEANUP_TOKEN: z.string().min(32),
+    LIFECYCLE_CLEANUP_BATCH_SIZE: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(1_000)
+      .default(DEFAULT_LIFECYCLE_CLEANUP_BATCH_SIZE),
+    SESSION_RETENTION_DAYS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(365)
+      .default(DEFAULT_SESSION_RETENTION_DAYS),
+    AUTH_CHALLENGE_RETENTION_DAYS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(90)
+      .default(DEFAULT_AUTH_CHALLENGE_RETENTION_DAYS),
+    COMMAND_RATE_LIMIT_RETENTION_HOURS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(168)
+      .default(DEFAULT_COMMAND_RATE_LIMIT_RETENTION_HOURS),
+  })
+  .strip();
+
 export const BackgroundRemovalProviderSchema = z.enum([
   "removebg",
   "fal",
@@ -364,6 +399,9 @@ export type EmailWorkerEnvironment = z.infer<
 export type EmailDispatchEnvironment = z.infer<
   typeof EmailDispatchEnvironmentSchema
 >;
+export type LifecycleCleanupEnvironment = z.infer<
+  typeof LifecycleCleanupEnvironmentSchema
+>;
 export type BackgroundRemovalProvider = z.infer<
   typeof BackgroundRemovalProviderSchema
 >;
@@ -420,4 +458,10 @@ export function parseEmailDispatchEnvironment(
   environment: Record<string, string | undefined>,
 ): EmailDispatchEnvironment {
   return EmailDispatchEnvironmentSchema.parse(environment);
+}
+
+export function parseLifecycleCleanupEnvironment(
+  environment: Record<string, string | undefined>,
+): LifecycleCleanupEnvironment {
+  return LifecycleCleanupEnvironmentSchema.parse(environment);
 }

@@ -62,3 +62,12 @@ email token must be separately generated from the processing dispatch token and
 stored only in scheduler and application server environments. This recovery
 dispatcher is the only application publisher; user-facing requests never wait
 for SQS or Resend.
+
+Configure a third trusted scheduler to invoke
+`POST /api/internal/lifecycle/cleanup` with
+`Authorization: Bearer <LIFECYCLE_CLEANUP_TOKEN>`. Run it repeatedly until its
+bounded aggregate count reaches zero, then continue on the selected maintenance
+cadence. Keep this token distinct from both dispatch tokens. The cleanup command
+deletes only sessions, OAuth/OTP challenges, and command-limit events older than
+their configured retention cutoffs; it does not delete vehicles, image assets,
+processing jobs, usage, audit logs, or private S3 objects.

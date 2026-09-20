@@ -140,6 +140,18 @@
     "reason": "Type-only signed-webhook verifier input, result, options, and port definitions."
   },
   {
+    "source": "apps/web/src/server/lifecycle/lifecycle-cleanup.constants.ts",
+    "reason": "Static lifecycle retention time, response, and cache constants only."
+  },
+  {
+    "source": "apps/web/src/server/lifecycle/lifecycle-cleanup.types.ts",
+    "reason": "Type-only lifecycle cleanup options, result, application, and repository ports."
+  },
+  {
+    "source": "apps/web/src/server/lifecycle/lifecycle-cleanup-runtime.ts",
+    "reason": "Composition root wiring the tested lifecycle service and database adapter."
+  },
+  {
     "source": "apps/web/src/server/uploads/image-validation/image-metadata.types.ts",
     "reason": "Type-only validated image metadata definitions with no runtime behavior."
   },
