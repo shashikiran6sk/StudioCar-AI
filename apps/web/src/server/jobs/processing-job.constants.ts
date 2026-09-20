@@ -31,5 +31,3 @@ export const PROCESSING_VEHICLE_NOT_DRAFT_MESSAGE =
   "This vehicle is no longer available for initial processing.";
 export const PROCESSING_UNAVAILABLE_MESSAGE =
   "Processing could not be started. Your originals are preserved.";
-export const PROCESSING_AUTHORIZATION_HEADER = "authorization";
-export const PROCESSING_BEARER_PREFIX = "Bearer ";

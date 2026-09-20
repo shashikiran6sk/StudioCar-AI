@@ -19,6 +19,7 @@
     "@studiocar/config": "workspace:*",
     "@studiocar/contracts": "workspace:*",
     "@studiocar/database": "workspace:*",
+    "@studiocar/email": "workspace:*",
     "@studiocar/processing": "workspace:*",
     "@studiocar/ui": "workspace:*",
     "next": "16.3.5",

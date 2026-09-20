@@ -4,13 +4,14 @@ import {
   SqsWorkerEventSchema,
   type SqsBatchResponse,
 } from "@studiocar/contracts";
-
-import type { MailerPort } from "./mailer.types";
-import { renderEmailMessage } from "./render-email-message";
+import {
+  EMAIL_DELIVERY_RETRY,
+  type EmailDeliveryProcessorPort,
+} from "@studiocar/email";
 
 export async function handleEmailQueueEvent(
   event: unknown,
-  mailer: MailerPort,
+  processor: EmailDeliveryProcessorPort,
 ): Promise<SqsBatchResponse> {
   const parsedEvent = SqsWorkerEventSchema.parse(event);
   const batchItemFailures: { itemIdentifier: string }[] = [];
@@ -19,8 +20,8 @@ export async function handleEmailQueueEvent(
     try {
       const body: unknown = JSON.parse(record.body);
       const message = EmailWorkerMessageSchema.parse(body);
-      const result = await mailer.send(renderEmailMessage(message));
-      if (result.kind === "FAILED" && result.retryable) {
+      const result = await processor.process(message);
+      if (result === EMAIL_DELIVERY_RETRY) {
         batchItemFailures.push({ itemIdentifier: record.messageId });
       }
     } catch {

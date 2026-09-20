@@ -10,6 +10,11 @@ const DEFAULT_PROCESSING_OUTBOX_BATCH_SIZE = 20;
 const DEFAULT_PROCESSING_OUTBOX_CLAIM_TTL_MS = 30_000;
 const DEFAULT_PROCESSING_OUTBOX_RETRY_BASE_MS = 1_000;
 const DEFAULT_PROCESSING_OUTBOX_RETRY_MAX_MS = 60_000;
+const DEFAULT_EMAIL_OUTBOX_BATCH_SIZE = 20;
+const DEFAULT_EMAIL_OUTBOX_CLAIM_TTL_MS = 30_000;
+const DEFAULT_EMAIL_OUTBOX_RETRY_BASE_MS = 1_000;
+const DEFAULT_EMAIL_OUTBOX_RETRY_MAX_MS = 60_000;
+const DEFAULT_EMAIL_DELIVERY_CLAIM_TTL_MS = 45_000;
 const DEFAULT_IMAGE_WORKER_CLAIM_TTL_MS = 120_000;
 const DEFAULT_IMAGE_WORKER_RETRY_BASE_MS = 5_000;
 const DEFAULT_IMAGE_WORKER_RETRY_MAX_MS = 300_000;
@@ -120,11 +125,61 @@ export const UploadEnvironmentSchema = z
 
 export const EmailWorkerEnvironmentSchema = z
   .object({
+    APPLICATION_BASE_URL: z.httpUrl(),
+    DATABASE_URL: PostgresUrlSchema,
+    EMAIL_DELIVERY_CLAIM_TTL_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(300_000)
+      .default(DEFAULT_EMAIL_DELIVERY_CLAIM_TTL_MS),
     EMAIL_FROM: z.email(),
     RESEND_API_KEY: z.string().trim().min(1),
     RESEND_TIMEOUT_MS: z.coerce.number().int().min(500).max(30_000).default(8_000),
   })
   .strip();
+
+export const EmailDispatchEnvironmentSchema = z
+  .object({
+    APPLICATION_BASE_URL: z.httpUrl(),
+    AWS_REGION: z.string().trim().min(1),
+    DATABASE_URL: PostgresUrlSchema,
+    EMAIL_DISPATCH_TOKEN: z.string().min(32),
+    EMAIL_OUTBOX_BATCH_SIZE: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .default(DEFAULT_EMAIL_OUTBOX_BATCH_SIZE),
+    EMAIL_OUTBOX_CLAIM_TTL_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(300_000)
+      .default(DEFAULT_EMAIL_OUTBOX_CLAIM_TTL_MS),
+    EMAIL_OUTBOX_RETRY_BASE_MS: z.coerce
+      .number()
+      .int()
+      .min(100)
+      .max(3_600_000)
+      .default(DEFAULT_EMAIL_OUTBOX_RETRY_BASE_MS),
+    EMAIL_OUTBOX_RETRY_MAX_MS: z.coerce
+      .number()
+      .int()
+      .min(100)
+      .max(3_600_000)
+      .default(DEFAULT_EMAIL_OUTBOX_RETRY_MAX_MS),
+    SQS_EMAIL_QUEUE_URL: z.url(),
+  })
+  .strip()
+  .refine(
+    (value) =>
+      value.EMAIL_OUTBOX_RETRY_MAX_MS >= value.EMAIL_OUTBOX_RETRY_BASE_MS,
+    {
+      message: "Email retry maximum must be at least the retry base.",
+      path: ["EMAIL_OUTBOX_RETRY_MAX_MS"],
+    },
+  );
 
 export const BackgroundRemovalProviderSchema = z.enum([
   "removebg",
@@ -281,9 +336,11 @@ export const ServerEnvironmentSchema = z
     PHONE_OTP_VERIFY_MAX_PER_IP: PhoneOtpLimitSchema.max(300).default(30),
     RESEND_API_KEY: z.string().trim().min(1),
     EMAIL_FROM: z.string().trim().min(3),
+    APPLICATION_BASE_URL: z.httpUrl(),
     ...UploadConfigurationSchema.shape,
     SQS_IMAGE_QUEUE_URL: z.url(),
     SQS_EMAIL_QUEUE_URL: z.url(),
+    EMAIL_DISPATCH_TOKEN: z.string().min(32),
     BACKGROUND_REMOVAL_PROVIDER: BackgroundRemovalProviderSchema,
     REMOVEBG_API_KEY: z.string().trim().min(1).optional(),
     FAL_KEY: z.string().trim().min(1).optional(),
@@ -331,6 +388,9 @@ export type ImageWorkerEnvironment = z.infer<
 >;
 export type EmailWorkerEnvironment = z.infer<
   typeof EmailWorkerEnvironmentSchema
+>;
+export type EmailDispatchEnvironment = z.infer<
+  typeof EmailDispatchEnvironmentSchema
 >;
 export type BackgroundRemovalProvider = z.infer<
   typeof BackgroundRemovalProviderSchema
@@ -388,4 +448,10 @@ export function parseEmailWorkerEnvironment(
   environment: Record<string, string | undefined>,
 ): EmailWorkerEnvironment {
   return EmailWorkerEnvironmentSchema.parse(environment);
+}
+
+export function parseEmailDispatchEnvironment(
+  environment: Record<string, string | undefined>,
+): EmailDispatchEnvironment {
+  return EmailDispatchEnvironmentSchema.parse(environment);
 }

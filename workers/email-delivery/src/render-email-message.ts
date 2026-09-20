@@ -7,9 +7,18 @@ import {
   EMAIL_PROCESSING_COMPLETE_SUBJECT,
 } from "./email-delivery.constants";
 import { escapeEmailHtml } from "./escape-email-html";
-import type { MailRequest } from "./mailer.types";
 
-export function renderEmailMessage(message: EmailWorkerMessage): MailRequest {
+export interface RenderedEmailMessage {
+  html: string;
+  idempotencyKey: string;
+  recipient: string;
+  subject: string;
+  text: string;
+}
+
+export function renderEmailMessage(
+  message: EmailWorkerMessage,
+): RenderedEmailMessage {
   const vehicleName = escapeEmailHtml(message.data.vehicleName);
   const portfolioUrl = escapeEmailHtml(message.data.portfolioUrl);
   const text = `${EMAIL_PROCESSING_COMPLETE_INTRO} ${message.data.vehicleName}. ${EMAIL_PROCESSING_COMPLETE_ACTION}: ${message.data.portfolioUrl}. ${EMAIL_PROCESSING_COMPLETE_FOOTER}`;

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   parseClientEnvironment,
+  parseEmailDispatchEnvironment,
   parseEmailWorkerEnvironment,
   parseGoogleAuthEnvironment,
   parseImageWorkerEnvironment,
@@ -23,12 +24,14 @@ const validEnvironment = {
   MSG91_TEMPLATE_ID: "template-id",
   RESEND_API_KEY: "resend-key",
   EMAIL_FROM: "StudioCar <hello@studiocar.example>",
+  APPLICATION_BASE_URL: "https://app.studiocar.example",
   AWS_REGION: "ap-south-1",
   S3_BUCKET: "studiocar-assets-test",
   SQS_IMAGE_QUEUE_URL: "https://sqs.ap-south-1.amazonaws.com/123/images",
   SQS_EMAIL_QUEUE_URL: "https://sqs.ap-south-1.amazonaws.com/123/email",
   BACKGROUND_REMOVAL_PROVIDER: "removebg",
   PROCESSING_DISPATCH_TOKEN: "processing-dispatch-token-at-least-32-characters",
+  EMAIL_DISPATCH_TOKEN: "email-dispatch-token-at-least-32-characters",
   REMOVEBG_API_KEY: "remove-bg-key",
 } satisfies Record<string, string>;
 
@@ -173,15 +176,34 @@ describe("environment validation", () => {
   it("validates the isolated email worker secrets and timeout", () => {
     expect(
       parseEmailWorkerEnvironment({
+        APPLICATION_BASE_URL: validEnvironment.APPLICATION_BASE_URL,
+        DATABASE_URL: validEnvironment.DATABASE_URL,
         EMAIL_FROM: "mail@studiocar.example",
         RESEND_API_KEY: "resend-secret",
       }),
     ).toEqual({
+      APPLICATION_BASE_URL: validEnvironment.APPLICATION_BASE_URL,
+      DATABASE_URL: validEnvironment.DATABASE_URL,
+      EMAIL_DELIVERY_CLAIM_TTL_MS: 45_000,
       EMAIL_FROM: "mail@studiocar.example",
       RESEND_API_KEY: "resend-secret",
       RESEND_TIMEOUT_MS: 8_000,
     });
 
     expect(() => parseEmailWorkerEnvironment({})).toThrow();
+  });
+
+  it("validates bounded email outbox dispatch settings", () => {
+    expect(parseEmailDispatchEnvironment(validEnvironment)).toEqual({
+      APPLICATION_BASE_URL: validEnvironment.APPLICATION_BASE_URL,
+      AWS_REGION: validEnvironment.AWS_REGION,
+      DATABASE_URL: validEnvironment.DATABASE_URL,
+      EMAIL_DISPATCH_TOKEN: validEnvironment.EMAIL_DISPATCH_TOKEN,
+      EMAIL_OUTBOX_BATCH_SIZE: 20,
+      EMAIL_OUTBOX_CLAIM_TTL_MS: 30_000,
+      EMAIL_OUTBOX_RETRY_BASE_MS: 1_000,
+      EMAIL_OUTBOX_RETRY_MAX_MS: 60_000,
+      SQS_EMAIL_QUEUE_URL: validEnvironment.SQS_EMAIL_QUEUE_URL,
+    });
   });
 });

@@ -7,10 +7,12 @@
   "dependencies": {
     "@studiocar/config": "workspace:*",
     "@studiocar/contracts": "workspace:*",
+    "@studiocar/database": "workspace:*",
+    "@studiocar/email": "workspace:*",
     "zod": "catalog:"
   },
   "scripts": {
-    "build": "tsc --noEmit && esbuild src/handler.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/handler.mjs",
+    "build": "tsc --noEmit && esbuild src/handler.ts --bundle --platform=node --target=node24 --format=esm --external:@prisma/adapter-pg --external:@prisma/client --external:pg --outfile=dist/handler.mjs",
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

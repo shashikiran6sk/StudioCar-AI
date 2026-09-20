@@ -38,17 +38,22 @@ timeout before production deployment.
 `email-delivery-queue.yml` provisions a separate encrypted standard queue,
 retained dead-letter queue, least-privilege publisher and consumer policies,
 and queue-depth, oldest-message-age, and non-empty-DLQ alarms for transactional
-email. Attach only its publisher policy to the future email outbox dispatcher;
+email. Attach only its publisher policy to the application email outbox dispatcher;
 the image-processing worker must never publish or deliver email directly.
 
 `email-delivery-worker.yml` deploys the Node.js 24 email worker from an
-immutable reviewed archive whose root contains `handler.mjs`. It resolves the
-Resend API key from Secrets Manager, requires a verified sender address, uses
-partial batch failure reporting, and caps reserved plus event-source
-concurrency independently from image processing. Keep the queue visibility
-timeout longer than the Lambda timeout and connect every alarm to the
-environment's incident-notification topic.
+immutable reviewed archive whose root contains `handler.mjs` plus the external
+Prisma PostgreSQL runtime dependencies. It resolves the database and Resend API
+keys from Secrets Manager, requires a verified sender address, claims durable
+delivery state before contacting Resend, uses partial batch failure reporting,
+and caps reserved plus event-source concurrency independently from image
+processing. Keep the queue visibility timeout longer than both the Lambda
+timeout and delivery claim lease, and connect every alarm to the environment's
+incident-notification topic.
 
-Application events and the durable email outbox producer are intentionally a
-separate deployment slice. Do not publish to the email queue synchronously from
-a user-facing request or block request completion on Resend.
+Configure a trusted scheduler to invoke `POST /api/internal/email/dispatch` at
+least once per minute with `Authorization: Bearer <EMAIL_DISPATCH_TOKEN>`. The
+email token must be separately generated from the processing dispatch token and
+stored only in scheduler and application server environments. This recovery
+dispatcher is the only application publisher; user-facing requests never wait
+for SQS or Resend.

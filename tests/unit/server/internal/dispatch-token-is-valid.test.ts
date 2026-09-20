@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { processingDispatchTokenIsValid } from "../../../../apps/web/src/server/jobs/processing-dispatch-token-is-valid";
+import { dispatchTokenIsValid } from "../../../../apps/web/src/server/internal/dispatch-token-is-valid";
 
-const TOKEN = "processing-dispatch-token-at-least-32-characters";
+const TOKEN = "internal-dispatch-token-at-least-32-characters";
 
-describe("processingDispatchTokenIsValid", () => {
+describe("dispatchTokenIsValid", () => {
   it("accepts only the exact bearer token", () => {
     expect(
-      processingDispatchTokenIsValid(
+      dispatchTokenIsValid(
         new Request("https://app.example.test/api/internal/jobs/dispatch", {
           headers: { authorization: `Bearer ${TOKEN}` },
         }),
@@ -15,8 +15,8 @@ describe("processingDispatchTokenIsValid", () => {
       ),
     ).toBe(true);
     expect(
-      processingDispatchTokenIsValid(
-        new Request("https://app.example.test/api/internal/jobs/dispatch", {
+      dispatchTokenIsValid(
+        new Request("https://app.example.test/api/internal/email/dispatch", {
           headers: { authorization: "Bearer wrong-token" },
         }),
         TOKEN,

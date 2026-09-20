@@ -104,6 +104,18 @@
     "reason": "Composition root that wires separately tested processing services and adapters."
   },
   {
+    "source": "apps/web/src/server/internal/internal-dispatch.constants.ts",
+    "reason": "Static internal authorization protocol constants only."
+  },
+  {
+    "source": "apps/web/src/server/email/email-dispatch.constants.ts",
+    "reason": "Static email dispatch response and queue constants only."
+  },
+  {
+    "source": "apps/web/src/server/email/email-runtime.ts",
+    "reason": "Composition root that wires separately tested email services and adapters."
+  },
+  {
     "source": "apps/web/src/server/uploads/image-validation/image-metadata.types.ts",
     "reason": "Type-only validated image metadata definitions with no runtime behavior."
   },
@@ -145,6 +157,18 @@
   },
   {
     "source": "packages/database/src/index.ts",
+    "reason": "Barrel export with no behavior."
+  },
+  {
+    "source": "packages/email/src/email.constants.ts",
+    "reason": "Static email message, error, and operational bound constants only."
+  },
+  {
+    "source": "packages/email/src/email.types.ts",
+    "reason": "Type-only email outbox, delivery, queue, and mailer port definitions."
+  },
+  {
+    "source": "packages/email/src/index.ts",
     "reason": "Barrel export with no behavior."
   },
   {
@@ -326,10 +350,6 @@
   {
     "source": "workers/email-delivery/src/email-delivery.constants.ts",
     "reason": "Static email template and Resend protocol constants only."
-  },
-  {
-    "source": "workers/email-delivery/src/mailer.types.ts",
-    "reason": "Type-only mail delivery port and result definitions."
   },
   {
     "source": "workers/email-delivery/src/index.ts",
