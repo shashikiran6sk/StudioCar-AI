@@ -77,7 +77,7 @@ Resources:
   UploadApplicationPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
-      Description: Presign uploads and validate private StudioCar image objects
+      Description: Presign, validate, and clean up private StudioCar image objects
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -86,6 +86,7 @@ Resources:
             Action:
               - s3:GetObject
               - s3:PutObject
+              - s3:DeleteObject
             Resource: !Sub ${ImageBucket.Arn}/users/*
           - Sid: ResolveImageBucketRegion
             Effect: Allow

@@ -30,6 +30,12 @@ const DEFAULT_LIFECYCLE_CLEANUP_BATCH_SIZE = 100;
 const DEFAULT_SESSION_RETENTION_DAYS = 30;
 const DEFAULT_AUTH_CHALLENGE_RETENTION_DAYS = 7;
 const DEFAULT_COMMAND_RATE_LIMIT_RETENTION_HOURS = 24;
+const DEFAULT_STORAGE_CLEANUP_BATCH_SIZE = 10;
+const DEFAULT_ABANDONED_UPLOAD_RETENTION_HOURS = 24;
+const DEFAULT_STORAGE_DELETION_CLAIM_TTL_MS = 120_000;
+const DEFAULT_STORAGE_DELETION_MAX_ATTEMPTS = 8;
+const DEFAULT_STORAGE_DELETION_RETRY_BASE_MS = 30_000;
+const DEFAULT_STORAGE_DELETION_RETRY_MAX_MS = 3_600_000;
 
 const PostgresUrlSchema = z.url().refine(
   (value) => /^postgres(?:ql)?:\/\//.test(value),
@@ -236,6 +242,60 @@ export const LifecycleCleanupEnvironmentSchema = z
   })
   .strip();
 
+export const StorageCleanupEnvironmentSchema = z
+  .object({
+    DATABASE_URL: PostgresUrlSchema,
+    AWS_REGION: z.string().trim().min(1),
+    S3_BUCKET: z.string().trim().min(3).max(63),
+    STORAGE_CLEANUP_TOKEN: z.string().min(32),
+    STORAGE_CLEANUP_BATCH_SIZE: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .default(DEFAULT_STORAGE_CLEANUP_BATCH_SIZE),
+    ABANDONED_UPLOAD_RETENTION_HOURS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(720)
+      .default(DEFAULT_ABANDONED_UPLOAD_RETENTION_HOURS),
+    STORAGE_DELETION_CLAIM_TTL_MS: z.coerce
+      .number()
+      .int()
+      .min(10_000)
+      .max(900_000)
+      .default(DEFAULT_STORAGE_DELETION_CLAIM_TTL_MS),
+    STORAGE_DELETION_MAX_ATTEMPTS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .default(DEFAULT_STORAGE_DELETION_MAX_ATTEMPTS),
+    STORAGE_DELETION_RETRY_BASE_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(3_600_000)
+      .default(DEFAULT_STORAGE_DELETION_RETRY_BASE_MS),
+    STORAGE_DELETION_RETRY_MAX_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(86_400_000)
+      .default(DEFAULT_STORAGE_DELETION_RETRY_MAX_MS),
+  })
+  .strip()
+  .refine(
+    (value) =>
+      value.STORAGE_DELETION_RETRY_MAX_MS >=
+      value.STORAGE_DELETION_RETRY_BASE_MS,
+    {
+      message: "Storage deletion retry maximum must be at least the retry base.",
+      path: ["STORAGE_DELETION_RETRY_MAX_MS"],
+    },
+  );
+
 export const BackgroundRemovalProviderSchema = z.enum([
   "removebg",
   "fal",
@@ -402,6 +462,9 @@ export type EmailDispatchEnvironment = z.infer<
 export type LifecycleCleanupEnvironment = z.infer<
   typeof LifecycleCleanupEnvironmentSchema
 >;
+export type StorageCleanupEnvironment = z.infer<
+  typeof StorageCleanupEnvironmentSchema
+>;
 export type BackgroundRemovalProvider = z.infer<
   typeof BackgroundRemovalProviderSchema
 >;
@@ -464,4 +527,10 @@ export function parseLifecycleCleanupEnvironment(
   environment: Record<string, string | undefined>,
 ): LifecycleCleanupEnvironment {
   return LifecycleCleanupEnvironmentSchema.parse(environment);
+}
+
+export function parseStorageCleanupEnvironment(
+  environment: Record<string, string | undefined>,
+): StorageCleanupEnvironment {
+  return StorageCleanupEnvironmentSchema.parse(environment);
 }

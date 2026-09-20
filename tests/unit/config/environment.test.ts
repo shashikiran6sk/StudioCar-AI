@@ -10,6 +10,7 @@ import {
   parsePhoneAuthEnvironment,
   parseProcessingEnvironment,
   parseSessionEnvironment,
+  parseStorageCleanupEnvironment,
   parseUploadEnvironment,
 } from "../../../packages/config/src/environment";
 
@@ -33,6 +34,7 @@ const validEnvironment = {
   PROCESSING_DISPATCH_TOKEN: "processing-dispatch-token-at-least-32-characters",
   EMAIL_DISPATCH_TOKEN: "email-dispatch-token-at-least-32-characters",
   LIFECYCLE_CLEANUP_TOKEN: "lifecycle-cleanup-token-at-least-32-characters",
+  STORAGE_CLEANUP_TOKEN: "storage-cleanup-token-at-least-32-characters",
   REMOVEBG_API_KEY: "remove-bg-key",
 } satisfies Record<string, string>;
 
@@ -227,6 +229,28 @@ describe("environment validation", () => {
       parseLifecycleCleanupEnvironment({
         ...validEnvironment,
         LIFECYCLE_CLEANUP_BATCH_SIZE: "1001",
+      }),
+    ).toThrow();
+  });
+
+  it("validates isolated storage cleanup and retry bounds", () => {
+    expect(parseStorageCleanupEnvironment(validEnvironment)).toEqual({
+      DATABASE_URL: validEnvironment.DATABASE_URL,
+      AWS_REGION: validEnvironment.AWS_REGION,
+      S3_BUCKET: validEnvironment.S3_BUCKET,
+      STORAGE_CLEANUP_TOKEN: validEnvironment.STORAGE_CLEANUP_TOKEN,
+      STORAGE_CLEANUP_BATCH_SIZE: 10,
+      ABANDONED_UPLOAD_RETENTION_HOURS: 24,
+      STORAGE_DELETION_CLAIM_TTL_MS: 120_000,
+      STORAGE_DELETION_MAX_ATTEMPTS: 8,
+      STORAGE_DELETION_RETRY_BASE_MS: 30_000,
+      STORAGE_DELETION_RETRY_MAX_MS: 3_600_000,
+    });
+    expect(() =>
+      parseStorageCleanupEnvironment({
+        ...validEnvironment,
+        STORAGE_DELETION_RETRY_BASE_MS: "60000",
+        STORAGE_DELETION_RETRY_MAX_MS: "30000",
       }),
     ).toThrow();
   });

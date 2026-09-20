@@ -12,7 +12,7 @@ provider keys into the Next.js application.
 | Next.js session and read models | `DATABASE_URL` | Provider, email-delivery, and scheduler secrets |
 | Google OAuth routes | `DATABASE_URL`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | MSG91, Resend, remove.bg, fal.ai |
 | Phone OTP routes | `DATABASE_URL`, `SESSION_SECRET`, `MSG91_AUTH_KEY`, `MSG91_TEMPLATE_ID` | Google, Resend, image-provider keys |
-| Upload, inventory, and portfolio control plane | `DATABASE_URL`, `AWS_REGION`, `S3_BUCKET`, workload-role S3 permissions | Image bytes, worker queue-consumer permissions, provider keys |
+| Upload, inventory, portfolio, and storage-cleanup control plane | `DATABASE_URL`, `AWS_REGION`, `S3_BUCKET`, workload-role S3 read/write/delete permissions | Image bytes, worker queue-consumer permissions, provider keys |
 | Processing outbox dispatcher | `DATABASE_URL`, `AWS_REGION`, `SQS_IMAGE_QUEUE_URL`, `PROCESSING_DISPATCH_TOKEN`, queue-publisher permission | Queue-consumer permission, provider keys, image-object write permission |
 | Email outbox dispatcher | `DATABASE_URL`, `AWS_REGION`, `SQS_EMAIL_QUEUE_URL`, `EMAIL_DISPATCH_TOKEN`, `APPLICATION_BASE_URL`, queue-publisher permission | `RESEND_API_KEY`, queue-consumer permission |
 | Image-processing worker | `DATABASE_URL`, private-image S3 read/write, image-queue consume, only the selected provider credential | Session, OAuth, OTP, email, scheduler secrets |
@@ -20,10 +20,11 @@ provider keys into the Next.js application.
 | Trusted processing scheduler | Processing dispatch URL and `PROCESSING_DISPATCH_TOKEN` only | Database, AWS, provider, session secrets |
 | Trusted email scheduler | Email dispatch URL and `EMAIL_DISPATCH_TOKEN` only | Database, AWS, Resend, session secrets |
 | Trusted lifecycle scheduler | Lifecycle cleanup URL and `LIFECYCLE_CLEANUP_TOKEN` only | Database, AWS, provider, auth, and dispatch secrets |
+| Trusted storage-cleanup scheduler | Storage cleanup URL and `STORAGE_CLEANUP_TOKEN` only | Database, AWS, provider, auth, and dispatch secrets |
 
 Use workload identities and the checked-in least-privilege IAM policies instead
 of long-lived AWS access keys in production. Processing and email dispatch tokens
-and the lifecycle cleanup token must be independently generated. Rotate a credential inside its owning runtime,
+and both cleanup tokens must be independently generated. Rotate a credential inside its owning runtime,
 then revoke the old value; never log either value during rollout.
 
 The configuration package deliberately exposes focused runtime parsers. There is

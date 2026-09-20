@@ -7,7 +7,9 @@ into the Next.js runtime.
 
 `upload-storage.yml` provisions the private, encrypted, versioned S3 bucket used
 for browser-to-S3 image uploads and a least-privilege managed policy for the
-Next.js application role. Supply the exact deployed web origin for browser CORS.
+Next.js application role. The policy also permits deletion under the same
+tenant-prefixed object namespace for the durable abandoned-upload cleanup
+command. Supply the exact deployed web origin for browser CORS.
 
 `image-processing-queue.yml` provisions the encrypted standard processing queue,
 its retained dead-letter queue, separate publisher and consumer policies, and
@@ -71,3 +73,14 @@ cadence. Keep this token distinct from both dispatch tokens. The cleanup command
 deletes only sessions, OAuth/OTP challenges, and command-limit events older than
 their configured retention cutoffs; it does not delete vehicles, image assets,
 processing jobs, usage, audit logs, or private S3 objects.
+
+Configure a fourth trusted scheduler to invoke
+`POST /api/internal/storage/cleanup` with
+`Authorization: Bearer <STORAGE_CLEANUP_TOKEN>`. Keep this token distinct from
+the lifecycle and dispatch tokens. Each invocation atomically marks only
+long-expired `PENDING_UPLOAD` assets as deleted and reserves their immutable
+object keys before attempting a bounded number of S3 deletes. Repeat while
+`reserved`, `claimed`, or `retrying` work remains. Alert on non-zero `failed`
+or `claimConflicts`; failed rows retain retry authority for an explicit replay
+procedure. The configured grace period begins after the upload intent expires,
+and committed `UPLOADED` assets are never eligible.
