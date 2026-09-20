@@ -3,6 +3,8 @@ import type { ProcessingProvider } from "@studiocar/database";
 import {
   createProcessingBatchRequestHash,
   createProcessingJobIdempotencyKey,
+  createUploadSessionUsageIdempotencyKey,
+  createUsageBillingPeriodKey,
 } from "@studiocar/processing";
 
 import type {
@@ -17,6 +19,7 @@ export class ProcessingJobService implements ProcessingJobApplication {
     private readonly jobs: ProcessingJobRepositoryPort,
     private readonly dispatcher: ProcessingDispatchPort,
     private readonly provider: ProcessingProvider,
+    private readonly now: () => Date = () => new Date(),
   ) {}
 
   public async createBatch(
@@ -30,6 +33,9 @@ export class ProcessingJobService implements ProcessingJobApplication {
       batchIdempotencyKey: idempotencyKey,
       batchRequestHash: createProcessingBatchRequestHash(command),
       provider: this.provider,
+      usageBillingPeriodKey: createUsageBillingPeriodKey(this.now()),
+      usageIdempotencyKey:
+        createUploadSessionUsageIdempotencyKey(idempotencyKey),
       options: command.options,
       jobs: command.assetIds.map((assetId, displayOrder) => ({
         assetId,

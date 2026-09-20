@@ -19,6 +19,6 @@ export const APP_NAVIGATION_ITEMS: readonly AppNavigationItem[] = [
   { available: true, href: INVENTORY_PATH, icon: "▦", label: "Inventory" },
   { available: false, href: PORTFOLIO_PATH, icon: "▥", label: "Portfolio" },
   { available: false, href: USAGE_PATH, icon: "◔", label: "Usage" },
-  { available: false, href: BILLING_PATH, icon: "◇", label: "Packs & Billing" },
+  { available: true, href: BILLING_PATH, icon: "◇", label: "Packs & Billing" },
   { available: false, href: HELP_PATH, icon: "?", label: "Help" },
 ];

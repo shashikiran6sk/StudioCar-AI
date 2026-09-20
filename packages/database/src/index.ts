@@ -13,5 +13,6 @@ export * from "./repositories/processing-outbox-repository";
 export * from "./repositories/processing-worker-repository";
 export * from "./repositories/profile-repository";
 export * from "./repositories/session-repository";
+export * from "./repositories/usage-billing-repository";
 export * from "./repositories/vehicle-repository";
 export * from "../generated/prisma/client";

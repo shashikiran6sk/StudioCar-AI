@@ -147,6 +147,15 @@ databaseDescribe("PrismaDashboardRepository", () => {
       database.usageEvent.create({
         data: {
           billingPeriodKey: "2026-09",
+          idempotencyKey: "dashboard-session-owner",
+          quantity: 1,
+          type: "VEHICLE_PROCESSING_BATCH_CREATED",
+          userId: owner.id,
+        },
+      }),
+      database.usageEvent.create({
+        data: {
+          billingPeriodKey: "2026-09",
           idempotencyKey: "dashboard-usage-foreign",
           jobId: foreignJob.id,
           quantity: 8,

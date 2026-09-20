@@ -68,6 +68,7 @@ enum OutputFormat {
 
 enum UsageEventType {
   BACKGROUND_REMOVAL_COMPLETED
+  VEHICLE_PROCESSING_BATCH_CREATED
 }
 
 enum SubscriptionStatus {

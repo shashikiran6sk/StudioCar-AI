@@ -1,4 +1,21 @@
-export const PRICING_PLANS = [
+import type { PlanKey } from "@studiocar/contracts";
+
+export interface PricingPlan {
+  action: string;
+  cadence: string;
+  description: string;
+  featured: boolean;
+  features: readonly string[];
+  imageCapacity: number;
+  key: PlanKey;
+  name: string;
+  price: string;
+  segment: string;
+  storageCapacityBytes: number | null;
+  uploadSessionCapacity: number | null;
+}
+
+export const PRICING_PLANS: readonly PricingPlan[] = [
   {
     action: "Start free",
     cadence: "forever",
@@ -10,9 +27,13 @@ export const PRICING_PLANS = [
       "Standard background processing",
       "3 GB storage",
     ],
+    imageCapacity: 9,
+    key: "FREE",
     name: "Free",
     price: "₹0",
     segment: "Explore",
+    storageCapacityBytes: 3_221_225_472,
+    uploadSessionCapacity: 3,
   },
   {
     action: "Choose Studio Pack",
@@ -25,9 +46,13 @@ export const PRICING_PLANS = [
       "Premium studio backgrounds",
       "Re-processing included",
     ],
+    imageCapacity: 100,
+    key: "STUDIO_PACK",
     name: "Studio Pack",
     price: "₹1,499",
     segment: "Most popular",
+    storageCapacityBytes: null,
+    uploadSessionCapacity: null,
   },
   {
     action: "Explore Studio Pro",
@@ -40,9 +65,13 @@ export const PRICING_PLANS = [
       "Increased storage",
       "Team-ready inventory workflow",
     ],
+    imageCapacity: 500,
+    key: "STUDIO_PRO",
     name: "Studio Pro",
     price: "₹3,999",
     segment: "Teams",
+    storageCapacityBytes: null,
+    uploadSessionCapacity: null,
   },
 ];
 

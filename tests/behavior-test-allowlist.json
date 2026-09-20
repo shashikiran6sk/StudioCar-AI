@@ -310,5 +310,17 @@
   {
     "source": "apps/web/src/server/dashboard/dashboard.types.ts",
     "reason": "Type-only dashboard application and repository ports with no runtime behavior."
+  },
+  {
+    "source": "apps/web/src/features/billing/usage-billing.constants.ts",
+    "reason": "Static Usage & Billing labels and truthful checkout-unavailable copy only."
+  },
+  {
+    "source": "apps/web/src/server/billing/billing.types.ts",
+    "reason": "Type-only billing, checkout, application, and repository ports with no runtime behavior."
+  },
+  {
+    "source": "apps/web/src/server/billing/usage-billing-runtime.ts",
+    "reason": "Composition root that wires the separately tested usage service and repository."
   }
 ]

@@ -1,4 +1,1 @@
 export const DASHBOARD_RECENT_VEHICLE_LIMIT = 3;
-export const FREE_PLAN_IMAGE_CAPACITY = 9;
-export const FREE_PLAN_NAME = "Free";
-export const FREE_PLAN_STORAGE_CAPACITY_BYTES = 3_221_225_472;

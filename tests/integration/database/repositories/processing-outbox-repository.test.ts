@@ -68,6 +68,8 @@ databaseDescribe("PrismaProcessingOutboxRepository", () => {
       batchIdempotencyKey,
       batchRequestHash: createProcessingBatchRequestHash(request),
       provider: ProcessingProvider.REMOVEBG,
+      usageBillingPeriodKey: "2026-09",
+      usageIdempotencyKey: `usage:upload-session:${batchIdempotencyKey}`,
       options,
       jobs: [
         {
