@@ -1,22 +1,26 @@
-import { StatePanel } from "@studiocar/ui";
+import { redirect } from "next/navigation";
 
+import { LOGIN_PATH } from "../../app-routes";
+import { DASHBOARD_DESCRIPTION } from "../../../features/dashboard/dashboard.constants";
 import { dashboardDate } from "../../../features/dashboard/dashboard-date";
 import { dashboardGreeting } from "../../../features/dashboard/dashboard-greeting";
+import { DashboardQuickActions } from "../../../features/dashboard/dashboard-quick-actions";
+import { DashboardRecentVehicles } from "../../../features/dashboard/dashboard-recent-vehicles";
+import { DashboardStats } from "../../../features/dashboard/dashboard-stats";
 import { userDisplayName } from "../../../features/shell/user-display-name";
 import { VehicleCreateLauncher } from "../../../features/vehicle-create/vehicle-create-launcher";
 import { getCurrentSession } from "../../../server/auth/get-current-session";
+import { getDashboardService } from "../../../server/dashboard/dashboard-runtime";
 
-const DASHBOARD_DESCRIPTION =
-  "Your authenticated workspace is ready for vehicle image workflows.";
-const EMPTY_DESCRIPTION =
-  "Upload tools and live vehicle activity will appear here as product slices are enabled.";
-const EMPTY_TITLE = "Your workspace is ready";
-const EMPTY_ICON_LABEL = "SC";
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const session = await getCurrentSession();
+  if (!session) redirect(LOGIN_PATH);
+
   const now = new Date();
-  const name = session ? userDisplayName(session.user).split(/\s+/, 1)[0] : undefined;
+  const name = userDisplayName(session.user).split(/\s+/, 1)[0];
+  const summary = await getDashboardService().getSummary(session.userId, now);
 
   return (
     <div className="dashboard-page">
@@ -24,17 +28,15 @@ export default async function DashboardPage() {
         <div>
           <p className="eyebrow">{dashboardDate(now)}</p>
           <h1>
-            {dashboardGreeting(now)}{name ? `, ${name}` : ""}.
+            {dashboardGreeting(now)}, {name}.
           </h1>
           <p>{DASHBOARD_DESCRIPTION}</p>
         </div>
         <VehicleCreateLauncher />
       </header>
-      <StatePanel
-        description={EMPTY_DESCRIPTION}
-        icon={<span aria-hidden="true">{EMPTY_ICON_LABEL}</span>}
-        title={EMPTY_TITLE}
-      />
+      <DashboardStats summary={summary} />
+      <DashboardQuickActions summary={summary} />
+      <DashboardRecentVehicles vehicles={summary.recentVehicles} />
     </div>
   );
 }

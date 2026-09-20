@@ -1411,6 +1411,217 @@ body {
   min-height: 320px;
 }
 
+.dashboard-stats {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.dashboard-stat {
+  display: grid;
+  min-width: 0;
+  min-height: 132px;
+  align-content: space-between;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--sc-neutral-300);
+  border-radius: var(--sc-radius-card);
+  background: var(--sc-neutral-0);
+}
+
+.dashboard-stat p,
+.dashboard-stat span {
+  margin: 0;
+  color: var(--sc-neutral-600);
+}
+
+.dashboard-stat p {
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.dashboard-stat strong {
+  overflow: hidden;
+  font-size: 27px;
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-stat span {
+  font-size: 9px;
+}
+
+.dashboard-stat--inverted {
+  border-color: var(--sc-neutral-950);
+  background: var(--sc-neutral-950);
+  color: var(--sc-neutral-0);
+}
+
+.dashboard-stat--inverted p,
+.dashboard-stat--inverted span {
+  color: var(--sc-neutral-400);
+}
+
+.dashboard-section {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+
+.dashboard-section > h2,
+.dashboard-section__heading h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.dashboard-section__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dashboard-actions,
+.dashboard-recent__grid,
+.dashboard-loading__cards {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.dashboard-action-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--sc-neutral-300);
+  border-radius: var(--sc-radius-card);
+  background: var(--sc-neutral-0);
+  box-shadow: var(--sc-shadow-card);
+}
+
+.dashboard-action-card__media {
+  position: relative;
+  height: 98px;
+  overflow: hidden;
+  background: var(--sc-neutral-150);
+}
+
+.dashboard-action-card__media img {
+  object-fit: contain;
+  transform: scale(1.18) translateY(7%);
+}
+
+.dashboard-action-card__media > span {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+  padding: 6px 9px;
+  border-radius: var(--sc-radius-control);
+  background: rgb(255 255 255 / 92%);
+  color: var(--sc-neutral-900);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.dashboard-action-card__body {
+  display: grid;
+  min-width: 0;
+  gap: 13px;
+  padding: 14px;
+}
+
+.dashboard-action-card__body h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.dashboard-action-card__body p {
+  margin: 0;
+  color: var(--sc-neutral-600);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.dashboard-action-card__footer {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dashboard-action-card__footer .sc-button {
+  flex: 0 0 auto;
+}
+
+.dashboard-recent__grid .inventory-card__media {
+  height: 142px;
+}
+
+.dashboard-recent .sc-state-panel {
+  min-height: 220px;
+}
+
+.dashboard-loading__header {
+  height: 94px;
+}
+
+.dashboard-loading__stat {
+  height: 132px;
+  border-radius: var(--sc-radius-card);
+}
+
+.dashboard-loading__card {
+  height: 250px;
+  border-radius: var(--sc-radius-card);
+}
+
+@media (max-width: 1099px) {
+  .dashboard-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dashboard-actions,
+  .dashboard-recent__grid,
+  .dashboard-loading__cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 899px) {
+  .dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-stats,
+  .dashboard-actions,
+  .dashboard-recent__grid,
+  .dashboard-loading__cards {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-stat {
+    min-height: 118px;
+  }
+
+  .dashboard-recent__grid .inventory-card {
+    grid-template-columns: 138px minmax(0, 1fr);
+  }
+
+  .dashboard-recent__grid .inventory-card__media {
+    height: 100%;
+    min-height: 154px;
+  }
+}
+
 .vehicle-details-form {
   display: grid;
   gap: 20px;
