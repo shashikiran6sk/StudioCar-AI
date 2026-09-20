@@ -4,6 +4,7 @@ import { handleCreateUploadIntent } from "../../../../apps/web/src/server/upload
 import type { UploadApplication } from "../../../../apps/web/src/server/uploads/upload.types";
 import type { CreateUploadIntentResult } from "../../../../apps/web/src/server/uploads/upload.types";
 import type { ActiveSession } from "../../../../apps/web/src/server/auth/session-service";
+import type { CommandRateLimiterPort } from "../../../../apps/web/src/server/security/command-rate-limiter.types";
 
 const ENDPOINT = "https://app.studiocar.test/api/uploads/presign";
 
@@ -38,6 +39,14 @@ function application(): UploadApplication {
   };
 }
 
+function allowingRateLimiter(): CommandRateLimiterPort {
+  return {
+    consume: vi.fn(
+      async (): Promise<{ allowed: true }> => ({ allowed: true }),
+    ),
+  };
+}
+
 function request(
   body: unknown,
   idempotencyKey = "upload-request-0001",
@@ -69,6 +78,7 @@ describe("handleCreateUploadIntent", () => {
       request(validBody),
       activeSession(),
       uploads,
+      allowingRateLimiter(),
     );
 
     expect(response.status).toBe(201);
@@ -86,24 +96,28 @@ describe("handleCreateUploadIntent", () => {
       request(validBody),
       null,
       uploads,
+      allowingRateLimiter(),
       () => "request-1",
     );
     const forbidden = await handleCreateUploadIntent(
       request(validBody, "upload-request-0001", "https://attacker.test"),
       activeSession(),
       uploads,
+      allowingRateLimiter(),
       () => "request-2",
     );
     const invalid = await handleCreateUploadIntent(
       request({ ...validBody, checksumSha256: "bad" }),
       activeSession(),
       uploads,
+      allowingRateLimiter(),
       () => "request-3",
     );
     const missingIdempotency = await handleCreateUploadIntent(
       request(validBody, "bad"),
       activeSession(),
       uploads,
+      allowingRateLimiter(),
       () => "request-4",
     );
 
@@ -111,6 +125,31 @@ describe("handleCreateUploadIntent", () => {
     expect(forbidden.status).toBe(403);
     expect(invalid.status).toBe(400);
     expect(missingIdempotency.status).toBe(400);
+    expect(uploads.createIntent).not.toHaveBeenCalled();
+  });
+
+  it("returns a retry window without creating another upload intent", async () => {
+    const uploads = application();
+    const rateLimiter: CommandRateLimiterPort = {
+      consume: vi.fn(async () => ({
+        allowed: false,
+        retryAfterSeconds: 42,
+      })),
+    };
+
+    const response = await handleCreateUploadIntent(
+      request(validBody),
+      activeSession(),
+      uploads,
+      rateLimiter,
+      () => "request-limited",
+    );
+
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: "RATE_LIMITED", requestId: "request-limited" },
+    });
+    expect(response.status).toBe(429);
+    expect(response.headers.get("retry-after")).toBe("42");
     expect(uploads.createIntent).not.toHaveBeenCalled();
   });
 });

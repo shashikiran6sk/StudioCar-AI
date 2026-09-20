@@ -1,13 +1,17 @@
 import { SQSClient } from "@aws-sdk/client-sqs";
 import { parseProcessingEnvironment } from "@studiocar/config";
 import {
+  CommandRateLimitScope,
   createDatabaseClient,
+  PrismaCommandRateLimitRepository,
   PrismaProcessingJobRepository,
   PrismaProcessingJobStatusRepository,
   PrismaProcessingOutboxRepository,
 } from "@studiocar/database";
 import { ProcessingOutboxDispatcher } from "@studiocar/processing";
 
+import { CommandRateLimiter } from "../security/command-rate-limiter";
+import { MILLISECONDS_PER_SECOND } from "../security/command-rate-limiter.constants";
 import { ProcessingJobService } from "./processing-job-service";
 import { ProcessingStatusService } from "./processing-status-service";
 import { SqsProcessingQueue } from "./sqs-processing-queue";
@@ -16,6 +20,7 @@ import { toProcessingProvider } from "./to-processing-provider";
 export interface ProcessingRuntime {
   dispatchToken: string;
   dispatcher: ProcessingOutboxDispatcher;
+  rateLimiter: CommandRateLimiter;
   service: ProcessingJobService;
   statusService: ProcessingStatusService;
 }
@@ -46,6 +51,16 @@ export function getProcessingRuntime(): ProcessingRuntime {
   processingRuntime = {
     dispatchToken: environment.PROCESSING_DISPATCH_TOKEN,
     dispatcher,
+    rateLimiter: new CommandRateLimiter(
+      new PrismaCommandRateLimitRepository(database),
+      {
+        scope: CommandRateLimitScope.PROCESSING_BATCH,
+        maximumRequests: environment.PROCESSING_BATCH_MAX_PER_WINDOW,
+        windowMilliseconds:
+          environment.PROCESSING_BATCH_RATE_LIMIT_WINDOW_SECONDS *
+          MILLISECONDS_PER_SECOND,
+      },
+    ),
     service: new ProcessingJobService(
       new PrismaProcessingJobRepository(database),
       dispatcher,

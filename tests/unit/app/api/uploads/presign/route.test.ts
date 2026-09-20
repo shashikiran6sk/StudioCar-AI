@@ -3,14 +3,16 @@ import { describe, expect, it, vi } from "vitest";
 import { POST } from "../../../../../../apps/web/src/app/api/uploads/presign/route";
 import { getCurrentSession } from "../../../../../../apps/web/src/server/auth/get-current-session";
 import { handleCreateUploadIntent } from "../../../../../../apps/web/src/server/uploads/create-upload-intent-handler";
-import { getUploadService } from "../../../../../../apps/web/src/server/uploads/upload-runtime";
+import { getUploadRuntime } from "../../../../../../apps/web/src/server/uploads/upload-runtime";
 import { UploadService } from "../../../../../../apps/web/src/server/uploads/upload-service";
+import { CommandRateLimiter } from "../../../../../../apps/web/src/server/security/command-rate-limiter";
+import { CommandRateLimitScope } from "../../../../../../packages/database/generated/prisma/client";
 
 vi.mock("../../../../../../apps/web/src/server/auth/get-current-session", () => ({
   getCurrentSession: vi.fn(),
 }));
 vi.mock("../../../../../../apps/web/src/server/uploads/upload-runtime", () => ({
-  getUploadService: vi.fn(),
+  getUploadRuntime: vi.fn(),
 }));
 vi.mock(
   "../../../../../../apps/web/src/server/uploads/create-upload-intent-handler",
@@ -38,8 +40,19 @@ describe("POST /api/uploads/presign", () => {
       { execute: vi.fn() },
       { execute: vi.fn() },
     );
+    const rateLimiter = new CommandRateLimiter(
+      { consume: vi.fn() },
+      {
+        scope: CommandRateLimitScope.UPLOAD_PRESIGN,
+        maximumRequests: 120,
+        windowMilliseconds: 60_000,
+      },
+    );
     vi.mocked(getCurrentSession).mockResolvedValue(session);
-    vi.mocked(getUploadService).mockReturnValue(uploads);
+    vi.mocked(getUploadRuntime).mockReturnValue({
+      rateLimiter,
+      service: uploads,
+    });
     const request = new Request(
       "https://app.studiocar.test/api/uploads/presign",
       { method: "POST" },
@@ -52,6 +65,7 @@ describe("POST /api/uploads/presign", () => {
       request,
       session,
       uploads,
+      rateLimiter,
     );
   });
 });

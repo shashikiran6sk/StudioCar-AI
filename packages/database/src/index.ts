@@ -1,5 +1,6 @@
 export * from "./client";
 export * from "./repositories/dashboard-repository";
+export * from "./repositories/command-rate-limit-repository";
 export * from "./repositories/email-delivery-repository";
 export * from "./repositories/email-outbox-publisher-repository";
 export * from "./repositories/google-identity-repository";

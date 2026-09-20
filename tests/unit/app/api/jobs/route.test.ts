@@ -7,7 +7,9 @@ import { ProcessingJobService } from "../../../../../apps/web/src/server/jobs/pr
 import { ProcessingStatusService } from "../../../../../apps/web/src/server/jobs/processing-status-service";
 import { handleGetProcessingStatuses } from "../../../../../apps/web/src/server/jobs/get-processing-status-handler";
 import { getProcessingRuntime } from "../../../../../apps/web/src/server/jobs/processing-runtime";
+import { CommandRateLimiter } from "../../../../../apps/web/src/server/security/command-rate-limiter";
 import { ProcessingProvider } from "../../../../../packages/database/generated/prisma/client";
+import { CommandRateLimitScope } from "../../../../../packages/database/generated/prisma/client";
 import { ProcessingOutboxDispatcher } from "../../../../../packages/processing/src/processing-outbox-dispatcher";
 import type {
   ProcessingOutboxRepositoryPort,
@@ -57,6 +59,14 @@ describe("POST /api/jobs", () => {
       ProcessingProvider.REMOVEBG,
     );
     const statusService = new ProcessingStatusService({ findOwned: vi.fn() });
+    const rateLimiter = new CommandRateLimiter(
+      { consume: vi.fn() },
+      {
+        scope: CommandRateLimitScope.PROCESSING_BATCH,
+        maximumRequests: 20,
+        windowMilliseconds: 60_000,
+      },
+    );
     const session = {
       id: "session-1",
       userId: "user-1",
@@ -72,6 +82,7 @@ describe("POST /api/jobs", () => {
     vi.mocked(getProcessingRuntime).mockReturnValue({
       dispatchToken: "processing-dispatch-token-at-least-32-characters",
       dispatcher,
+      rateLimiter,
       service,
       statusService,
     });
@@ -86,6 +97,7 @@ describe("POST /api/jobs", () => {
       request,
       session,
       service,
+      rateLimiter,
     );
   });
 
@@ -113,10 +125,19 @@ describe("POST /api/jobs", () => {
       retryMaximumMilliseconds: 60_000,
     });
     const statusService = new ProcessingStatusService({ findOwned: vi.fn() });
+    const rateLimiter = new CommandRateLimiter(
+      { consume: vi.fn() },
+      {
+        scope: CommandRateLimitScope.PROCESSING_BATCH,
+        maximumRequests: 20,
+        windowMilliseconds: 60_000,
+      },
+    );
     vi.mocked(getCurrentSession).mockResolvedValue(session);
     vi.mocked(getProcessingRuntime).mockReturnValue({
       dispatchToken: "processing-dispatch-token-at-least-32-characters",
       dispatcher,
+      rateLimiter,
       service: new ProcessingJobService(
         { reserveBatchOwned: vi.fn() },
         dispatcher,

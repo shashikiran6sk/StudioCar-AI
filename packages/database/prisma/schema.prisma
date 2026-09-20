@@ -98,23 +98,40 @@ enum EmailDeliveryStatus {
   FAILED
 }
 
+enum CommandRateLimitScope {
+  UPLOAD_PRESIGN
+  PROCESSING_BATCH
+}
+
 model User {
-  id                  String               @id @default(uuid()) @db.Uuid
-  displayName         String?              @db.VarChar(120)
-  primaryEmail        String?              @unique @db.VarChar(320)
-  primaryPhone        String?              @unique @db.VarChar(20)
-  createdAt           DateTime             @default(now()) @db.Timestamptz(3)
-  updatedAt           DateTime             @updatedAt @db.Timestamptz(3)
-  authIdentities      AuthIdentity[]
-  sessions            Session[]
-  vehicles            Vehicle[]
-  imageAssets         ImageAsset[]
-  processingJobs      ProcessingJob[]
-  processedAssets     ProcessedAsset[]
-  usageEvents         UsageEvent[]
-  planSubscriptions   PlanSubscription[]
-  auditLogs           AuditLog[]
-  emailOutboxMessages EmailOutboxMessage[]
+  id                     String                  @id @default(uuid()) @db.Uuid
+  displayName            String?                 @db.VarChar(120)
+  primaryEmail           String?                 @unique @db.VarChar(320)
+  primaryPhone           String?                 @unique @db.VarChar(20)
+  createdAt              DateTime                @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime                @updatedAt @db.Timestamptz(3)
+  authIdentities         AuthIdentity[]
+  sessions               Session[]
+  vehicles               Vehicle[]
+  imageAssets            ImageAsset[]
+  processingJobs         ProcessingJob[]
+  processedAssets        ProcessedAsset[]
+  usageEvents            UsageEvent[]
+  planSubscriptions      PlanSubscription[]
+  auditLogs              AuditLog[]
+  emailOutboxMessages    EmailOutboxMessage[]
+  commandRateLimitEvents CommandRateLimitEvent[]
+}
+
+model CommandRateLimitEvent {
+  id         String                @id @default(uuid()) @db.Uuid
+  userId     String                @db.Uuid
+  scope      CommandRateLimitScope
+  occurredAt DateTime              @default(now()) @db.Timestamptz(3)
+  user       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, scope, occurredAt])
+  @@index([occurredAt])
 }
 
 model AuthIdentity {

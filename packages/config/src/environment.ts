@@ -23,6 +23,9 @@ const DEFAULT_PROVIDER_INPUT_BYTES = 22 * 1024 * 1024;
 const DEFAULT_PROVIDER_OUTPUT_BYTES = 100 * 1024 * 1024;
 const DEFAULT_WORKER_IMAGE_PIXELS = 50_000_000;
 const DEFAULT_PREVIEW_MAX_WIDTH = 720;
+const DEFAULT_COMMAND_RATE_LIMIT_WINDOW_SECONDS = 60;
+const DEFAULT_UPLOAD_PRESIGN_MAX_PER_WINDOW = 120;
+const DEFAULT_PROCESSING_BATCH_MAX_PER_WINDOW = 20;
 
 const PostgresUrlSchema = z.url().refine(
   (value) => /^postgres(?:ql)?:\/\//.test(value),
@@ -57,6 +60,19 @@ const PhoneOtpRateLimitWindowSchema = z.coerce
   .default(600);
 
 const PhoneOtpLimitSchema = z.coerce.number().int().min(1);
+
+const CommandRateLimitWindowSchema = z.coerce
+  .number()
+  .int()
+  .min(10)
+  .max(3_600)
+  .default(DEFAULT_COMMAND_RATE_LIMIT_WINDOW_SECONDS);
+
+const CommandRateLimitMaximumSchema = z.coerce
+  .number()
+  .int()
+  .min(1)
+  .max(10_000);
 
 export const PhoneAuthEnvironmentSchema = z
   .object({
@@ -114,6 +130,10 @@ const UploadConfigurationSchema = z.object({
     .min(1_000_000)
     .max(500_000_000)
     .default(DEFAULT_MAX_IMAGE_PIXELS),
+  UPLOAD_PRESIGN_RATE_LIMIT_WINDOW_SECONDS: CommandRateLimitWindowSchema,
+  UPLOAD_PRESIGN_MAX_PER_WINDOW: CommandRateLimitMaximumSchema.default(
+    DEFAULT_UPLOAD_PRESIGN_MAX_PER_WINDOW,
+  ),
 });
 
 export const UploadEnvironmentSchema = z
@@ -194,6 +214,10 @@ export const ProcessingEnvironmentSchema = z
     SQS_IMAGE_QUEUE_URL: z.url(),
     BACKGROUND_REMOVAL_PROVIDER: BackgroundRemovalProviderSchema,
     PROCESSING_DISPATCH_TOKEN: z.string().min(32),
+    PROCESSING_BATCH_RATE_LIMIT_WINDOW_SECONDS: CommandRateLimitWindowSchema,
+    PROCESSING_BATCH_MAX_PER_WINDOW: CommandRateLimitMaximumSchema.default(
+      DEFAULT_PROCESSING_BATCH_MAX_PER_WINDOW,
+    ),
     PROCESSING_OUTBOX_BATCH_SIZE: z.coerce
       .number()
       .int()
@@ -342,6 +366,10 @@ export const ServerEnvironmentSchema = z
     SQS_EMAIL_QUEUE_URL: z.url(),
     EMAIL_DISPATCH_TOKEN: z.string().min(32),
     BACKGROUND_REMOVAL_PROVIDER: BackgroundRemovalProviderSchema,
+    PROCESSING_BATCH_RATE_LIMIT_WINDOW_SECONDS: CommandRateLimitWindowSchema,
+    PROCESSING_BATCH_MAX_PER_WINDOW: CommandRateLimitMaximumSchema.default(
+      DEFAULT_PROCESSING_BATCH_MAX_PER_WINDOW,
+    ),
     REMOVEBG_API_KEY: z.string().trim().min(1).optional(),
     FAL_KEY: z.string().trim().min(1).optional(),
     SELF_HOSTED_BIREFNET_ENDPOINT: z.url().optional(),

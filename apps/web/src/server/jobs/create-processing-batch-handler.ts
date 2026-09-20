@@ -8,6 +8,11 @@ import { createApiErrorResponse } from "../auth/create-api-error-response";
 import { isSameOriginRequest } from "../auth/is-same-origin-request";
 import type { ActiveSession } from "../auth/session-service";
 import {
+  COMMAND_RATE_LIMITED_CODE,
+  COMMAND_RATE_LIMITED_STATUS,
+} from "../security/command-rate-limiter.constants";
+import type { CommandRateLimiterPort } from "../security/command-rate-limiter.types";
+import {
   PROCESSING_ACCEPTED_STATUS,
   PROCESSING_ASSETS_NOT_READY_MESSAGE,
   PROCESSING_BAD_REQUEST_CODE,
@@ -26,6 +31,7 @@ import {
   PROCESSING_NOT_FOUND_MESSAGE,
   PROCESSING_NOT_FOUND_STATUS,
   PROCESSING_PRIVATE_CACHE_CONTROL,
+  PROCESSING_RATE_LIMITED_MESSAGE,
   PROCESSING_UNAUTHENTICATED_CODE,
   PROCESSING_UNAUTHENTICATED_MESSAGE,
   PROCESSING_UNAUTHENTICATED_STATUS,
@@ -40,6 +46,7 @@ export async function handleCreateProcessingBatch(
   request: Request,
   session: ActiveSession | null,
   jobs: ProcessingJobApplication,
+  rateLimiter: CommandRateLimiterPort,
   createRequestId: () => string = randomUUID,
 ): Promise<Response> {
   if (!isSameOriginRequest(request)) {
@@ -88,6 +95,17 @@ export async function handleCreateProcessingBatch(
   }
 
   try {
+    const rateLimit = await rateLimiter.consume(session.userId);
+    if (!rateLimit.allowed) {
+      return createApiErrorResponse({
+        status: COMMAND_RATE_LIMITED_STATUS,
+        code: COMMAND_RATE_LIMITED_CODE,
+        message: PROCESSING_RATE_LIMITED_MESSAGE,
+        requestId: createRequestId(),
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      });
+    }
+
     const result = await jobs.createBatch(
       session.userId,
       idempotencyKey.data,

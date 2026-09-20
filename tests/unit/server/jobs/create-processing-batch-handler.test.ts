@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { handleCreateProcessingBatch } from "../../../../apps/web/src/server/jobs/create-processing-batch-handler";
 import type { ActiveSession } from "../../../../apps/web/src/server/auth/session-service";
 import type { ProcessingJobApplication } from "../../../../apps/web/src/server/jobs/processing-job.types";
+import type { CommandRateLimiterPort } from "../../../../apps/web/src/server/security/command-rate-limiter.types";
 
 const ENDPOINT = "https://app.studiocar.test/api/jobs";
 const VEHICLE_ID = "0e879f46-1193-4d77-b785-057fe026d998";
@@ -19,6 +20,14 @@ const session: ActiveSession = {
     primaryPhone: null,
   },
 };
+
+function allowingRateLimiter(): CommandRateLimiterPort {
+  return {
+    consume: vi.fn(
+      async (): Promise<{ allowed: true }> => ({ allowed: true }),
+    ),
+  };
+}
 
 function createRequest(
   body: unknown,
@@ -51,6 +60,7 @@ describe("handleCreateProcessingBatch", () => {
       createRequest({ vehicleId: VEHICLE_ID, assetIds: [ASSET_ID], options: {} }),
       session,
       jobs,
+      allowingRateLimiter(),
     );
 
     expect(response.status).toBe(202);
@@ -68,18 +78,21 @@ describe("handleCreateProcessingBatch", () => {
       createRequest({}, "processing-request-0001", "https://attacker.test"),
       session,
       jobs,
+      allowingRateLimiter(),
       () => "request-0001",
     );
     const unauthenticated = await handleCreateProcessingBatch(
       createRequest({}),
       null,
       jobs,
+      allowingRateLimiter(),
       () => "request-0002",
     );
     const invalid = await handleCreateProcessingBatch(
       createRequest({ vehicleId: VEHICLE_ID, assetIds: [], options: {} }),
       session,
       jobs,
+      allowingRateLimiter(),
       () => "request-0003",
     );
 
@@ -99,8 +112,59 @@ describe("handleCreateProcessingBatch", () => {
     };
     const command = { vehicleId: VEHICLE_ID, assetIds: [ASSET_ID], options: {} };
 
-    expect((await handleCreateProcessingBatch(createRequest(command), session, jobs)).status).toBe(404);
-    expect((await handleCreateProcessingBatch(createRequest(command), session, jobs)).status).toBe(409);
-    expect((await handleCreateProcessingBatch(createRequest(command), session, jobs)).status).toBe(503);
+    expect(
+      (
+        await handleCreateProcessingBatch(
+          createRequest(command),
+          session,
+          jobs,
+          allowingRateLimiter(),
+        )
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await handleCreateProcessingBatch(
+          createRequest(command),
+          session,
+          jobs,
+          allowingRateLimiter(),
+        )
+      ).status,
+    ).toBe(409);
+    expect(
+      (
+        await handleCreateProcessingBatch(
+          createRequest(command),
+          session,
+          jobs,
+          allowingRateLimiter(),
+        )
+      ).status,
+    ).toBe(503);
+  });
+
+  it("returns a retry window without reserving a processing batch", async () => {
+    const jobs: ProcessingJobApplication = { createBatch: vi.fn() };
+    const rateLimiter: CommandRateLimiterPort = {
+      consume: vi.fn(async () => ({
+        allowed: false,
+        retryAfterSeconds: 17,
+      })),
+    };
+    const response = await handleCreateProcessingBatch(
+      createRequest({ vehicleId: VEHICLE_ID, assetIds: [ASSET_ID], options: {} }),
+      session,
+      jobs,
+      rateLimiter,
+      () => "request-limited",
+    );
+
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: "RATE_LIMITED", requestId: "request-limited" },
+    });
+    expect(response.status).toBe(429);
+    expect(response.headers.get("retry-after")).toBe("17");
+    expect(jobs.createBatch).not.toHaveBeenCalled();
   });
 });
