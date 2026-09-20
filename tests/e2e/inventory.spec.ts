@@ -127,6 +127,30 @@ inventoryTest(
         ],
       );
 
+      await page.goto("/dashboard");
+      await expect(
+        page.getByRole("heading", { name: /Good (morning|afternoon|evening), Inventory\./ }),
+      ).toBeVisible();
+      const dashboardStatistics = page.getByRole("region", {
+        name: "Workspace statistics",
+      });
+      await expect(dashboardStatistics).toContainText("Vehicles processing");
+      await expect(page.getByRole("heading", { name: "2026 Audi Q5" }))
+        .toBeVisible();
+      await page.screenshot({
+        fullPage: true,
+        path: testInfo.outputPath("desktop-dashboard.png"),
+      });
+
+      await page.setViewportSize({ height: 844, width: 390 });
+      await page.goto("/dashboard");
+      await expect(page.getByText("Quick actions", { exact: true })).toBeVisible();
+      await page.screenshot({
+        fullPage: true,
+        path: testInfo.outputPath("mobile-dashboard.png"),
+      });
+      await page.setViewportSize({ height: 720, width: 1280 });
+
       await page.goto("/inventory");
       await expect(page.getByRole("heading", { name: "2026 Audi Q5" }))
         .toBeVisible();

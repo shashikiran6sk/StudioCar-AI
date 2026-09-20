@@ -1,10 +1,10 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-09-19
+Last updated: 2026-09-20
 
 ## Current status
 
-Foundation, the first design-system primitives, canonical boundary contracts, the initial persistence model, tenant-safe repositories, opaque sessions, Google OAuth/OIDC, MSG91 phone OTP authentication, authenticated account surfaces, direct private-S3 uploads, and the end-to-end four-step vehicle submission path through durable SQS enqueue are implemented. The provider-independent worker lifecycle, remove.bg adapter, private-S3 execution, full decoder validation, deterministic output recovery, preview transformation, bounded Lambda runtime, tenant-safe status API, truthful adaptive processing UI, and the screenshot-derived inventory foundation are implemented; the next planned slice is the vehicle portfolio/detail surface.
+The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived inventory and portfolio surfaces, complete marketing homepage, and tenant-scoped operational dashboard are implemented. The next planned slice is the immutable-event-backed Usage & Billing surface; payment checkout remains intentionally unavailable until a billing provider is selected.
 
 ## Completed
 
@@ -207,6 +207,15 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Added focused component tests for every marketing behavior file, replaced the old foundation browser smoke with full desktop/mobile homepage coverage, and visually compared both rendered pages against all supplied homepage screenshots.
 - Verified source mapping, lint, strict typecheck, 168 web unit/component files with 281 tests, Prisma validation, all migrations, 15 real-PostgreSQL integration files with 30 tests, production build, and the complete five-test Playwright suite locally.
 
+### SC016B — Tenant-scoped dashboard data surface
+
+- Replaced the authenticated dashboard placeholder with the supplied composition: date-aware greeting, upload CTA, five compact operational metrics, vehicle-image quick actions, and the three newest authorized vehicle batches with truthful processing cards.
+- Added a canonical dashboard response contract and a dedicated PostgreSQL read repository. Counts, immutable usage totals, active jobs, success rate inputs, and original-plus-processed storage bytes are selected only inside the authenticated tenant boundary; recent cards reuse the bounded Inventory application service and short-lived private preview signatures.
+- Kept the initial plan presentation truthful while checkout is unavailable: dashboard remaining usage is derived from current-period immutable usage events against the centrally named free allowance, and values never fall below zero. Storage includes only committed originals and persisted processed outputs.
+- Added responsive five/three/two/one-column statistics, three/two/one-column action and recent grids, layout-preserving skeletons, retry-safe error UI, accessible section naming, and the original local marketing vehicle as the shared quick-action visual.
+- Added contract, aggregate calculation, byte-safety, service, component, page-state, real-PostgreSQL ownership, and authenticated desktop/mobile Playwright coverage. The dashboard was visually compared with the supplied reference at both breakpoints.
+- Verified source mapping, lint, strict typecheck, 181 web unit/component files with 298 tests, Prisma validation, all migrations, 16 real-PostgreSQL integration files with 31 tests, production build, and the complete five-test Playwright suite locally.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -216,9 +225,9 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 
 ## Next planned slices
 
-1. **SC016B — Dashboard data surface**: tenant-scoped metrics, recent vehicles, processing and usage summaries, and screenshot-derived responsive cards.
-2. **SC016C — Usage & Billing**: immutable usage-event summaries, capacity indicators, shared plan cards, and billing-port-safe upgrade actions.
-3. **Later hardening**: asynchronous email, security review, performance optimization, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
+1. **SC016C — Usage & Billing**: immutable usage-event summaries, capacity indicators, shared plan cards, and billing-port-safe upgrade actions.
+2. **SC017 — Asynchronous email**: independent email queue, worker, MailerPort, and Resend adapter without request-path delivery.
+3. **Later hardening**: security review, performance optimization, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
 
 ## Important implementation notes
 
@@ -247,6 +256,7 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - `apps/web/next-env.d.ts` is generated by Next.js and intentionally untracked.
 - Processing progress must use truthful stages unless a provider exposes meaningful progress.
 - The global activity store contains only transient job IDs and the latest server response; it is not canonical and intentionally does not survive a full browser restart. Processing continues independently, and the inventory/dashboard server queries must rediscover active vehicle state from PostgreSQL.
+- Dashboard operational values are server-authoritative: completed-image usage comes from immutable `UsageEvent` quantities, active counts from explicit database states, and storage from committed original plus processed asset sizes. The current free allowance is nine images (three documented sessions with three images per batch) until SC016C introduces the complete entitlement/billing boundary.
 - Batched status polling pauses completely for hidden tabs, refreshes immediately when visible, and removes terminal IDs from future poll requests. Terminal results remain in the activity panel until dismissed so failures are not silently lost.
 - Inventory is a separate optimized read model rather than an extension of draft mutation endpoints. It exposes only operational vehicle batches and computes visible progress from completed image jobs; it never invents provider-level progress.
 - Inventory preview URLs are signed at render time from tenant-scoped preview object keys and expire according to the bounded presigned URL configuration. Full-resolution asset signing is isolated to the tenant-authorized portfolio service.

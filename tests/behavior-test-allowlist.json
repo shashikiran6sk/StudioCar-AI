@@ -294,5 +294,21 @@
   {
     "source": "apps/web/src/features/pricing/pricing-plans.ts",
     "reason": "Canonical static pricing presentation shared by marketing and future billing surfaces."
+  },
+  {
+    "source": "apps/web/src/features/dashboard/dashboard.constants.ts",
+    "reason": "Static dashboard labels, paths, and presentation configuration only."
+  },
+  {
+    "source": "apps/web/src/server/dashboard/dashboard-runtime.ts",
+    "reason": "Composition root that wires separately tested dashboard, inventory, database, and signing adapters."
+  },
+  {
+    "source": "apps/web/src/server/dashboard/dashboard.constants.ts",
+    "reason": "Static bounded dashboard and free-plan configuration only."
+  },
+  {
+    "source": "apps/web/src/server/dashboard/dashboard.types.ts",
+    "reason": "Type-only dashboard application and repository ports with no runtime behavior."
   }
 ]
