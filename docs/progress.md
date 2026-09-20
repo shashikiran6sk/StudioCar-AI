@@ -4,7 +4,7 @@ Last updated: 2026-09-20
 
 ## Current status
 
-The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and durable transactional email are implemented. Browser response hardening, a blocking production dependency audit, and durable authenticated command limits are also in place. Payment checkout remains intentionally unavailable until a billing provider is selected.
+The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and durable transactional email are implemented. Browser response hardening, a blocking production dependency audit, durable authenticated command limits, runtime secret isolation, and a provider-neutral signed-webhook verification boundary are also in place. Payment checkout remains intentionally unavailable until a billing provider is selected.
 
 ## Completed
 
@@ -274,6 +274,14 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Added the eleventh backward-compatible migration plus unit, route, configuration, and real-PostgreSQL concurrency/window-expiry coverage. Cleanup of expired limiter events is intentionally part of the lifecycle-retention slice.
 - Verified a clean production dependency audit, source mapping, Prisma generation/validation, all eleven migrations, lint, strict typecheck, the complete web unit/component suite with 321 tests, 20 real-PostgreSQL integration files with 37 tests, production builds for all eleven packages, and the five-test Playwright suite.
 
+### SC018A2b — Secret isolation and signed-webhook foundation
+
+- Removed the unused aggregate server-environment parser that grouped unrelated Google, MSG91, Resend, S3/SQS, and image-provider secrets. Runtime composition continues to use focused Zod parsers that strip credentials outside each process's responsibility.
+- Added a deployment ownership matrix for the Next.js control plane, processing and email dispatchers, independent workers, and trusted schedulers. The matrix requires workload identities, separate dispatch tokens, selected-provider-only credentials, and prohibits copying the local environment union into production runtimes.
+- Added a provider-neutral `WebhookSignatureVerifier` boundary and a raw-body HMAC-SHA256 adapter with validated header configuration, bounded timestamp tolerance, constant-time digest comparison, malformed-header bounds, and two-secret rotation support.
+- Documented the mandatory future webhook admission order: bounded raw bytes, provider-selected verifier, freshness/signature verification, Zod parsing, and unique provider/external-ID persistence. No public webhook route was exposed because no selected provider signature contract currently justifies one.
+- Added focused parser, digest, option-validation, adapter, configuration-isolation, and rotation/tamper/freshness tests. Verified a clean dependency audit, source mapping, all eleven migrations, lint, strict typecheck, the complete web suite with 203 files and 327 tests, 20 real-PostgreSQL integration files with 37 tests, production builds for all eleven packages, and the five-test Playwright suite.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -283,8 +291,8 @@ The production foundation, authentication, private direct uploads, asynchronous 
 
 ## Next planned slices
 
-1. **SC018A2b — Secret isolation and webhook verification foundation**: formalize runtime-specific deployment secret scopes and add a provider-neutral signed-webhook verification boundary before any webhook endpoint is exposed.
-2. **SC018B — Performance and lifecycle hardening**: query/index review, cleanup jobs, polling/load verification, and bounded data-retention operations.
+1. **SC018B1 — Lifecycle retention**: add bounded cleanup commands for expired sessions, auth challenges, abandoned upload intents, and command-limit events without deleting active customer work.
+2. **SC018B2 — Query and load hardening**: complete query/index review plus polling and burst-load verification.
 3. **Later hardening**: observability/alerts, full E2E completion, AWS deployment, DLQ replay/backups, and BiRefNet substitution proof.
 
 ## Important implementation notes
@@ -333,6 +341,8 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - All future work follows the branch → PR → required CI → merge workflow in `/AGENTS.md`.
 - Browser security headers are generated from focused constants and applied through `next.config.ts`. The production CSP intentionally excludes eval; S3 is the only external browser data-plane origin class. Re-run browser tests whenever a new third-party client integration is introduced rather than broadening directives preemptively.
 - CI runs `pnpm audit --prod --audit-level moderate`. The workspace overrides for `deepmerge-ts` and `mysql2` are temporary reviewed transitive remediations for Prisma 7.10 and must be removed once Prisma pins patched versions upstream.
+- Production credential ownership is defined in `docs/security.md`. The root `.env.example` is a local-development union only; focused runtime parsers and deployment configuration must prevent unrelated secrets from crossing process boundaries.
+- No webhook route may trust parsed JSON before verifying the provider's signature over the exact raw bytes. The generic HMAC-SHA256 adapter may be selected only for a provider whose official protocol matches it; other protocols require their own verifier adapter.
 
 ## Per-slice update checklist
 

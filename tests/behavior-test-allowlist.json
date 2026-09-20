@@ -132,6 +132,14 @@
     "reason": "Type-only command rate-limit policy, decision, and persistence ports."
   },
   {
+    "source": "apps/web/src/server/webhooks/webhook-signature.constants.ts",
+    "reason": "Static signed-webhook bounds, algorithm identifiers, failure enum, and messages only."
+  },
+  {
+    "source": "apps/web/src/server/webhooks/webhook-signature.types.ts",
+    "reason": "Type-only signed-webhook verifier input, result, options, and port definitions."
+  },
+  {
     "source": "apps/web/src/server/uploads/image-validation/image-metadata.types.ts",
     "reason": "Type-only validated image metadata definitions with no runtime behavior."
   },

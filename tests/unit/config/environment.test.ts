@@ -9,7 +9,6 @@ import {
   parsePhoneAuthEnvironment,
   parseProcessingEnvironment,
   parseSessionEnvironment,
-  parseServerEnvironment,
   parseUploadEnvironment,
 } from "../../../packages/config/src/environment";
 
@@ -36,27 +35,13 @@ const validEnvironment = {
 } satisfies Record<string, string>;
 
 describe("environment validation", () => {
-  it("coerces bounded operational defaults", () => {
-    expect(parseServerEnvironment(validEnvironment)).toMatchObject({
-      MAX_UPLOAD_BYTES: 25 * 1024 * 1024,
-      PRESIGNED_URL_TTL_SECONDS: 300,
-      MAX_IMAGE_DIMENSION: 16_384,
-      MAX_IMAGE_PIXELS: 100_000_000,
-      UPLOAD_PRESIGN_RATE_LIMIT_WINDOW_SECONDS: 60,
-      UPLOAD_PRESIGN_MAX_PER_WINDOW: 120,
-      PROCESSING_BATCH_RATE_LIMIT_WINDOW_SECONDS: 60,
-      PROCESSING_BATCH_MAX_PER_WINDOW: 20,
-      BACKGROUND_REMOVAL_PROVIDER: "removebg",
-    });
-  });
-
   it.each([
     ["fal", "FAL_KEY"],
     ["birefnet", "SELF_HOSTED_BIREFNET_ENDPOINT"],
   ])("requires the configured %s provider credential", (provider, key) => {
     const result = (() => {
       try {
-        parseServerEnvironment({
+        parseImageWorkerEnvironment({
           ...validEnvironment,
           BACKGROUND_REMOVAL_PROVIDER: provider,
           REMOVEBG_API_KEY: undefined,
@@ -153,6 +138,18 @@ describe("environment validation", () => {
       PROCESSING_OUTBOX_RETRY_BASE_MS: 1_000,
       PROCESSING_OUTBOX_RETRY_MAX_MS: 60_000,
     });
+  });
+
+  it("keeps provider and delivery secrets out of web control-plane parsers", () => {
+    expect(parseProcessingEnvironment(validEnvironment)).not.toHaveProperty(
+      "REMOVEBG_API_KEY",
+    );
+    expect(parseEmailDispatchEnvironment(validEnvironment)).not.toHaveProperty(
+      "RESEND_API_KEY",
+    );
+    expect(parseUploadEnvironment(validEnvironment)).not.toHaveProperty(
+      "SESSION_SECRET",
+    );
   });
 
   it("validates bounded image worker settings and provider credentials", () => {
