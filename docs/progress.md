@@ -197,6 +197,16 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Added contract, filename, status mapping, service, S3 signer, utility, component, route-state, inventory-link, real-PostgreSQL latest-batch/tenant-ownership, and authenticated desktop/mobile Playwright coverage.
 - Verified source mapping, lint, strict typecheck, 158 web unit/component files with 271 tests, Prisma validation, all migrations, 15 real-PostgreSQL integration files with 30 tests, production build, and the complete five-test Playwright suite locally.
 
+### SC016A — Screenshot-derived marketing homepage
+
+- Replaced the design-foundation placeholder with the complete scrollable homepage from the six supplied references: sticky product navigation, two-column hero, draggable before/after treatment comparison, interactive feature selector, audience strip, four-step workflow, studio-background gallery, shared pricing system, final CTA, and structured footer.
+- Added an original repository-owned transparent automotive image and reused the same vehicle across original, Premium White, Dark Studio, and Grey Studio treatments so the visual story demonstrates consistent processing without remote image dependencies.
+- Kept all acquisition actions connected to the real authentication entry point. Illustrative plan actions do not simulate checkout and explicitly disclose that paid checkout remains unavailable until a billing provider is connected.
+- Established one canonical pricing-plan presentation module for reuse by the future Usage & Billing page, avoiding divergent plan names, prices, limits, and benefits.
+- Added marketing design tokens for the documented hero/lift shadows and major-surface radius, plus responsive single-column layouts, horizontally scrollable mobile navigation, 44px mobile actions, keyboard-native feature controls, semantic landmarks, reduced-motion behavior, and optimized Next.js image delivery.
+- Added focused component tests for every marketing behavior file, replaced the old foundation browser smoke with full desktop/mobile homepage coverage, and visually compared both rendered pages against all supplied homepage screenshots.
+- Verified source mapping, lint, strict typecheck, 168 web unit/component files with 281 tests, Prisma validation, all migrations, 15 real-PostgreSQL integration files with 30 tests, production build, and the complete five-test Playwright suite locally.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -206,8 +216,8 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 
 ## Next planned slices
 
-1. **SC016A — Homepage**: screenshot-derived marketing navigation, hero comparison, workflow, feature, pricing, CTA, and footer using the established design system.
-2. **SC016B+ — Remaining product surfaces**: dashboard data and usage/billing implemented screenshot-by-screenshot.
+1. **SC016B — Dashboard data surface**: tenant-scoped metrics, recent vehicles, processing and usage summaries, and screenshot-derived responsive cards.
+2. **SC016C — Usage & Billing**: immutable usage-event summaries, capacity indicators, shared plan cards, and billing-port-safe upgrade actions.
 3. **Later hardening**: asynchronous email, security review, performance optimization, observability/alerts, full E2E completion, AWS deployment, cleanup/replay/backups/load testing, and BiRefNet substitution proof.
 
 ## Important implementation notes
@@ -243,6 +253,8 @@ Foundation, the first design-system primitives, canonical boundary contracts, th
 - Portfolio URLs are signed only after the tenant-scoped detail repository selects the latest completed batch. Originals use inline signed responses, processed outputs have separate inline and attachment signatures, and all URLs expire according to the bounded presigned URL configuration.
 - Favorites, edit, reprocess, hero selection, and ZIP actions remain intentionally absent until their canonical persistence, mutation, and archive-generation flows exist; the UI does not expose controls that would falsely imply those operations are implemented.
 - Browser portfolio tests use explicit non-production AWS credentials solely to exercise local SigV4 generation and intercept the private S3 host before any network request; CI does not require or expose production AWS credentials.
+- Marketing pricing is illustrative and centralized in `apps/web/src/features/pricing/pricing-plans.ts`; no action claims payment success, and the same module must be reused by Usage & Billing until commercial configuration moves behind the billing boundary.
+- The marketing vehicle visual is an original generated RGBA asset stored at `apps/web/public/images/marketing/silver-sedan.png`; it has no embedded brand marks, readable plate, remote runtime dependency, or user-provided image content.
 - Turborepo's E2E task explicitly passes only `DATABASE_URL`, `AWS_REGION`, and `S3_BUCKET`; this ensures authenticated Playwright tests actually execute while keeping unrelated secrets out of the browser-test task.
 - All future work follows the branch → PR → required CI → merge workflow in `/AGENTS.md`.
 

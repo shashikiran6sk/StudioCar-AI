@@ -286,5 +286,13 @@
   {
     "source": "apps/web/src/features/portfolio/portfolio.constants.ts",
     "reason": "Static portfolio labels and normalized treatment presentation only."
+  },
+  {
+    "source": "apps/web/src/features/marketing/marketing.constants.ts",
+    "reason": "Static marketing routes, anchors, labels, feature content, workflow content, and asset paths only."
+  },
+  {
+    "source": "apps/web/src/features/pricing/pricing-plans.ts",
+    "reason": "Canonical static pricing presentation shared by marketing and future billing surfaces."
   }
 ]
