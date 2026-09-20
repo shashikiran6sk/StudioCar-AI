@@ -3,7 +3,18 @@ import { expect, test } from "@playwright/test";
 test("renders the complete marketing homepage at desktop and mobile widths", async ({
   page,
 }, testInfo) => {
-  await page.goto("/");
+  const response = await page.goto("/");
+  if (!response) throw new Error("Expected the homepage response.");
+  const responseHeaders = response.headers();
+
+  expect(responseHeaders["content-security-policy"]).toContain(
+    "frame-ancestors 'none'",
+  );
+  expect(responseHeaders["strict-transport-security"]).toBe(
+    "max-age=63072000; includeSubDomains; preload",
+  );
+  expect(responseHeaders["x-content-type-options"]).toBe("nosniff");
+  expect(responseHeaders["x-frame-options"]).toBe("DENY");
 
   await expect(page.getByRole("heading", { name: /Turn every vehicle photo/ }))
     .toBeVisible();

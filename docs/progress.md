@@ -4,7 +4,7 @@ Last updated: 2026-09-20
 
 ## Current status
 
-The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived inventory, portfolio, dashboard, marketing, and immutable-event-backed Usage & Billing surfaces are implemented. Processing-completion email now has a transactional outbox, independent queue dispatcher, durable worker claims, and audited terminal outcomes. Payment checkout remains intentionally unavailable until a billing provider is selected.
+The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and durable transactional email are implemented. Browser response hardening and a blocking production dependency audit are also in place. Payment checkout remains intentionally unavailable until a billing provider is selected.
 
 ## Completed
 
@@ -255,6 +255,16 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Added domain, adapter, route, environment, worker, and real-PostgreSQL coverage for publish recovery, competing claims, transient release, terminal failure, successful finalization, and delayed duplicate suppression.
 - Verified source mapping, Prisma validation, all ten migrations, lint, strict typecheck, the complete unit/component suite, 19 real-PostgreSQL integration files with 35 tests, production builds for all eleven packages, and the five-test Playwright suite locally.
 
+### SC018A1 — Browser and dependency security baseline
+
+- Added a repository-owned response-header policy to every Next.js route: Content Security Policy, HSTS, clickjacking denial, MIME-sniffing prevention, strict referrer handling, a least-capability Permissions Policy, same-origin opener isolation, and legacy cross-domain policy denial.
+- Kept the production CSP free of `unsafe-eval`, denied objects, framing, foreign form targets, and foreign base URIs, and allowed only the private S3 data-plane origin class required for direct browser uploads and signed image reads. Development-only eval and WebSocket allowances are excluded from production output.
+- Preserved static marketing rendering by using Next.js's documented non-nonce CSP approach. The remaining `unsafe-inline` script/style allowance is explicit; adopting request nonces would deliberately trade away static generation and CDN caching for the affected routes.
+- Added a blocking moderate-or-higher production dependency audit to CI. Pinned patched pnpm workspace overrides for vulnerable Prisma CLI transitive dependencies and verified the audit reports no known vulnerabilities while Prisma generation and schema validation continue to pass.
+- Audited the current App Router surface: every cookie-authenticated mutation rejects absent/cross-origin `Origin` values, internal dispatch endpoints use constant-time dedicated bearer checks, and data repositories remain tenant-scoped. Google authorization start remains browser-bound through one-time state, nonce, PKCE, and its HttpOnly binding cookie.
+- Added unit coverage for production/development CSP behavior and the full header set, plus browser-level assertions against the built application response.
+- Verified a clean moderate-or-higher production dependency audit, source mapping, Prisma generation/validation, all ten migrations, lint, strict typecheck, the complete unit/component suite including 197 web files with 317 tests, 19 real-PostgreSQL integration files with 35 tests, production builds for all eleven packages, and the five-test Playwright suite locally.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -264,7 +274,7 @@ The production foundation, authentication, private direct uploads, asynchronous 
 
 ## Next planned slices
 
-1. **SC018A — Security hardening audit**: secure headers, route-by-route CSRF and ownership review, deployment secret isolation, and automated security checks.
+1. **SC018A2 — Abuse controls and secret isolation**: add shared authenticated command limits beyond OTP, formalize deployment secret scopes, and add webhook signature infrastructure before any webhook endpoint is exposed.
 2. **SC018B — Performance and lifecycle hardening**: query/index review, cleanup jobs, polling/load verification, and bounded data-retention operations.
 3. **Later hardening**: observability/alerts, full E2E completion, AWS deployment, DLQ replay/backups, and BiRefNet substitution proof.
 
@@ -312,6 +322,8 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - The marketing vehicle visual is an original generated RGBA asset stored at `apps/web/public/images/marketing/silver-sedan.png`; it has no embedded brand marks, readable plate, remote runtime dependency, or user-provided image content.
 - Turborepo's E2E task explicitly passes only `DATABASE_URL`, `AWS_REGION`, and `S3_BUCKET`; this ensures authenticated Playwright tests actually execute while keeping unrelated secrets out of the browser-test task.
 - All future work follows the branch → PR → required CI → merge workflow in `/AGENTS.md`.
+- Browser security headers are generated from focused constants and applied through `next.config.ts`. The production CSP intentionally excludes eval; S3 is the only external browser data-plane origin class. Re-run browser tests whenever a new third-party client integration is introduced rather than broadening directives preemptively.
+- CI runs `pnpm audit --prod --audit-level moderate`. The workspace overrides for `deepmerge-ts` and `mysql2` are temporary reviewed transitive remediations for Prisma 7.10 and must be removed once Prisma pins patched versions upstream.
 
 ## Per-slice update checklist
 
