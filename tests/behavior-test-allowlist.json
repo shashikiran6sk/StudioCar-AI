@@ -116,6 +116,14 @@
     "reason": "Composition root that wires separately tested email services and adapters."
   },
   {
+    "source": "apps/web/src/server/security/security-header.types.ts",
+    "reason": "Type-only security response header definition."
+  },
+  {
+    "source": "apps/web/src/server/security/security-headers.constants.ts",
+    "reason": "Static browser security header names, values, and CSP directives only."
+  },
+  {
     "source": "apps/web/src/server/uploads/image-validation/image-metadata.types.ts",
     "reason": "Type-only validated image metadata definitions with no runtime behavior."
   },
