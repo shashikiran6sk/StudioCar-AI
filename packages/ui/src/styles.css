@@ -24,6 +24,8 @@
   --sc-warning-bg: #fff8e6;
   --sc-error: #d92d20;
   --sc-error-bg: #fff1f2;
+  --sc-processing: var(--sc-blue-500);
+  --sc-processing-bg: var(--sc-blue-50);
   --sc-focus: rgb(49 92 245 / 35%);
   --sc-overlay: rgb(12 12 11 / 44%);
   --sc-font-sans: Manrope, Arial, system-ui, sans-serif;
@@ -32,9 +34,12 @@
   --sc-radius-vehicle: 15px;
   --sc-radius-panel: 16px;
   --sc-radius-modal: 20px;
+  --sc-radius-marketing: 24px;
   --sc-radius-pill: 999px;
   --sc-shadow-panel: 0 14px 38px rgb(20 20 18 / 10%);
   --sc-shadow-card: 0 2px 6px rgb(20 20 18 / 2.5%);
+  --sc-shadow-hero: 0 24px 60px rgb(22 22 20 / 16%);
+  --sc-shadow-lift: 0 12px 28px rgb(0 0 0 / 13%);
 }
 
 *,
