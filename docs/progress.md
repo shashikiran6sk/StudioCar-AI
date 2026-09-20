@@ -4,7 +4,7 @@ Last updated: 2026-09-20
 
 ## Current status
 
-The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and durable transactional email are implemented. Browser response hardening, a blocking production dependency audit, durable authenticated command limits, runtime secret isolation, and a provider-neutral signed-webhook verification boundary are also in place. Payment checkout remains intentionally unavailable until a billing provider is selected.
+The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and durable transactional email are implemented. Browser response hardening, a blocking production dependency audit, durable authenticated command limits, runtime secret isolation, signed-webhook verification, and bounded database retention are also in place. Payment checkout remains intentionally unavailable until a billing provider is selected.
 
 ## Completed
 
@@ -282,6 +282,15 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Documented the mandatory future webhook admission order: bounded raw bytes, provider-selected verifier, freshness/signature verification, Zod parsing, and unique provider/external-ID persistence. No public webhook route was exposed because no selected provider signature contract currently justifies one.
 - Added focused parser, digest, option-validation, adapter, configuration-isolation, and rotation/tamper/freshness tests. Verified a clean dependency audit, source mapping, all eleven migrations, lint, strict typecheck, the complete web suite with 203 files and 327 tests, 20 real-PostgreSQL integration files with 37 tests, production builds for all eleven packages, and the five-test Playwright suite.
 
+### SC018B1a — Bounded database lifecycle retention
+
+- Added a dedicated, secret-protected lifecycle cleanup command with independent retention windows for expired sessions, OAuth challenges, phone OTP challenges/attempts, and command-rate-limit events.
+- Implemented every deletion as an ordered PostgreSQL candidate batch with `FOR UPDATE SKIP LOCKED` and a configured maximum. Concurrent scheduler invocations remain safe, and repeated calls drain backlog without an unbounded transaction.
+- Preserved active/recent security state and excluded users, vehicles, image assets, processing jobs, outputs, usage events, subscriptions, webhook events, email records, and audit logs from deletion.
+- Added a backward-compatible OAuth expiry index migration and a focused environment parser with a separately generated lifecycle token, batch bound, and retention settings.
+- Documented the trusted scheduler contract and kept the root environment file local-only. The cleanup response contains aggregate counts only and is private/no-store.
+- Added service, handler, route, configuration, and real-PostgreSQL cutoff/batch coverage. Verified a clean production dependency audit, source mapping, Prisma generation/validation, all twelve migrations, lint, strict typecheck, the complete web suite with 206 files and 331 tests, 21 integration files with 39 tests, production builds for all eleven packages, and the five-test Playwright suite.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -291,7 +300,7 @@ The production foundation, authentication, private direct uploads, asynchronous 
 
 ## Next planned slices
 
-1. **SC018B1 — Lifecycle retention**: add bounded cleanup commands for expired sessions, auth challenges, abandoned upload intents, and command-limit events without deleting active customer work.
+1. **SC018B1b — Abandoned upload object cleanup**: add a durable private-S3 deletion outbox so expired upload intents and orphaned bytes can be reconciled without unsafe cross-system deletion.
 2. **SC018B2 — Query and load hardening**: complete query/index review plus polling and burst-load verification.
 3. **Later hardening**: observability/alerts, full E2E completion, AWS deployment, DLQ replay/backups, and BiRefNet substitution proof.
 
@@ -343,6 +352,7 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - CI runs `pnpm audit --prod --audit-level moderate`. The workspace overrides for `deepmerge-ts` and `mysql2` are temporary reviewed transitive remediations for Prisma 7.10 and must be removed once Prisma pins patched versions upstream.
 - Production credential ownership is defined in `docs/security.md`. The root `.env.example` is a local-development union only; focused runtime parsers and deployment configuration must prevent unrelated secrets from crossing process boundaries.
 - No webhook route may trust parsed JSON before verifying the provider's signature over the exact raw bytes. The generic HMAC-SHA256 adapter may be selected only for a provider whose official protocol matches it; other protocols require their own verifier adapter.
+- Lifecycle cleanup deletes only records strictly older than configured cutoffs in bounded, skip-locked batches. It deliberately excludes image records and S3 bytes until SC018B1b provides a durable deletion outbox; database-only deletion would otherwise orphan uploaded objects or lose retry authority.
 
 ## Per-slice update checklist
 

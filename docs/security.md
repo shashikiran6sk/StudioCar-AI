@@ -19,10 +19,11 @@ provider keys into the Next.js application.
 | Email-delivery worker | `DATABASE_URL`, `RESEND_API_KEY`, `EMAIL_FROM`, `APPLICATION_BASE_URL`, email-queue consume | S3, image queue, image-provider, auth secrets |
 | Trusted processing scheduler | Processing dispatch URL and `PROCESSING_DISPATCH_TOKEN` only | Database, AWS, provider, session secrets |
 | Trusted email scheduler | Email dispatch URL and `EMAIL_DISPATCH_TOKEN` only | Database, AWS, Resend, session secrets |
+| Trusted lifecycle scheduler | Lifecycle cleanup URL and `LIFECYCLE_CLEANUP_TOKEN` only | Database, AWS, provider, auth, and dispatch secrets |
 
 Use workload identities and the checked-in least-privilege IAM policies instead
 of long-lived AWS access keys in production. Processing and email dispatch tokens
-must be independently generated. Rotate a credential inside its owning runtime,
+and the lifecycle cleanup token must be independently generated. Rotate a credential inside its owning runtime,
 then revoke the old value; never log either value during rollout.
 
 The configuration package deliberately exposes focused runtime parsers. There is

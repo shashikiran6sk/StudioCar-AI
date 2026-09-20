@@ -6,6 +6,7 @@ import {
   parseEmailWorkerEnvironment,
   parseGoogleAuthEnvironment,
   parseImageWorkerEnvironment,
+  parseLifecycleCleanupEnvironment,
   parsePhoneAuthEnvironment,
   parseProcessingEnvironment,
   parseSessionEnvironment,
@@ -31,6 +32,7 @@ const validEnvironment = {
   BACKGROUND_REMOVAL_PROVIDER: "removebg",
   PROCESSING_DISPATCH_TOKEN: "processing-dispatch-token-at-least-32-characters",
   EMAIL_DISPATCH_TOKEN: "email-dispatch-token-at-least-32-characters",
+  LIFECYCLE_CLEANUP_TOKEN: "lifecycle-cleanup-token-at-least-32-characters",
   REMOVEBG_API_KEY: "remove-bg-key",
 } satisfies Record<string, string>;
 
@@ -210,5 +212,22 @@ describe("environment validation", () => {
       EMAIL_OUTBOX_RETRY_MAX_MS: 60_000,
       SQS_EMAIL_QUEUE_URL: validEnvironment.SQS_EMAIL_QUEUE_URL,
     });
+  });
+
+  it("validates focused lifecycle cleanup retention bounds", () => {
+    expect(parseLifecycleCleanupEnvironment(validEnvironment)).toEqual({
+      DATABASE_URL: validEnvironment.DATABASE_URL,
+      LIFECYCLE_CLEANUP_TOKEN: validEnvironment.LIFECYCLE_CLEANUP_TOKEN,
+      LIFECYCLE_CLEANUP_BATCH_SIZE: 100,
+      SESSION_RETENTION_DAYS: 30,
+      AUTH_CHALLENGE_RETENTION_DAYS: 7,
+      COMMAND_RATE_LIMIT_RETENTION_HOURS: 24,
+    });
+    expect(() =>
+      parseLifecycleCleanupEnvironment({
+        ...validEnvironment,
+        LIFECYCLE_CLEANUP_BATCH_SIZE: "1001",
+      }),
+    ).toThrow();
   });
 });
