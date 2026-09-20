@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { createApiErrorResponse } from "../auth/create-api-error-response";
+import { dispatchTokenIsValid } from "../internal/dispatch-token-is-valid";
 import {
   PROCESSING_FORBIDDEN_CODE,
   PROCESSING_FORBIDDEN_MESSAGE,
@@ -9,7 +10,6 @@ import {
   PROCESSING_UNAVAILABLE_MESSAGE,
   PROCESSING_UNAVAILABLE_STATUS,
 } from "./processing-job.constants";
-import { processingDispatchTokenIsValid } from "./processing-dispatch-token-is-valid";
 import type { ProcessingDispatchPort } from "./processing-job.types";
 
 export async function handleDispatchProcessingOutbox(
@@ -18,7 +18,7 @@ export async function handleDispatchProcessingOutbox(
   dispatcher: ProcessingDispatchPort,
   createRequestId: () => string = randomUUID,
 ): Promise<Response> {
-  if (!processingDispatchTokenIsValid(request, expectedToken)) {
+  if (!dispatchTokenIsValid(request, expectedToken)) {
     return createApiErrorResponse({
       status: PROCESSING_FORBIDDEN_STATUS,
       code: PROCESSING_FORBIDDEN_CODE,

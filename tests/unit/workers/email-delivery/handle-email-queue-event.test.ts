@@ -15,18 +15,10 @@ const MESSAGE = JSON.stringify({
 
 describe("handleEmailQueueEvent", () => {
   it("reports only retryable records as SQS batch failures", async () => {
-    const send = vi
+    const process = vi
       .fn()
-      .mockResolvedValueOnce({
-        errorCode: "RESEND_HTTP_429",
-        kind: "FAILED",
-        retryable: true,
-      })
-      .mockResolvedValueOnce({
-        errorCode: "RESEND_HTTP_400",
-        kind: "FAILED",
-        retryable: false,
-      });
+      .mockResolvedValueOnce("RETRY")
+      .mockResolvedValueOnce("ACKNOWLEDGED");
 
     await expect(
       handleEmailQueueEvent(
@@ -36,7 +28,7 @@ describe("handleEmailQueueEvent", () => {
             { body: MESSAGE, messageId: "sqs-2" },
           ],
         },
-        { send },
+        { process },
       ),
     ).resolves.toEqual({ batchItemFailures: [{ itemIdentifier: "sqs-1" }] });
   });
@@ -45,7 +37,7 @@ describe("handleEmailQueueEvent", () => {
     await expect(
       handleEmailQueueEvent(
         { Records: [{ body: "not-json", messageId: "sqs-invalid" }] },
-        { send: vi.fn() },
+        { process: vi.fn() },
       ),
     ).resolves.toEqual({
       batchItemFailures: [{ itemIdentifier: "sqs-invalid" }],

@@ -1,3 +1,10 @@
+import type { EmailWorkerMessage } from "@studiocar/contracts";
+import {
+  MAIL_DELIVERY_DELIVERED,
+  MAIL_DELIVERY_FAILED,
+  type MailDeliveryResult,
+  type MailerPort,
+} from "@studiocar/email";
 import { z } from "zod";
 
 import {
@@ -8,7 +15,7 @@ import {
   RESEND_INVALID_RESPONSE,
   RESEND_NETWORK_ERROR,
 } from "./email-delivery.constants";
-import type { MailDeliveryResult, MailerPort, MailRequest } from "./mailer.types";
+import { renderEmailMessage } from "./render-email-message";
 import { resendFailureIsRetryable } from "./resend-failure-is-retryable";
 
 const ResendSuccessSchema = z.object({ id: z.string().trim().min(1) });
@@ -26,7 +33,8 @@ export class ResendMailer implements MailerPort {
     private readonly request: typeof fetch = fetch,
   ) {}
 
-  public async send(mail: MailRequest): Promise<MailDeliveryResult> {
+  public async send(message: EmailWorkerMessage): Promise<MailDeliveryResult> {
+    const mail = renderEmailMessage(message);
     const controller = new AbortController();
     const timeout = setTimeout(
       () => {
@@ -57,7 +65,7 @@ export class ResendMailer implements MailerPort {
         );
         return {
           errorCode: `RESEND_HTTP_${String(response.status)}`,
-          kind: "FAILED",
+          kind: MAIL_DELIVERY_FAILED,
           retryable: resendFailureIsRetryable(
             response.status,
             failure.success ? failure.data.name : undefined,
@@ -66,10 +74,18 @@ export class ResendMailer implements MailerPort {
       }
       const result = ResendSuccessSchema.safeParse(await response.json());
       return result.success
-        ? { kind: "DELIVERED", providerMessageId: result.data.id }
-        : { errorCode: RESEND_INVALID_RESPONSE, kind: "FAILED", retryable: true };
+        ? { kind: MAIL_DELIVERY_DELIVERED, providerMessageId: result.data.id }
+        : {
+            errorCode: RESEND_INVALID_RESPONSE,
+            kind: MAIL_DELIVERY_FAILED,
+            retryable: true,
+          };
     } catch {
-      return { errorCode: RESEND_NETWORK_ERROR, kind: "FAILED", retryable: true };
+      return {
+        errorCode: RESEND_NETWORK_ERROR,
+        kind: MAIL_DELIVERY_FAILED,
+        retryable: true,
+      };
     } finally {
       clearTimeout(timeout);
     }

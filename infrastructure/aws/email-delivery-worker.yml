@@ -8,6 +8,9 @@ Parameters:
   ArtifactKey:
     Type: String
     Description: Immutable S3 key for the reviewed worker deployment archive
+  DatabaseSecretArn:
+    Type: String
+    Description: Secrets Manager ARN containing DATABASE_URL as a JSON property
   ResendSecretArn:
     Type: String
     Description: Secrets Manager ARN containing RESEND_API_KEY as a JSON property
@@ -15,6 +18,10 @@ Parameters:
     Type: String
     AllowedPattern: ^[^@\s]+@[^@\s]+\.[^@\s]+$
     Description: Verified sender email address
+  ApplicationBaseUrl:
+    Type: String
+    AllowedPattern: ^https://.+$
+    Description: Public HTTPS origin used for authorized portfolio links
   EmailDeliveryQueueArn:
     Type: String
     Description: ARN exported by the email-delivery queue stack
@@ -78,6 +85,9 @@ Resources:
       Environment:
         Variables:
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
+          APPLICATION_BASE_URL: !Ref ApplicationBaseUrl
+          DATABASE_URL: !Sub '{{resolve:secretsmanager:${DatabaseSecretArn}:SecretString:DATABASE_URL}}'
+          EMAIL_DELIVERY_CLAIM_TTL_MS: "45000"
           EMAIL_FROM: !Ref EmailFrom
           RESEND_API_KEY: !Sub '{{resolve:secretsmanager:${ResendSecretArn}:SecretString:RESEND_API_KEY}}'
           RESEND_TIMEOUT_MS: "8000"

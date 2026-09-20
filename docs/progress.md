@@ -4,7 +4,7 @@ Last updated: 2026-09-20
 
 ## Current status
 
-The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived inventory, portfolio, dashboard, marketing, and immutable-event-backed Usage & Billing surfaces are implemented. The independent email delivery plane and atomic processing-completion outbox reservation are implemented; the next slice will dispatch and durably execute those messages. Payment checkout remains intentionally unavailable until a billing provider is selected.
+The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived inventory, portfolio, dashboard, marketing, and immutable-event-backed Usage & Billing surfaces are implemented. Processing-completion email now has a transactional outbox, independent queue dispatcher, durable worker claims, and audited terminal outcomes. Payment checkout remains intentionally unavailable until a billing provider is selected.
 
 ## Completed
 
@@ -245,6 +245,16 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Added a backward-compatible tenth migration and real-PostgreSQL assertions for successful outbox reservation and absence on terminal image failure. Queue publication and worker delivery claims remain closed until SC017B2.
 - Verified source mapping, lint, strict typecheck, the complete unit/component suite, Prisma validation, all ten migrations, 17 real-PostgreSQL integration files with 32 tests, production builds for all ten packages, and the five-test Playwright suite locally.
 
+### SC017B2 — Email dispatch and durable delivery
+
+- Added the provider-neutral `@studiocar/email` package with bounded outbox dispatch, exponential backoff with jitter, canonical message construction, delivery leasing, terminal finalization, and `MailerPort` orchestration independent of Resend semantics.
+- Added separate Prisma publisher and delivery adapters. Pending rows use expiring publish leases and durable retry scheduling; queued rows use expiring delivery leases, attempt accounting, provider identifiers, terminal failure codes, and duplicate suppression after delivery or failure.
+- Added a dedicated SQS email publisher and secret-protected `POST /api/internal/email/dispatch` recovery endpoint. The email token, queue settings, public application origin, batch size, leases, and retry bounds are validated independently from processing configuration.
+- Changed the email worker to treat queue content as an untrusted reference: after validating the stable contract, it claims the message UUID and reconstructs recipient, vehicle name, and portfolio URL from the PostgreSQL snapshot before contacting Resend.
+- Updated the independently deployable email Lambda stack with database configuration and a delivery lease shorter than queue visibility, while retaining separate concurrency, queue, DLQ, credentials, and alarms from image processing.
+- Added domain, adapter, route, environment, worker, and real-PostgreSQL coverage for publish recovery, competing claims, transient release, terminal failure, successful finalization, and delayed duplicate suppression.
+- Verified source mapping, Prisma validation, all ten migrations, lint, strict typecheck, the complete unit/component suite, 19 real-PostgreSQL integration files with 35 tests, production builds for all eleven packages, and the five-test Playwright suite locally.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -254,8 +264,8 @@ The production foundation, authentication, private direct uploads, asynchronous 
 
 ## Next planned slices
 
-1. **SC017B2 — Email dispatch and durable delivery**: dispatch pending email outbox rows to the independent queue, recover publication failures, and make the worker claim/finalize PostgreSQL delivery state.
-2. **SC018 — Security and performance hardening**: secure headers, CSRF/rate-limit audit, query/index review, cleanup, and load verification.
+1. **SC018A — Security hardening audit**: secure headers, route-by-route CSRF and ownership review, deployment secret isolation, and automated security checks.
+2. **SC018B — Performance and lifecycle hardening**: query/index review, cleanup jobs, polling/load verification, and bounded data-retention operations.
 3. **Later hardening**: observability/alerts, full E2E completion, AWS deployment, DLQ replay/backups, and BiRefNet substitution proof.
 
 ## Important implementation notes
@@ -288,9 +298,10 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Dashboard operational values are server-authoritative: completed-image usage comes from immutable `UsageEvent` quantities, active counts from explicit database states, and storage from committed original plus processed asset sizes. The current free allowance is sourced from the shared plan catalog as nine images across three documented sessions with three images per batch.
 - Upload-session usage is now recorded as `VEHICLE_PROCESSING_BATCH_CREATED` in the processing-reservation transaction and remains separate from per-image `BACKGROUND_REMOVAL_COMPLETED` charges. Usage & Billing queries filter these event types explicitly; adding a new usage type cannot silently inflate an unrelated quota.
 - `BillingPort` is intentionally unimplemented until a payment provider is selected. UI upgrade controls disclose this state and never return fake checkout URLs, mutate subscriptions, or claim payment success.
-- The email worker consumes only the stable `EmailWorkerMessage` contract and treats delivery as an independent data plane. No application request publishes directly to SQS or waits for Resend; SC017B must add a transactional outbox and recovery dispatcher before the worker is connected to product events.
-- Resend retains idempotency keys for a bounded provider window. SC017B must also persist application delivery claims and terminal outcomes so later DLQ replay is governed by durable PostgreSQL state rather than provider retention alone.
+- The email worker consumes only the stable `EmailWorkerMessage` contract and treats delivery as an independent data plane. No user-facing request publishes to its SQS queue or waits for Resend; a trusted scheduler invokes the recovery dispatcher at least once per minute with a dedicated `EMAIL_DISPATCH_TOKEN`.
+- Resend retains idempotency keys for a bounded provider window. PostgreSQL delivery claims and terminal outcomes provide application-level duplicate suppression beyond that window; an unresolved provider-success/database-outage interval remains an externally uncertain operation and must be handled conservatively during DLQ replay.
 - Processing-completion email reservation occurs only when the vehicle atomically transitions from `PROCESSING` to `READY`, a verified primary email is present, and the job belongs to a keyed batch. The email row snapshots delivery-facing values so later profile edits cannot change an already accepted notification.
+- Queue payload recipient, vehicle name, and URL values are never used as worker authority. The worker claims by message UUID and reconstructs the delivery from the immutable database snapshot plus validated `APPLICATION_BASE_URL` before rendering email.
 - Batched status polling pauses completely for hidden tabs, refreshes immediately when visible, and removes terminal IDs from future poll requests. Terminal results remain in the activity panel until dismissed so failures are not silently lost.
 - Inventory is a separate optimized read model rather than an extension of draft mutation endpoints. It exposes only operational vehicle batches and computes visible progress from completed image jobs; it never invents provider-level progress.
 - Inventory preview URLs are signed at render time from tenant-scoped preview object keys and expire according to the bounded presigned URL configuration. Full-resolution asset signing is isolated to the tenant-authorized portfolio service.

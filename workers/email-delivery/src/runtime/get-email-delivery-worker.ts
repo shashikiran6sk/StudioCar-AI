@@ -1,9 +1,9 @@
-import type { MailerPort } from "../mailer.types";
+import type { EmailDeliveryProcessor } from "@studiocar/email";
 import { createEmailDeliveryWorker } from "./create-email-delivery-worker";
 
-let worker: MailerPort | undefined;
+let worker: EmailDeliveryProcessor | undefined;
 
-export function getEmailDeliveryWorker(): MailerPort {
+export function getEmailDeliveryWorker(): EmailDeliveryProcessor {
   worker ??= createEmailDeliveryWorker(process.env);
   return worker;
 }

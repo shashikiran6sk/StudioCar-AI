@@ -37,6 +37,7 @@ Workspace layout:
 - `packages/ui`: reusable design-system components
 - `packages/contracts`: canonical Zod schemas and inferred DTO types
 - `packages/database`: Prisma schema, migrations, client, and repositories
+- `packages/email`: provider-neutral email outbox, delivery claims, and mailer ports
 - `packages/processing`: processing domain and provider ports/adapters
 - `packages/observability`: structured logging and metrics
 - `packages/config`: validated environment and shared tool configuration
