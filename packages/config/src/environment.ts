@@ -340,61 +340,6 @@ export const ImageWorkerEnvironmentSchema = z
     }
   });
 
-export const ServerEnvironmentSchema = z
-  .object({
-    NODE_ENV: EnvironmentNameSchema.default("development"),
-    DATABASE_URL: PostgresUrlSchema,
-    SESSION_SECRET: z.string().min(32),
-    GOOGLE_CLIENT_ID: z.string().trim().min(1),
-    GOOGLE_CLIENT_SECRET: z.string().trim().min(1),
-    GOOGLE_REDIRECT_URI: z.url(),
-    OAUTH_CHALLENGE_TTL_SECONDS: OAuthChallengeTtlSchema,
-    MSG91_AUTH_KEY: z.string().trim().min(1),
-    MSG91_TEMPLATE_ID: z.string().trim().min(1),
-    MSG91_TIMEOUT_MS: z.coerce.number().int().min(500).max(15_000).default(5_000),
-    PHONE_OTP_CHALLENGE_TTL_SECONDS: PhoneOtpChallengeTtlSchema,
-    PHONE_OTP_RATE_LIMIT_WINDOW_SECONDS: PhoneOtpRateLimitWindowSchema,
-    PHONE_OTP_SEND_MAX_PER_PHONE: PhoneOtpLimitSchema.max(10).default(3),
-    PHONE_OTP_SEND_MAX_PER_IP: PhoneOtpLimitSchema.max(100).default(10),
-    PHONE_OTP_VERIFY_MAX_PER_CHALLENGE: PhoneOtpLimitSchema.max(10).default(5),
-    PHONE_OTP_VERIFY_MAX_PER_IP: PhoneOtpLimitSchema.max(300).default(30),
-    RESEND_API_KEY: z.string().trim().min(1),
-    EMAIL_FROM: z.string().trim().min(3),
-    APPLICATION_BASE_URL: z.httpUrl(),
-    ...UploadConfigurationSchema.shape,
-    SQS_IMAGE_QUEUE_URL: z.url(),
-    SQS_EMAIL_QUEUE_URL: z.url(),
-    EMAIL_DISPATCH_TOKEN: z.string().min(32),
-    BACKGROUND_REMOVAL_PROVIDER: BackgroundRemovalProviderSchema,
-    PROCESSING_BATCH_RATE_LIMIT_WINDOW_SECONDS: CommandRateLimitWindowSchema,
-    PROCESSING_BATCH_MAX_PER_WINDOW: CommandRateLimitMaximumSchema.default(
-      DEFAULT_PROCESSING_BATCH_MAX_PER_WINDOW,
-    ),
-    REMOVEBG_API_KEY: z.string().trim().min(1).optional(),
-    FAL_KEY: z.string().trim().min(1).optional(),
-    SELF_HOSTED_BIREFNET_ENDPOINT: z.url().optional(),
-  })
-  .strip()
-  .superRefine((value, context) => {
-    const providerKey: Record<
-      z.infer<typeof BackgroundRemovalProviderSchema>,
-      keyof typeof value
-    > = {
-      removebg: "REMOVEBG_API_KEY",
-      fal: "FAL_KEY",
-      birefnet: "SELF_HOSTED_BIREFNET_ENDPOINT",
-    };
-    const requiredKey = providerKey[value.BACKGROUND_REMOVAL_PROVIDER];
-
-    if (!value[requiredKey]) {
-      context.addIssue({
-        code: "custom",
-        message: `${requiredKey} is required for ${value.BACKGROUND_REMOVAL_PROVIDER}.`,
-        path: [requiredKey],
-      });
-    }
-  });
-
 export const ClientEnvironmentSchema = z
   .object({
     NODE_ENV: EnvironmentNameSchema.default("development"),
@@ -402,7 +347,6 @@ export const ClientEnvironmentSchema = z
   })
   .strip();
 
-export type ServerEnvironment = z.infer<typeof ServerEnvironmentSchema>;
 export type ClientEnvironment = z.infer<typeof ClientEnvironmentSchema>;
 export type GoogleAuthEnvironment = z.infer<typeof GoogleAuthEnvironmentSchema>;
 export type PhoneAuthEnvironment = z.infer<typeof PhoneAuthEnvironmentSchema>;
@@ -423,12 +367,6 @@ export type EmailDispatchEnvironment = z.infer<
 export type BackgroundRemovalProvider = z.infer<
   typeof BackgroundRemovalProviderSchema
 >;
-
-export function parseServerEnvironment(
-  environment: Record<string, string | undefined>,
-): ServerEnvironment {
-  return ServerEnvironmentSchema.parse(environment);
-}
 
 export function parseClientEnvironment(
   environment: Record<string, string | undefined>,

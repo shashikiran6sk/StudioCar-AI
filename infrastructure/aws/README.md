@@ -1,5 +1,10 @@
 # AWS infrastructure
 
+The runtime credential and IAM ownership matrix is documented in
+[`docs/security.md`](../../docs/security.md). Treat that matrix as a deployment
+constraint: worker-only provider and delivery credentials must not be injected
+into the Next.js runtime.
+
 `upload-storage.yml` provisions the private, encrypted, versioned S3 bucket used
 for browser-to-S3 image uploads and a least-privilege managed policy for the
 Next.js application role. Supply the exact deployed web origin for browser CORS.
