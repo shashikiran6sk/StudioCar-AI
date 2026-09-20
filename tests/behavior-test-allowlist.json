@@ -322,5 +322,25 @@
   {
     "source": "apps/web/src/server/billing/usage-billing-runtime.ts",
     "reason": "Composition root that wires the separately tested usage service and repository."
+  },
+  {
+    "source": "workers/email-delivery/src/email-delivery.constants.ts",
+    "reason": "Static email template and Resend protocol constants only."
+  },
+  {
+    "source": "workers/email-delivery/src/mailer.types.ts",
+    "reason": "Type-only mail delivery port and result definitions."
+  },
+  {
+    "source": "workers/email-delivery/src/index.ts",
+    "reason": "Stable package barrel with no behavior."
+  },
+  {
+    "source": "workers/email-delivery/src/handler.ts",
+    "reason": "Thin Lambda entry point delegating to the tested queue handler and runtime."
+  },
+  {
+    "source": "workers/email-delivery/src/runtime/get-email-delivery-worker.ts",
+    "reason": "Warm Lambda composition cache around the tested worker factory."
   }
 ]

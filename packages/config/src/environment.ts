@@ -118,6 +118,14 @@ export const UploadEnvironmentSchema = z
   })
   .strip();
 
+export const EmailWorkerEnvironmentSchema = z
+  .object({
+    EMAIL_FROM: z.email(),
+    RESEND_API_KEY: z.string().trim().min(1),
+    RESEND_TIMEOUT_MS: z.coerce.number().int().min(500).max(30_000).default(8_000),
+  })
+  .strip();
+
 export const BackgroundRemovalProviderSchema = z.enum([
   "removebg",
   "fal",
@@ -321,6 +329,9 @@ export type ProcessingEnvironment = z.infer<
 export type ImageWorkerEnvironment = z.infer<
   typeof ImageWorkerEnvironmentSchema
 >;
+export type EmailWorkerEnvironment = z.infer<
+  typeof EmailWorkerEnvironmentSchema
+>;
 export type BackgroundRemovalProvider = z.infer<
   typeof BackgroundRemovalProviderSchema
 >;
@@ -371,4 +382,10 @@ export function parseImageWorkerEnvironment(
   environment: Record<string, string | undefined>,
 ): ImageWorkerEnvironment {
   return ImageWorkerEnvironmentSchema.parse(environment);
+}
+
+export function parseEmailWorkerEnvironment(
+  environment: Record<string, string | undefined>,
+): EmailWorkerEnvironment {
+  return EmailWorkerEnvironmentSchema.parse(environment);
 }

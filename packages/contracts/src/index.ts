@@ -2,6 +2,7 @@ export * from "./api";
 export * from "./auth";
 export * from "./common";
 export * from "./dashboard";
+export * from "./email";
 export * from "./inventory";
 export * from "./jobs";
 export * from "./processing";

@@ -1,0 +1,164 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: StudioCar AI email-delivery queue, dead-letter queue, IAM policies, and alarms
+
+Parameters:
+  QueueName:
+    Type: String
+    Default: studiocar-email-delivery
+    AllowedPattern: ^[A-Za-z0-9_-]{1,70}$
+    Description: Base name for the standard email-delivery queue
+  MessageRetentionSeconds:
+    Type: Number
+    Default: 1209600
+    MinValue: 60
+    MaxValue: 1209600
+  VisibilityTimeoutSeconds:
+    Type: Number
+    Default: 60
+    MinValue: 30
+    MaxValue: 43200
+  MaximumReceiveCount:
+    Type: Number
+    Default: 5
+    MinValue: 1
+    MaxValue: 100
+  QueueDepthAlarmThreshold:
+    Type: Number
+    Default: 500
+    MinValue: 1
+  OldestMessageAgeAlarmSeconds:
+    Type: Number
+    Default: 300
+    MinValue: 60
+
+Resources:
+  EmailDeliveryDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      QueueName: !Sub ${QueueName}-dlq
+      MessageRetentionPeriod: !Ref MessageRetentionSeconds
+      SqsManagedSseEnabled: true
+
+  EmailDeliveryQueue:
+    Type: AWS::SQS::Queue
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      QueueName: !Ref QueueName
+      MessageRetentionPeriod: !Ref MessageRetentionSeconds
+      ReceiveMessageWaitTimeSeconds: 20
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt EmailDeliveryDeadLetterQueue.Arn
+        maxReceiveCount: !Ref MaximumReceiveCount
+      SqsManagedSseEnabled: true
+      VisibilityTimeout: !Ref VisibilityTimeoutSeconds
+
+  EmailDeliveryQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref EmailDeliveryQueue
+        - !Ref EmailDeliveryDeadLetterQueue
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: sqs:*
+            Resource:
+              - !GetAtt EmailDeliveryQueue.Arn
+              - !GetAtt EmailDeliveryDeadLetterQueue.Arn
+            Condition:
+              Bool:
+                aws:SecureTransport: "false"
+
+  EmailPublisherPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Publish StudioCar email messages from the application outbox
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: PublishEmailMessages
+            Effect: Allow
+            Action: sqs:SendMessage
+            Resource: !GetAtt EmailDeliveryQueue.Arn
+
+  EmailWorkerPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Consume StudioCar email messages with least-privilege queue access
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: ConsumeEmailMessages
+            Effect: Allow
+            Action:
+              - sqs:ChangeMessageVisibility
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+              - sqs:ReceiveMessage
+            Resource: !GetAtt EmailDeliveryQueue.Arn
+
+  EmailQueueDepthAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Email-delivery queue depth is above the configured capacity threshold
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt EmailDeliveryQueue.QueueName
+      EvaluationPeriods: 2
+      MetricName: ApproximateNumberOfMessagesVisible
+      Namespace: AWS/SQS
+      Period: 60
+      Statistic: Maximum
+      Threshold: !Ref QueueDepthAlarmThreshold
+      TreatMissingData: notBreaching
+
+  EmailOldestMessageAgeAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Oldest email-delivery message exceeds the latency threshold
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt EmailDeliveryQueue.QueueName
+      EvaluationPeriods: 2
+      MetricName: ApproximateAgeOfOldestMessage
+      Namespace: AWS/SQS
+      Period: 60
+      Statistic: Maximum
+      Threshold: !Ref OldestMessageAgeAlarmSeconds
+      TreatMissingData: notBreaching
+
+  EmailDeadLetterQueueAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: At least one email message is in the dead-letter queue
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt EmailDeliveryDeadLetterQueue.QueueName
+      EvaluationPeriods: 1
+      MetricName: ApproximateNumberOfMessagesVisible
+      Namespace: AWS/SQS
+      Period: 60
+      Statistic: Maximum
+      Threshold: 0
+      TreatMissingData: notBreaching
+
+Outputs:
+  EmailDeliveryQueueArn:
+    Value: !GetAtt EmailDeliveryQueue.Arn
+  EmailDeliveryQueueUrl:
+    Value: !Ref EmailDeliveryQueue
+  EmailDeliveryDeadLetterQueueArn:
+    Value: !GetAtt EmailDeliveryDeadLetterQueue.Arn
+  EmailPublisherPolicyArn:
+    Value: !Ref EmailPublisherPolicy
+  EmailWorkerPolicyArn:
+    Value: !Ref EmailWorkerPolicy

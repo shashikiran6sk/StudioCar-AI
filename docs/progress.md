@@ -4,7 +4,7 @@ Last updated: 2026-09-20
 
 ## Current status
 
-The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived inventory, portfolio, dashboard, marketing, and immutable-event-backed Usage & Billing surfaces are implemented. The next planned slice is asynchronous email delivery; payment checkout remains intentionally unavailable until a billing provider is selected.
+The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived inventory, portfolio, dashboard, marketing, and immutable-event-backed Usage & Billing surfaces are implemented. The independent email delivery queue/worker boundary is implemented; the next slice will add the durable application outbox and processing-completion producer. Payment checkout remains intentionally unavailable until a billing provider is selected.
 
 ## Completed
 
@@ -226,6 +226,16 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Added contract, idempotency-key, processing-service, component, page-state, real-PostgreSQL transaction/tenant/plan, and authenticated Playwright coverage; visually compared the completed desktop surface with the supplied Usage & Billing reference.
 - Verified source mapping, lint, strict typecheck, 192 web unit/component files with 310 tests, Prisma validation, nine migrations, 17 real-PostgreSQL integration files with 32 tests, production build, and the complete five-test Playwright suite locally.
 
+### SC017A — Independent email delivery plane
+
+- Added a strict, versioned processing-completion email message contract that carries a stable message UUID, recipient, authorized portfolio URL, and bounded vehicle name without accepting arbitrary email HTML from producers.
+- Added an independently deployable Node.js 24 email-delivery worker behind a `MailerPort`, with a fixed escaped HTML/text template and a server-only fetch-based Resend adapter.
+- Bound each provider request to the stable message UUID through Resend's `Idempotency-Key` header. The adapter applies bounded timeouts and distinguishes retryable network, timeout, 429, 5xx, and concurrent-idempotency failures from terminal 4xx or payload-conflict failures.
+- Added SQS partial-batch handling: successful and terminal records are acknowledged, transient failures are retried, and malformed messages follow the queue's bounded receive policy into the DLQ without exposing recipient data, credentials, or content in logs.
+- Added focused worker environment validation and deployable, independently scalable CloudFormation stacks for the encrypted email queue, retained DLQ, least-privilege policies, bounded Lambda concurrency, Secrets Manager key resolution, and queue/Lambda alarms.
+- Generalized behavior-source mapping discovery so every worker workspace is covered automatically, and added contract, renderer, escaping, retry-classification, adapter, handler, and composition tests.
+- Verified source mapping, lint, strict typecheck, the complete unit/component suite, the worker's six focused test files with 15 tests, Prisma validation, all nine migrations, 17 real-PostgreSQL integration files with 32 tests, production builds for all ten packages, and the five-test Playwright suite locally. Database-backed producer, delivery audit, and end-to-end dispatch remain intentionally closed until SC017B.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -235,7 +245,7 @@ The production foundation, authentication, private direct uploads, asynchronous 
 
 ## Next planned slices
 
-1. **SC017 — Asynchronous email**: independent email queue, worker, MailerPort, and Resend adapter without request-path delivery.
+1. **SC017B — Durable email outbox**: atomically create processing-completion notifications, dispatch them to the independent queue, and persist delivery claims/results without request-path delivery.
 2. **SC018 — Security and performance hardening**: secure headers, CSRF/rate-limit audit, query/index review, cleanup, and load verification.
 3. **Later hardening**: observability/alerts, full E2E completion, AWS deployment, DLQ replay/backups, and BiRefNet substitution proof.
 
@@ -269,6 +279,8 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Dashboard operational values are server-authoritative: completed-image usage comes from immutable `UsageEvent` quantities, active counts from explicit database states, and storage from committed original plus processed asset sizes. The current free allowance is sourced from the shared plan catalog as nine images across three documented sessions with three images per batch.
 - Upload-session usage is now recorded as `VEHICLE_PROCESSING_BATCH_CREATED` in the processing-reservation transaction and remains separate from per-image `BACKGROUND_REMOVAL_COMPLETED` charges. Usage & Billing queries filter these event types explicitly; adding a new usage type cannot silently inflate an unrelated quota.
 - `BillingPort` is intentionally unimplemented until a payment provider is selected. UI upgrade controls disclose this state and never return fake checkout URLs, mutate subscriptions, or claim payment success.
+- The email worker consumes only the stable `EmailWorkerMessage` contract and treats delivery as an independent data plane. No application request publishes directly to SQS or waits for Resend; SC017B must add a transactional outbox and recovery dispatcher before the worker is connected to product events.
+- Resend retains idempotency keys for a bounded provider window. SC017B must also persist application delivery claims and terminal outcomes so later DLQ replay is governed by durable PostgreSQL state rather than provider retention alone.
 - Batched status polling pauses completely for hidden tabs, refreshes immediately when visible, and removes terminal IDs from future poll requests. Terminal results remain in the activity panel until dismissed so failures are not silently lost.
 - Inventory is a separate optimized read model rather than an extension of draft mutation endpoints. It exposes only operational vehicle batches and computes visible progress from completed image jobs; it never invents provider-level progress.
 - Inventory preview URLs are signed at render time from tenant-scoped preview object keys and expire according to the bounded presigned URL configuration. Full-resolution asset signing is isolated to the tenant-authorized portfolio service.
