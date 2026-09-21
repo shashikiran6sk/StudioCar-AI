@@ -1,5 +1,4 @@
 import {
-  ProcessingJobStatus,
   VehicleStatus,
   type InventoryVehicleRecord,
 } from "../../../../packages/database/src/index";
@@ -12,26 +11,14 @@ const VEHICLE_ID = "4bb7fa89-c907-4458-9786-8aafc2235728";
 function createRecord(): InventoryVehicleRecord {
   return {
     brand: "BMW",
+    completedImageCount: 1,
     createdAt: new Date("2026-09-19T10:00:00.000Z"),
+    failedImageCount: 1,
     id: VEHICLE_ID,
+    imageCount: 3,
     model: "3 Series",
     name: "2026 BMW 3 Series",
-    processingJobs: [
-      {
-        processedAsset: {
-          previewObjectKey: "users/user-1/vehicles/vehicle-1/preview.webp",
-        },
-        status: ProcessingJobStatus.COMPLETED,
-      },
-      {
-        processedAsset: null,
-        status: ProcessingJobStatus.FAILED,
-      },
-      {
-        processedAsset: null,
-        status: ProcessingJobStatus.QUEUED,
-      },
-    ],
+    previewObjectKey: "users/user-1/vehicles/vehicle-1/preview.webp",
     status: VehicleStatus.PARTIALLY_FAILED,
     stockId: "SC-100",
     year: 2026,
@@ -97,10 +84,7 @@ describe("InventoryService", () => {
 
   it("does not invoke storage signing when a batch has no completed output", async () => {
     const record = createRecord();
-    record.processingJobs = record.processingJobs.map((job) => ({
-      ...job,
-      processedAsset: null,
-    }));
+    record.previewObjectKey = null;
     const previewSigner = { signPreview: vi.fn() };
     const service = new InventoryService(
       {

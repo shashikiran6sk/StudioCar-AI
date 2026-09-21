@@ -4,6 +4,7 @@ import { EntityIdSchema, IsoDateTimeSchema } from "./common";
 import { ProcessingOptionsSchema } from "./processing";
 
 export const MAX_PROCESSING_BATCH_ASSETS = 20;
+export const MAX_JOB_STATUS_QUERY_IDS = 100;
 
 export const JobStateSchema = z.enum([
   "CREATED",
@@ -72,13 +73,13 @@ export const JobStatusQuerySchema = z
     ids: z
       .array(EntityIdSchema)
       .min(1)
-      .max(100)
+      .max(MAX_JOB_STATUS_QUERY_IDS)
       .refine((ids) => new Set(ids).size === ids.length, "Job IDs must be unique."),
   })
   .strict();
 
 export const JobStatusResponseSchema = z
-  .object({ jobs: z.array(JobStatusSchema).max(100) })
+  .object({ jobs: z.array(JobStatusSchema).max(MAX_JOB_STATUS_QUERY_IDS) })
   .strict();
 
 export const CreateProcessingBatchSchema = z

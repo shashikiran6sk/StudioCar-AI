@@ -5,6 +5,10 @@ import type {
 
 import type { Prisma, PrismaClient } from "../../generated/prisma/client";
 import { VehicleStatus } from "../../generated/prisma/client";
+import {
+  findInventoryBatchSummaries,
+  type InventoryBatchSummary,
+} from "./find-inventory-batch-summaries";
 
 const OPERATIONAL_VEHICLE_STATUSES = [
   VehicleStatus.PROCESSING,
@@ -22,18 +26,14 @@ const inventoryVehicleSelect = {
   stockId: true,
   status: true,
   createdAt: true,
-  processingJobs: {
-    orderBy: [{ displayOrder: "asc" }, { id: "asc" }],
-    select: {
-      status: true,
-      processedAsset: { select: { previewObjectKey: true } },
-    },
-  },
 } satisfies Prisma.VehicleSelect;
 
-export type InventoryVehicleRecord = Prisma.VehicleGetPayload<{
+type InventoryVehicleBaseRecord = Prisma.VehicleGetPayload<{
   select: typeof inventoryVehicleSelect;
 }>;
+
+export type InventoryVehicleRecord = InventoryVehicleBaseRecord &
+  Omit<InventoryBatchSummary, "vehicleId">;
 
 export interface InventoryRepositoryPage {
   counts: InventoryFilterCounts;
@@ -134,10 +134,24 @@ export class PrismaInventoryRepository {
     ]);
     const hasNextPage = records.length > query.limit;
     if (hasNextPage) records.pop();
+    const summaries = await findInventoryBatchSummaries(
+      this.database,
+      userId,
+      records.map((record) => record.id),
+    );
 
     return {
       counts,
-      items: records,
+      items: records.map((record) => {
+        const summary = summaries.get(record.id);
+        return {
+          ...record,
+          completedImageCount: summary?.completedImageCount ?? 0,
+          failedImageCount: summary?.failedImageCount ?? 0,
+          imageCount: summary?.imageCount ?? 0,
+          previewObjectKey: summary?.previewObjectKey ?? null,
+        };
+      }),
       nextCursor: hasNextPage ? (records.at(-1)?.id ?? null) : null,
     };
   }

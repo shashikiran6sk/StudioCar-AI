@@ -128,7 +128,10 @@ databaseDescribe("PrismaInventoryRepository", () => {
     });
     expect(page.items).toHaveLength(1);
     expect(page.items[0]).toMatchObject({ id: ready.id, name: "2026 BMW 3 Series" });
-    expect(page.items[0]?.processingJobs[0]?.processedAsset).toEqual({
+    expect(page.items[0]).toMatchObject({
+      completedImageCount: 1,
+      failedImageCount: 0,
+      imageCount: 1,
       previewObjectKey: `users/${owner.id}/vehicles/${ready.id}/preview.webp`,
     });
 

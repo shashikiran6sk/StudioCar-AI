@@ -6,14 +6,14 @@ import { calculateAdaptivePollingDelay } from "./calculate-adaptive-polling-dela
 import { jobStatusIsTerminal } from "./job-status-is-terminal";
 import { PROCESSING_STATUS_REQUEST_ERROR } from "./processing-polling.constants";
 import { useProcessingStatusStore } from "./processing-status-store";
-import { requestProcessingStatuses } from "./request-processing-statuses";
+import { requestProcessingStatusBatches } from "./request-processing-status-batches";
 
 export interface ProcessingStatusPollerProps {
-  requestStatuses?: typeof requestProcessingStatuses;
+  requestStatuses?: typeof requestProcessingStatusBatches;
 }
 
 export function ProcessingStatusPoller({
-  requestStatuses = requestProcessingStatuses,
+  requestStatuses = requestProcessingStatusBatches,
 }: ProcessingStatusPollerProps) {
   const jobs = useProcessingStatusStore((state) => state.jobs);
   const update = useProcessingStatusStore((state) => state.update);

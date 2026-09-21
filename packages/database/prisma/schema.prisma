@@ -252,8 +252,10 @@ model Vehicle {
   @@unique([userId, stockId])
   @@unique([userId, internalId])
   @@unique([userId, creationIdempotencyKey])
-  @@index([userId, createdAt])
-  @@index([userId, status, createdAt])
+  @@index([userId, createdAt, id])
+  @@index([userId, name, id])
+  @@index([userId, status, createdAt, id])
+  @@index([userId, status, name, id])
 }
 
 model ImageAsset {
@@ -346,10 +348,14 @@ model ProcessingJob {
   @@unique([userId, idempotencyKey])
   @@unique([userId, batchIdempotencyKey, imageAssetId])
   @@index([userId, status, createdAt])
+  @@index([userId, status, completedAt, vehicleId])
   @@index([userId, batchIdempotencyKey])
+  @@index([userId, vehicleId, createdAt, id])
+  @@index([userId, vehicleId, status, completedAt, id])
   @@index([status, claimExpiresAt])
   @@index([status, nextAttemptAt])
   @@index([imageAssetId, createdAt])
+  @@index([vehicleId, batchRequestHash, displayOrder, id])
 }
 
 model ProcessingOutboxMessage {
