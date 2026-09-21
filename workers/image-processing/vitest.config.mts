@@ -11,6 +11,10 @@ export default defineConfig({
         directory,
         "../../packages/contracts/src/index.ts",
       ),
+      "@studiocar/observability": path.resolve(
+        directory,
+        "../../packages/observability/src/index.ts",
+      ),
       "@studiocar/processing": path.resolve(
         directory,
         "../../packages/processing/src/index.ts",

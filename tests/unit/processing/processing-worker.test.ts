@@ -123,6 +123,16 @@ describe("ProcessingWorker", () => {
     await expect(worker.process(createMessage())).resolves.toEqual({
       kind: "COMPLETED",
       processedAssetId: COMPLETED_ASSET_ID,
+      telemetry: {
+        assetId: ASSET_ID,
+        attemptNumber: 1,
+        failureKind: null,
+        provider: "REMOVEBG",
+        providerLatencyMilliseconds: 850,
+        providerRequestId: "provider-request-1",
+        userId: USER_ID,
+        vehicleId: VEHICLE_ID,
+      },
     });
     expect(repository.completions).toHaveLength(1);
     expect(repository.completions[0]).toMatchObject({
@@ -163,6 +173,16 @@ describe("ProcessingWorker", () => {
     await expect(worker.process(createMessage())).resolves.toEqual({
       kind: "RETRY_SCHEDULED",
       nextAttemptAt,
+      telemetry: {
+        assetId: ASSET_ID,
+        attemptNumber: 1,
+        failureKind: "PROVIDER_429",
+        provider: "REMOVEBG",
+        providerLatencyMilliseconds: 50,
+        providerRequestId: null,
+        userId: USER_ID,
+        vehicleId: VEHICLE_ID,
+      },
     });
     expect(repository.failures[0]).toMatchObject({
       errorCode: "PROVIDER_RATE_LIMITED",
@@ -194,6 +214,16 @@ describe("ProcessingWorker", () => {
 
     await expect(worker.process(createMessage())).resolves.toEqual({
       kind: "RETRY_DELIVERY",
+      telemetry: {
+        assetId: ASSET_ID,
+        attemptNumber: 1,
+        failureKind: null,
+        provider: "REMOVEBG",
+        providerLatencyMilliseconds: null,
+        providerRequestId: null,
+        userId: USER_ID,
+        vehicleId: VEHICLE_ID,
+      },
     });
     expect(repository.completions).toEqual([]);
     expect(repository.failures).toEqual([]);

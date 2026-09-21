@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { WorkerMessage } from "../../../../packages/contracts/src/worker";
 import type { ProcessWorkerMessageResult } from "../../../../packages/processing/src/processing-worker.types";
@@ -25,6 +25,7 @@ function createRecord(messageId: string, body: string) {
 describe("handleProcessingQueueEvent", () => {
   it("acknowledges completed and durably scheduled records", async () => {
     const processor = new StubProcessor({ kind: "FAILED" });
+    const emit = vi.fn(() => true);
     const response = await handleProcessingQueueEvent(
       {
         Records: [
@@ -40,14 +41,17 @@ describe("handleProcessingQueueEvent", () => {
         ],
       },
       processor,
+      { emit },
     );
 
     expect(response).toEqual({ batchItemFailures: [] });
     expect(processor.messages).toHaveLength(1);
+    expect(emit).toHaveBeenCalledTimes(1);
   });
 
   it("returns only malformed and retry-delivery records as partial failures", async () => {
     const processor = new StubProcessor({ kind: "RETRY_DELIVERY" });
+    const emit = vi.fn(() => true);
     const response = await handleProcessingQueueEvent(
       {
         Records: [
@@ -64,6 +68,7 @@ describe("handleProcessingQueueEvent", () => {
         ],
       },
       processor,
+      { emit },
     );
 
     expect(response).toEqual({
@@ -72,5 +77,6 @@ describe("handleProcessingQueueEvent", () => {
         { itemIdentifier: "retry" },
       ],
     });
+    expect(emit).toHaveBeenCalledTimes(2);
   });
 });

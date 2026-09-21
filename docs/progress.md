@@ -4,7 +4,7 @@ Last updated: 2026-09-21
 
 ## Current status
 
-The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and durable transactional email are implemented. Browser response hardening, a blocking production dependency audit, durable authenticated command limits, runtime secret isolation, signed-webhook verification, bounded retention, durable abandoned-upload cleanup, and production read-path hardening are also in place. Payment checkout remains intentionally unavailable until a billing provider is selected.
+The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and durable transactional email are implemented. Browser response hardening, a blocking production dependency audit, durable authenticated command limits, runtime secret isolation, signed-webhook verification, bounded retention, durable abandoned-upload cleanup, production read-path hardening, and the image-worker observability foundation are also in place. Payment checkout remains intentionally unavailable until a billing provider is selected.
 
 ## Completed
 
@@ -306,6 +306,14 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Exported the canonical 100-job polling bound and made the client split larger transient activity sets into sequential bounded requests, preserving order while avoiding a single invalid or unbounded query.
 - Added multi-batch/cross-tenant real-PostgreSQL coverage, migration index verification, large polling-set coverage, and updated inventory service/repository tests. Verified a clean production dependency audit, source mapping, Prisma generation/validation, all fourteen migrations, lint, strict typecheck, the complete web suite with 212 files and 340 tests, 24 integration files with 43 tests, production builds for all eleven packages, and the five-test Playwright suite.
 
+### SC018C1 — Image-worker operational telemetry
+
+- Activated `packages/observability` with a provider-neutral structured-event port and a fail-safe CloudWatch Embedded Metric Format sink. Metric dimensions are restricted to bounded service/outcome/provider values; tenant, asset, vehicle, job, queue-message, and provider-request IDs remain searchable correlation fields rather than high-cardinality dimensions.
+- Enriched internal processing outcomes with the authoritative claimed-job context and normalized failure kind, then instrumented every valid, ignored, retried, terminal, completed, malformed, and unexpectedly failed queue record without logging image bytes, object keys, provider errors, credentials, or queue bodies.
+- Added truthful message count, worker duration, end-to-end latency, provider latency, images processed, terminal failure, retry, ignored-delivery, and provider-429 metrics. Reused provider outputs omit provider latency rather than fabricating a new call, and telemetry sink failures cannot change SQS acknowledgement decisions.
+- Added retained configurable Lambda log storage plus alarms for p95 Lambda duration, terminal failure spikes, retry spikes, provider rate-limit spikes, and p95 end-to-end latency. Existing queue depth, oldest-message age, DLQ, and Lambda error alarms remain in place.
+- Added focused serializer, failure-isolation, correlation, metric-classification, handler-emission, and enriched worker-result tests. Verified a clean production dependency audit, source mapping, Prisma validation, all fourteen migrations, lint, strict typecheck, the complete web suite with 212 files and 340 tests, 24 integration files with 43 tests, observability and image-worker suites with 34 tests, production builds for all eleven packages, and the five-test Playwright suite.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -315,9 +323,10 @@ The production foundation, authentication, private direct uploads, asynchronous 
 
 ## Next planned slices
 
-1. **SC018C — Observability and alerts**: emit correlated operational metrics and alarms for lifecycle/storage cleanup, worker/provider health, and cost/storage growth.
-2. **SC018D — Recovery operations**: document and implement bounded DLQ/outbox replay, backup verification, and cleanup failure recovery.
-3. **Later hardening**: load-test automation, AWS deployment, and BiRefNet substitution proof.
+1. **SC018C2 — Control-plane and delivery telemetry**: instrument email delivery, outbox dispatch, polling volume/API latency, and lifecycle/storage-cleanup outcomes with retained logs and actionable alarms.
+2. **SC018C3 — Capacity and cost telemetry**: emit storage growth and configured provider cost estimates without inventing commercial rates, and document the production dashboard/alarm wiring.
+3. **SC018D — Recovery operations**: document and implement bounded DLQ/outbox replay, backup verification, and cleanup failure recovery.
+4. **Later hardening**: load-test automation, AWS deployment, and BiRefNet substitution proof.
 
 ## Important implementation notes
 
@@ -368,6 +377,7 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Production credential ownership is defined in `docs/security.md`. The root `.env.example` is a local-development union only; focused runtime parsers and deployment configuration must prevent unrelated secrets from crossing process boundaries.
 - No webhook route may trust parsed JSON before verifying the provider's signature over the exact raw bytes. The generic HMAC-SHA256 adapter may be selected only for a provider whose official protocol matches it; other protocols require their own verifier adapter.
 - Lifecycle cleanup deletes only records strictly older than configured cutoffs in bounded, skip-locked batches. Image bytes use the separate storage-deletion outbox: the asset status change and deletion intent are atomic, S3 deletion is idempotent, and exhausted failures remain queryable for explicit replay rather than being silently discarded.
+- Image-worker telemetry uses CloudWatch EMF service-only aggregates for alarms and a second bounded service/outcome/provider dimension set for diagnosis. IDs remain nested correlation fields, and event construction exposes no free-form error or payload field. Estimated cost metrics are intentionally deferred until a deployment supplies a reviewed provider rate; the system must not hardcode or fabricate remove.bg pricing.
 
 ## Per-slice update checklist
 

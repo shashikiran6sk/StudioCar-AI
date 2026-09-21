@@ -42,12 +42,22 @@ export class ProcessingWorker {
     if (claim.kind !== "CLAIMED") {
       return { kind: "IGNORED", reason: claim.kind };
     }
+    const telemetry = {
+      assetId: claim.job.imageAssetId,
+      attemptNumber: claim.job.attemptNumber,
+      failureKind: null,
+      provider: claim.job.provider,
+      providerLatencyMilliseconds: null,
+      providerRequestId: null,
+      userId: claim.job.userId,
+      vehicleId: claim.job.vehicleId,
+    } satisfies ProcessWorkerMessageResult["telemetry"];
 
     let execution;
     try {
       execution = await this.executor.execute(claim.job);
     } catch {
-      return { kind: "RETRY_DELIVERY" };
+      return { kind: "RETRY_DELIVERY", telemetry };
     }
 
     if (execution.ok) {
@@ -70,9 +80,22 @@ export class ProcessingWorker {
         return {
           kind: "COMPLETED",
           processedAssetId: completion.processedAssetId,
+          telemetry: {
+            ...telemetry,
+            providerLatencyMilliseconds:
+              execution.providerLatencyMilliseconds,
+            providerRequestId: execution.providerRequestId,
+          },
         };
       }
-      return { kind: "RETRY_DELIVERY" };
+      return {
+        kind: "RETRY_DELIVERY",
+        telemetry: {
+          ...telemetry,
+          providerLatencyMilliseconds: execution.providerLatencyMilliseconds,
+          providerRequestId: execution.providerRequestId,
+        },
+      };
     }
 
     const classification = classifyProcessingFailure(execution.failure.kind);
@@ -102,9 +125,36 @@ export class ProcessingWorker {
       return {
         kind: "RETRY_SCHEDULED",
         nextAttemptAt: failure.nextAttemptAt,
+        telemetry: {
+          ...telemetry,
+          failureKind: execution.failure.kind,
+          providerLatencyMilliseconds:
+            execution.failure.providerLatencyMilliseconds,
+          providerRequestId: execution.failure.providerRequestId,
+        },
       };
     }
-    if (failure.kind === "FAILED") return { kind: "FAILED" };
-    return { kind: "RETRY_DELIVERY" };
+    if (failure.kind === "FAILED") {
+      return {
+        kind: "FAILED",
+        telemetry: {
+          ...telemetry,
+          failureKind: execution.failure.kind,
+          providerLatencyMilliseconds:
+            execution.failure.providerLatencyMilliseconds,
+          providerRequestId: execution.failure.providerRequestId,
+        },
+      };
+    }
+    return {
+      kind: "RETRY_DELIVERY",
+      telemetry: {
+        ...telemetry,
+        failureKind: execution.failure.kind,
+        providerLatencyMilliseconds:
+          execution.failure.providerLatencyMilliseconds,
+        providerRequestId: execution.failure.providerRequestId,
+      },
+    };
   }
 }

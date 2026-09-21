@@ -118,12 +118,27 @@ export interface ProcessingWorkerOptions {
   retryMaximumMilliseconds: number;
 }
 
-export type ProcessWorkerMessageResult =
+export interface ProcessingWorkerTelemetry {
+  assetId: string;
+  attemptNumber: number;
+  failureKind: ProcessingFailureKind | null;
+  provider: ProcessingProviderKey;
+  providerLatencyMilliseconds: number | null;
+  providerRequestId: string | null;
+  userId: string;
+  vehicleId: string;
+}
+
+type ProcessWorkerMessageOutcome =
   | { kind: "COMPLETED"; processedAssetId: string }
   | { kind: "IGNORED"; reason: "NOT_FOUND" | "NOT_READY" | "TERMINAL" }
   | { kind: "RETRY_SCHEDULED"; nextAttemptAt: Date }
   | { kind: "FAILED" }
   | { kind: "RETRY_DELIVERY" };
+
+export type ProcessWorkerMessageResult = ProcessWorkerMessageOutcome & {
+  telemetry?: ProcessingWorkerTelemetry;
+};
 
 export interface ProcessingFailureClassification {
   errorCode: string;

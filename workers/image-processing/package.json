@@ -11,6 +11,7 @@
     "@studiocar/config": "workspace:*",
     "@studiocar/contracts": "workspace:*",
     "@studiocar/database": "workspace:*",
+    "@studiocar/observability": "workspace:*",
     "@studiocar/processing": "workspace:*",
     "sharp": "catalog:"
   },
