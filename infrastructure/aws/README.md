@@ -40,7 +40,11 @@ binary) at its root. The stack resolves database and remove.bg credentials from
 Secrets Manager, grants only tenant-prefix object access, caps both reserved and
 SQS event-source concurrency, and enables `ReportBatchItemFailures`. Configure
 alarm actions and ensure the queue visibility timeout is longer than the Lambda
-timeout before production deployment.
+timeout before production deployment. The worker emits structured CloudWatch
+Embedded Metric Format events under `StudioCarAI/Operations`, with correlation
+IDs kept out of metric dimensions. The stack applies configurable log retention
+and alarms on Lambda errors/duration, terminal failures, retry spikes, provider
+rate limits, and end-to-end latency.
 
 `email-delivery-queue.yml` provisions a separate encrypted standard queue,
 retained dead-letter queue, least-privilege publisher and consumer policies,

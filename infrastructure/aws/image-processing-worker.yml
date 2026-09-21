@@ -40,6 +40,37 @@ Parameters:
     Default: 50000000
     MinValue: 1000000
     MaxValue: 50000000
+  LogRetentionDays:
+    Type: Number
+    Default: 30
+    AllowedValues:
+      - 14
+      - 30
+      - 60
+      - 90
+      - 120
+      - 180
+      - 365
+  TerminalFailureAlarmThreshold:
+    Type: Number
+    Default: 5
+    MinValue: 1
+  RetryAlarmThreshold:
+    Type: Number
+    Default: 20
+    MinValue: 1
+  ProviderRateLimitAlarmThreshold:
+    Type: Number
+    Default: 5
+    MinValue: 1
+  EndToEndLatencyAlarmMilliseconds:
+    Type: Number
+    Default: 300000
+    MinValue: 1000
+  WorkerDurationAlarmMilliseconds:
+    Type: Number
+    Default: 100000
+    MinValue: 1000
 
 Resources:
   ImageProcessingWorkerRole:
@@ -122,6 +153,14 @@ Resources:
       ScalingConfig:
         MaximumConcurrency: !Ref MaximumConcurrency
 
+  ImageProcessingWorkerLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${ImageProcessingWorker}
+      RetentionInDays: !Ref LogRetentionDays
+
   ImageProcessingWorkerErrorAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
@@ -136,6 +175,86 @@ Resources:
       Period: 60
       Statistic: Sum
       Threshold: 0
+      TreatMissingData: notBreaching
+
+  ImageProcessingWorkerDurationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Image-processing Lambda duration is approaching its configured timeout
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref ImageProcessingWorker
+      EvaluationPeriods: 2
+      ExtendedStatistic: p95
+      MetricName: Duration
+      Namespace: AWS/Lambda
+      Period: 60
+      Threshold: !Ref WorkerDurationAlarmMilliseconds
+      TreatMissingData: notBreaching
+
+  ImageProcessingTerminalFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Image-processing terminal failures exceed the configured threshold
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: Service
+          Value: image-processing-worker
+      EvaluationPeriods: 1
+      MetricName: ProcessingTerminalFailureCount
+      Namespace: StudioCarAI/Operations
+      Period: 300
+      Statistic: Sum
+      Threshold: !Ref TerminalFailureAlarmThreshold
+      TreatMissingData: notBreaching
+
+  ImageProcessingRetryAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Image-processing retries exceed the configured threshold
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: Service
+          Value: image-processing-worker
+      EvaluationPeriods: 1
+      MetricName: ProcessingRetryCount
+      Namespace: StudioCarAI/Operations
+      Period: 300
+      Statistic: Sum
+      Threshold: !Ref RetryAlarmThreshold
+      TreatMissingData: notBreaching
+
+  ImageProcessingProviderRateLimitAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Background-removal provider rate limits exceed the configured threshold
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: Service
+          Value: image-processing-worker
+      EvaluationPeriods: 1
+      MetricName: ProviderRateLimitCount
+      Namespace: StudioCarAI/Operations
+      Period: 300
+      Statistic: Sum
+      Threshold: !Ref ProviderRateLimitAlarmThreshold
+      TreatMissingData: notBreaching
+
+  ImageProcessingEndToEndLatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Image-processing end-to-end latency exceeds the configured threshold
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: Service
+          Value: image-processing-worker
+      EvaluationPeriods: 2
+      ExtendedStatistic: p95
+      MetricName: ProcessingEndToEndLatencyMilliseconds
+      Namespace: StudioCarAI/Operations
+      Period: 300
+      Threshold: !Ref EndToEndLatencyAlarmMilliseconds
       TreatMissingData: notBreaching
 
 Outputs:

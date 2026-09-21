@@ -236,6 +236,14 @@
     "reason": "Barrel export with no behavior."
   },
   {
+    "source": "packages/observability/src/operational-telemetry.constants.ts",
+    "reason": "Static operational namespace, dimension, level, and unit constants only."
+  },
+  {
+    "source": "packages/observability/src/operational-telemetry.types.ts",
+    "reason": "Type-only structured telemetry, metric, correlation, and sink definitions."
+  },
+  {
     "source": "packages/processing/src/background-removal-provider.types.ts",
     "reason": "Type-only background-removal provider boundary with no runtime behavior."
   },
@@ -274,6 +282,10 @@
   {
     "source": "workers/image-processing/src/processing-message-handler.types.ts",
     "reason": "Type-only processing message handler port with no runtime behavior."
+  },
+  {
+    "source": "workers/image-processing/src/processing-telemetry.constants.ts",
+    "reason": "Static image-worker service, dimension, event, and metric names only."
   },
   {
     "source": "workers/image-processing/src/providers/remove-bg-provider.constants.ts",
