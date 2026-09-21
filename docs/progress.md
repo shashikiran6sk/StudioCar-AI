@@ -1,10 +1,10 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-09-20
+Last updated: 2026-09-21
 
 ## Current status
 
-The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and durable transactional email are implemented. Browser response hardening, a blocking production dependency audit, durable authenticated command limits, runtime secret isolation, signed-webhook verification, bounded database retention, and durable abandoned-upload cleanup are also in place. Payment checkout remains intentionally unavailable until a billing provider is selected.
+The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and durable transactional email are implemented. Browser response hardening, a blocking production dependency audit, durable authenticated command limits, runtime secret isolation, signed-webhook verification, bounded retention, durable abandoned-upload cleanup, and production read-path hardening are also in place. Payment checkout remains intentionally unavailable until a billing provider is selected.
 
 ## Completed
 
@@ -299,6 +299,13 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Added a separately authenticated private storage-cleanup command, focused configuration, least-privilege `s3:DeleteObject` permission under the existing tenant object prefix, and a trusted scheduler contract.
 - Added service, retry, handler, route, S3 adapter, configuration, and real-PostgreSQL reservation/claim/idempotency coverage. Verified a clean production dependency audit, source mapping, Prisma generation/validation, all thirteen migrations, lint, strict typecheck, the complete web suite with 211 files and 339 tests, 22 integration files with 41 tests, production builds for all eleven packages, and the five-test Playwright suite.
 
+### SC018B2 — Query and load hardening
+
+- Replaced the inventory card query's unbounded processing-job relation load with one page-bounded PostgreSQL latest-batch aggregate. Reprocessing history no longer inflates current image counts or response size, and only one preview key per visible vehicle crosses the repository boundary.
+- Added deterministic cursor-sort indexes for tenant vehicle creation/name ordering plus focused processing-job indexes for dashboard completion windows, latest vehicle batches, portfolio completion lookup, and batch display ordering.
+- Exported the canonical 100-job polling bound and made the client split larger transient activity sets into sequential bounded requests, preserving order while avoiding a single invalid or unbounded query.
+- Added multi-batch/cross-tenant real-PostgreSQL coverage, migration index verification, large polling-set coverage, and updated inventory service/repository tests. Verified a clean production dependency audit, source mapping, Prisma generation/validation, all fourteen migrations, lint, strict typecheck, the complete web suite with 212 files and 340 tests, 24 integration files with 43 tests, production builds for all eleven packages, and the five-test Playwright suite.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -308,9 +315,9 @@ The production foundation, authentication, private direct uploads, asynchronous 
 
 ## Next planned slices
 
-1. **SC018B2 — Query and load hardening**: complete query/index review plus polling and burst-load verification.
-2. **SC018C — Observability and alerts**: emit correlated operational metrics and alarms for lifecycle/storage cleanup, worker/provider health, and cost/storage growth.
-3. **Later hardening**: full E2E completion, AWS deployment, DLQ replay/backups, and BiRefNet substitution proof.
+1. **SC018C — Observability and alerts**: emit correlated operational metrics and alarms for lifecycle/storage cleanup, worker/provider health, and cost/storage growth.
+2. **SC018D — Recovery operations**: document and implement bounded DLQ/outbox replay, backup verification, and cleanup failure recovery.
+3. **Later hardening**: load-test automation, AWS deployment, and BiRefNet substitution proof.
 
 ## Important implementation notes
 
@@ -346,8 +353,8 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Resend retains idempotency keys for a bounded provider window. PostgreSQL delivery claims and terminal outcomes provide application-level duplicate suppression beyond that window; an unresolved provider-success/database-outage interval remains an externally uncertain operation and must be handled conservatively during DLQ replay.
 - Processing-completion email reservation occurs only when the vehicle atomically transitions from `PROCESSING` to `READY`, a verified primary email is present, and the job belongs to a keyed batch. The email row snapshots delivery-facing values so later profile edits cannot change an already accepted notification.
 - Queue payload recipient, vehicle name, and URL values are never used as worker authority. The worker claims by message UUID and reconstructs the delivery from the immutable database snapshot plus validated `APPLICATION_BASE_URL` before rendering email.
-- Batched status polling pauses completely for hidden tabs, refreshes immediately when visible, and removes terminal IDs from future poll requests. Terminal results remain in the activity panel until dismissed so failures are not silently lost.
-- Inventory is a separate optimized read model rather than an extension of draft mutation endpoints. It exposes only operational vehicle batches and computes visible progress from completed image jobs; it never invents provider-level progress.
+- Batched status polling pauses completely for hidden tabs, refreshes immediately when visible, removes terminal IDs from future polls, and splits more than 100 active IDs into sequential contract-bounded requests. Terminal results remain in the activity panel until dismissed so failures are not silently lost.
+- Inventory is a separate optimized read model rather than an extension of draft mutation endpoints. Its bounded PostgreSQL aggregate selects only the latest processing batch for each vehicle on the current cursor page, so historical reprocessing cannot grow card payloads or alter current progress; it never invents provider-level progress.
 - Inventory preview URLs are signed at render time from tenant-scoped preview object keys and expire according to the bounded presigned URL configuration. Full-resolution asset signing is isolated to the tenant-authorized portfolio service.
 - Portfolio URLs are signed only after the tenant-scoped detail repository selects the latest completed batch. Originals use inline signed responses, processed outputs have separate inline and attachment signatures, and all URLs expire according to the bounded presigned URL configuration.
 - Favorites, edit, reprocess, hero selection, and ZIP actions remain intentionally absent until their canonical persistence, mutation, and archive-generation flows exist; the UI does not expose controls that would falsely imply those operations are implemented.

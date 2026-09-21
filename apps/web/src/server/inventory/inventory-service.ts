@@ -3,10 +3,7 @@ import type {
   InventoryPage,
   InventoryQuery,
 } from "@studiocar/contracts";
-import {
-  ProcessingJobStatus,
-  type InventoryVehicleRecord,
-} from "@studiocar/database";
+import type { InventoryVehicleRecord } from "@studiocar/database";
 
 import type {
   InventoryPreviewSignerPort,
@@ -42,31 +39,20 @@ export class InventoryService {
   }
 
   private async toItem(record: InventoryVehicleRecord): Promise<InventoryItem> {
-    const completedImageCount = record.processingJobs.filter(
-      (job) => job.status === ProcessingJobStatus.COMPLETED,
-    ).length;
-    const failedImageCount = record.processingJobs.filter(
-      (job) =>
-        job.status === ProcessingJobStatus.FAILED ||
-        job.status === ProcessingJobStatus.CANCELLED,
-    ).length;
-    const previewObjectKey = record.processingJobs.find(
-      (job) => job.processedAsset !== null,
-    )?.processedAsset?.previewObjectKey;
-    const previewUrl = previewObjectKey
+    const previewUrl = record.previewObjectKey
       ? await this.previewSigner.signPreview(
-          previewObjectKey,
+          record.previewObjectKey,
           this.options.previewUrlTtlSeconds,
         )
       : null;
 
     return {
       brand: record.brand,
-      completedImageCount,
+      completedImageCount: record.completedImageCount,
       createdAt: record.createdAt.toISOString(),
-      failedImageCount,
+      failedImageCount: record.failedImageCount,
       id: record.id,
-      imageCount: record.processingJobs.length,
+      imageCount: record.imageCount,
       model: record.model,
       name: record.name,
       previewUrl,
