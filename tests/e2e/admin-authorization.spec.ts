@@ -94,6 +94,26 @@ adminTest(
         fullPage: true,
         path: testInfo.outputPath("admin-overview.png"),
       });
+
+      // The administrators page, where the only administrator cannot revoke
+      // their own access.
+      await page.goto("/admin/admins");
+      await expect(
+        page.getByRole("heading", { name: "Administrators", level: 1 }),
+      ).toBeVisible();
+      await expect(page.getByRole("button", { name: "Revoke" })).toBeDisabled();
+      await expect(
+        page.getByText("No invitations are waiting."),
+      ).toBeVisible();
+      await page.screenshot({
+        fullPage: true,
+        path: testInfo.outputPath("admin-administrators.png"),
+      });
+
+      // A non-administrator cannot reach it either.
+      await signInAs(PLAIN_TOKEN);
+      const refusedAdmins = await page.goto("/admin/admins");
+      expect(refusedAdmins?.status()).toBe(404);
     } finally {
       await database.query(
         'DELETE FROM "User" WHERE "primaryEmail" = ANY($1)',

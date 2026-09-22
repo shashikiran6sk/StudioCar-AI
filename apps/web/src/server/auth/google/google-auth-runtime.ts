@@ -4,6 +4,7 @@ import {
 } from "@studiocar/config";
 import { createDatabaseClient } from "@studiocar/database-runtime";
 import { PrismaAdminBootstrapRepository } from "../../db/repositories/admin-bootstrap-repository";
+import { PrismaAdminManagementRepository } from "../../db/repositories/admin-management-repository";
 import { PrismaAuthIdentityLinkRepository } from "../../db/repositories/auth-identity-link-repository";
 import { AdminBootstrapService } from "../../admin/admin-bootstrap-service";
 import { PrismaGoogleIdentityRepository } from "../../db/repositories/google-identity-repository";
@@ -42,10 +43,14 @@ export function getGoogleOAuthApplication(): GoogleOAuthApplication {
     provider,
     protector,
     sessions,
-    new AdminBootstrapService(new PrismaAdminBootstrapRepository(database), {
-      bootstrapEmail: parseAdminBootstrapEnvironment(process.env)
-        .BOOTSTRAP_ADMIN_EMAIL,
-    }),
+    new AdminBootstrapService(
+      new PrismaAdminBootstrapRepository(database),
+      new PrismaAdminManagementRepository(database),
+      {
+        bootstrapEmail: parseAdminBootstrapEnvironment(process.env)
+          .BOOTSTRAP_ADMIN_EMAIL,
+      },
+    ),
     { challengeTtlSeconds: environment.OAUTH_CHALLENGE_TTL_SECONDS },
   );
 

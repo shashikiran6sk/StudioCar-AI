@@ -63,6 +63,25 @@ control: it stops nobody from requesting an endpoint directly. A signed-in
 non-administrator receives `404` rather than a refusal, so the existence of the
 administration area is not disclosed.
 
+## Administrator management
+
+Access is granted only to a **verified Google identity**. An administrator
+entering an email grants immediately when a Google-verified identity already
+holds that address, and otherwise records a pending invitation. No placeholder
+account is ever created, and a phone-only account whose profile happens to carry
+that address is never granted: the address is on the profile, but Google never
+verified it.
+
+An invitation becomes a role only when somebody signs in with a Google account
+Google has verified for that address. Expired invitations are closed rather than
+honoured, and revoked ones never activate.
+
+StudioCar AI can never reach zero administrators. Revocation counts and deletes
+under one lock, so two administrators revoking each other simultaneously cannot
+both succeed. Every grant, invitation, cancellation, and revocation writes an
+`AuditLog` entry naming the acting administrator, and none of that metadata
+contains a token or credential.
+
 ## Local development drivers
 
 The local environment selects development drivers that cannot reach a customer:

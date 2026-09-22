@@ -2,6 +2,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createDatabaseClient } from "../../../../../packages/database-runtime/src/client";
 import { PrismaAdminBootstrapRepository } from "../../../../../apps/web/src/server/db/repositories/admin-bootstrap-repository";
+import { PrismaAdminManagementRepository } from "../../../../../apps/web/src/server/db/repositories/admin-management-repository";
 import { PrismaAdminRoleRepository } from "../../../../../apps/web/src/server/db/repositories/admin-role-repository";
 import { AdminBootstrapService } from "../../../../../apps/web/src/server/admin/admin-bootstrap-service";
 import { ADMIN_BOOTSTRAP_CONFIG_KEY } from "../../../../../apps/web/src/server/admin/admin.constants";
@@ -16,6 +17,7 @@ databaseDescribe("first administrator bootstrap", () => {
   let database: ReturnType<typeof createDatabaseClient>;
   let bootstrap: PrismaAdminBootstrapRepository;
   let roles: PrismaAdminRoleRepository;
+  let invitations: PrismaAdminManagementRepository;
 
   beforeAll(() => {
     if (!databaseUrl) {
@@ -24,6 +26,7 @@ databaseDescribe("first administrator bootstrap", () => {
     database = createDatabaseClient({ connectionString: databaseUrl, log: [] });
     bootstrap = new PrismaAdminBootstrapRepository(database);
     roles = new PrismaAdminRoleRepository(database);
+    invitations = new PrismaAdminManagementRepository(database);
   });
 
   afterEach(async () => {
@@ -127,7 +130,7 @@ databaseDescribe("first administrator bootstrap", () => {
       createUser(ownerEmail),
       createUser(otherEmail),
     ]);
-    const service = new AdminBootstrapService(bootstrap, {
+    const service = new AdminBootstrapService(bootstrap, invitations, {
       bootstrapEmail: ownerEmail,
     });
 
@@ -144,12 +147,12 @@ databaseDescribe("first administrator bootstrap", () => {
 
   it("keeps an administrator after the environment value is removed", async () => {
     const owner = await createUser(ownerEmail);
-    await new AdminBootstrapService(bootstrap, {
+    await new AdminBootstrapService(bootstrap, invitations, {
       bootstrapEmail: ownerEmail,
     }).evaluate(owner.id, ownerEmail, now);
 
     // The deployment removes BOOTSTRAP_ADMIN_EMAIL entirely.
-    const withoutConfiguration = new AdminBootstrapService(bootstrap, {
+    const withoutConfiguration = new AdminBootstrapService(bootstrap, invitations, {
       bootstrapEmail: undefined,
     });
     await expect(
@@ -165,11 +168,11 @@ databaseDescribe("first administrator bootstrap", () => {
       createUser(ownerEmail),
       createUser(otherEmail),
     ]);
-    await new AdminBootstrapService(bootstrap, {
+    await new AdminBootstrapService(bootstrap, invitations, {
       bootstrapEmail: ownerEmail,
     }).evaluate(owner.id, ownerEmail, now);
 
-    await new AdminBootstrapService(bootstrap, {
+    await new AdminBootstrapService(bootstrap, invitations, {
       bootstrapEmail: otherEmail,
     }).evaluate(other.id, otherEmail, now);
 

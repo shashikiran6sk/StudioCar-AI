@@ -4,11 +4,17 @@ import { AdminBootstrapService } from "../../../../apps/web/src/server/admin/adm
 
 const now = new Date("2026-09-22T10:00:00.000Z");
 
-function service(bootstrapEmail: string | undefined, bootstrap = vi.fn()) {
+function service(
+  bootstrapEmail: string | undefined,
+  bootstrap = vi.fn(),
+  acceptForVerifiedEmail = vi.fn(async () => false),
+) {
   const store = { bootstrap };
+  const invitations = { acceptForVerifiedEmail };
   return {
     store,
-    service: new AdminBootstrapService(store, { bootstrapEmail }),
+    invitations,
+    service: new AdminBootstrapService(store, invitations, { bootstrapEmail }),
   };
 }
 
@@ -72,5 +78,54 @@ describe("AdminBootstrapService", () => {
     await expect(
       subject.evaluate("user-1", "owner@example.com", now),
     ).resolves.toEqual({ kind: "ALREADY_COMPLETED" });
+  });
+});
+
+describe("AdminBootstrapService invitations", () => {
+  it("accepts a pending invitation for the verified address", async () => {
+    const accept = vi.fn(async () => true);
+    const { service: subject, store } = service(
+      undefined,
+      vi.fn(),
+      accept,
+    );
+
+    await expect(
+      subject.evaluate("user-1", "Invited@Example.com", now),
+    ).resolves.toEqual({ kind: "BOOTSTRAPPED" });
+    // The address is normalised before it is matched.
+    expect(accept).toHaveBeenCalledWith({
+      userId: "user-1",
+      email: "invited@example.com",
+      now,
+    });
+    // An accepted invitation makes the bootstrap question moot.
+    expect(store.bootstrap).not.toHaveBeenCalled();
+  });
+
+  it("checks invitations before bootstrap, so an invited admin is still granted", async () => {
+    const { service: subject, store } = service(
+      "owner@example.com",
+      vi.fn(async () => ({ kind: "ALREADY_COMPLETED" as const })),
+      vi.fn(async () => true),
+    );
+
+    await expect(
+      subject.evaluate("user-2", "invited@example.com", now),
+    ).resolves.toEqual({ kind: "BOOTSTRAPPED" });
+    expect(store.bootstrap).not.toHaveBeenCalled();
+  });
+
+  it("falls through to bootstrap when no invitation matches", async () => {
+    const { service: subject, store } = service(
+      "owner@example.com",
+      vi.fn(async () => ({ kind: "BOOTSTRAPPED" as const })),
+      vi.fn(async () => false),
+    );
+
+    await expect(
+      subject.evaluate("user-3", "owner@example.com", now),
+    ).resolves.toEqual({ kind: "BOOTSTRAPPED" });
+    expect(store.bootstrap).toHaveBeenCalled();
   });
 });
