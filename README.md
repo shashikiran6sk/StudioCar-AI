@@ -82,5 +82,31 @@ has consented through `PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION`.
 Database commands are deliberately invoked directly rather than through
 Turborepo, so stateful migration work is never served from a task cache.
 
+## Administration
+
+Signed-in administrators reach an internal area at `/admin`, hidden from
+everybody else and authorized against the database on every page and every
+mutation.
+
+| Destination | What it changes |
+| --- | --- |
+| `/admin` | Bounded counts, accounts by plan, and the recent administrative changes |
+| `/admin/pricing` | Plan prices, allowances, batch limits, storage, and copy |
+| `/admin/subscriptions` | A paid plan assigned by hand, until a billing provider exists |
+| `/admin/content` | The public footer's social links |
+| `/admin/admins` | Who has administrator access |
+
+Authorization is a row in `UserRole`, never an environment value.
+`BOOTSTRAP_ADMIN_EMAIL` names the one verified Google email that may become the
+**first** administrator on a database that has never had one; completion is
+recorded in `AppConfig`, so the value is inert afterwards and cannot re-grant a
+revoked administrator. Everyone else is granted from inside the product.
+
+Every grant, revocation, plan edit, subscription assignment, and footer-link
+change writes an `AuditLog` entry naming the administrator who made it.
+
+See [`docs/security.md`](./docs/security.md) for the full secret-ownership and
+authorization model.
+
 Product and architecture requirements live in [`docs/`](./docs/).
 
