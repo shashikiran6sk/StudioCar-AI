@@ -11,7 +11,7 @@ import { describe, expect, it, vi } from "vitest";
 import { SensitiveIdentifierHasher } from "../../../../../apps/web/src/server/auth/hash-sensitive-identifier";
 import { hashSessionToken } from "../../../../../apps/web/src/server/auth/session-service";
 import {
-  PhoneOtpProviderVerificationStatus,
+  PhoneOtpIdentificationStatus,
   type PhoneOtpChallengeStore,
   type PhoneOtpCompletionStore,
   type PhoneOtpProvider,
@@ -27,6 +27,7 @@ const challengeId = "4f9d4891-157f-49ed-aa5a-c026abc0a768";
 const attemptId = "201b85c4-0dd3-47e2-a15e-7687707f3bf6";
 const binding = "b".repeat(43);
 const sessionToken = "s".repeat(43);
+const accessToken = "signed.widget.access-token";
 
 function challengeStore(): PhoneOtpChallengeStore {
   return {
@@ -41,14 +42,12 @@ function challengeStore(): PhoneOtpChallengeStore {
     markSendFailed: vi.fn(async () => true),
     claimVerification: vi.fn(
       async (): Promise<ClaimPhoneOtpVerificationResult> => ({
-      status: PhoneOtpVerificationClaimStatus.Claimed,
-      attemptId,
-      phoneNumber: "+919876543210",
-      providerAlreadyVerified: false,
+        status: PhoneOtpVerificationClaimStatus.Claimed,
+        attemptId,
+        phoneNumber: "+919876543210",
       }),
     ),
     recordInvalid: vi.fn(async () => true),
-    recordExpired: vi.fn(async () => true),
     recordProviderVerified: vi.fn(async () => true),
     recordProviderError: vi.fn(async () => true),
   };
@@ -75,9 +74,10 @@ function completionStore(): PhoneOtpCompletionStore {
 
 function provider(): PhoneOtpProvider {
   return {
-    send: vi.fn(async () => ({ providerRequestId: "provider-request-1" })),
-    verify: vi.fn(async () => ({
-      status: PhoneOtpProviderVerificationStatus.Verified,
+    driver: "msg91",
+    identify: vi.fn(async () => ({
+      status: PhoneOtpIdentificationStatus.Verified as const,
+      identifier: "919876543210",
     })),
   };
 }
@@ -96,12 +96,13 @@ function service(
   challenges: PhoneOtpChallengeStore = challengeStore(),
   completions: PhoneOtpCompletionStore = completionStore(),
   otpProvider: PhoneOtpProvider = provider(),
+  sessions: SessionPreparer = sessionPreparer(),
 ): PhoneOtpService {
   return new PhoneOtpService(
     challenges,
     completions,
     otpProvider,
-    sessionPreparer(),
+    sessions,
     new SensitiveIdentifierHasher("k".repeat(32)),
     {
       challengeTtlSeconds: 600,
@@ -116,8 +117,8 @@ function service(
   );
 }
 
-describe("PhoneOtpService", () => {
-  it("creates a rate-limited challenge before sending through the provider", async () => {
+describe("PhoneOtpService start", () => {
+  it("creates a rate-limited challenge without spending a provider message", async () => {
     const challenges = challengeStore();
     const otpProvider = provider();
     const result = await service(challenges, completionStore(), otpProvider).start(
@@ -137,47 +138,44 @@ describe("PhoneOtpService", () => {
         maxPerIp: 10,
       }),
     );
-    expect(otpProvider.send).toHaveBeenCalledWith("+919876543210");
+    // The widget sends the message from the browser.
+    expect(otpProvider.identify).not.toHaveBeenCalled();
   });
 
-  it("surfaces persisted rate limits without calling MSG91", async () => {
+  it("surfaces persisted send rate limits with a retry hint", async () => {
     const challenges = challengeStore();
     vi.mocked(challenges.createRateLimited).mockResolvedValue({
       status: PhoneOtpChallengeCreationStatus.RateLimited,
       retryAt: new Date("2026-09-18T12:00:30.000Z"),
     });
-    const otpProvider = provider();
 
     await expect(
-      service(challenges, completionStore(), otpProvider).start(
-        { phoneNumber: "+919876543210" },
-        "203.0.113.10",
-      ),
+      service(challenges).start({ phoneNumber: "+919876543210" }, "203.0.113.10"),
     ).rejects.toMatchObject({
       code: PhoneOtpApplicationErrorCode.RateLimited,
       retryAfterSeconds: 30,
     });
-    expect(otpProvider.send).not.toHaveBeenCalled();
+    expect(challenges.markSent).not.toHaveBeenCalled();
   });
+});
 
-  it("verifies with MSG91 and atomically completes identity plus session", async () => {
+describe("PhoneOtpService verify", () => {
+  it("verifies the widget access token and completes identity plus session", async () => {
     const challenges = challengeStore();
     const completions = completionStore();
     const otpProvider = provider();
     const result = await service(challenges, completions, otpProvider).verify(
-      { challengeId, phoneNumber: "+919876543210", otp: "123456" },
+      { challengeId, phoneNumber: "+919876543210", accessToken },
       binding,
       "203.0.113.10",
     );
 
     expect(result.token).toBe(sessionToken);
-    expect(otpProvider.verify).toHaveBeenCalledWith(
-      "+919876543210",
-      "123456",
-    );
+    expect(otpProvider.identify).toHaveBeenCalledWith(accessToken);
     expect(challenges.recordProviderVerified).toHaveBeenCalledWith(
       challengeId,
       attemptId,
+      expect.stringMatching(/^[0-9a-f]{64}$/),
       now,
     );
     expect(completions.complete).toHaveBeenCalledWith(
@@ -189,33 +187,30 @@ describe("PhoneOtpService", () => {
     );
   });
 
-  it("records invalid OTPs without preparing a session", async () => {
+  it("never sends the access token itself to the challenge store", async () => {
     const challenges = challengeStore();
-    const otpProvider = provider();
-    vi.mocked(otpProvider.verify).mockResolvedValue({
-      status: PhoneOtpProviderVerificationStatus.Invalid,
-    });
-    const sessions = sessionPreparer();
-    const otpService = new PhoneOtpService(
-      challenges,
-      completionStore(),
-      otpProvider,
-      sessions,
-      new SensitiveIdentifierHasher("k".repeat(32)),
-      {
-        challengeTtlSeconds: 600,
-        rateLimitWindowSeconds: 600,
-        sendMaxPerPhone: 3,
-        sendMaxPerIp: 10,
-        verifyMaxPerChallenge: 5,
-        verifyMaxPerIp: 30,
-        now: () => now,
-      },
+    await service(challenges).verify(
+      { challengeId, phoneNumber: "+919876543210", accessToken },
+      binding,
+      "203.0.113.10",
     );
 
+    const recorded = vi.mocked(challenges.recordProviderVerified).mock.calls[0];
+    expect(recorded?.[2]).not.toContain(accessToken);
+  });
+
+  it("refuses a token that proves a different handset", async () => {
+    const challenges = challengeStore();
+    const otpProvider = provider();
+    vi.mocked(otpProvider.identify).mockResolvedValue({
+      status: PhoneOtpIdentificationStatus.Verified,
+      identifier: "919999999999",
+    });
+    const sessions = sessionPreparer();
+
     await expect(
-      otpService.verify(
-        { challengeId, phoneNumber: "+919876543210", otp: "000000" },
+      service(challenges, completionStore(), otpProvider, sessions).verify(
+        { challengeId, phoneNumber: "+919876543210", accessToken },
         binding,
         "203.0.113.10",
       ),
@@ -226,5 +221,115 @@ describe("PhoneOtpService", () => {
       now,
     );
     expect(sessions.prepareIssue).not.toHaveBeenCalled();
+  });
+
+  it("answers a rejected token exactly as it answers a mismatched one", async () => {
+    const challenges = challengeStore();
+    const otpProvider = provider();
+    vi.mocked(otpProvider.identify).mockResolvedValue({
+      status: PhoneOtpIdentificationStatus.Rejected,
+    });
+    const sessions = sessionPreparer();
+
+    await expect(
+      service(challenges, completionStore(), otpProvider, sessions).verify(
+        { challengeId, phoneNumber: "+919876543210", accessToken },
+        binding,
+        "203.0.113.10",
+      ),
+    ).rejects.toMatchObject({ code: PhoneOtpApplicationErrorCode.InvalidOtp });
+    expect(sessions.prepareIssue).not.toHaveBeenCalled();
+  });
+
+  it("distinguishes an unreachable provider from a refused token", async () => {
+    const challenges = challengeStore();
+    const otpProvider = provider();
+    vi.mocked(otpProvider.identify).mockResolvedValue({
+      status: PhoneOtpIdentificationStatus.Unavailable,
+    });
+
+    await expect(
+      service(challenges, completionStore(), otpProvider).verify(
+        { challengeId, phoneNumber: "+919876543210", accessToken },
+        binding,
+        "203.0.113.10",
+      ),
+    ).rejects.toMatchObject({
+      code: PhoneOtpApplicationErrorCode.ProviderUnavailable,
+    });
+    expect(challenges.recordProviderError).toHaveBeenCalledWith(
+      challengeId,
+      attemptId,
+      now,
+    );
+    expect(challenges.recordInvalid).not.toHaveBeenCalled();
+  });
+
+  it("refuses a replayed access token that another challenge already claimed", async () => {
+    const challenges = challengeStore();
+    vi.mocked(challenges.recordProviderVerified).mockResolvedValue(false);
+    const sessions = sessionPreparer();
+
+    await expect(
+      service(challenges, completionStore(), provider(), sessions).verify(
+        { challengeId, phoneNumber: "+919876543210", accessToken },
+        binding,
+        "203.0.113.10",
+      ),
+    ).rejects.toMatchObject({ code: PhoneOtpApplicationErrorCode.InvalidOtp });
+    expect(sessions.prepareIssue).not.toHaveBeenCalled();
+  });
+
+  it("reports an expired challenge before contacting the provider", async () => {
+    const challenges = challengeStore();
+    vi.mocked(challenges.claimVerification).mockResolvedValue({
+      status: PhoneOtpVerificationClaimStatus.Expired,
+    });
+    const otpProvider = provider();
+
+    await expect(
+      service(challenges, completionStore(), otpProvider).verify(
+        { challengeId, phoneNumber: "+919876543210", accessToken },
+        binding,
+        "203.0.113.10",
+      ),
+    ).rejects.toMatchObject({ code: PhoneOtpApplicationErrorCode.Expired });
+    expect(otpProvider.identify).not.toHaveBeenCalled();
+  });
+
+  it("stops at the per-challenge attempt cap", async () => {
+    const challenges = challengeStore();
+    vi.mocked(challenges.claimVerification).mockResolvedValue({
+      status: PhoneOtpVerificationClaimStatus.TooManyAttempts,
+    });
+    const otpProvider = provider();
+
+    await expect(
+      service(challenges, completionStore(), otpProvider).verify(
+        { challengeId, phoneNumber: "+919876543210", accessToken },
+        binding,
+        "203.0.113.10",
+      ),
+    ).rejects.toMatchObject({
+      code: PhoneOtpApplicationErrorCode.TooManyAttempts,
+    });
+    expect(otpProvider.identify).not.toHaveBeenCalled();
+  });
+
+  it("reports an identity that already belongs to another account", async () => {
+    const completions = completionStore();
+    vi.mocked(completions.complete).mockResolvedValue({
+      status: PhoneOtpCompletionStatus.LinkRequired,
+    });
+
+    await expect(
+      service(challengeStore(), completions).verify(
+        { challengeId, phoneNumber: "+919876543210", accessToken },
+        binding,
+        "203.0.113.10",
+      ),
+    ).rejects.toMatchObject({
+      code: PhoneOtpApplicationErrorCode.IdentityLinkRequired,
+    });
   });
 });

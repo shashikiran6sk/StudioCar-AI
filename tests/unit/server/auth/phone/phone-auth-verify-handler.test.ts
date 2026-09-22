@@ -47,7 +47,7 @@ function request(includeBinding = true): Request {
     body: JSON.stringify({
       challengeId,
       phoneNumber: "+919876543210",
-      otp: "123456",
+      accessToken: "signed.widget.access-token",
     }),
   });
 }
@@ -63,7 +63,7 @@ describe("handlePhoneAuthVerify", () => {
       {
         challengeId,
         phoneNumber: "+919876543210",
-        otp: "123456",
+        accessToken: "signed.widget.access-token",
       },
       browserBinding,
       "unknown",

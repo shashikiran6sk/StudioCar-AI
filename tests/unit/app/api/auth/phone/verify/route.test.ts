@@ -47,7 +47,7 @@ describe("POST /api/auth/phone/verify", () => {
         body: JSON.stringify({
           challengeId: "4f9d4891-157f-49ed-aa5a-c026abc0a768",
           phoneNumber: "+919876543210",
-          otp: "123456",
+          accessToken: "signed.widget.access-token",
         }),
       }),
     );

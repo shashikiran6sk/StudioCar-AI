@@ -3,6 +3,7 @@ export const MILLISECONDS_PER_SECOND = 1_000;
 export const PHONE_IDENTIFIER_PREFIX = "phone:";
 export const IP_IDENTIFIER_PREFIX = "ip:";
 export const PHONE_OTP_SEND_FAILURE_CODE = "provider_send_failed";
+export const PHONE_OTP_TOKEN_IDENTIFIER_PREFIX = "phone-otp-token:";
 
 export const HTTP_CREATED_STATUS = 201;
 export const HTTP_BAD_REQUEST_STATUS = 400;
@@ -11,6 +12,8 @@ export const HTTP_CONFLICT_STATUS = 409;
 export const HTTP_TOO_MANY_REQUESTS_STATUS = 429;
 export const HTTP_SERVICE_UNAVAILABLE_STATUS = 503;
 export const RETRY_AFTER_HEADER = "retry-after";
+export const CACHE_CONTROL_HEADER = "cache-control";
+export const PRIVATE_RESPONSE_CACHE_CONTROL = "no-store";
 
 export const API_BAD_REQUEST_CODE = "BAD_REQUEST";
 export const API_FORBIDDEN_CODE = "FORBIDDEN";
@@ -29,15 +32,18 @@ export const PROVIDER_UNAVAILABLE_MESSAGE =
   "Phone verification is temporarily unavailable.";
 
 export const MSG91_BASE_URL = "https://control.msg91.com";
-export const MSG91_SEND_PATH = "/api/v5/otp";
-export const MSG91_VERIFY_PATH = "/api/v5/otp/verify";
-export const MSG91_AUTH_HEADER = "authkey";
+export const MSG91_VERIFY_ACCESS_TOKEN_PATH = "/api/v5/widget/verifyAccessToken";
+export const MSG91_WIDGET_SCRIPT_URL = "https://verify.msg91.com/otp-provider.js";
+export const MSG91_AUTH_KEY_FIELD = "authkey";
+export const MSG91_ACCESS_TOKEN_FIELD = "access-token";
 export const MSG91_ACCEPT_HEADER = "accept";
+export const MSG91_CONTENT_TYPE_HEADER = "content-type";
 export const JSON_MEDIA_TYPE = "application/json";
 export const MSG91_SUCCESS_TYPE = "success";
-export const MSG91_ERROR_TYPE = "error";
-export const MSG91_EXPIRED_MESSAGE_FRAGMENT = "expired";
-export const MSG91_INVALID_MESSAGE_FRAGMENTS: readonly string[] = [
-  "invalid",
-  "match",
-];
+
+export const DEVELOPMENT_OTP_TOKEN_PREFIX = "dev-otp:";
+export const DEVELOPMENT_OTP_TOKEN_SEPARATOR = ":";
+
+export const PHONE_OTP_WIDGET_DISABLED_REASON =
+  "Set MSG91_WIDGET_ID, MSG91_WIDGET_TOKEN, and MSG91_AUTH_KEY to verify phone numbers.";
+export const PHONE_OTP_IDENTIFIER_MISMATCH_CODE = "identifier_mismatch";

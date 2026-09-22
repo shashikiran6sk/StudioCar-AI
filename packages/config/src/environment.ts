@@ -91,13 +91,22 @@ const CommandRateLimitMaximumSchema = z.coerce
   .min(1)
   .max(10_000);
 
+export const PhoneOtpDriverSchema = z.enum(["msg91", "fake"]);
+
 export const PhoneAuthEnvironmentSchema = z
   .object({
     NODE_ENV: EnvironmentNameSchema.default("development"),
     DATABASE_URL: PostgresUrlSchema,
     SESSION_SECRET: z.string().min(32),
-    MSG91_AUTH_KEY: z.string().trim().min(1),
-    MSG91_TEMPLATE_ID: z.string().trim().min(1),
+    PHONE_OTP_DRIVER: PhoneOtpDriverSchema.default("fake"),
+    PHONE_OTP_DEV_CODE: z
+      .string()
+      .trim()
+      .regex(/^\d{4,8}$/)
+      .default("1234"),
+    MSG91_AUTH_KEY: z.string().trim().min(1).optional(),
+    MSG91_WIDGET_ID: z.string().trim().min(1).optional(),
+    MSG91_WIDGET_TOKEN: z.string().trim().min(1).optional(),
     MSG91_TIMEOUT_MS: z.coerce.number().int().min(500).max(15_000).default(5_000),
     PHONE_OTP_CHALLENGE_TTL_SECONDS: PhoneOtpChallengeTtlSchema,
     PHONE_OTP_RATE_LIMIT_WINDOW_SECONDS: PhoneOtpRateLimitWindowSchema,
@@ -106,7 +115,40 @@ export const PhoneAuthEnvironmentSchema = z
     PHONE_OTP_VERIFY_MAX_PER_CHALLENGE: PhoneOtpLimitSchema.max(10).default(5),
     PHONE_OTP_VERIFY_MAX_PER_IP: PhoneOtpLimitSchema.max(300).default(30),
   })
-  .strip();
+  .strip()
+  .superRefine((value, context) => {
+    if (value.PHONE_OTP_DRIVER === "fake") {
+      if (value.NODE_ENV === "production") {
+        context.addIssue({
+          code: "custom",
+          message:
+            "PHONE_OTP_DRIVER must be msg91 in production; the fake driver accepts a fixed code and sends no message.",
+          path: ["PHONE_OTP_DRIVER"],
+        });
+      }
+      return;
+    }
+
+    /**
+     * The browser runs the widget, so it needs the widget identifier and its
+     * public token. The auth key stays server-side: it is what makes access
+     * token verification a server-to-server call.
+     */
+    const required = [
+      "MSG91_AUTH_KEY",
+      "MSG91_WIDGET_ID",
+      "MSG91_WIDGET_TOKEN",
+    ] as const;
+    for (const key of required) {
+      if (!value[key]) {
+        context.addIssue({
+          code: "custom",
+          message: `${key} is required when PHONE_OTP_DRIVER is msg91.`,
+          path: [key],
+        });
+      }
+    }
+  });
 
 export const GoogleAuthEnvironmentSchema = z
   .object({
@@ -463,6 +505,7 @@ export const ClientEnvironmentSchema = z
 export type ClientEnvironment = z.infer<typeof ClientEnvironmentSchema>;
 export type GoogleAuthEnvironment = z.infer<typeof GoogleAuthEnvironmentSchema>;
 export type PhoneAuthEnvironment = z.infer<typeof PhoneAuthEnvironmentSchema>;
+export type PhoneOtpDriver = z.infer<typeof PhoneOtpDriverSchema>;
 export type SessionEnvironment = z.infer<typeof SessionEnvironmentSchema>;
 export type UploadEnvironment = z.infer<typeof UploadEnvironmentSchema>;
 export type ProcessingEnvironment = z.infer<

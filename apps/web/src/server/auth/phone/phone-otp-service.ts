@@ -14,8 +14,9 @@ import {
   IP_IDENTIFIER_PREFIX,
   MILLISECONDS_PER_SECOND,
   PHONE_IDENTIFIER_PREFIX,
-  PHONE_OTP_SEND_FAILURE_CODE,
+  PHONE_OTP_TOKEN_IDENTIFIER_PREFIX,
 } from "./phone-auth.constants";
+import { toProviderMsisdn } from "./to-provider-msisdn";
 import { createPhoneOtpBrowserBinding } from "./create-phone-otp-browser-binding";
 import type {
   CompletedPhoneOtp,
@@ -26,7 +27,7 @@ import type {
   SessionPreparer,
   StartedPhoneOtp,
 } from "./phone-auth.types";
-import { PhoneOtpProviderVerificationStatus } from "./phone-auth.types";
+import { PhoneOtpIdentificationStatus } from "./phone-auth.types";
 
 const INVALID_CONFIGURATION_MESSAGE =
   "Phone OTP configuration values must be positive safe integers.";
@@ -132,29 +133,18 @@ export class PhoneOtpService implements PhoneOtpApplication {
       );
     }
 
-    try {
-      const sent = await this.provider.send(validated.phoneNumber);
-      const recorded = await this.challenges.markSent(
-        result.challenge.id,
-        sent.providerRequestId,
-        this.now(),
-      );
-      if (!recorded) {
-        throw new PhoneOtpApplicationError(
-          PhoneOtpApplicationErrorCode.ProviderUnavailable,
-        );
-      }
-    } catch (error) {
-      await this.challenges.markSendFailed(
-        result.challenge.id,
-        PHONE_OTP_SEND_FAILURE_CODE,
-        this.now(),
-      );
-      if (error instanceof PhoneOtpApplicationError) throw error;
+    /**
+     * The widget sends the message from the browser, so this records that the
+     * challenge was authorised rather than that a provider accepted a send.
+     */
+    const recorded = await this.challenges.markSent(
+      result.challenge.id,
+      null,
+      this.now(),
+    );
+    if (!recorded) {
       throw new PhoneOtpApplicationError(
-        PhoneOtpApplicationErrorCode.ProviderUnavailable,
-        undefined,
-        { cause: error },
+        PhoneOtpApplicationErrorCode.InvalidChallenge,
       );
     }
 
@@ -189,50 +179,56 @@ export class PhoneOtpService implements PhoneOtpApplication {
       this.throwClaimError(claim, now);
     }
 
-    if (!claim.providerAlreadyVerified) {
-      let verification: { status: PhoneOtpProviderVerificationStatus };
-      try {
-        verification = await this.provider.verify(claim.phoneNumber, validated.otp);
-      } catch (error) {
-        await this.challenges.recordProviderError(
-          validated.challengeId,
-          claim.attemptId,
-          this.now(),
-        );
-        throw new PhoneOtpApplicationError(
-          PhoneOtpApplicationErrorCode.ProviderUnavailable,
-          undefined,
-          { cause: error },
-        );
-      }
+    const identification = await this.provider.identify(validated.accessToken);
 
-      if (verification.status === PhoneOtpProviderVerificationStatus.Invalid) {
-        await this.challenges.recordInvalid(
-          validated.challengeId,
-          claim.attemptId,
-          this.now(),
-        );
-        throw new PhoneOtpApplicationError(PhoneOtpApplicationErrorCode.InvalidOtp);
-      }
-
-      if (verification.status === PhoneOtpProviderVerificationStatus.Expired) {
-        await this.challenges.recordExpired(
-          validated.challengeId,
-          claim.attemptId,
-          this.now(),
-        );
-        throw new PhoneOtpApplicationError(PhoneOtpApplicationErrorCode.Expired);
-      }
+    if (identification.status === PhoneOtpIdentificationStatus.Unavailable) {
+      await this.challenges.recordProviderError(
+        validated.challengeId,
+        claim.attemptId,
+        this.now(),
+      );
+      throw new PhoneOtpApplicationError(
+        PhoneOtpApplicationErrorCode.ProviderUnavailable,
+      );
     }
 
+    /**
+     * The claimed number is the assertion being checked, never trusted input.
+     * A token that proves a different handset is refused with the same answer
+     * as a rejected token, so the response reveals nothing about whose number
+     * a token belongs to.
+     */
+    const claimedIdentifier = toProviderMsisdn(claim.phoneNumber);
+    if (
+      identification.status === PhoneOtpIdentificationStatus.Rejected ||
+      claimedIdentifier === null ||
+      identification.identifier !== claimedIdentifier
+    ) {
+      await this.challenges.recordInvalid(
+        validated.challengeId,
+        claim.attemptId,
+        this.now(),
+      );
+      throw new PhoneOtpApplicationError(
+        PhoneOtpApplicationErrorCode.InvalidOtp,
+      );
+    }
+
+    /**
+     * Claiming the token hash is what stops a verified access token being
+     * replayed against a second challenge; the unique index decides the race.
+     */
     const providerRecorded = await this.challenges.recordProviderVerified(
       validated.challengeId,
       claim.attemptId,
+      this.identifierHasher.hash(
+        `${PHONE_OTP_TOKEN_IDENTIFIER_PREFIX}${validated.accessToken}`,
+      ),
       this.now(),
     );
     if (!providerRecorded) {
       throw new PhoneOtpApplicationError(
-        PhoneOtpApplicationErrorCode.InvalidChallenge,
+        PhoneOtpApplicationErrorCode.InvalidOtp,
       );
     }
 

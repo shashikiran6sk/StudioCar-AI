@@ -1,10 +1,12 @@
 import type {
   AuthUser,
+  PhoneOtpDriver,
   ClaimPhoneOtpVerificationCommand,
   ClaimPhoneOtpVerificationResult,
   CompletePhoneOtpCommand,
   CreatePhoneOtpChallengeCommand,
   CreatePhoneOtpChallengeResult,
+  PhoneOtpWidget,
   PhoneStart,
   PhoneOtpCompletionResult,
   PhoneVerify,
@@ -15,18 +17,33 @@ import type {
   PreparedSession,
 } from "../session-service";
 
-export enum PhoneOtpProviderVerificationStatus {
+export enum PhoneOtpIdentificationStatus {
   Verified = "verified",
-  Invalid = "invalid",
-  Expired = "expired",
+  Rejected = "rejected",
+  Unavailable = "unavailable",
 }
 
+/**
+ * Digits only, without a leading plus, exactly as MSG91 names a handset.
+ */
+export type ProviderMsisdn = string;
+
+export type PhoneOtpIdentification =
+  | {
+      status: PhoneOtpIdentificationStatus.Verified;
+      identifier: ProviderMsisdn;
+    }
+  | { status: PhoneOtpIdentificationStatus.Rejected }
+  | { status: PhoneOtpIdentificationStatus.Unavailable };
+
+/**
+ * The browser sends and collects the OTP through the provider widget. The
+ * server never sees the code: it presents the resulting access token and asks
+ * whose handset it proves.
+ */
 export interface PhoneOtpProvider {
-  send(phoneNumber: string): Promise<{ providerRequestId: string | null }>;
-  verify(
-    phoneNumber: string,
-    otp: string,
-  ): Promise<{ status: PhoneOtpProviderVerificationStatus }>;
+  readonly driver: PhoneOtpDriver;
+  identify(accessToken: string): Promise<PhoneOtpIdentification>;
 }
 
 export interface PhoneOtpChallengeStore {
@@ -51,14 +68,14 @@ export interface PhoneOtpChallengeStore {
     attemptId: string,
     completedAt: Date,
   ): Promise<boolean>;
-  recordExpired(
-    challengeId: string,
-    attemptId: string,
-    completedAt: Date,
-  ): Promise<boolean>;
+  /**
+   * Claiming the provider token hash is what makes a verified access token
+   * single use across challenges; a replay collides on the unique index.
+   */
   recordProviderVerified(
     challengeId: string,
     attemptId: string,
+    providerTokenHash: string,
     completedAt: Date,
   ): Promise<boolean>;
   recordProviderError(
@@ -80,6 +97,10 @@ export interface StartedPhoneOtp {
   challengeId: string;
   expiresAt: Date;
   browserBinding: string;
+}
+
+export interface PhoneOtpWidgetConfiguration {
+  describe(): PhoneOtpWidget;
 }
 
 export interface CompletedPhoneOtp {

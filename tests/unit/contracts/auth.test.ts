@@ -5,7 +5,8 @@ import {
   GoogleIdTokenClaimsSchema,
   GoogleOAuthCallbackSchema,
   GoogleOAuthChallengePayloadSchema,
-  Msg91OtpResponseSchema,
+  Msg91WidgetVerificationSchema,
+  PhoneOtpWidgetSchema,
   PhoneAuthenticationStatus,
   PhoneStartSchema,
   PhoneStartResponseSchema,
@@ -46,20 +47,58 @@ describe("phone authentication contracts", () => {
       }).success,
     ).toBe(true);
     expect(
-      Msg91OtpResponseSchema.parse({
+      Msg91WidgetVerificationSchema.parse({
         type: "SUCCESS",
-        request_id: "provider-request",
+        message: "919876543210",
         extra: true,
       }),
-    ).toMatchObject({ type: "success", request_id: "provider-request" });
+    ).toMatchObject({ type: "success", message: "919876543210" });
   });
 
-  it("keeps OTP verification tied to a challenge and numeric code", () => {
+  it("keeps verification tied to a challenge and a widget access token", () => {
     expect(
       PhoneVerifySchema.safeParse({
         challengeId: "4f9d4891-157f-49ed-aa5a-c026abc0a768",
         phoneNumber: "+919876543210",
-        otp: "12ab56",
+        accessToken: "signed.access.token",
+      }).success,
+    ).toBe(true);
+    expect(
+      PhoneVerifySchema.safeParse({
+        challengeId: "4f9d4891-157f-49ed-aa5a-c026abc0a768",
+        phoneNumber: "+919876543210",
+        accessToken: "",
+      }).success,
+    ).toBe(false);
+    expect(
+      PhoneVerifySchema.safeParse({
+        challengeId: "4f9d4891-157f-49ed-aa5a-c026abc0a768",
+        phoneNumber: "+919876543210",
+        otp: "123456",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("describes widget configuration without server credentials", () => {
+    const widget = PhoneOtpWidgetSchema.parse({
+      enabled: true,
+      driver: "msg91",
+      widgetId: "widget-id",
+      tokenAuth: "widget-token",
+      devCode: null,
+      reason: null,
+    });
+
+    expect(Object.keys(widget)).not.toContain("authKey");
+    expect(
+      PhoneOtpWidgetSchema.safeParse({
+        enabled: true,
+        driver: "msg91",
+        widgetId: "widget-id",
+        tokenAuth: "widget-token",
+        devCode: null,
+        reason: null,
+        authKey: "must-not-be-accepted",
       }).success,
     ).toBe(false);
   });

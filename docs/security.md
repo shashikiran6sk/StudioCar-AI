@@ -11,7 +11,7 @@ provider keys into the Next.js application.
 | --- | --- | --- |
 | Next.js session and read models | `DATABASE_URL` | Provider, email-delivery, and scheduler secrets |
 | Google OAuth routes | `DATABASE_URL`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | MSG91, Resend, remove.bg, fal.ai |
-| Phone OTP routes | `DATABASE_URL`, `SESSION_SECRET`, `MSG91_AUTH_KEY`, `MSG91_TEMPLATE_ID` | Google, Resend, image-provider keys |
+| Phone OTP routes | `DATABASE_URL`, `SESSION_SECRET`, `PHONE_OTP_DRIVER`, `MSG91_AUTH_KEY`, `MSG91_WIDGET_ID`, `MSG91_WIDGET_TOKEN` | Google, Resend, image-provider keys |
 | Upload, inventory, portfolio, and storage-cleanup control plane | `DATABASE_URL`, `AWS_REGION`, `S3_BUCKET`, optional `S3_ENDPOINT`/`S3_FORCE_PATH_STYLE`/`S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`, workload-role S3 read/write/delete permissions | Image bytes, worker queue-consumer permissions, provider keys |
 | Processing outbox dispatcher | `DATABASE_URL`, `AWS_REGION`, `SQS_IMAGE_QUEUE_URL`, optional `SQS_ENDPOINT`/`SQS_ACCESS_KEY_ID`/`SQS_SECRET_ACCESS_KEY`, `PROCESSING_DISPATCH_TOKEN`, queue-publisher permission | Queue-consumer permission, provider keys, image-object write permission |
 | Email outbox dispatcher | `DATABASE_URL`, `AWS_REGION`, `SQS_EMAIL_QUEUE_URL`, optional `SQS_ENDPOINT`/`SQS_ACCESS_KEY_ID`/`SQS_SECRET_ACCESS_KEY`, `EMAIL_DISPATCH_TOKEN`, `APPLICATION_BASE_URL`, queue-publisher permission | `RESEND_API_KEY`, queue-consumer permission |
@@ -34,6 +34,22 @@ The configuration package deliberately exposes focused runtime parsers. There is
 no aggregate parser that requires every product secret in one environment.
 Provider selection must fail closed when the selected provider's credential is
 absent.
+
+## MSG91 OTP widget credentials
+
+`MSG91_WIDGET_ID` and `MSG91_WIDGET_TOKEN` are browser-safe by design: the
+widget sends the message from the browser. They are still served from an
+authenticated, same-origin, `no-store` endpoint rather than inlined as
+`NEXT_PUBLIC_*`, because whoever holds them can spend the account's message
+balance, and because rotating a widget should be a restart rather than a
+rebuild.
+
+`MSG91_AUTH_KEY` is never in that response and must never be. It is the
+credential that makes access-token verification a server-to-server call, and it
+is the only thing that distinguishes a proven handset from a claimed one.
+
+`PHONE_OTP_DRIVER=fake` sends no message and accepts `PHONE_OTP_DEV_CODE`.
+Environment validation refuses it when `NODE_ENV` is `production`.
 
 ## Signed webhook admission
 

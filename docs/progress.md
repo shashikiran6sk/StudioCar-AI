@@ -333,6 +333,19 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Verified the complete data plane against a real S3-compatible endpoint: presign, a browser-equivalent `PUT` with the checksum and ownership headers, a `HEAD` matching content length, content type, SHA-256, and all three metadata values, and the bounded range read used by upload commit.
 - Verified lint, strict typecheck, source mapping, 35 configuration tests, the complete 217-file web suite with 345 tests, every package suite, and production builds for all eleven packages.
 
+### SC021 — MSG91 Widget-based phone OTP
+
+- Fixed the `templateId missing` failure. `MSG91_TEMPLATE_ID` was a required field of the phone environment parser, so the runtime threw before any request whenever it was absent, and the adapter targeted the DLT-template server API `/api/v5/otp` that the deployment has no registration for.
+- Replaced that flow with the MSG91 Widget flow. The browser loads `verify.msg91.com/otp-provider.js`, runs `sendOtp`/`retryOtp`/`verifyOtp`, and exchanges the typed code for a signed access token. The six digits never reach the application.
+- The server presents that token to `control.msg91.com/api/v5/widget/verifyAccessToken` with the server-only `MSG91_AUTH_KEY` and asks whose handset it proves. The claimed number is treated as an assertion to check, not as input: a token naming a different handset is refused with exactly the same answer as a refused token, so the response reveals nothing about whose number a token belongs to.
+- Added `PHONE_OTP_DRIVER`, `MSG91_WIDGET_ID`, `MSG91_WIDGET_TOKEN`, and `PHONE_OTP_DEV_CODE`, and removed `MSG91_TEMPLATE_ID`. Selecting `msg91` requires all three credentials; the `fake` driver sends no message, accepts one configured code, and is refused when `NODE_ENV` is production.
+- Added `GET /api/auth/phone/widget`, a same-origin, `no-store` endpoint that serves only the browser-safe widget id and public token. `MSG91_AUTH_KEY` is never in that response. Serving it rather than inlining `NEXT_PUBLIC_*` makes rotating a widget a restart instead of a rebuild.
+- Added a `providerTokenHash` column with a unique index. A verified access token is claimed exactly once, so replaying one against a second challenge collides and is refused; re-running the same challenge with the same token stays idempotent so a completion failure can still be retried.
+- Kept the existing durable challenge, browser-binding cookie, per-phone/per-IP send limits, per-challenge attempt cap, and per-IP verification limits. Because the widget sends from the browser, the application reserves the rate-limited challenge first: that is what bounds how many messages a caller can cause.
+- Extended the content security policy with the two MSG91 browser origins and nothing else.
+- Added widget loader, bounded-call, send, resend, verify, token-reader, identifier-normalisation, adapter, development-driver, widget-configuration, endpoint, and sign-in-form coverage, including that a DLT template is never requested and that the server auth key never reaches a browser payload.
+- Verified lint, strict typecheck, source mapping, 233 web test files with 436 tests, 38 configuration tests, 24 integration files with 43 tests against real PostgreSQL, all fifteen migrations, and production builds for all eleven packages.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -353,7 +366,7 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Prisma CLI validation/generation can run without secrets; migration and integration commands require `DATABASE_URL`.
 - Real PostgreSQL integration tests currently cover schema constraints, tenant-scoped vehicle operations, sessions, one-time OAuth challenges, canonical Google identities, OTP throttling, canonical phone identities, atomic phone-session completion, image upload idempotency, and concurrent processing-batch reservation.
 - Google OAuth requires an exact registered `GOOGLE_REDIRECT_URI`; production must use HTTPS. OAuth challenge TTL defaults to 10 minutes and is bounded to 1–15 minutes.
-- MSG91 uses its server-side V5 OTP endpoints. Configure an approved template and tune the bounded OTP TTL/rate-limit environment values for production traffic; raw OTPs are never persisted or logged.
+- MSG91 uses the Widget flow, not the DLT-template server API. Allow-list every origin that renders the sign-in surface on the MSG91 widget, or `sendOtp` and `verifyOtp` will never answer. Raw OTPs are never received, persisted, or logged; only a hash of the verified access token is stored, to make it single use.
 - Expired OTP challenge and verification-attempt cleanup is intentionally deferred to the production cleanup-jobs slice; indexes support bounded deletion without affecting authentication correctness.
 - The authenticated route group enforces session authorization on the server. Future API handlers and repositories must still perform their own authentication, tenant authorization, and ownership checks.
 - Product navigation entries remain non-interactive until their corresponding slices land; this prevents dead routes while preserving the screenshot-derived application shell.
