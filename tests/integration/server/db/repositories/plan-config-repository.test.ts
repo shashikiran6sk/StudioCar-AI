@@ -97,7 +97,14 @@ databaseDescribe("PrismaPlanConfigRepository", () => {
     ).rejects.toThrow();
   });
 
-  it("holds every shipped default, including Studio Plus", async () => {
+  it("accepts every shipped default, including Studio Plus", async () => {
+    /**
+     * Seeding here rather than assuming a seeded database proves two things at
+     * once: the command is idempotent, and every default the product ships
+     * satisfies the constraints the database enforces.
+     */
+    await repository.seedMissing(DEFAULT_PLAN_CONFIGURATIONS);
+
     const stored = await repository.findAll();
     const keys = stored.map((plan) => plan.planKey);
     for (const plan of DEFAULT_PLAN_CONFIGURATIONS) {
