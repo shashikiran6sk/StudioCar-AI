@@ -5,6 +5,7 @@ import { LOGIN_PATH } from "../app-routes";
 import { AppShell } from "../../features/shell/app-shell";
 import { getCurrentSession } from "../../server/auth/get-current-session";
 import { getPlanUsageSummary } from "../../server/plan-usage/get-plan-usage-summary";
+import { isCurrentUserAdministrator } from "../../server/admin/is-current-user-administrator";
 
 export default async function AuthenticatedLayout({
   children,
@@ -15,6 +16,7 @@ export default async function AuthenticatedLayout({
   return (
     <AppShell
       planUsage={await getPlanUsageSummary(session.userId)}
+      showAdmin={await isCurrentUserAdministrator()}
       user={session.user}
     >
       {children}

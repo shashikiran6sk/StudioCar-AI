@@ -13,6 +13,7 @@ describe("AppShell", () => {
     render(
       <AppShell
         planUsage={null}
+        showAdmin={false}
         user={{
           id: "user-1",
           displayName: "Priya Sharma",
@@ -34,6 +35,7 @@ describe("AppShell", () => {
 
     render(
       <AppShell
+        showAdmin={false}
         planUsage={{
           planKey: "FREE",
           planName: "Free",

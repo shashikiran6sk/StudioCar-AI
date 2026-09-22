@@ -418,6 +418,19 @@ Payment checkout remains intentionally unavailable until a billing provider is s
 - Excluded unrelated pre-existing drift from the migration. The generated diff wanted to drop `id` defaults on three existing tables; that is a difference between the live database and the schema, not part of this change.
 - Verified lint, strict typecheck, source mapping, all package suites, 26 integration files with 61 tests against real PostgreSQL, production builds, and `pnpm db:reset` followed by `pnpm db:seed` producing a clean, configured database.
 
+### SC028 — Administrator authorization and first-administrator bootstrap
+
+- Authorization is now read from the database on every request. `UserRole` is the only source; nothing consults the environment, so revoking a role takes effect everywhere on the next request.
+- Added `BOOTSTRAP_ADMIN_EMAIL`, which names the one verified Google email that may become the first administrator on a database that has never had one. It is matched only against an email Google itself verified during a real sign-in, never against an address in a request, one somebody typed, or a profile field on a phone-only account.
+- Comparison trims and lowercases and does nothing else. Gmail dot and plus aliasing is deliberately not folded, because that would let one configured value match addresses its owner never chose.
+- Completion is persisted in `AppConfig` under `admin.bootstrap`, and **that record, not the absence of an administrator, is what closes the window**. An integration test proves the case this exists for: after the bootstrap administrator is revoked by another administrator, signing in again with the environment variable still naming them grants nothing.
+- The one-time grant is serialised by an advisory lock, so two simultaneous sign-ins create exactly one administrator. The grant, the completion record, and an `INITIAL_ADMIN_BOOTSTRAPPED` audit entry are written in one transaction, with the actor recorded as the system because no administrator existed to perform it.
+- Bootstrap can never be the reason a sign-in fails. It is evaluated after identity resolution on both the sign-in and link paths, and a failure is swallowed: the role is a convenience the deployment configured, while authentication is what the person actually asked for.
+- Added `requireAdministrator` for pages and `assertAdministrator` for handlers and actions. A signed-in non-administrator receives `404` rather than a refusal, so the existence of the administration area is not disclosed. Every page authorizes for itself and not only through its layout.
+- Added a gated `/admin` overview reporting bounded counts only, and a conditional Admin navigation entry. Hiding that entry is presentation, never a control.
+- Added bootstrap-decision, guard, overview, navigation, page, and layout coverage; eight real-PostgreSQL bootstrap tests; role and overview repository tests; and a Playwright walk proving a signed-in non-administrator gets a genuine `404` at `/admin` while an administrator gets `200`.
+- Verified lint, strict typecheck, source mapping, every package suite, 28 integration files with 77 tests against real PostgreSQL, production builds, and seven Playwright tests.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -429,20 +442,19 @@ Payment checkout remains intentionally unavailable until a billing provider is s
 
 Ordered as agreed. UI work first, then the admin and billing foundation.
 
-1. **SC028 — Admin authorization and first-admin bootstrap**: database-backed `ADMIN` checks on every admin page, action, and handler, plus a persisted one-time bootstrap.
-2. **SC029 — Administrator management**: grant, invite, accept on verified Google sign-in, revoke, last-admin protection, and audit entries.
-3. **SC030 — Database-backed plan configuration**: move the hardcoded plan catalog behind validated configuration with safe defaults and cache invalidation.
-4. **SC031 — Manual subscriptions**: assign Studio Pro and Studio Plus by hand without ever overwriting a provider-backed subscription.
-5. **SC032 — Dynamic footer social links**: administered links with server-side URL validation.
-6. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
-7. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
+1. **SC029 — Administrator management**: grant, invite, accept on verified Google sign-in, revoke, last-admin protection, and audit entries.
+2. **SC030 — Database-backed plan configuration**: move the hardcoded plan catalog behind validated configuration with safe defaults and cache invalidation.
+3. **SC031 — Manual subscriptions**: assign Studio Pro and Studio Plus by hand without ever overwriting a provider-backed subscription.
+4. **SC032 — Dynamic footer social links**: administered links with server-side URL validation.
+5. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
+6. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
 
 ## Not yet implemented
 
 Tracked explicitly so the gap between the plan and the repository stays visible.
 
 - **Identity disconnection is not implemented.** Linking exists; removing a method still needs a "never leave an account without a usable sign-in method" rule and re-authentication, and nothing in the accepted scope requires it.
-- **No admin surface exists yet.** The role, invitation, configuration, and audit models are in place, but nothing reads or writes them: there is no authorization check, no bootstrap, no admin route, and `AuditLog` is still unused.
+- **Administrator management does not exist.** Authorization, bootstrap, and a gated overview are in place, but nothing grants, invites, or revokes a role through the interface: `AdminInvite` is unused, and the only way to a second administrator today is a direct database write.
 - **Plan configuration is stored but not yet read.** `PlanConfig` holds all four plans including Studio Plus, but the application still resolves allowances from the hardcoded `apps/web/src/features/pricing/pricing-plans.ts`. Wiring the database through is the next slice.
 - **Subscriptions are never written.** `PlanSubscription` is read when resolving a plan but nothing creates a row, and `BillingPort` is intentionally unimplemented until a payment provider is selected.
 - **The footer has no social links.** The `SocialLink` model and platform catalog exist, but nothing renders or administers them, and no row is seeded.

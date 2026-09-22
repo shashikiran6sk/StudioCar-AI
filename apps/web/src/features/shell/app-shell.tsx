@@ -16,15 +16,21 @@ import { ProcessingIndicator } from "../processing/processing-indicator";
 export interface AppShellProps {
   children: ReactNode;
   planUsage: PlanUsageSummary | null;
+  showAdmin: boolean;
   user: AuthUser;
 }
 
-export function AppShell({ children, planUsage, user }: AppShellProps) {
+export function AppShell({
+  children,
+  planUsage,
+  showAdmin,
+  user,
+}: AppShellProps) {
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
         <BrandMark className="app-sidebar__brand" withName />
-        <AppNavigation />
+        <AppNavigation showAdmin={showAdmin} />
         <SidebarPlanSummary summary={planUsage} />
       </aside>
       <div className="app-shell__workspace">

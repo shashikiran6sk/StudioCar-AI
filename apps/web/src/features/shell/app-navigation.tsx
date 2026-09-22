@@ -3,15 +3,25 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { APP_NAVIGATION_ITEMS } from "./app-navigation.constants";
+import {
+  ADMIN_NAVIGATION_ITEM,
+  APP_NAVIGATION_ITEMS,
+} from "./app-navigation.constants";
 import { navigationItemIsActive } from "./navigation-item-is-active";
 
-export function AppNavigation() {
+export interface AppNavigationProps {
+  showAdmin: boolean;
+}
+
+export function AppNavigation({ showAdmin }: AppNavigationProps) {
   const pathname = usePathname();
+  const items = showAdmin
+    ? [...APP_NAVIGATION_ITEMS, ADMIN_NAVIGATION_ITEM]
+    : APP_NAVIGATION_ITEMS;
 
   return (
     <nav aria-label="Workspace" className="app-navigation">
-      {APP_NAVIGATION_ITEMS.map((item) => {
+      {items.map((item) => {
         const active = navigationItemIsActive(pathname, item.href);
         return (
           <Link

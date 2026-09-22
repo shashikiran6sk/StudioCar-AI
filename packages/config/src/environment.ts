@@ -209,6 +209,25 @@ export const PhoneAuthEnvironmentSchema = z
     }
   });
 
+/**
+ * First-administrator bootstrap.
+ *
+ * This is not an authorization source. It names the one verified Google email
+ * that may become the first administrator on a database that has never had one.
+ * Once bootstrap completes, the database is authoritative and this value is
+ * inert: removing it revokes nothing, and changing it transfers nothing.
+ */
+export const AdminBootstrapEnvironmentSchema = z
+  .object({
+    BOOTSTRAP_ADMIN_EMAIL: z
+      .email()
+      .trim()
+      .toLowerCase()
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+  })
+  .strip();
+
 export const GoogleAuthEnvironmentSchema = z
   .object({
     NODE_ENV: EnvironmentNameSchema.default("development"),
@@ -624,6 +643,9 @@ export const ClientEnvironmentSchema = z
 
 export type ClientEnvironment = z.infer<typeof ClientEnvironmentSchema>;
 export type GoogleAuthEnvironment = z.infer<typeof GoogleAuthEnvironmentSchema>;
+export type AdminBootstrapEnvironment = z.infer<
+  typeof AdminBootstrapEnvironmentSchema
+>;
 export type PhoneAuthEnvironment = z.infer<typeof PhoneAuthEnvironmentSchema>;
 export type PhoneOtpDriver = z.infer<typeof PhoneOtpDriverSchema>;
 export type PhoneOtpWidgetEnvironment = z.infer<
@@ -664,6 +686,12 @@ export function parseClientEnvironment(
   environment: Record<string, string | undefined>,
 ): ClientEnvironment {
   return ClientEnvironmentSchema.parse(environment);
+}
+
+export function parseAdminBootstrapEnvironment(
+  environment: Record<string, string | undefined>,
+): AdminBootstrapEnvironment {
+  return AdminBootstrapEnvironmentSchema.parse(environment);
 }
 
 export function parseGoogleAuthEnvironment(

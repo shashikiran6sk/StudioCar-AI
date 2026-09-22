@@ -1,4 +1,5 @@
 import {
+  ADMIN_PATH,
   BILLING_PATH,
   DASHBOARD_PATH,
   INVENTORY_PATH,
@@ -22,3 +23,14 @@ export const APP_NAVIGATION_ITEMS: readonly AppNavigationItem[] = [
   { href: BILLING_PATH, icon: "◇", label: "Packs & Billing" },
   { href: PROFILE_PATH, icon: "◔", label: "Profile" },
 ];
+
+/**
+ * Shown only to administrators. Hiding it is presentation: every administration
+ * page and mutation authorizes for itself, so a hidden entry stops nobody from
+ * calling an endpoint directly.
+ */
+export const ADMIN_NAVIGATION_ITEM: AppNavigationItem = {
+  href: ADMIN_PATH,
+  icon: "⚙",
+  label: "Admin",
+};

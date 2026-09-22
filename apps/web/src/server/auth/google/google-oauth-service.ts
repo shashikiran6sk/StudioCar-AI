@@ -8,6 +8,7 @@ import {
 
 import { hashAuthSecret } from "../hash-auth-secret";
 import type {
+  AdminBootstrapEvaluator,
   GoogleIdentityLinkStore,
   GoogleIdentityProvider,
   GoogleIdentityStore,
@@ -58,6 +59,7 @@ export class GoogleOAuthService implements GoogleOAuthApplication {
     private readonly provider: GoogleIdentityProvider,
     private readonly protector: GoogleOAuthPayloadProtector,
     private readonly sessions: SessionIssuer,
+    private readonly adminBootstrap: AdminBootstrapEvaluator,
     options: GoogleOAuthServiceOptions,
   ) {
     this.challengeTtlMs = options.challengeTtlSeconds * MILLISECONDS_PER_SECOND;
@@ -170,6 +172,11 @@ export class GoogleOAuthService implements GoogleOAuthApplication {
       );
     }
 
+    await this.bootstrapAdministrator(
+      resolution.user.id,
+      identity.email,
+      authenticatedAt,
+    );
     const issuedSession = await this.sessions.issue(resolution.user.id);
 
     return { kind: "SIGNED_IN", issuedSession, returnTo };
@@ -210,6 +217,25 @@ export class GoogleOAuthService implements GoogleOAuthApplication {
       );
     }
 
+    await this.bootstrapAdministrator(linkUserId, identity.email, linkedAt);
+
     return { kind: "LINKED", returnTo };
+  }
+
+  /**
+   * Bootstrap must never be the reason a sign-in fails. The role is a
+   * convenience the deployment configured; authentication is what the person
+   * actually asked for.
+   */
+  private async bootstrapAdministrator(
+    userId: string,
+    verifiedEmail: string,
+    now: Date,
+  ): Promise<void> {
+    try {
+      await this.adminBootstrap.evaluate(userId, verifiedEmail, now);
+    } catch {
+      // Intentionally ignored; see above.
+    }
   }
 }

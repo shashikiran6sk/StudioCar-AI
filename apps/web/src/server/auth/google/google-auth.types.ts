@@ -55,6 +55,18 @@ export interface GoogleOAuthPayloadProtector {
   unprotect(value: string): GoogleOAuthChallengePayload;
 }
 
+/**
+ * Evaluated after a Google identity is resolved, because only then is there
+ * both a verified email and an internal user to grant the role to.
+ */
+export interface AdminBootstrapEvaluator {
+  evaluate(
+    userId: string,
+    verifiedEmail: string,
+    now: Date,
+  ): Promise<unknown>;
+}
+
 export interface SessionIssuer {
   issue(userId: string): Promise<IssuedSession>;
 }

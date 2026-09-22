@@ -95,6 +95,7 @@ function dependencies(overrides?: {
     protector,
     identityStore,
     linkStore: { linkGoogle: vi.fn() },
+    adminBootstrap: { evaluate: vi.fn() },
     sessions,
   };
 }
@@ -109,6 +110,7 @@ function service(
     values.provider,
     values.protector,
     values.sessions,
+    values.adminBootstrap,
     { challengeTtlSeconds: 600, now: () => now },
   );
 }
