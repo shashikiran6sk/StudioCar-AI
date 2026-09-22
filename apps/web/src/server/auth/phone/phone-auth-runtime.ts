@@ -1,5 +1,6 @@
 import {
   parsePhoneAuthEnvironment,
+  parsePhoneOtpWidgetEnvironment,
   type PhoneAuthEnvironment,
 } from "@studiocar/config";
 import type { PhoneOtpWidget } from "@studiocar/contracts";
@@ -70,7 +71,7 @@ export function getPhoneOtpApplication(): PhoneOtpApplication {
 
 export function getPhoneOtpWidget(): PhoneOtpWidget {
   phoneOtpWidget ??= describePhoneOtpWidget(
-    parsePhoneAuthEnvironment(process.env),
+    parsePhoneOtpWidgetEnvironment(process.env),
   );
   return phoneOtpWidget;
 }

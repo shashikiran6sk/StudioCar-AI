@@ -2,7 +2,7 @@ import {
   PhoneOtpWidgetSchema,
   type PhoneOtpWidget,
 } from "@studiocar/contracts";
-import type { PhoneAuthEnvironment } from "@studiocar/config";
+import type { PhoneOtpWidgetEnvironment } from "@studiocar/config";
 
 import { PHONE_OTP_WIDGET_DISABLED_REASON } from "./phone-auth.constants";
 
@@ -12,7 +12,7 @@ import { PHONE_OTP_WIDGET_DISABLED_REASON } from "./phone-auth.constants";
  * verification a server-to-server call.
  */
 export function describePhoneOtpWidget(
-  environment: PhoneAuthEnvironment,
+  environment: PhoneOtpWidgetEnvironment,
 ): PhoneOtpWidget {
   if (environment.PHONE_OTP_DRIVER === "fake") {
     return PhoneOtpWidgetSchema.parse({

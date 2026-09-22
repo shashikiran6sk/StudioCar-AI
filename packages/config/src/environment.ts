@@ -133,6 +133,25 @@ const CommandRateLimitMaximumSchema = z.coerce
 
 export const PhoneOtpDriverSchema = z.enum(["msg91", "fake"]);
 
+/**
+ * Only what describes the browser widget. It deliberately excludes the session
+ * secret, the database URL, and the server auth key: serving browser-safe
+ * widget configuration must not depend on, or fail because of, credentials it
+ * has no business reading.
+ */
+export const PhoneOtpWidgetEnvironmentSchema = z
+  .object({
+    PHONE_OTP_DRIVER: PhoneOtpDriverSchema.default("fake"),
+    PHONE_OTP_DEV_CODE: z
+      .string()
+      .trim()
+      .regex(/^\d{4,8}$/)
+      .default("1234"),
+    MSG91_WIDGET_ID: z.string().trim().min(1).optional(),
+    MSG91_WIDGET_TOKEN: z.string().trim().min(1).optional(),
+  })
+  .strip();
+
 export const PhoneAuthEnvironmentSchema = z
   .object({
     NODE_ENV: EnvironmentNameSchema.default("development"),
@@ -607,6 +626,9 @@ export type ClientEnvironment = z.infer<typeof ClientEnvironmentSchema>;
 export type GoogleAuthEnvironment = z.infer<typeof GoogleAuthEnvironmentSchema>;
 export type PhoneAuthEnvironment = z.infer<typeof PhoneAuthEnvironmentSchema>;
 export type PhoneOtpDriver = z.infer<typeof PhoneOtpDriverSchema>;
+export type PhoneOtpWidgetEnvironment = z.infer<
+  typeof PhoneOtpWidgetEnvironmentSchema
+>;
 export type SessionEnvironment = z.infer<typeof SessionEnvironmentSchema>;
 export type UploadEnvironment = z.infer<typeof UploadEnvironmentSchema>;
 export type ProcessingEnvironment = z.infer<
@@ -648,6 +670,12 @@ export function parseGoogleAuthEnvironment(
   environment: Record<string, string | undefined>,
 ): GoogleAuthEnvironment {
   return GoogleAuthEnvironmentSchema.parse(environment);
+}
+
+export function parsePhoneOtpWidgetEnvironment(
+  environment: Record<string, string | undefined>,
+): PhoneOtpWidgetEnvironment {
+  return PhoneOtpWidgetEnvironmentSchema.parse(environment);
 }
 
 export function parsePhoneAuthEnvironment(
