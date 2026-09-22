@@ -4,7 +4,7 @@ import {
   type PortfolioImage,
   type VehiclePortfolio,
 } from "@studiocar/contracts";
-import type { PortfolioVehicleRecord } from "@studiocar/database";
+import type { PortfolioVehicleRecord } from "../db/repositories/portfolio-repository";
 
 import { createPortfolioDownloadFilename } from "./create-portfolio-download-filename";
 import type {

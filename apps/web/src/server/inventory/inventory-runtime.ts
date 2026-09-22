@@ -1,9 +1,7 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { parseUploadEnvironment } from "@studiocar/config";
-import {
-  createDatabaseClient,
-  PrismaInventoryRepository,
-} from "@studiocar/database";
+import { createDatabaseClient } from "@studiocar/database-runtime";
+import { PrismaInventoryRepository } from "../db/repositories/inventory-repository";
 
 import { InventoryService } from "./inventory-service";
 import { S3InventoryPreviewSigner } from "./s3-inventory-preview-signer";

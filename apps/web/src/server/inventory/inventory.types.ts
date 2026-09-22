@@ -2,7 +2,7 @@ import type {
   InventoryPage,
   InventoryQuery,
 } from "@studiocar/contracts";
-import type { InventoryRepositoryPage } from "@studiocar/database";
+import type { InventoryRepositoryPage } from "../db/repositories/inventory-repository";
 
 export interface InventoryRepositoryPort {
   listOwned(

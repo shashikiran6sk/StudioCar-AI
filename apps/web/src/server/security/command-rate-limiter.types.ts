@@ -1,8 +1,5 @@
-import type {
-  CommandRateLimitScope,
-  ConsumeCommandRateLimitCommand,
-  ConsumeCommandRateLimitResult,
-} from "@studiocar/database";
+import type { CommandRateLimitScope } from "@studiocar/database-runtime";
+import type { ConsumeCommandRateLimitCommand, ConsumeCommandRateLimitResult } from "../db/repositories/command-rate-limit-repository";
 
 export interface CommandRateLimitRepositoryPort {
   consume(

@@ -2,7 +2,7 @@ import type {
   JobStatusQuery,
   JobStatusResponse,
 } from "@studiocar/contracts";
-import type { FindProcessingJobStatusesResult } from "@studiocar/database";
+import type { FindProcessingJobStatusesResult } from "../db/repositories/processing-job-status-repository";
 
 export interface ProcessingJobStatusRepositoryPort {
   findOwned(

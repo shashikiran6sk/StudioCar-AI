@@ -1,10 +1,8 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { parseUploadEnvironment } from "@studiocar/config";
-import {
-  createDatabaseClient,
-  PrismaDashboardRepository,
-  PrismaInventoryRepository,
-} from "@studiocar/database";
+import { createDatabaseClient } from "@studiocar/database-runtime";
+import { PrismaDashboardRepository } from "../db/repositories/dashboard-repository";
+import { PrismaInventoryRepository } from "../db/repositories/inventory-repository";
 
 import { DashboardService } from "./dashboard-service";
 import { InventoryService } from "../inventory/inventory-service";

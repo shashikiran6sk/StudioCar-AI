@@ -1,7 +1,5 @@
-import {
-  VehicleStatus,
-  type PortfolioVehicleRecord,
-} from "../../../../packages/database/src/index";
+import { VehicleStatus } from "../../../../packages/database-runtime/src";
+import type { PortfolioVehicleRecord } from "../../../../apps/web/src/server/db/repositories/portfolio-repository";
 import { describe, expect, it, vi } from "vitest";
 
 import { PortfolioService } from "../../../../apps/web/src/server/portfolio/portfolio-service";

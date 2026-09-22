@@ -3,12 +3,23 @@
   "compilerOptions": {
     "baseUrl": ".",
     "incremental": true,
-    "types": ["vitest/globals", "@testing-library/jest-dom/vitest"],
+    "types": [
+      "vitest/globals",
+      "@testing-library/jest-dom/vitest"
+    ],
     "paths": {
-      "@/*": ["./src/*"],
-      "next/*": ["./node_modules/next/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "next/*": [
+        "./node_modules/next/*"
+      ]
     },
-    "plugins": [{ "name": "next" }]
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "include": [
     "next-env.d.ts",
@@ -20,7 +31,11 @@
     "../../tests/unit/features/**/*.ts",
     "../../tests/unit/features/**/*.tsx",
     "../../tests/unit/server/**/*.ts",
-    "../../tests/unit/server/**/*.tsx"
+    "../../tests/unit/server/**/*.tsx",
+    "prisma.config.ts",
+    "../../tests/integration/server/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }

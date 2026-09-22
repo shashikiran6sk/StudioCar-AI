@@ -1,7 +1,5 @@
-import {
-  VehicleStatus,
-  type InventoryVehicleRecord,
-} from "../../../../packages/database/src/index";
+import { VehicleStatus } from "../../../../packages/database-runtime/src";
+import type { InventoryVehicleRecord } from "../../../../apps/web/src/server/db/repositories/inventory-repository";
 import { describe, expect, it, vi } from "vitest";
 
 import { InventoryService } from "../../../../apps/web/src/server/inventory/inventory-service";

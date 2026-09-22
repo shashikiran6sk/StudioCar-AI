@@ -204,19 +204,19 @@
     "reason": "Barrel export with no behavior."
   },
   {
-    "source": "packages/database/src/index.ts",
+    "source": "packages/database-runtime/src/index.ts",
     "reason": "Barrel export with no behavior."
   },
   {
-    "source": "packages/database/src/repositories/storage-deletion-record.ts",
+    "source": "apps/web/src/server/db/repositories/storage-deletion-record.ts",
     "reason": "Static typed Prisma selection and derived persistence record only."
   },
   {
-    "source": "packages/database/src/repositories/storage-deletion-repository.constants.ts",
+    "source": "apps/web/src/server/db/repositories/storage-deletion-repository.constants.ts",
     "reason": "Static storage deletion bounds and expiry reason constants only."
   },
   {
-    "source": "packages/database/src/repositories/storage-deletion-repository.types.ts",
+    "source": "apps/web/src/server/db/repositories/storage-deletion-repository.types.ts",
     "reason": "Type-only storage deletion repository commands."
   },
   {
@@ -434,5 +434,9 @@
   {
     "source": "workers/email-delivery/src/runtime/get-email-delivery-worker.ts",
     "reason": "Warm Lambda composition cache around the tested worker factory."
+  },
+  {
+    "source": "apps/web/prisma.config.ts",
+    "reason": "Prisma CLI configuration with no application runtime behavior."
   }
 ]

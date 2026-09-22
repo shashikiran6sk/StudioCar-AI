@@ -7,19 +7,19 @@
   },
   "packageManager": "pnpm@12.3.4",
   "scripts": {
-    "build": "turbo run build",
-    "db:generate": "pnpm --filter @studiocar/database db:generate",
-    "db:migrate:deploy": "pnpm --filter @studiocar/database db:migrate:deploy",
-    "db:migrate:status": "pnpm --filter @studiocar/database db:migrate:status",
-    "db:validate": "pnpm --filter @studiocar/database db:validate",
+    "build": "pnpm db:generate && turbo run build",
+    "db:generate": "pnpm --filter @studiocar/web db:generate",
+    "db:migrate:deploy": "pnpm --filter @studiocar/web db:migrate:deploy",
+    "db:migrate:status": "pnpm --filter @studiocar/web db:migrate:status",
+    "db:validate": "pnpm --filter @studiocar/web db:validate",
     "dev": "turbo run dev",
     "e2e": "turbo run e2e",
-    "lint": "turbo run lint",
+    "lint": "pnpm db:generate && turbo run lint",
     "security:audit": "pnpm audit --prod --audit-level moderate",
-    "test": "pnpm test:mapping && turbo run test",
-    "test:integration": "turbo run test:integration",
+    "test": "pnpm db:generate && pnpm test:mapping && turbo run test",
+    "test:integration": "pnpm db:generate && turbo run test:integration",
     "test:mapping": "node scripts/check-test-mapping.mjs",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "pnpm db:generate && turbo run typecheck"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "catalog:",

@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { toJobStatus } from "../../../../apps/web/src/server/jobs/to-job-status";
-import {
-  ProcessingJobStatus,
-  type ProcessingJobStatusRecord,
-} from "../../../../packages/database/src";
+import { ProcessingJobStatus } from "../../../../packages/database-runtime/src";
+import type { ProcessingJobStatusRecord } from "../../../../apps/web/src/server/db/repositories/processing-job-status-repository";
 
 const baseRecord = {
   id: "8c879f46-1193-4d77-b785-057fe026d111",

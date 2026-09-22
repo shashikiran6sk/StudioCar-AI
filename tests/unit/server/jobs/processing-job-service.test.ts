@@ -5,7 +5,7 @@ import type {
   ProcessingDispatchPort,
   ProcessingJobRepositoryPort,
 } from "../../../../apps/web/src/server/jobs/processing-job.types";
-import { ProcessingProvider } from "../../../../packages/database/generated/prisma/client";
+import { ProcessingProvider } from "../../../../packages/database-runtime/generated/prisma/client";
 
 const JOB_ID = "8c879f46-1193-4d77-b785-057fe026d111";
 const ASSET_ID = "331a1e25-b9d8-4b1a-a398-8351a58f8c24";

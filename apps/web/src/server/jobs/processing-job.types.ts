@@ -2,10 +2,7 @@ import type {
   CreateProcessingBatch,
   CreateProcessingBatchResponse,
 } from "@studiocar/contracts";
-import type {
-  ReserveProcessingBatchCommand,
-  ReserveProcessingBatchResult,
-} from "@studiocar/database";
+import type { ReserveProcessingBatchCommand, ReserveProcessingBatchResult } from "../db/repositories/processing-job-repository";
 import type {
   ProcessingOutboxDispatchRequest,
   ProcessingOutboxDispatchResult,

@@ -1,11 +1,5 @@
-import type {
-  ClaimStorageDeletionsCommand,
-  CompleteStorageDeletionCommand,
-  FailStorageDeletionCommand,
-  ReleaseStorageDeletionCommand,
-  ReserveExpiredUploadsCommand,
-  StorageDeletionRecord,
-} from "@studiocar/database";
+import type { StorageDeletionRecord } from "../db/repositories/storage-deletion-record";
+import type { ClaimStorageDeletionsCommand, CompleteStorageDeletionCommand, FailStorageDeletionCommand, ReleaseStorageDeletionCommand, ReserveExpiredUploadsCommand } from "../db/repositories/storage-deletion-repository.types";
 
 export interface StorageCleanupRepositoryPort {
   reserveExpiredPendingUploads(

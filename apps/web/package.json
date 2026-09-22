@@ -4,11 +4,16 @@
   "private": true,
   "scripts": {
     "build": "next build",
+    "db:generate": "prisma generate",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:status": "prisma migrate status",
+    "db:validate": "prisma validate",
     "dev": "next dev",
     "e2e": "playwright test",
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
-    "test:integration": "vitest run --config vitest.integration.config.mts --passWithNoTests",
+    "test:integration": "vitest run --config vitest.integration.config.mts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -16,16 +21,23 @@
     "@aws-sdk/client-sqs": "catalog:",
     "@aws-sdk/s3-request-presigner": "catalog:",
     "@fontsource-variable/manrope": "5.3.0",
+    "@prisma/adapter-pg": "catalog:",
+    "@prisma/client": "catalog:",
     "@studiocar/config": "workspace:*",
     "@studiocar/contracts": "workspace:*",
-    "@studiocar/database": "workspace:*",
+    "@studiocar/database-runtime": "workspace:*",
     "@studiocar/email": "workspace:*",
     "@studiocar/processing": "workspace:*",
     "@studiocar/ui": "workspace:*",
     "next": "16.3.5",
     "openid-client": "catalog:",
+    "pg": "catalog:",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "zustand": "5.0.15"
+  },
+  "devDependencies": {
+    "@types/pg": "catalog:",
+    "prisma": "catalog:"
   }
 }

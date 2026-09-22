@@ -1,4 +1,4 @@
-import { VehicleStatus } from "../../../../packages/database/src/index";
+import { VehicleStatus } from "../../../../packages/database-runtime/src";
 import { describe, expect, it } from "vitest";
 
 import { toPortfolioStatus } from "../../../../apps/web/src/server/portfolio/to-portfolio-status";

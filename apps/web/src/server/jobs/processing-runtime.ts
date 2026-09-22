@@ -1,13 +1,10 @@
 import { SQSClient } from "@aws-sdk/client-sqs";
 import { parseProcessingEnvironment } from "@studiocar/config";
-import {
-  CommandRateLimitScope,
-  createDatabaseClient,
-  PrismaCommandRateLimitRepository,
-  PrismaProcessingJobRepository,
-  PrismaProcessingJobStatusRepository,
-  PrismaProcessingOutboxRepository,
-} from "@studiocar/database";
+import { CommandRateLimitScope, createDatabaseClient } from "@studiocar/database-runtime";
+import { PrismaCommandRateLimitRepository } from "../db/repositories/command-rate-limit-repository";
+import { PrismaProcessingJobRepository } from "../db/repositories/processing-job-repository";
+import { PrismaProcessingJobStatusRepository } from "../db/repositories/processing-job-status-repository";
+import { PrismaProcessingOutboxRepository } from "../db/repositories/processing-outbox-repository";
 import { ProcessingOutboxDispatcher } from "@studiocar/processing";
 
 import { CommandRateLimiter } from "../security/command-rate-limiter";

@@ -1,7 +1,4 @@
-import type {
-  DeleteExpiredRecordsCommand,
-  LifecycleCleanupResult,
-} from "@studiocar/database";
+import type { DeleteExpiredRecordsCommand, LifecycleCleanupResult } from "../db/repositories/lifecycle-cleanup-repository";
 
 export interface LifecycleCleanupRepositoryPort {
   deleteExpiredSessions(command: DeleteExpiredRecordsCommand): Promise<number>;

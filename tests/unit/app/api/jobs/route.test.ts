@@ -8,8 +8,8 @@ import { ProcessingStatusService } from "../../../../../apps/web/src/server/jobs
 import { handleGetProcessingStatuses } from "../../../../../apps/web/src/server/jobs/get-processing-status-handler";
 import { getProcessingRuntime } from "../../../../../apps/web/src/server/jobs/processing-runtime";
 import { CommandRateLimiter } from "../../../../../apps/web/src/server/security/command-rate-limiter";
-import { ProcessingProvider } from "../../../../../packages/database/generated/prisma/client";
-import { CommandRateLimitScope } from "../../../../../packages/database/generated/prisma/client";
+import { ProcessingProvider } from "../../../../../packages/database-runtime/generated/prisma/client";
+import { CommandRateLimitScope } from "../../../../../packages/database-runtime/generated/prisma/client";
 import { ProcessingOutboxDispatcher } from "../../../../../packages/processing/src/processing-outbox-dispatcher";
 import type {
   ProcessingOutboxRepositoryPort,

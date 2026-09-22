@@ -1,5 +1,5 @@
 import type { DashboardSummary } from "@studiocar/contracts";
-import type { DashboardRepositoryMetrics } from "@studiocar/database";
+import type { DashboardRepositoryMetrics } from "../db/repositories/dashboard-repository";
 
 export interface DashboardRepositoryPort {
   getOwnedMetrics(

@@ -9,7 +9,7 @@ import { CommandRateLimiter } from "../../../../../../../apps/web/src/server/sec
 import {
   CommandRateLimitScope,
   ProcessingProvider,
-} from "../../../../../../../packages/database/generated/prisma/client";
+} from "../../../../../../../packages/database-runtime/generated/prisma/client";
 import { ProcessingOutboxDispatcher } from "../../../../../../../packages/processing/src/processing-outbox-dispatcher";
 import type {
   ProcessingOutboxRepositoryPort,

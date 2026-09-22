@@ -1,5 +1,5 @@
 import type { BackgroundRemovalProvider } from "@studiocar/config";
-import { ProcessingProvider } from "@studiocar/database";
+import { ProcessingProvider } from "@studiocar/database-runtime";
 
 export function toProcessingProvider(
   provider: BackgroundRemovalProvider,

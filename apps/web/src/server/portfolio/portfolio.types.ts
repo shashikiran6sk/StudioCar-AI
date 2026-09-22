@@ -1,5 +1,5 @@
 import type { VehiclePortfolio } from "@studiocar/contracts";
-import type { PortfolioVehicleRecord } from "@studiocar/database";
+import type { PortfolioVehicleRecord } from "../db/repositories/portfolio-repository";
 
 export interface PortfolioRepositoryPort {
   findOwned(userId: string, vehicleId: string): Promise<PortfolioVehicleRecord | null>;

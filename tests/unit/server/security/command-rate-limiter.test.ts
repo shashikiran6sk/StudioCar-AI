@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CommandRateLimiter } from "../../../../apps/web/src/server/security/command-rate-limiter";
 import type { CommandRateLimitRepositoryPort } from "../../../../apps/web/src/server/security/command-rate-limiter.types";
-import { CommandRateLimitScope } from "../../../../packages/database/generated/prisma/client";
+import { CommandRateLimitScope } from "../../../../packages/database-runtime/generated/prisma/client";
 
 const NOW = new Date("2026-09-20T12:00:00.000Z");
 

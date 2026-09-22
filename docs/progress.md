@@ -1,6 +1,6 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-09-21
+Last updated: 2026-09-22
 
 ## Current status
 
@@ -313,6 +313,15 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Added truthful message count, worker duration, end-to-end latency, provider latency, images processed, terminal failure, retry, ignored-delivery, and provider-429 metrics. Reused provider outputs omit provider latency rather than fabricating a new call, and telemetry sink failures cannot change SQS acknowledgement decisions.
 - Added retained configurable Lambda log storage plus alarms for p95 Lambda duration, terminal failure spikes, retry spikes, provider rate-limit spikes, and p95 end-to-end latency. Existing queue depth, oldest-message age, DLQ, and Lambda error alarms remain in place.
 - Added focused serializer, failure-isolation, correlation, metric-classification, handler-emission, and enriched worker-result tests. Verified a clean production dependency audit, source mapping, Prisma validation, all fourteen migrations, lint, strict typecheck, the complete web suite with 212 files and 340 tests, 24 integration files with 43 tests, observability and image-worker suites with 34 tests, production builds for all eleven packages, and the five-test Playwright suite.
+
+### SC019 — Database ownership moved into the web application
+
+- Moved the Prisma schema, all fourteen committed migrations, and `prisma.config.ts` into `apps/web`; every migration and its `migration_lock.toml` moved byte-identically, so existing databases keep matching by checksum and nothing was squashed, reapplied, or reset.
+- Moved twenty-one tenant repositories into `apps/web/src/server/db/repositories`, where the application services now import them directly instead of through a workspace barrel.
+- Replaced `@studiocar/database` with the deliberately minimal `@studiocar/database-runtime`, which owns only the generated Prisma client, the pooled client factory, and the two repositories the deployable image and email workers genuinely share. The workers keep a real package boundary rather than reaching into another application's source.
+- Pointed the generator output at `packages/database-runtime/generated/prisma`, moved the `db:*` scripts to `apps/web`, and made the root `lint`, `typecheck`, `test`, `test:integration`, and `build` scripts generate the client first. Database commands are invoked directly rather than through Turborepo so stateful migration work can never be served from a task cache.
+- Mirrored every moved source in the behaviour-test map: repository tests now live under `tests/unit/server/db` and `tests/integration/server/db`, with the shared client and worker repositories under `tests/unit/database-runtime` and `tests/integration/database-runtime`.
+- Verified Prisma generation and schema validation from the new location, all fourteen migrations applying cleanly to an empty PostgreSQL instance, lint, strict typecheck, source mapping, 217 web test files with 345 tests, 24 integration files with 43 tests against real PostgreSQL, and production builds for all eleven packages.
 
 ### Repository governance
 

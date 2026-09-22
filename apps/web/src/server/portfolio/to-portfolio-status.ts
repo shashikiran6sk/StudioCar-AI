@@ -1,5 +1,5 @@
 import type { PortfolioStatus } from "@studiocar/contracts";
-import { VehicleStatus } from "@studiocar/database";
+import { VehicleStatus } from "@studiocar/database-runtime";
 
 export function toPortfolioStatus(status: VehicleStatus): PortfolioStatus {
   switch (status) {
