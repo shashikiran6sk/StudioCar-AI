@@ -6,17 +6,31 @@ import { hashSessionToken } from "../../apps/web/src/server/auth/session-service
 
 const databaseUrl = process.env["DATABASE_URL"];
 const adminTest = databaseUrl ? test : test.skip;
+
+/**
+ * The set of administrators is global state, and one of these tests asserts
+ * that only one exists. They must not run beside each other.
+ */
+test.describe.configure({ mode: "serial" });
+
 const PLAIN_TOKEN = "a".repeat(43);
 const ADMIN_TOKEN = "d".repeat(43);
 const PLAIN_EMAIL = "admin-e2e-plain@studiocar.test";
 const ADMIN_EMAIL = "admin-e2e-admin@studiocar.test";
+const EDITOR_TOKEN = "e".repeat(43);
+const EDITOR_EMAIL = "plan-editor-e2e@studiocar.test";
+const EDITED_PLAN_KEY = "STUDIO_PRO";
+/** A price nothing else in the product uses, so seeing it proves the edit. */
+const EDITED_PRICE_RUPEES = "4321";
+const EDITED_PRICE_LABEL = "₹4,321";
 const SESSION_COOKIE_NAME = "__Host-studiocar_session";
 const SESSION_COOKIE_SCOPE_URL = "https://localhost:3100";
 
 adminTest(
   "keeps the administration area from everybody who is not an administrator",
   async ({ page }, testInfo) => {
-    if (!databaseUrl) throw new Error("DATABASE_URL is required for this test.");
+    if (!databaseUrl)
+      throw new Error("DATABASE_URL is required for this test.");
     const database = new Pool({ connectionString: databaseUrl, max: 1 });
     const plainId = randomUUID();
     const adminId = randomUUID();
@@ -102,9 +116,7 @@ adminTest(
         page.getByRole("heading", { name: "Administrators", level: 1 }),
       ).toBeVisible();
       await expect(page.getByRole("button", { name: "Revoke" })).toBeDisabled();
-      await expect(
-        page.getByText("No invitations are waiting."),
-      ).toBeVisible();
+      await expect(page.getByText("No invitations are waiting.")).toBeVisible();
       await page.screenshot({
         fullPage: true,
         path: testInfo.outputPath("admin-administrators.png"),
@@ -119,6 +131,96 @@ adminTest(
         'DELETE FROM "User" WHERE "primaryEmail" = ANY($1)',
         [[PLAIN_EMAIL, ADMIN_EMAIL]],
       );
+      await database.end();
+    }
+  },
+);
+
+adminTest(
+  "lets an administrator change a plan and shows it to everybody",
+  async ({ page }, testInfo) => {
+    if (!databaseUrl)
+      throw new Error("DATABASE_URL is required for this test.");
+    const database = new Pool({ connectionString: databaseUrl, max: 1 });
+    const adminId = randomUUID();
+
+    // The plan is configuration the deployment shares, so it is put back.
+    const before = await database.query(
+      'SELECT * FROM "PlanConfig" WHERE "planKey" = $1',
+      [EDITED_PLAN_KEY],
+    );
+
+    try {
+      await database.query('DELETE FROM "User" WHERE "primaryEmail" = $1', [
+        EDITOR_EMAIL,
+      ]);
+      await database.query(
+        'INSERT INTO "User" ("id", "displayName", "primaryEmail", "updatedAt") VALUES ($1, $2, $3, CURRENT_TIMESTAMP)',
+        [adminId, "Plan Editor", EDITOR_EMAIL],
+      );
+      await database.query(
+        'INSERT INTO "Session" ("id", "userId", "tokenHash", "expiresAt") VALUES ($1, $2, $3, $4)',
+        [
+          randomUUID(),
+          adminId,
+          hashSessionToken(EDITOR_TOKEN),
+          new Date("2027-09-19T00:00:00.000Z"),
+        ],
+      );
+      await database.query(
+        'INSERT INTO "UserRole" ("id", "userId", "role", "source") VALUES ($1, $2, $3, $4)',
+        [randomUUID(), adminId, "ADMIN", "ADMIN_GRANT"],
+      );
+
+      await page.context().addCookies([
+        {
+          name: SESSION_COOKIE_NAME,
+          value: EDITOR_TOKEN,
+          url: SESSION_COOKIE_SCOPE_URL,
+          httpOnly: true,
+          sameSite: "Lax",
+          secure: true,
+        },
+      ]);
+
+      await page.goto("/admin/pricing");
+      await expect(
+        page.getByRole("heading", { name: "Plans and pricing", level: 1 }),
+      ).toBeVisible();
+
+      const plan = page.locator(".admin-card", {
+        has: page.getByRole("heading", { name: "Studio Pro", level: 2 }),
+      });
+      await plan.getByLabel(/^Price/).fill(EDITED_PRICE_RUPEES);
+      await plan.getByRole("button", { name: "Save plan" }).click();
+      await expect(plan.getByText("Plan updated.")).toBeVisible();
+      await page.screenshot({
+        fullPage: true,
+        path: testInfo.outputPath("admin-pricing.png"),
+      });
+
+      // The whole point of the slice: configuration reaches the public page.
+      await page.goto("/settings/billing");
+      await expect(page.getByText(EDITED_PRICE_LABEL)).toBeVisible();
+
+      await page.context().clearCookies();
+      await page.goto("/");
+      await expect(page.getByText(EDITED_PRICE_LABEL)).toBeVisible();
+    } finally {
+      await database.query('DELETE FROM "PlanConfig" WHERE "planKey" = $1', [
+        EDITED_PLAN_KEY,
+      ]);
+      const [original] = before.rows;
+      if (original) {
+        const columns = Object.keys(original);
+        await database.query(
+          `INSERT INTO "PlanConfig" (${columns.map((column) => `"${column}"`).join(", ")}) VALUES (${columns.map((_column, index) => `$${String(index + 1)}`).join(", ")})`,
+          columns.map((column) => original[column]),
+        );
+      }
+      await database.query('DELETE FROM "User" WHERE "primaryEmail" = $1', [
+        EDITOR_EMAIL,
+      ]);
       await database.end();
     }
   },

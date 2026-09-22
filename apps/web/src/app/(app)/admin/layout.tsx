@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { AdminNavigation } from "../../../features/admin/admin-navigation";
 import { requireAdministrator } from "../../../server/admin/require-administrator";
 
 /**
@@ -11,5 +12,10 @@ export default async function AdminLayout({
 }: Readonly<{ children: ReactNode }>) {
   await requireAdministrator();
 
-  return <div className="admin-page">{children}</div>;
+  return (
+    <div className="admin-page">
+      <AdminNavigation />
+      {children}
+    </div>
+  );
 }

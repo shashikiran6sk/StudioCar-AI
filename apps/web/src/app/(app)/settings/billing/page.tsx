@@ -12,6 +12,7 @@ import {
 } from "../../../../features/billing/usage-billing.constants";
 import { getCurrentSession } from "../../../../server/auth/get-current-session";
 import { getUsageBillingSummary } from "../../../../server/billing/get-usage-billing-summary";
+import { getPlanCatalog } from "../../../../server/plans/get-plan-catalog";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,10 @@ export default async function UsageBillingPage() {
   const session = await getCurrentSession();
   if (!session) redirect(LOGIN_PATH);
 
-  const summary = await getUsageBillingSummary(session.userId);
+  const [summary, plans] = await Promise.all([
+    getUsageBillingSummary(session.userId),
+    getPlanCatalog(),
+  ]);
 
   return (
     <div className="usage-billing-page">
@@ -32,7 +36,7 @@ export default async function UsageBillingPage() {
         <BillingUnavailableAction label={USAGE_BILLING_UPGRADE_LABEL} />
       </header>
       <UsageOverview summary={summary} />
-      <BillingPlanGrid currentPlanKey={summary.currentPlan.key} />
+      <BillingPlanGrid currentPlanKey={summary.currentPlan.key} plans={plans} />
     </div>
   );
 }

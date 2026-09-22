@@ -1,9 +1,14 @@
-import { ButtonLink } from "@studiocar/ui";
+import type { PlanCatalogEntry } from "@studiocar/contracts";
 
-import { MARKETING_PRICING_ID, MARKETING_START_PATH } from "../marketing/marketing.constants";
-import { PRICING_COPY, PRICING_PLANS } from "./pricing-plans";
+import { PricingCard } from "./pricing-card";
+import { PRICING_COPY } from "./pricing.constants";
+import { MARKETING_PRICING_ID } from "../marketing/marketing.constants";
 
-export function PricingSection() {
+export interface PricingSectionProps {
+  plans: readonly PlanCatalogEntry[];
+}
+
+export function PricingSection({ plans }: PricingSectionProps) {
   return (
     <section className="pricing-section" id={MARKETING_PRICING_ID}>
       <div className="pricing-section__heading">
@@ -12,30 +17,11 @@ export function PricingSection() {
         <p>{PRICING_COPY.summary}</p>
       </div>
       <div className="pricing-section__grid">
-        {PRICING_PLANS.map((plan) => (
-          <article
-            className={`pricing-card${plan.featured ? " pricing-card--featured" : ""}`}
-            key={plan.name}
-          >
-            <header><strong>{plan.name}</strong><span>{plan.segment}</span></header>
-            <p className="pricing-card__price">{plan.price} <small>{plan.cadence}</small></p>
-            <p className="pricing-card__description">{plan.description}</p>
-            <ul>
-              {plan.features.map((feature) => <li key={feature}>✓ {feature}</li>)}
-            </ul>
-            <ButtonLink
-              href={MARKETING_START_PATH}
-              size="marketing"
-              variant={plan.featured ? "secondary" : "primary"}
-            >
-              {plan.action}
-            </ButtonLink>
-          </article>
+        {plans.map((plan) => (
+          <PricingCard key={plan.planKey} plan={plan} />
         ))}
       </div>
-      <p className="pricing-section__note">
-        {PRICING_COPY.note}
-      </p>
+      <p className="pricing-section__note">{PRICING_COPY.note}</p>
     </section>
   );
 }

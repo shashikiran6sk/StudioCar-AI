@@ -3,6 +3,7 @@ import { createDatabaseClient } from "@studiocar/database-runtime";
 import { PrismaUsageBillingRepository } from "../db/repositories/usage-billing-repository";
 
 import { UsageBillingService } from "./usage-billing-service";
+import { getPlanCatalog } from "../plans/get-plan-catalog";
 
 let usageBillingService: UsageBillingService | undefined;
 
@@ -15,6 +16,7 @@ export function getUsageBillingService(): UsageBillingService {
   });
   usageBillingService = new UsageBillingService(
     new PrismaUsageBillingRepository(database),
+    { list: getPlanCatalog },
   );
   return usageBillingService;
 }
