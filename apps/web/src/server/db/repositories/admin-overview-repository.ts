@@ -5,10 +5,40 @@ import {
   SubscriptionStatus,
 } from "@studiocar/database-runtime";
 
-import type { AdminOverview } from "../../admin/admin-overview.types";
+import type {
+  AdminOverview,
+  PlanAccountCount,
+} from "../../admin/admin-overview.types";
 
 export class PrismaAdminOverviewRepository {
   public constructor(private readonly database: PrismaClient) {}
+
+  /**
+   * How many accounts each paid plan currently carries.
+   *
+   * Counts only, grouped in the database. The overview is a summary, not a
+   * place to read anybody's personal data. Accounts with no live subscription
+   * are absent rather than counted as a "free" group, because no row means no
+   * subscription rather than a subscription to nothing.
+   */
+  public async countAccountsByPlan(now: Date): Promise<PlanAccountCount[]> {
+    const grouped = await this.database.planSubscription.groupBy({
+      by: ["planKey"],
+      where: {
+        status: {
+          in: [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING],
+        },
+        currentPeriodEnd: { gt: now },
+      },
+      _count: { _all: true },
+      orderBy: { planKey: "asc" },
+    });
+
+    return grouped.map((group) => ({
+      accountCount: group._count._all,
+      planKey: group.planKey,
+    }));
+  }
 
   public async summarise(): Promise<AdminOverview> {
     const activeStatuses = [

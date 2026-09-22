@@ -8,7 +8,7 @@ The production foundation, authentication, private direct uploads, asynchronous 
 
 Database ownership now belongs to `apps/web`, S3 and SQS connections are configurable, phone OTP uses the MSG91 Widget flow, a deterministic local environment reproduces the production data plane, and workspace navigation carries a real plan and usage summary.
 
-Plan prices, allowances and batch limits are database-backed and editable at `/admin/pricing`; the application carries no second copy of a plan. An administrator can assign a paid plan by hand at `/admin/subscriptions`, and a subscription a payment provider owns is never overwritten from there. The public footer's social links are administered at `/admin/content`. Payment checkout remains intentionally unavailable until a billing provider is selected. See **Not yet implemented** for everything the accepted plan still calls for.
+Plan prices, allowances and batch limits are database-backed and editable at `/admin/pricing`; the application carries no second copy of a plan. An administrator can assign a paid plan by hand at `/admin/subscriptions`, and a subscription a payment provider owns is never overwritten from there. The public footer's social links are administered at `/admin/content`, and the overview reports the recent administrative changes alongside bounded counts. Payment checkout remains intentionally unavailable until a billing provider is selected. See **Not yet implemented** for everything the accepted plan still calls for.
 
 ## Completed
 
@@ -492,6 +492,19 @@ Plan prices, allowances and batch limits are database-backed and editable at `/a
 - Added contract, mapper, reader, action, component and page coverage; eight real-PostgreSQL repository tests; and a Playwright walk that starts with an empty footer, configures a link, sees a plaintext address refused, and finds the link on the public homepage while signed out.
 - Verified lint, strict typecheck, source mapping, every package suite (725 tests), 30 integration files with 118 tests against real PostgreSQL, production builds, and ten Playwright tests.
 
+### SC033 — Administration overview
+
+- **The audit trail is finally read.** Nine administrative actions have been written since SC028 and nothing displayed them; an administrator could not answer "who changed this price?" without database access. The overview now lists the recent administrative changes.
+- The trail is restricted to the administrative actions and bounded to 25 entries, so the overview can never become an unpaged dump of a table that also carries ordinary account activity.
+- Each entry is rendered to a sentence **on the server**. Stored metadata never reaches the browser, so a key added to it later cannot leak into a page by accident; a test asserts an account identifier in the metadata does not appear in what the page receives.
+- `AuditLog.metadata` is `Json`, so it arrives as `unknown` and is validated before any field is read. An entry whose metadata has the wrong type, is absent, or is not an object at all still renders — with the detail omitted rather than guessed at. An action this version does not recognise is reported plainly rather than hidden.
+- **A deleted administrator is no longer reported as StudioCar AI.** `AuditLog.userId` is set to null when an account is removed, which made a removed actor indistinguishable from the one action the system genuinely performs by itself. The e2e screenshot surfaced this; the two are now named separately, because conflating them would mislead exactly where an audit trail matters most.
+- Added an accounts-by-plan breakdown, grouped in the database and counts only. Accounts with no live subscription are absent rather than counted as a "free" group: no row means no subscription, not a subscription to nothing. A plan the catalog no longer describes falls back to its stored key rather than rendering blank.
+- Account lookup for subscription management shipped with SC031, where it was a hard prerequisite.
+- Hardened the social-link integration fixtures to be unique per run. The whole integration suite shares one database across parallel package tasks, and a fixture another process can delete makes a file fail on timing rather than on behaviour. The failure was intermittent and the exact concurrent writer was not pinned; the fixture isolation removes the class of race, and the suite then ran clean four times in a row.
+- Added contract, describer, actor-attribution, reader, component and page coverage; five real-PostgreSQL audit tests; and a Playwright assertion that a change an administrator has just made appears on the overview.
+- Verified lint, strict typecheck, source mapping, every package suite (749 tests), 31 integration files with 123 tests against real PostgreSQL, `prisma validate`, production builds, and ten Playwright tests.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -503,7 +516,7 @@ Plan prices, allowances and batch limits are database-backed and editable at `/a
 
 Ordered as agreed. UI work first, then the admin and billing foundation.
 
-1. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
+1. **Documentation consolidation and a full-stack validation pass**.
 2. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
 
 ## Not yet implemented
@@ -516,6 +529,8 @@ Tracked explicitly so the gap between the plan and the repository stays visible.
 - **No social link is seeded.** The footer shows what an administrator configures and nothing otherwise, which is deliberate — but it means a fresh deployment's footer has no social section until somebody adds one.
 - **New plans cannot be created from the interface.** `/admin/pricing` edits the four plans the deployment ships; adding a fifth still needs a code change, because `planKey` is the closed set that subscriptions and the usage contract are keyed by.
 - **A plan-catalog read failure is not observable.** The web application has no logger yet, so a failed `PlanConfig` query surfaces as an error page rather than as a recorded event. This belongs with the control-plane telemetry slice.
+- **The activity trail is not searchable or paged.** The overview shows the most recent 25 administrative changes and nothing older. Filtering by actor, action or date needs a dedicated page.
+- **Nothing prunes the audit trail.** It grows without bound; retention belongs with the scheduled lifecycle jobs that already cover other tables.
 
 ## Deployment state
 
@@ -531,6 +546,9 @@ true when it does ship.
 - A manual subscription never overwrites one a payment provider owns. When the billing provider lands, the provider's webhook remains the only writer of `PAYMENT_PROVIDER` rows, and the administration page must keep refusing to touch them.
 - An account is found for subscription management only through a verified `AuthIdentity`, never through `User.primaryEmail` or `primaryPhone`. Those are profile values, not proof.
 - A footer link has no shipped default on purpose. It is an address the public will follow, so it exists only once an administrator supplies a real one; an empty result renders no section at all.
+- `AuditLog.metadata` is `Json` and must be validated before any field is read; entries written by an older version of the product still have to render. Audit entries are rendered to sentences on the server so stored metadata never reaches a page.
+- `AuditLog.userId` is set to null when an account is deleted. A null actor therefore means either the system acted (first-run bootstrap only) or the administrator's account is gone; do not report them as the same thing.
+- Integration fixtures must be unique per run. The whole integration suite shares one database across parallel package tasks, so a fixture another process can delete makes a file fail on timing rather than on behaviour.
 - Do not modify the committed initial migration after it has been applied; add a new backward-compatible migration for every schema change.
 - Prisma CLI validation/generation can run without secrets; migration and integration commands require `DATABASE_URL`.
 - Real PostgreSQL integration tests currently cover schema constraints, tenant-scoped vehicle operations, sessions, one-time OAuth challenges, canonical Google identities, OTP throttling, canonical phone identities, atomic phone-session completion, image upload idempotency, and concurrent processing-batch reservation.

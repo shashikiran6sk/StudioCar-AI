@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createDatabaseClient } from "../../../../../packages/database-runtime/src/client";
@@ -5,7 +6,12 @@ import { PrismaSocialLinkRepository } from "../../../../../apps/web/src/server/d
 
 const databaseUrl = process.env["DATABASE_URL"];
 const databaseDescribe = databaseUrl ? describe : describe.skip;
-const actorEmail = "content-editor@integration.studiocar.test";
+/**
+ * Unique per run. The whole integration suite shares one database, and a
+ * fixture another process can delete makes this file fail on timing rather
+ * than on behaviour.
+ */
+const actorEmail = `content-editor-${randomUUID()}@integration.studiocar.test`;
 
 const instagram = {
   enabled: true,
@@ -57,7 +63,7 @@ databaseDescribe("PrismaSocialLinkRepository", () => {
       { platform: "INSTAGRAM", url: instagram.url, enabled: true },
     ]);
     const audit = await database.auditLog.findFirstOrThrow({
-      where: { resourceType: "SocialLink" },
+      where: { resourceType: "SocialLink", userId: actor.id },
       select: { action: true, resourceId: true, userId: true },
     });
     expect(audit).toEqual({

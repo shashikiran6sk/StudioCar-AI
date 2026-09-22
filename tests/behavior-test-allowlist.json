@@ -526,5 +526,9 @@
   {
     "source": "apps/web/src/server/content/social-link-runtime.ts",
     "reason": "Composition root wiring the social link repository to the database client."
+  },
+  {
+    "source": "apps/web/src/server/admin/audit-log-runtime.ts",
+    "reason": "Composition root wiring the audit log repository to the database client."
   }
 ]
