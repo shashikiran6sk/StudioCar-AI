@@ -20,6 +20,7 @@ function application(): GoogleOAuthApplication {
   return {
     start: vi.fn(),
     complete: vi.fn(async () => ({
+      kind: "SIGNED_IN" as const,
       returnTo: "/inventory",
       issuedSession: {
         token: "t".repeat(43),

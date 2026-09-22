@@ -12,6 +12,7 @@ describe("POST /api/auth/phone/verify", () => {
   it("delegates verification and returns the authenticated user", async () => {
     const application: PhoneOtpApplication = {
       start: vi.fn(),
+      link: vi.fn(),
       verify: vi.fn(async () => ({
         token: "t".repeat(43),
         expiresAt: new Date("2026-10-18T12:00:00.000Z"),

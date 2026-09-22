@@ -26,6 +26,8 @@ export const FORBIDDEN_REQUEST_MESSAGE = "The request origin is not allowed.";
 export const RATE_LIMITED_MESSAGE = "Too many attempts. Try again later.";
 export const INVALID_CHALLENGE_MESSAGE = "The OTP challenge is invalid or expired.";
 export const INVALID_OTP_MESSAGE = "The OTP is invalid.";
+export const IDENTITY_LINK_TAKEN_MESSAGE =
+  "That sign-in method already belongs to another StudioCar AI account.";
 export const IDENTITY_LINK_REQUIRED_MESSAGE =
   "This phone number is already associated with an account.";
 export const PROVIDER_UNAVAILABLE_MESSAGE =

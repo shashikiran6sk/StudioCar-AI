@@ -16,6 +16,7 @@ function application(): PhoneOtpApplication {
       expiresAt: new Date("2026-09-18T12:10:00.000Z"),
       browserBinding: "b".repeat(43),
     })),
+    link: vi.fn(),
     verify: vi.fn(),
   };
 }

@@ -6,6 +6,9 @@ import {
   type PhoneStart,
   PhoneVerifySchema,
   type PhoneVerify,
+  LinkPhoneIdentitySchema,
+  type IdentityLinkResult,
+  type LinkPhoneIdentity,
 } from "@studiocar/contracts";
 
 import { hashAuthSecret } from "../hash-auth-secret";
@@ -22,6 +25,7 @@ import type {
   CompletedPhoneOtp,
   PhoneOtpApplication,
   PhoneOtpChallengeStore,
+  PhoneIdentityLinkStore,
   PhoneOtpCompletionStore,
   PhoneOtpProvider,
   SessionPreparer,
@@ -73,6 +77,7 @@ export class PhoneOtpService implements PhoneOtpApplication {
   public constructor(
     private readonly challenges: PhoneOtpChallengeStore,
     private readonly completions: PhoneOtpCompletionStore,
+    private readonly links: PhoneIdentityLinkStore,
     private readonly provider: PhoneOtpProvider,
     private readonly sessions: SessionPreparer,
     private readonly identifierHasher: SensitiveIdentifierHasher,
@@ -161,6 +166,65 @@ export class PhoneOtpService implements PhoneOtpApplication {
     clientAddress: string,
   ): Promise<CompletedPhoneOtp> {
     const validated = PhoneVerifySchema.parse(input);
+    const claim = await this.proveNumber(validated, browserBinding, clientAddress);
+
+    const prepared = this.sessions.prepareIssue();
+    const completion = await this.completions.complete({
+      challengeId: validated.challengeId,
+      attemptId: claim.attemptId,
+      phoneNumber: claim.phoneNumber,
+      browserBindingHash: hashAuthSecret(browserBinding),
+      tokenHash: prepared.tokenHash,
+      sessionExpiresAt: prepared.expiresAt,
+      authenticatedAt: this.now(),
+    });
+
+    if (completion.status === PhoneOtpCompletionStatus.LinkRequired) {
+      throw new PhoneOtpApplicationError(
+        PhoneOtpApplicationErrorCode.IdentityLinkRequired,
+      );
+    }
+    if (completion.status === PhoneOtpCompletionStatus.InvalidChallenge) {
+      throw new PhoneOtpApplicationError(
+        PhoneOtpApplicationErrorCode.InvalidChallenge,
+      );
+    }
+
+    return {
+      token: prepared.token,
+      expiresAt: prepared.expiresAt,
+      session: completion.session,
+      user: completion.session.user,
+    };
+  }
+
+  public async link(
+    userId: string,
+    input: LinkPhoneIdentity,
+    browserBinding: string,
+    clientAddress: string,
+  ): Promise<IdentityLinkResult> {
+    const validated = LinkPhoneIdentitySchema.parse(input);
+    const claim = await this.proveNumber(validated, browserBinding, clientAddress);
+
+    return this.links.linkPhone({
+      userId,
+      phoneNumber: claim.phoneNumber,
+      linkedAt: this.now(),
+    });
+  }
+
+  /**
+   * Everything that establishes the person holds this handset: the browser-bound
+   * rate-limited challenge, the provider's verdict on the access token, the
+   * assertion that the token names the claimed number, and the single-use claim
+   * of that token. Shared so linking and signing in cannot diverge.
+   */
+  private async proveNumber(
+    validated: PhoneVerify | LinkPhoneIdentity,
+    browserBinding: string,
+    clientAddress: string,
+  ): Promise<{ attemptId: string; phoneNumber: string }> {
     const now = this.now();
     const claim = await this.challenges.claimVerification({
       challengeId: validated.challengeId,
@@ -232,34 +296,7 @@ export class PhoneOtpService implements PhoneOtpApplication {
       );
     }
 
-    const prepared = this.sessions.prepareIssue();
-    const completion = await this.completions.complete({
-      challengeId: validated.challengeId,
-      attemptId: claim.attemptId,
-      phoneNumber: claim.phoneNumber,
-      browserBindingHash: hashAuthSecret(browserBinding),
-      tokenHash: prepared.tokenHash,
-      sessionExpiresAt: prepared.expiresAt,
-      authenticatedAt: this.now(),
-    });
-
-    if (completion.status === PhoneOtpCompletionStatus.LinkRequired) {
-      throw new PhoneOtpApplicationError(
-        PhoneOtpApplicationErrorCode.IdentityLinkRequired,
-      );
-    }
-    if (completion.status === PhoneOtpCompletionStatus.InvalidChallenge) {
-      throw new PhoneOtpApplicationError(
-        PhoneOtpApplicationErrorCode.InvalidChallenge,
-      );
-    }
-
-    return {
-      token: prepared.token,
-      expiresAt: prepared.expiresAt,
-      session: completion.session,
-      user: completion.session.user,
-    };
+    return { attemptId: claim.attemptId, phoneNumber: claim.phoneNumber };
   }
 
   private throwClaimError(

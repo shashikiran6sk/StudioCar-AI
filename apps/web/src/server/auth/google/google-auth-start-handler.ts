@@ -6,6 +6,11 @@ import {
 
 import {
   API_BAD_REQUEST_CODE,
+  API_UNAUTHENTICATED_CODE,
+  GOOGLE_AUTH_INTENT_QUERY_KEY,
+  GOOGLE_AUTH_LINK_INTENT,
+  LINK_REQUIRES_SESSION_MESSAGE,
+  UNAUTHENTICATED_STATUS,
   API_SERVICE_UNAVAILABLE_CODE,
   BAD_REQUEST_MESSAGE,
   BAD_REQUEST_STATUS,
@@ -22,9 +27,28 @@ export async function handleGoogleAuthStart(
   request: Request,
   application: GoogleOAuthApplication,
   isProduction: boolean,
+  sessionUserId: string | null = null,
   createRequestId: () => string = randomUUID,
 ): Promise<Response> {
   const requestUrl = new URL(request.url);
+  const linking =
+    requestUrl.searchParams.get(GOOGLE_AUTH_INTENT_QUERY_KEY) ===
+    GOOGLE_AUTH_LINK_INTENT;
+
+  /**
+   * Connecting Google to an account requires being signed in as that account.
+   * A link cannot be started on behalf of somebody else.
+   */
+  if (linking && sessionUserId === null) {
+    const body: ApiError = {
+      error: {
+        code: API_UNAUTHENTICATED_CODE,
+        message: LINK_REQUIRES_SESSION_MESSAGE,
+        requestId: createRequestId(),
+      },
+    };
+    return Response.json(body, { status: UNAUTHENTICATED_STATUS });
+  }
   const result = GoogleAuthStartSchema.safeParse({
     returnTo:
       requestUrl.searchParams.get(GOOGLE_AUTH_RETURN_TO_QUERY_KEY) ?? undefined,
@@ -43,7 +67,12 @@ export async function handleGoogleAuthStart(
   }
 
   try {
-    const started = await application.start(result.data);
+    const started = await application.start({
+      ...result.data,
+      ...(linking && sessionUserId !== null
+        ? { linkUserId: sessionUserId }
+        : {}),
+    });
     const response = NextResponse.redirect(
       started.authorizationUrl,
       OAUTH_START_REDIRECT_STATUS,

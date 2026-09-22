@@ -89,7 +89,14 @@ function dependencies(overrides?: {
     })),
   };
 
-  return { challengeStore, provider, protector, identityStore, sessions };
+  return {
+    challengeStore,
+    provider,
+    protector,
+    identityStore,
+    linkStore: { linkGoogle: vi.fn() },
+    sessions,
+  };
 }
 
 function service(
@@ -98,6 +105,7 @@ function service(
   return new GoogleOAuthService(
     values.challengeStore,
     values.identityStore,
+    values.linkStore,
     values.provider,
     values.protector,
     values.sessions,
@@ -128,7 +136,7 @@ describe("GoogleOAuthService", () => {
   it("consumes the challenge, resolves the canonical identity, and issues a session", async () => {
     const values = dependencies();
 
-    const completed = await service(values).complete({ callbackUrl, state });
+    const completed = await service(values).complete({ sessionUserId: null, callbackUrl, state });
 
     expect(values.challengeStore.consume).toHaveBeenCalledWith(hashAuthSecret(state), now);
     expect(values.provider.exchangeAuthorizationCode).toHaveBeenCalledWith(
@@ -151,7 +159,7 @@ describe("GoogleOAuthService", () => {
   it("fails closed when a challenge is missing or already consumed", async () => {
     const values = dependencies({ consumedChallenge: null });
 
-    await expect(service(values).complete({ callbackUrl, state })).rejects.toMatchObject({
+    await expect(service(values).complete({ sessionUserId: null, callbackUrl, state })).rejects.toMatchObject({
       code: GoogleOAuthCompletionErrorCode.ChallengeInvalid,
     });
     expect(values.provider.exchangeAuthorizationCode).not.toHaveBeenCalled();
@@ -160,11 +168,111 @@ describe("GoogleOAuthService", () => {
   it("requires an explicit link when a verified email belongs to another user", async () => {
     const values = dependencies({ identityStatus: "link_required" });
 
-    await expect(service(values).complete({ callbackUrl, state })).rejects.toEqual(
+    await expect(service(values).complete({ sessionUserId: null, callbackUrl, state })).rejects.toEqual(
       new GoogleOAuthCompletionError(
         GoogleOAuthCompletionErrorCode.IdentityLinkRequired,
       ),
     );
     expect(values.sessions.issue).not.toHaveBeenCalled();
+  });
+});
+
+describe("GoogleOAuthService linking", () => {
+  const linkedIdentity = {
+    providerSubject: "google-subject-1",
+    email: "owner@example.com",
+    displayName: "Owner",
+  };
+
+  function linkingDependencies(linkUserId: string) {
+    const values = dependencies();
+    values.protector.unprotect = vi.fn(() => ({
+      codeVerifier: "v".repeat(43),
+      nonce: "n".repeat(43),
+      linkUserId,
+    }));
+    values.provider.exchangeAuthorizationCode = vi.fn(
+      async () => linkedIdentity,
+    );
+    return values;
+  }
+
+  it("carries the link intent inside the encrypted challenge, not the URL", async () => {
+    const values = dependencies();
+    await service(values).start({
+      returnTo: "/settings/profile",
+      linkUserId: "user-1",
+    });
+
+    expect(values.protector.protect).toHaveBeenCalledWith(
+      expect.objectContaining({ linkUserId: "user-1" }),
+    );
+  });
+
+  it("connects Google without issuing a new session", async () => {
+    const values = linkingDependencies("user-1");
+    values.linkStore.linkGoogle.mockResolvedValue({ status: "linked" });
+
+    await expect(
+      service(values).complete({
+        callbackUrl: new URL("https://app.studiocar.test/callback?code=c"),
+        state: "s".repeat(43),
+        sessionUserId: "user-1",
+      }),
+    ).resolves.toMatchObject({ kind: "LINKED", returnTo: "/inventory" });
+    expect(values.sessions.issue).not.toHaveBeenCalled();
+    expect(values.identityStore.resolve).not.toHaveBeenCalled();
+  });
+
+  it("refuses when a different session completes the link", async () => {
+    const values = linkingDependencies("user-1");
+
+    await expect(
+      service(values).complete({
+        callbackUrl: new URL("https://app.studiocar.test/callback?code=c"),
+        state: "s".repeat(43),
+        sessionUserId: "user-2",
+      }),
+    ).rejects.toMatchObject({ code: "link_session_mismatch" });
+    expect(values.linkStore.linkGoogle).not.toHaveBeenCalled();
+  });
+
+  it("refuses when no session completes the link", async () => {
+    const values = linkingDependencies("user-1");
+
+    await expect(
+      service(values).complete({
+        callbackUrl: new URL("https://app.studiocar.test/callback?code=c"),
+        state: "s".repeat(43),
+        sessionUserId: null,
+      }),
+    ).rejects.toMatchObject({ code: "link_session_mismatch" });
+    expect(values.linkStore.linkGoogle).not.toHaveBeenCalled();
+  });
+
+  it("refuses an identity that already belongs to another account", async () => {
+    const values = linkingDependencies("user-1");
+    values.linkStore.linkGoogle.mockResolvedValue({ status: "identity_taken" });
+
+    await expect(
+      service(values).complete({
+        callbackUrl: new URL("https://app.studiocar.test/callback?code=c"),
+        state: "s".repeat(43),
+        sessionUserId: "user-1",
+      }),
+    ).rejects.toMatchObject({ code: "link_identity_taken" });
+  });
+
+  it("treats an already-connected identity as a completed link", async () => {
+    const values = linkingDependencies("user-1");
+    values.linkStore.linkGoogle.mockResolvedValue({ status: "already_linked" });
+
+    await expect(
+      service(values).complete({
+        callbackUrl: new URL("https://app.studiocar.test/callback?code=c"),
+        state: "s".repeat(43),
+        sessionUserId: "user-1",
+      }),
+    ).resolves.toMatchObject({ kind: "LINKED" });
   });
 });

@@ -4,6 +4,9 @@ import type { GoogleOAuthApplication } from "../../../../../../../apps/web/src/s
 import { getGoogleOAuthApplication } from "../../../../../../../apps/web/src/server/auth/google/google-auth-runtime";
 import { GET } from "../../../../../../../apps/web/src/app/api/auth/google/callback/route";
 
+vi.mock("../../../../../../../apps/web/src/server/auth/get-current-session", () => ({
+  getCurrentSession: vi.fn(async () => null),
+}));
 vi.mock("../../../../../../../apps/web/src/server/auth/google/google-auth-runtime", () => ({
   getGoogleOAuthApplication: vi.fn(),
 }));
@@ -15,6 +18,7 @@ describe("GET /api/auth/google/callback", () => {
     const application: GoogleOAuthApplication = {
       start: vi.fn(),
       complete: vi.fn(async () => ({
+      kind: "SIGNED_IN" as const,
         returnTo: "/dashboard",
         issuedSession: {
           token: "t".repeat(43),

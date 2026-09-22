@@ -6,6 +6,7 @@ import {
 import type { PhoneOtpWidget } from "@studiocar/contracts";
 import { createDatabaseClient } from "@studiocar/database-runtime";
 
+import { PrismaAuthIdentityLinkRepository } from "../../db/repositories/auth-identity-link-repository";
 import { PrismaPhoneOtpChallengeRepository } from "../../db/repositories/phone-otp-challenge-repository";
 import { PrismaPhoneOtpCompletionRepository } from "../../db/repositories/phone-otp-completion-repository";
 import { PrismaSessionRepository } from "../../db/repositories/session-repository";
@@ -52,6 +53,7 @@ export function getPhoneOtpApplication(): PhoneOtpApplication {
   phoneOtpApplication = new PhoneOtpService(
     new PrismaPhoneOtpChallengeRepository(database),
     new PrismaPhoneOtpCompletionRepository(database),
+    new PrismaAuthIdentityLinkRepository(database),
     createProvider(environment),
     sessions,
     new SensitiveIdentifierHasher(environment.SESSION_SECRET),

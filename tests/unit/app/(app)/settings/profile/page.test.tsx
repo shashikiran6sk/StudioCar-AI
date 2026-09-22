@@ -65,7 +65,7 @@ describe("ProfilePage", () => {
     };
     vi.mocked(getProfileService).mockReturnValue(new ProfileService(repository));
 
-    render(await ProfilePage());
+    render(await ProfilePage({ searchParams: Promise.resolve({}) }));
 
     expect(
       screen.getByRole("heading", { name: "Profile & security" }),

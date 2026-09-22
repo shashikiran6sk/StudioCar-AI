@@ -29,6 +29,10 @@ const binding = "b".repeat(43);
 const sessionToken = "s".repeat(43);
 const accessToken = "signed.widget.access-token";
 
+function linkStore() {
+  return { linkPhone: vi.fn() };
+}
+
 function challengeStore(): PhoneOtpChallengeStore {
   return {
     createRateLimited: vi.fn(async (): Promise<CreatePhoneOtpChallengeResult> => ({
@@ -101,6 +105,7 @@ function service(
   return new PhoneOtpService(
     challenges,
     completions,
+    linkStore(),
     otpProvider,
     sessions,
     new SensitiveIdentifierHasher("k".repeat(32)),

@@ -10,6 +10,7 @@ const browserBinding = "b".repeat(43);
 function application(): PhoneOtpApplication {
   return {
     start: vi.fn(),
+    link: vi.fn(),
     verify: vi.fn(async () => ({
       token: "t".repeat(43),
       expiresAt: new Date("2026-10-18T12:00:00.000Z"),

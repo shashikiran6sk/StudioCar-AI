@@ -5,6 +5,8 @@ import { readRequestCookie } from "../read-request-cookie";
 import { createSessionCookie } from "../session-cookie";
 import {
   GoogleAuthRedirectErrorCode,
+  GOOGLE_AUTH_LINKED_QUERY_KEY,
+  GOOGLE_AUTH_LINKED_VALUE,
   GOOGLE_OAUTH_CODE_QUERY_KEY,
   GOOGLE_OAUTH_ERROR_DESCRIPTION_QUERY_KEY,
   GOOGLE_OAUTH_ERROR_QUERY_KEY,
@@ -26,6 +28,7 @@ export async function handleGoogleAuthCallback(
   request: Request,
   application: GoogleOAuthApplication,
   isProduction: boolean,
+  sessionUserId: string | null = null,
 ): Promise<Response> {
   const requestUrl = new URL(request.url);
   const providerError = requestUrl.searchParams.get(GOOGLE_OAUTH_ERROR_QUERY_KEY);
@@ -78,8 +81,25 @@ export async function handleGoogleAuthCallback(
     const completed = await application.complete({
       callbackUrl: requestUrl,
       state: parsed.data.state,
+      sessionUserId,
     });
     const destination = new URL(completed.returnTo, requestUrl.origin);
+    const oauthCookie = clearGoogleOAuthCookie(isProduction);
+
+    /**
+     * A link issues no session: the person is already signed in, and minting a
+     * new one would silently rotate their session as a side effect.
+     */
+    if (completed.kind === "LINKED") {
+      destination.searchParams.set(
+        GOOGLE_AUTH_LINKED_QUERY_KEY,
+        GOOGLE_AUTH_LINKED_VALUE,
+      );
+      const linked = NextResponse.redirect(destination, OAUTH_REDIRECT_STATUS);
+      linked.cookies.set(oauthCookie.name, oauthCookie.value, oauthCookie.options);
+      return linked;
+    }
+
     const response = NextResponse.redirect(destination, OAUTH_REDIRECT_STATUS);
     const cookie = createSessionCookie(
       completed.issuedSession.token,
@@ -87,18 +107,15 @@ export async function handleGoogleAuthCallback(
       isProduction,
     );
     response.cookies.set(cookie.name, cookie.value, cookie.options);
-    const oauthCookie = clearGoogleOAuthCookie(isProduction);
     response.cookies.set(oauthCookie.name, oauthCookie.value, oauthCookie.options);
     return response;
   } catch (error) {
     if (error instanceof GoogleOAuthCompletionError) {
-      const code =
-        error.code === GoogleOAuthCompletionErrorCode.ChallengeInvalid
-          ? GoogleAuthRedirectErrorCode.ChallengeInvalid
-          : error.code === GoogleOAuthCompletionErrorCode.IdentityLinkRequired
-            ? GoogleAuthRedirectErrorCode.IdentityLinkRequired
-            : GoogleAuthRedirectErrorCode.ProviderFailed;
-      return createGoogleAuthErrorRedirect(requestUrl, code, isProduction);
+      return createGoogleAuthErrorRedirect(
+        requestUrl,
+        toRedirectErrorCode(error.code),
+        isProduction,
+      );
     }
 
     return createGoogleAuthErrorRedirect(
@@ -106,5 +123,22 @@ export async function handleGoogleAuthCallback(
       GoogleAuthRedirectErrorCode.InternalError,
       isProduction,
     );
+  }
+}
+
+function toRedirectErrorCode(
+  code: GoogleOAuthCompletionErrorCode,
+): GoogleAuthRedirectErrorCode {
+  switch (code) {
+    case GoogleOAuthCompletionErrorCode.ChallengeInvalid:
+      return GoogleAuthRedirectErrorCode.ChallengeInvalid;
+    case GoogleOAuthCompletionErrorCode.IdentityLinkRequired:
+      return GoogleAuthRedirectErrorCode.IdentityLinkRequired;
+    case GoogleOAuthCompletionErrorCode.LinkSessionMismatch:
+      return GoogleAuthRedirectErrorCode.LinkSessionMismatch;
+    case GoogleOAuthCompletionErrorCode.LinkIdentityTaken:
+      return GoogleAuthRedirectErrorCode.LinkIdentityTaken;
+    default:
+      return GoogleAuthRedirectErrorCode.ProviderFailed;
   }
 }

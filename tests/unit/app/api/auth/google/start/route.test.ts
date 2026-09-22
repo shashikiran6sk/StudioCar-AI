@@ -4,6 +4,9 @@ import type { GoogleOAuthApplication } from "../../../../../../../apps/web/src/s
 import { getGoogleOAuthApplication } from "../../../../../../../apps/web/src/server/auth/google/google-auth-runtime";
 import { GET } from "../../../../../../../apps/web/src/app/api/auth/google/start/route";
 
+vi.mock("../../../../../../../apps/web/src/server/auth/get-current-session", () => ({
+  getCurrentSession: vi.fn(async () => null),
+}));
 vi.mock("../../../../../../../apps/web/src/server/auth/google/google-auth-runtime", () => ({
   getGoogleOAuthApplication: vi.fn(),
 }));
