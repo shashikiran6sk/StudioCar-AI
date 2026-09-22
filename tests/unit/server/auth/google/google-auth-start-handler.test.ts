@@ -23,6 +23,7 @@ describe("handleGoogleAuthStart", () => {
       ),
       auth,
       false,
+      null,
       () => "request-123",
     );
 
@@ -52,5 +53,54 @@ describe("handleGoogleAuthStart", () => {
       "__Host-studiocar_google_oauth=ssss",
     );
     expect(response.headers.get("set-cookie")).toContain("HttpOnly");
+  });
+});
+
+describe("handleGoogleAuthStart linking", () => {
+  it("refuses to start a link without a session", async () => {
+    const auth = application();
+    const response = await handleGoogleAuthStart(
+      new Request(
+        "https://app.studiocar.test/api/auth/google/start?returnTo=%2Fsettings%2Fprofile&intent=link",
+      ),
+      auth,
+      false,
+      null,
+      () => "request-401",
+    );
+
+    expect(response.status).toBe(401);
+    expect(auth.start).not.toHaveBeenCalled();
+  });
+
+  it("carries the signed-in account into the challenge, never the URL", async () => {
+    const auth = application();
+    await handleGoogleAuthStart(
+      new Request(
+        "https://app.studiocar.test/api/auth/google/start?returnTo=%2Fsettings%2Fprofile&intent=link",
+      ),
+      auth,
+      false,
+      "user-1",
+    );
+
+    expect(auth.start).toHaveBeenCalledWith({
+      returnTo: "/settings/profile",
+      linkUserId: "user-1",
+    });
+  });
+
+  it("does not treat an ordinary sign-in as a link", async () => {
+    const auth = application();
+    await handleGoogleAuthStart(
+      new Request(
+        "https://app.studiocar.test/api/auth/google/start?returnTo=%2Fdashboard",
+      ),
+      auth,
+      false,
+      "user-1",
+    );
+
+    expect(auth.start).toHaveBeenCalledWith({ returnTo: "/dashboard" });
   });
 });

@@ -397,6 +397,16 @@ Payment checkout remains intentionally unavailable until a billing provider is s
 - Added allowance-resolution, service-refusal, plan-limit-context, and contract coverage, plus real-PostgreSQL integration tests proving a six-image batch is refused with the vehicle left as a draft and no jobs created, a five-image batch is accepted, in-flight work counts against the allowance, and a failed job does not.
 - Verified lint, strict typecheck, source mapping, 19 package suites, 24 integration files with 43 tests against real PostgreSQL, production builds, and six Playwright tests.
 
+### SC026 — Account linking and Profile sign-in methods
+
+- Identity resolution already refused to merge accounts, but there was no way to complete a link, so a phone-first user who chose Google reached an error page with no way forward. A signed-in user can now securely connect the method they do not yet have.
+- **Google.** `GET /api/auth/google/start?intent=link` requires a session and records the intent inside the **encrypted, one-time challenge payload**, never the URL, so it cannot be forged or pointed at another account. The callback refuses unless the session completing it is still the account that asked, and a link issues **no new session**: the person is already signed in, and minting one would silently rotate their session as a side effect.
+- **Phone.** `POST /api/profile/identities/phone` runs the same challenge, per-phone and per-IP limits, browser binding, provider verdict, identifier assertion, and single-use access-token claim as signing in. `verify` and `link` now share one `proveNumber` path so the two cannot diverge.
+- Linking never merges and never transfers. An identity another account holds is refused, as is a contact detail another account holds, and a unique-constraint violation from a concurrent link resolves to the same refusal. Business data stays on the same internal user throughout, which an integration test asserts directly.
+- Profile gained Connect actions for whichever method is missing, an inline phone-verification form, and a success notice after a Google link. The card states plainly that connecting a second method never merges accounts.
+- Added link-href, link-handler, route, service-linking, and connect-form coverage, plus eight real-PostgreSQL integration tests covering adoption of a verified email, idempotent relinking, a refused identity that stays with its owner, a refused contact detail, phone linking, concurrent linking creating exactly one identity, and preserved ownership.
+- Verified lint, strict typecheck, source mapping, 244 web test files with 501 tests, 25 integration files with 55 tests against real PostgreSQL, production builds, and six Playwright tests.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -408,28 +418,33 @@ Payment checkout remains intentionally unavailable until a billing provider is s
 
 Ordered as agreed. UI work first, then the admin and billing foundation.
 
-1. **SC026 — Account linking and Profile sign-in methods**: let a signed-in user securely connect the provider they do not yet have, and surface Connect actions on Profile.
-2. **SC027 — Admin data model**: roles, application configuration, admin invitations, plan configuration, social links, and manual subscription source.
-3. **SC028 — Admin authorization and first-admin bootstrap**: database-backed `ADMIN` checks on every admin page, action, and handler, plus a persisted one-time bootstrap.
-4. **SC029 — Administrator management**: grant, invite, accept on verified Google sign-in, revoke, last-admin protection, and audit entries.
-5. **SC030 — Database-backed plan configuration**: move the hardcoded plan catalog behind validated configuration with safe defaults and cache invalidation.
-6. **SC031 — Manual subscriptions**: assign Studio Pro and Studio Plus by hand without ever overwriting a provider-backed subscription.
-7. **SC032 — Dynamic footer social links**: administered links with server-side URL validation.
-8. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
-9. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
+1. **SC027 — Admin data model**: roles, application configuration, admin invitations, plan configuration, social links, and manual subscription source.
+2. **SC028 — Admin authorization and first-admin bootstrap**: database-backed `ADMIN` checks on every admin page, action, and handler, plus a persisted one-time bootstrap.
+3. **SC029 — Administrator management**: grant, invite, accept on verified Google sign-in, revoke, last-admin protection, and audit entries.
+4. **SC030 — Database-backed plan configuration**: move the hardcoded plan catalog behind validated configuration with safe defaults and cache invalidation.
+5. **SC031 — Manual subscriptions**: assign Studio Pro and Studio Plus by hand without ever overwriting a provider-backed subscription.
+6. **SC032 — Dynamic footer social links**: administered links with server-side URL validation.
+7. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
+8. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
 
 ## Not yet implemented
 
 Tracked explicitly so the gap between the plan and the repository stays visible.
 
-- **Account linking does not exist.** Identity resolution correctly refuses to merge accounts and returns `LinkRequired`, but there is no flow to complete a link, so a phone-first user who chooses Google reaches an error page with no way forward. Profile therefore shows connected identities without Connect actions.
-- **Identity disconnection is out of scope** until linking exists and a "never leave an account without a usable sign-in method" rule is designed.
+- **Identity disconnection is not implemented.** Linking exists; removing a method still needs a "never leave an account without a usable sign-in method" rule and re-authentication, and nothing in the accepted scope requires it.
 - **No roles, permissions, admin surface, or admin audit log exist.** `AuditLog` is present in the schema and unused.
-- **Plan configuration is hardcoded** in `apps/web/src/features/pricing/pricing-plans.ts`, and `STUDIO_PLUS` does not exist.
+- **Plan configuration is hardcoded** in `apps/web/src/features/pricing/pricing-plans.ts`, and `STUDIO_PLUS` does not exist yet. Its confirmed configuration is ₹7,999 per month, 1,500 images, 20 per batch, on a billing-period allowance.
 - **Subscriptions are never written.** `PlanSubscription` is read when resolving a plan but nothing creates a row, and `BillingPort` is intentionally unimplemented until a payment provider is selected.
 - **The footer has no social links**, dynamic or otherwise; its company entries are inert text.
 - **Plan allowance values still come from the hardcoded catalog.** The limits are enforced, but changing 15 or 5 needs a deployment until plan configuration is database-backed.
 - **`pnpm db:seed` does not exist**; it will arrive with plan configuration, when there is something canonical to seed.
+
+## Deployment state
+
+StudioCar AI is in development and has not been deployed to production. Schema
+changes therefore carry no live-data migration risk today, but the repository
+keeps its additive-migration rule and its local-only reset guards so that stays
+true when it does ship.
 
 ## Important implementation notes
 

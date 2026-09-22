@@ -20,3 +20,6 @@ export const PHONE_WIDGET_UNAVAILABLE_MESSAGE =
 export const PHONE_DEVELOPMENT_NOTICE =
   "Development mode: no message is sent. Enter the configured code.";
 export const PHONE_CAPTCHA_CONTAINER_CLASS = "auth-form__captcha";
+
+export const GOOGLE_LINK_INTENT_QUERY_KEY = "intent";
+export const GOOGLE_LINK_INTENT_VALUE = "link";

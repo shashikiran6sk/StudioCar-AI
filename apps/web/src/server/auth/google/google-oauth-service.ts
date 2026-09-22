@@ -3,14 +3,17 @@ import {
   type GoogleIdentity,
   type GoogleOAuthChallengePayload,
   GoogleIdentityResolutionStatus,
+  IdentityLinkStatus,
 } from "@studiocar/contracts";
 
 import { hashAuthSecret } from "../hash-auth-secret";
 import type {
+  GoogleIdentityLinkStore,
   GoogleIdentityProvider,
   GoogleIdentityStore,
   GoogleOAuthApplication,
   GoogleOAuthChallengeStore,
+  GoogleOAuthCompletion,
   GoogleOAuthPayloadProtector,
   SessionIssuer,
 } from "./google-auth.types";
@@ -23,6 +26,10 @@ export enum GoogleOAuthCompletionErrorCode {
   ChallengeInvalid = "challenge_invalid",
   IdentityLinkRequired = "identity_link_required",
   ProviderFailed = "provider_failed",
+  /** The link was started by a session that is no longer the one completing it. */
+  LinkSessionMismatch = "link_session_mismatch",
+  /** The Google account already belongs to somebody else. */
+  LinkIdentityTaken = "link_identity_taken",
 }
 
 export class GoogleOAuthCompletionError extends Error {
@@ -47,6 +54,7 @@ export class GoogleOAuthService implements GoogleOAuthApplication {
   public constructor(
     private readonly challengeStore: GoogleOAuthChallengeStore,
     private readonly identityStore: GoogleIdentityStore,
+    private readonly linkStore: GoogleIdentityLinkStore,
     private readonly provider: GoogleIdentityProvider,
     private readonly protector: GoogleOAuthPayloadProtector,
     private readonly sessions: SessionIssuer,
@@ -60,17 +68,29 @@ export class GoogleOAuthService implements GoogleOAuthApplication {
     }
   }
 
-  public async start(input: { returnTo: string }): Promise<{
+  public async start(input: {
+    returnTo: string;
+    linkUserId?: string;
+  }): Promise<{
     authorizationUrl: URL;
     state: string;
     expiresAt: Date;
   }> {
-    const validatedInput = GoogleAuthStartSchema.parse(input);
+    const validatedInput = GoogleAuthStartSchema.parse({
+      returnTo: input.returnTo,
+    });
     const authorizationRequest = await this.provider.createAuthorizationRequest();
     const expiresAt = new Date(this.now().getTime() + this.challengeTtlMs);
+    /**
+     * The link intent lives inside the encrypted, one-time challenge rather
+     * than the URL, so it cannot be forged or pointed at another account.
+     */
     const protectedPayload = this.protector.protect({
       codeVerifier: authorizationRequest.codeVerifier,
       nonce: authorizationRequest.nonce,
+      ...(input.linkUserId === undefined
+        ? {}
+        : { linkUserId: input.linkUserId }),
     });
 
     await this.challengeStore.create({
@@ -87,7 +107,11 @@ export class GoogleOAuthService implements GoogleOAuthApplication {
     };
   }
 
-  public async complete(input: { callbackUrl: URL; state: string }) {
+  public async complete(input: {
+    callbackUrl: URL;
+    state: string;
+    sessionUserId: string | null;
+  }): Promise<GoogleOAuthCompletion> {
     const authenticatedAt = this.now();
     const challenge = await this.challengeStore.consume(
       hashAuthSecret(input.state),
@@ -124,6 +148,20 @@ export class GoogleOAuthService implements GoogleOAuthApplication {
       );
     }
 
+    const returnTo = GoogleAuthStartSchema.parse({
+      returnTo: challenge.returnTo,
+    }).returnTo;
+
+    if (payload.linkUserId !== undefined) {
+      return this.completeLink(
+        payload.linkUserId,
+        identity,
+        input.sessionUserId,
+        authenticatedAt,
+        returnTo,
+      );
+    }
+
     const resolution = await this.identityStore.resolve(identity, authenticatedAt);
 
     if (resolution.status === GoogleIdentityResolutionStatus.LinkRequired) {
@@ -132,11 +170,46 @@ export class GoogleOAuthService implements GoogleOAuthApplication {
       );
     }
 
-    const returnTo = GoogleAuthStartSchema.parse({
-      returnTo: challenge.returnTo,
-    }).returnTo;
     const issuedSession = await this.sessions.issue(resolution.user.id);
 
-    return { issuedSession, returnTo };
+    return { kind: "SIGNED_IN", issuedSession, returnTo };
+  }
+
+  private async completeLink(
+    linkUserId: string,
+    identity: GoogleIdentity,
+    sessionUserId: string | null,
+    linkedAt: Date,
+    returnTo: string,
+  ): Promise<GoogleOAuthCompletion> {
+    /**
+     * The browser completing the callback must still be the account that asked
+     * for the link. Without this, a link challenge could be finished by a
+     * different session and attach a Google account to the wrong user.
+     */
+    if (sessionUserId === null || sessionUserId !== linkUserId) {
+      throw new GoogleOAuthCompletionError(
+        GoogleOAuthCompletionErrorCode.LinkSessionMismatch,
+      );
+    }
+
+    const result = await this.linkStore.linkGoogle({
+      userId: linkUserId,
+      providerSubject: identity.providerSubject,
+      email: identity.email,
+      displayName: identity.displayName,
+      linkedAt,
+    });
+
+    if (
+      result.status === IdentityLinkStatus.IdentityTaken ||
+      result.status === IdentityLinkStatus.ContactTaken
+    ) {
+      throw new GoogleOAuthCompletionError(
+        GoogleOAuthCompletionErrorCode.LinkIdentityTaken,
+      );
+    }
+
+    return { kind: "LINKED", returnTo };
   }
 }

@@ -6,6 +6,9 @@ import type {
   CompletePhoneOtpCommand,
   CreatePhoneOtpChallengeCommand,
   CreatePhoneOtpChallengeResult,
+  IdentityLinkResult,
+  LinkPhoneIdentity,
+  LinkPhoneIdentityCommand,
   PhoneOtpWidget,
   PhoneStart,
   PhoneOtpCompletionResult,
@@ -85,6 +88,10 @@ export interface PhoneOtpChallengeStore {
   ): Promise<boolean>;
 }
 
+export interface PhoneIdentityLinkStore {
+  linkPhone(command: LinkPhoneIdentityCommand): Promise<IdentityLinkResult>;
+}
+
 export interface PhoneOtpCompletionStore {
   complete(command: CompletePhoneOtpCommand): Promise<PhoneOtpCompletionResult>;
 }
@@ -117,4 +124,15 @@ export interface PhoneOtpApplication {
     browserBinding: string,
     clientAddress: string,
   ): Promise<CompletedPhoneOtp>;
+  /**
+   * Proves a phone number for an account that is already signed in. It runs the
+   * same challenge, rate-limit, identifier-assertion and single-use-token path
+   * as signing in, then attaches the identity instead of issuing a session.
+   */
+  link(
+    userId: string,
+    input: LinkPhoneIdentity,
+    browserBinding: string,
+    clientAddress: string,
+  ): Promise<IdentityLinkResult>;
 }

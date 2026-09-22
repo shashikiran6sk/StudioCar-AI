@@ -1,6 +1,8 @@
 import type {
   AuthUser,
   GoogleAuthStart,
+  IdentityLinkResult,
+  LinkGoogleIdentityCommand,
   GoogleIdentity,
   GoogleIdentityResolution,
   GoogleOAuthChallengePayload,
@@ -44,6 +46,10 @@ export interface GoogleIdentityStore {
   resolve(identity: GoogleIdentity, authenticatedAt: Date): Promise<GoogleIdentityResolution>;
 }
 
+export interface GoogleIdentityLinkStore {
+  linkGoogle(command: LinkGoogleIdentityCommand): Promise<IdentityLinkResult>;
+}
+
 export interface GoogleOAuthPayloadProtector {
   protect(payload: GoogleOAuthChallengePayload): string;
   unprotect(value: string): GoogleOAuthChallengePayload;
@@ -53,8 +59,19 @@ export interface SessionIssuer {
   issue(userId: string): Promise<IssuedSession>;
 }
 
+/**
+ * A callback either signs somebody in or connects Google to the account that
+ * was already signed in. The two are deliberately distinct: a link issues no
+ * new session, and a sign-in never silently attaches to an open session.
+ */
+export type GoogleOAuthCompletion =
+  | { kind: "SIGNED_IN"; issuedSession: IssuedSession; returnTo: string }
+  | { kind: "LINKED"; returnTo: string };
+
 export interface GoogleOAuthApplication {
-  start(input: GoogleAuthStart): Promise<{
+  start(
+    input: GoogleAuthStart & { linkUserId?: string },
+  ): Promise<{
     authorizationUrl: URL;
     state: string;
     expiresAt: Date;
@@ -62,5 +79,6 @@ export interface GoogleOAuthApplication {
   complete(input: {
     callbackUrl: URL;
     state: string;
-  }): Promise<{ issuedSession: IssuedSession; returnTo: string }>;
+    sessionUserId: string | null;
+  }): Promise<GoogleOAuthCompletion>;
 }

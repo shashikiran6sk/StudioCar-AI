@@ -6,15 +6,22 @@ import { ProfileIdentitiesCard } from "../../../../features/profile/profile-iden
 import { ProfileSecurityCard } from "../../../../features/profile/profile-security-card";
 import { getCurrentSession } from "../../../../server/auth/get-current-session";
 import { getProfileService } from "../../../../server/profile/profile-runtime";
+import { PROFILE_GOOGLE_LINKED_MESSAGE } from "../../../../features/profile/profile.constants";
 
 const PAGE_EYEBROW = "Account";
 const PAGE_TITLE = "Profile & security";
 const PAGE_DESCRIPTION =
   "Manage your account details, sign-in methods, and active sessions.";
 
-export default async function ProfilePage() {
+export interface ProfilePageProps {
+  searchParams: Promise<{ linked?: string }>;
+}
+
+export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   const session = await getCurrentSession();
   if (!session) redirect(LOGIN_PATH);
+
+  const { linked } = await searchParams;
 
   const profile = await getProfileService().get(session.userId);
   if (!profile) notFound();
@@ -30,7 +37,12 @@ export default async function ProfilePage() {
       </header>
       <div className="profile-grid">
         <ProfileDetailsCard user={profile.user} />
-        <ProfileIdentitiesCard identities={profile.identities} />
+        <ProfileIdentitiesCard
+          identities={profile.identities}
+          {...(linked === "google"
+            ? { notice: PROFILE_GOOGLE_LINKED_MESSAGE }
+            : {})}
+        />
         <ProfileSecurityCard
           activeSessionCount={profile.activeSessionCount}
           currentSessionExpiresAt={session.expiresAt}

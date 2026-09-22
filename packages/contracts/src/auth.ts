@@ -64,6 +64,13 @@ export const GoogleOAuthChallengePayloadSchema = z
       .min(MINIMUM_OAUTH_VALUE_LENGTH)
       .max(MAXIMUM_OAUTH_VALUE_LENGTH)
       .regex(OAUTH_VALUE_PATTERN),
+    /**
+     * Present only when this flow was started to connect Google to an account
+     * that is already signed in. It travels inside the encrypted, one-time
+     * challenge payload rather than the URL, so the intent cannot be forged or
+     * swapped for another account's.
+     */
+    linkUserId: z.uuid().optional(),
   })
   .strict();
 
@@ -140,6 +147,32 @@ export const PhoneOtpWidgetSchema = z
     tokenAuth: z.string().nullable(),
     devCode: z.string().nullable(),
     reason: z.string().nullable(),
+  })
+  .strict();
+
+/**
+ * Linking never merges accounts. An identity that already belongs to somebody
+ * else is refused outright, and so is a contact detail another account holds.
+ */
+export enum IdentityLinkStatus {
+  Linked = "linked",
+  AlreadyLinked = "already_linked",
+  IdentityTaken = "identity_taken",
+  ContactTaken = "contact_taken",
+}
+
+export const LinkPhoneIdentitySchema = z
+  .object({
+    challengeId: z.uuid(),
+    phoneNumber: IndianPhoneNumberSchema,
+    accessToken: z.string().trim().min(1).max(MAXIMUM_ACCESS_TOKEN_LENGTH),
+  })
+  .strict();
+
+export const IdentityLinkResponseSchema = z
+  .object({
+    status: z.literal(IdentityLinkStatus.Linked),
+    provider: z.enum(["GOOGLE", "PHONE"]),
   })
   .strict();
 
@@ -272,6 +305,24 @@ export const LogoutSchema = z
 
 export type PhoneStart = z.infer<typeof PhoneStartSchema>;
 export type PhoneOtpDriver = z.infer<typeof PhoneOtpDriverSchema>;
+export type LinkPhoneIdentity = z.infer<typeof LinkPhoneIdentitySchema>;
+export type IdentityLinkResponse = z.infer<typeof IdentityLinkResponseSchema>;
+
+export interface LinkGoogleIdentityCommand {
+  userId: string;
+  providerSubject: string;
+  email: string;
+  displayName: string | null;
+  linkedAt: Date;
+}
+
+export interface LinkPhoneIdentityCommand {
+  userId: string;
+  phoneNumber: string;
+  linkedAt: Date;
+}
+
+export type IdentityLinkResult = { status: IdentityLinkStatus };
 export type PhoneOtpWidget = z.infer<typeof PhoneOtpWidgetSchema>;
 export type Msg91WidgetVerification = z.infer<
   typeof Msg91WidgetVerificationSchema

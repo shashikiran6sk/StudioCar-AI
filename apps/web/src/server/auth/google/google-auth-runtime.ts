@@ -1,5 +1,6 @@
 import { parseGoogleAuthEnvironment } from "@studiocar/config";
 import { createDatabaseClient } from "@studiocar/database-runtime";
+import { PrismaAuthIdentityLinkRepository } from "../../db/repositories/auth-identity-link-repository";
 import { PrismaGoogleIdentityRepository } from "../../db/repositories/google-identity-repository";
 import { PrismaGoogleOAuthChallengeRepository } from "../../db/repositories/google-oauth-challenge-repository";
 import { PrismaSessionRepository } from "../../db/repositories/session-repository";
@@ -32,6 +33,7 @@ export function getGoogleOAuthApplication(): GoogleOAuthApplication {
   googleOAuthApplication = new GoogleOAuthService(
     challenges,
     identities,
+    new PrismaAuthIdentityLinkRepository(database),
     provider,
     protector,
     sessions,
