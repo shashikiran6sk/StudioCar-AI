@@ -10,6 +10,7 @@ The architectural goal is to move from remove.bg to fal.ai BiRefNet v2 and event
 
 - Product and system behavior: the repository's StudioCar AI technical specification and accepted implementation requirements.
 - Repository-wide engineering instructions: `/AGENTS.md`.
+- Secret ownership and security decisions: `/docs/security.md`.
 - Visual design tokens and component rules: `/docs/design.md`.
 - Screen composition: `/docs/screens/`.
 - Current delivery state and implementation notes: `/docs/progress.md`.
@@ -34,6 +35,7 @@ Workspace layout:
 
 - `apps/web`: Next.js application, application-server code, and the Prisma schema, migrations, and tenant repositories
 - `workers/image-processing`: asynchronous image-processing worker
+- `workers/email-delivery`: asynchronous email-delivery worker
 - `packages/ui`: reusable design-system components
 - `packages/contracts`: canonical Zod schemas and inferred DTO types
 - `packages/database-runtime`: generated Prisma client, pooled client factory, and the repositories shared with the deployable workers
@@ -63,7 +65,7 @@ Route handlers stay thin. React code never calls Prisma or external processing p
 
 ## Core domain
 
-The canonical persistence model includes `User`, `AuthIdentity`, `Session`, `Vehicle`, `ImageAsset`, `ProcessingJob`, `ProcessingAttempt`, `ProcessedAsset`, `UsageEvent`, `PlanSubscription`, `WebhookEvent`, and `AuditLog`.
+The canonical persistence model includes `User`, `AuthIdentity`, `Session`, `Vehicle`, `ImageAsset`, `ProcessingJob`, `ProcessingAttempt`, `ProcessedAsset`, `UsageEvent`, `PlanSubscription`, `WebhookEvent`, and `AuditLog`, plus the durable outbox tables and the administration and configuration tables: `UserRole`, `AppConfig`, `AdminInvite`, `PlanConfig`, and `SocialLink`.
 
 Important invariants:
 
@@ -76,6 +78,11 @@ Important invariants:
 - Duplicate delivery cannot cause duplicate provider charges, outputs, or usage events.
 - Successful job completion and immutable usage-event creation occur atomically.
 - Stored database values are private object keys, not permanent S3 URLs.
+- Administrator authorization is a row in `UserRole`, never an environment value, and every administration page and server action re-checks it against the database for itself.
+- Plans, prices, allowances, batch limits, and footer links are configuration rows, not constants. The application carries no second copy of a plan.
+- `planKey`, `allowanceScope`, and `currency` are not editable: the key identifies existing subscriptions, and the scope decides how usage already charged is counted.
+- A subscription a payment provider owns is never written from the administration area, and an account is found there only through a sign-in method it has verified.
+- `AuditLog` is append-only and read bounded. Its `metadata` is `Json` and must be validated before any field is read; a null `userId` means the system acted or the actor's account was deleted, which are different facts.
 
 ## Code conventions
 

@@ -1,14 +1,35 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-09-22
+Last updated: 2026-09-23
 
 ## Current status
 
-The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and durable transactional email are implemented. Browser response hardening, a blocking production dependency audit, durable authenticated command limits, runtime secret isolation, signed-webhook verification, bounded retention, durable abandoned-upload cleanup, production read-path hardening, and the image-worker observability foundation are also in place.
+Every slice in the accepted plan is implemented and merged.
 
-Database ownership now belongs to `apps/web`, S3 and SQS connections are configurable, phone OTP uses the MSG91 Widget flow, a deterministic local environment reproduces the production data plane, and workspace navigation carries a real plan and usage summary.
+The production foundation, authentication with account linking, private direct
+uploads, asynchronous provider-independent processing, truthful polling,
+screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and
+durable transactional email are in place. So are browser response hardening, a
+blocking production dependency audit, durable authenticated command limits,
+runtime secret isolation, signed-webhook verification, bounded retention,
+durable abandoned-upload cleanup, production read-path hardening, and the
+image-worker observability foundation.
 
-Plan prices, allowances and batch limits are database-backed and editable at `/admin/pricing`; the application carries no second copy of a plan. An administrator can assign a paid plan by hand at `/admin/subscriptions`, and a subscription a payment provider owns is never overwritten from there. The public footer's social links are administered at `/admin/content`, and the overview reports the recent administrative changes alongside bounded counts. Payment checkout remains intentionally unavailable until a billing provider is selected. See **Not yet implemented** for everything the accepted plan still calls for.
+Database ownership belongs to `apps/web`, S3 and SQS connections are
+configurable, phone OTP uses the MSG91 Widget flow, and a deterministic local
+environment reproduces the production data plane end to end.
+
+The internal administration area is complete. Authorization is a row in
+`UserRole` and is re-checked against the database on every page and every
+mutation. Plan prices, allowances and batch limits are configuration rows read
+fresh on each request; the application carries no second copy of a plan. An
+administrator can assign a paid plan by hand, administer the public footer's
+social links, manage who else has access, and read the recent administrative
+changes. Every change writes an `AuditLog` entry naming who made it.
+
+Payment checkout remains intentionally unavailable until a billing provider is
+selected, and no plan is marked purchasable. See **Not yet implemented** for
+everything the accepted plan still leaves open.
 
 ## Completed
 
@@ -505,6 +526,16 @@ Plan prices, allowances and batch limits are database-backed and editable at `/a
 - Added contract, describer, actor-attribution, reader, component and page coverage; five real-PostgreSQL audit tests; and a Playwright assertion that a change an administrator has just made appears on the overview.
 - Verified lint, strict typecheck, source mapping, every package suite (749 tests), 31 integration files with 123 tests against real PostgreSQL, `prisma validate`, production builds, and ten Playwright tests.
 
+### SC034 — Documentation consolidation and full-stack validation
+
+- Brought the documentation back in line with the repository after the administration work. `context.md` listed a persistence model that predated `UserRole`, `AppConfig`, `AdminInvite`, `PlanConfig` and `SocialLink`, and omitted the email-delivery worker.
+- Added the administration invariants to `context.md`: authorization is a row and is re-checked per request; plans and footer links are configuration rows, not constants; `planKey`, `allowanceScope` and `currency` are not editable; a provider-owned subscription is never written from the administration area; `AuditLog.metadata` must be validated before it is read, and a null actor is ambiguous between the system and a deleted account.
+- Extended `docs/security.md` to cover SC030–SC033, which it did not reach: what an administrator may and may not change and why, the provider-owned subscription rule, verified-identity-only lookup with no customer listing, https-only footer links with no embedded credentials, and how the audit trail is read without shipping stored metadata to a browser.
+- Added an Administration section to `README.md` naming every destination, what it changes, and the exact role `BOOTSTRAP_ADMIN_EMAIL` plays — and does not play.
+- Ran a full-stack validation pass against real infrastructure: 16 committed migrations apply cleanly and the schema is up to date; `pnpm db:seed` is idempotent across repeated runs and left every edited row untouched; the seeded catalog matches the agreed figures exactly (Free 15/5 lifetime, Studio Pack ₹1,499/100, Studio Pro ₹3,999/500, Studio Plus ₹7,999/1,500, none purchasable).
+- Confirmed the end-to-end suite restores what it changes: Studio Pro's price was back to ₹3,999 after the pricing walk edited it.
+- Every gate green on a clean `main`: lint, strict typecheck, source mapping, 749 unit tests, 127 integration tests against real PostgreSQL, `prisma validate`, production builds, and 10 Playwright tests.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -514,10 +545,9 @@ Plan prices, allowances and batch limits are database-backed and editable at `/a
 
 ## Next planned slices
 
-Ordered as agreed. UI work first, then the admin and billing foundation.
+Every slice in the accepted plan is done. What remains was deferred by that plan, not dropped from it.
 
-1. **Documentation consolidation and a full-stack validation pass**.
-2. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
+1. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
 
 ## Not yet implemented
 

@@ -82,6 +82,86 @@ both succeed. Every grant, invitation, cancellation, and revocation writes an
 `AuditLog` entry naming the acting administrator, and none of that metadata
 contains a token or credential.
 
+## Configuration an administrator may change
+
+Plan configuration is a row in `PlanConfig`, read fresh on each request rather
+than cached across them: an allowance decides whether somebody's work is charged
+or refused, so it is never served from a stale copy.
+
+Three fields are deliberately not editable. `planKey` identifies existing
+subscriptions and keeps the set of plans closed, so an edit cannot invent a plan
+nothing else in the product understands. `allowanceScope` decides how usage
+**already charged** is counted, so changing it would reinterpret history rather
+than change the future. `currency` is fixed for the same reason.
+
+Validation is layered. The canonical Zod contract refuses a batch limit larger
+than the plan's whole allowance, and the database's own CHECK constraints refuse
+the same thing, so neither can be bypassed by reaching the other first. Every
+save runs under an advisory lock and writes a `PLAN_CONFIG_UPDATED` audit entry
+in the same transaction.
+
+Resolution never fails: a plan the live catalog does not describe falls back to
+the shipped default, and a key nothing describes falls back to the free plan.
+Falling back to the smallest allowance is the safe direction — it can delay
+work, never over-grant it.
+
+## Manually assigned subscriptions
+
+A subscription a payment provider owns is **never** overwritten from the
+administration area. The provider is the authority on what somebody has paid
+for, and two rows disagreeing with no way to tell which is right is worse than
+refusing the change. When a billing provider lands, its webhook remains the only
+writer of `PAYMENT_PROVIDER` rows.
+
+At most one manual assignment is ever in force, enforced by a partial unique
+index as well as by the write path, so "which plan applies" is never ambiguous.
+Assignments are bounded in length; no grant is open-ended.
+
+An account is found for subscription management only through a sign-in method it
+has **verified** — a Google identity with a verified email, or a phone identity.
+Never `User.primaryEmail` or `primaryPhone`, which are profile values somebody
+typed rather than proof.
+
+Lookup is exact-match only. There is no partial search and no customer listing:
+an administrator assigning a subscription already knows who to, and a browsable
+directory of customers would disclose more than the task needs. A malformed
+lookup queries nothing at all.
+
+Ownership is keyed by account. The assignment contract takes a `userId` and
+rejects a contact detail in its place, so a subscription can never be attached
+to an address rather than to a person.
+
+## Public footer links
+
+A footer link is an address the public will follow. It must be `https`, which
+the database's `SocialLink_url_is_https` CHECK constraint mirrors, so an
+administrator cannot downgrade visitors to plaintext by pasting.
+
+An address carrying credentials is refused. `https://studiocar.example@evil.example/`
+reads as a StudioCar address in a status bar but is not one, and nothing
+legitimate needs a password in a link the whole world can see. An `@` in the
+path is accepted, because that is how most handles are written.
+
+There is no shipped default and nothing is seeded. A link exists only once a
+real address is supplied, so the footer renders nothing rather than a dead link.
+
+## Reading the audit trail
+
+The administration overview reads `AuditLog`, restricted to the administrative
+actions and bounded, so it cannot become an unpaged dump of a table that also
+carries ordinary account activity.
+
+`AuditLog.metadata` is `Json`, so it arrives as `unknown` and is validated
+before any field is read. Entries are rendered to sentences **on the server**:
+stored metadata never reaches the browser, so a key added to it later cannot
+leak into a page by accident.
+
+`AuditLog.userId` is set to null when an account is deleted. A null actor
+therefore means one of two different things — the system acted, which only
+first-run bootstrap does, or the administrator's account is gone. The trail
+names them separately, because conflating them would mislead exactly where an
+audit trail matters most.
+
 ## Local development drivers
 
 The local environment selects development drivers that cannot reach a customer:
