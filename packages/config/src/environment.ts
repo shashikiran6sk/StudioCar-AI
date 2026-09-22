@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+import {
+  refineS3Connection,
+  refineSqsConnection,
+  S3ConnectionSchema,
+  SqsConnectionSchema,
+} from "./aws-connection";
+
 const EnvironmentNameSchema = z.enum(["development", "test", "production"]);
 const DEFAULT_MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 const MAX_CONFIGURED_UPLOAD_BYTES = DEFAULT_MAX_UPLOAD_BYTES;
@@ -114,7 +121,7 @@ export const GoogleAuthEnvironmentSchema = z
   .strip();
 
 const UploadConfigurationSchema = z.object({
-  AWS_REGION: z.string().trim().min(1),
+  ...S3ConnectionSchema.shape,
   S3_BUCKET: z.string().trim().min(3).max(63),
   MAX_UPLOAD_BYTES: z.coerce
     .number()
@@ -151,7 +158,8 @@ export const UploadEnvironmentSchema = z
     DATABASE_URL: PostgresUrlSchema,
     ...UploadConfigurationSchema.shape,
   })
-  .strip();
+  .strip()
+  .superRefine(refineS3Connection);
 
 export const EmailWorkerEnvironmentSchema = z
   .object({
@@ -172,7 +180,7 @@ export const EmailWorkerEnvironmentSchema = z
 export const EmailDispatchEnvironmentSchema = z
   .object({
     APPLICATION_BASE_URL: z.httpUrl(),
-    AWS_REGION: z.string().trim().min(1),
+    ...SqsConnectionSchema.shape,
     DATABASE_URL: PostgresUrlSchema,
     EMAIL_DISPATCH_TOKEN: z.string().min(32),
     EMAIL_OUTBOX_BATCH_SIZE: z.coerce
@@ -202,14 +210,16 @@ export const EmailDispatchEnvironmentSchema = z
     SQS_EMAIL_QUEUE_URL: z.url(),
   })
   .strip()
-  .refine(
-    (value) =>
-      value.EMAIL_OUTBOX_RETRY_MAX_MS >= value.EMAIL_OUTBOX_RETRY_BASE_MS,
-    {
-      message: "Email retry maximum must be at least the retry base.",
-      path: ["EMAIL_OUTBOX_RETRY_MAX_MS"],
-    },
-  );
+  .superRefine((value, context) => {
+    refineSqsConnection(value, context);
+    if (value.EMAIL_OUTBOX_RETRY_MAX_MS < value.EMAIL_OUTBOX_RETRY_BASE_MS) {
+      context.addIssue({
+        code: "custom",
+        message: "Email retry maximum must be at least the retry base.",
+        path: ["EMAIL_OUTBOX_RETRY_MAX_MS"],
+      });
+    }
+  });
 
 export const LifecycleCleanupEnvironmentSchema = z
   .object({
@@ -245,7 +255,7 @@ export const LifecycleCleanupEnvironmentSchema = z
 export const StorageCleanupEnvironmentSchema = z
   .object({
     DATABASE_URL: PostgresUrlSchema,
-    AWS_REGION: z.string().trim().min(1),
+    ...S3ConnectionSchema.shape,
     S3_BUCKET: z.string().trim().min(3).max(63),
     STORAGE_CLEANUP_TOKEN: z.string().min(32),
     STORAGE_CLEANUP_BATCH_SIZE: z.coerce
@@ -286,15 +296,18 @@ export const StorageCleanupEnvironmentSchema = z
       .default(DEFAULT_STORAGE_DELETION_RETRY_MAX_MS),
   })
   .strip()
-  .refine(
-    (value) =>
-      value.STORAGE_DELETION_RETRY_MAX_MS >=
-      value.STORAGE_DELETION_RETRY_BASE_MS,
-    {
-      message: "Storage deletion retry maximum must be at least the retry base.",
-      path: ["STORAGE_DELETION_RETRY_MAX_MS"],
-    },
-  );
+  .superRefine((value, context) => {
+    refineS3Connection(value, context);
+    if (
+      value.STORAGE_DELETION_RETRY_MAX_MS < value.STORAGE_DELETION_RETRY_BASE_MS
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Storage deletion retry maximum must be at least the retry base.",
+        path: ["STORAGE_DELETION_RETRY_MAX_MS"],
+      });
+    }
+  });
 
 export const BackgroundRemovalProviderSchema = z.enum([
   "removebg",
@@ -305,7 +318,7 @@ export const BackgroundRemovalProviderSchema = z.enum([
 export const ProcessingEnvironmentSchema = z
   .object({
     DATABASE_URL: PostgresUrlSchema,
-    AWS_REGION: z.string().trim().min(1),
+    ...SqsConnectionSchema.shape,
     SQS_IMAGE_QUEUE_URL: z.url(),
     BACKGROUND_REMOVAL_PROVIDER: BackgroundRemovalProviderSchema,
     PROCESSING_DISPATCH_TOKEN: z.string().min(32),
@@ -339,20 +352,24 @@ export const ProcessingEnvironmentSchema = z
       .default(DEFAULT_PROCESSING_OUTBOX_RETRY_MAX_MS),
   })
   .strip()
-  .refine(
-    (value) =>
-      value.PROCESSING_OUTBOX_RETRY_MAX_MS >=
-      value.PROCESSING_OUTBOX_RETRY_BASE_MS,
-    {
-      message: "Processing retry maximum must be at least the retry base.",
-      path: ["PROCESSING_OUTBOX_RETRY_MAX_MS"],
-    },
-  );
+  .superRefine((value, context) => {
+    refineSqsConnection(value, context);
+    if (
+      value.PROCESSING_OUTBOX_RETRY_MAX_MS <
+      value.PROCESSING_OUTBOX_RETRY_BASE_MS
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Processing retry maximum must be at least the retry base.",
+        path: ["PROCESSING_OUTBOX_RETRY_MAX_MS"],
+      });
+    }
+  });
 
 export const ImageWorkerEnvironmentSchema = z
   .object({
     DATABASE_URL: PostgresUrlSchema,
-    AWS_REGION: z.string().trim().min(1),
+    ...S3ConnectionSchema.shape,
     S3_BUCKET: z.string().trim().min(3).max(63),
     BACKGROUND_REMOVAL_PROVIDER: BackgroundRemovalProviderSchema,
     REMOVEBG_API_KEY: z.string().trim().min(1).optional(),
@@ -409,6 +426,7 @@ export const ImageWorkerEnvironmentSchema = z
   })
   .strip()
   .superRefine((value, context) => {
+    refineS3Connection(value, context);
     if (value.PROCESSING_RETRY_MAX_MS < value.PROCESSING_RETRY_BASE_MS) {
       context.addIssue({
         code: "custom",

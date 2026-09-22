@@ -1,5 +1,8 @@
 import { SQSClient } from "@aws-sdk/client-sqs";
-import { parseEmailDispatchEnvironment } from "@studiocar/config";
+import {
+  createSqsClientOptions,
+  parseEmailDispatchEnvironment,
+} from "@studiocar/config";
 import { createDatabaseClient } from "@studiocar/database-runtime";
 import { PrismaEmailOutboxPublisherRepository } from "../db/repositories/email-outbox-publisher-repository";
 import { EmailOutboxDispatcher } from "@studiocar/email";
@@ -21,7 +24,7 @@ export function getEmailRuntime(): EmailRuntime {
     connectionString: environment.DATABASE_URL,
   });
   const queue = new SqsEmailQueue(
-    new SQSClient({ region: environment.AWS_REGION }),
+    new SQSClient(createSqsClientOptions(environment)),
     environment.SQS_EMAIL_QUEUE_URL,
   );
   emailRuntime = {

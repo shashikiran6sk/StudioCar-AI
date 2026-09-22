@@ -11,6 +11,17 @@ Parameters:
     Type: String
     AllowedPattern: ^https://[^/]+$
     Description: Exact HTTPS origin allowed to upload directly from the browser
+  AdditionalBrowserOrigin:
+    Type: String
+    Default: ""
+    AllowedPattern: ^$|^https?://[^/]+$
+    Description: >-
+      Optional second exact origin allowed to upload directly from the browser,
+      for a non-production stack that must accept a local development host.
+      Leave empty in production.
+
+Conditions:
+  HasAdditionalBrowserOrigin: !Not [!Equals [!Ref AdditionalBrowserOrigin, ""]]
 
 Resources:
   ImageBucket:
@@ -33,8 +44,10 @@ Resources:
               - x-amz-meta-vehicle-id
             AllowedMethods:
               - PUT
-            AllowedOrigins:
-              - !Ref WebApplicationOrigin
+            AllowedOrigins: !If
+              - HasAdditionalBrowserOrigin
+              - [!Ref WebApplicationOrigin, !Ref AdditionalBrowserOrigin]
+              - [!Ref WebApplicationOrigin]
             ExposedHeaders:
               - ETag
               - x-amz-checksum-sha256

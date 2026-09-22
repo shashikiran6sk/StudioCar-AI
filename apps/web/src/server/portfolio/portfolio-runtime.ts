@@ -1,5 +1,5 @@
 import { S3Client } from "@aws-sdk/client-s3";
-import { parseUploadEnvironment } from "@studiocar/config";
+import { createS3ClientOptions, parseUploadEnvironment } from "@studiocar/config";
 import { createDatabaseClient } from "@studiocar/database-runtime";
 import { PrismaPortfolioRepository } from "../db/repositories/portfolio-repository";
 
@@ -17,7 +17,7 @@ export function getPortfolioService(): PortfolioService {
       createDatabaseClient({ connectionString: environment.DATABASE_URL }),
     ),
     new S3PortfolioAssetSigner(
-      new S3Client({ region: environment.AWS_REGION }),
+      new S3Client(createS3ClientOptions(environment)),
       environment.S3_BUCKET,
     ),
     { assetUrlTtlSeconds: environment.PRESIGNED_URL_TTL_SECONDS },

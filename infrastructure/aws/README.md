@@ -9,7 +9,9 @@ into the Next.js runtime.
 for browser-to-S3 image uploads and a least-privilege managed policy for the
 Next.js application role. The policy also permits deletion under the same
 tenant-prefixed object namespace for the durable abandoned-upload cleanup
-command. Supply the exact deployed web origin for browser CORS.
+command. Supply the exact deployed web origin for browser CORS. A non-production stack
+may additionally supply `AdditionalBrowserOrigin` so a local development host
+can upload directly; leave it empty in production.
 
 `image-processing-queue.yml` provisions the encrypted standard processing queue,
 its retained dead-letter queue, separate publisher and consumer policies, and

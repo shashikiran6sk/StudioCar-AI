@@ -1,0 +1,257 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  createS3ClientOptions,
+  createSqsClientOptions,
+  S3ConnectionSchema,
+  SqsConnectionSchema,
+} from "../../../packages/config/src/aws-connection";
+import {
+  parseImageWorkerEnvironment,
+  parseProcessingEnvironment,
+  parseStorageCleanupEnvironment,
+  parseUploadEnvironment,
+} from "../../../packages/config/src/environment";
+
+const databaseUrl = "postgresql://studiocar:secret@localhost:5432/studiocar";
+const accessKeyId = "AKIAEXAMPLEEXAMPLE00";
+const secretAccessKey = "example-secret-access-key-value-0000";
+
+const baseUploadEnvironment = {
+  DATABASE_URL: databaseUrl,
+  AWS_REGION: "ap-south-1",
+  S3_BUCKET: "studiocar-private",
+};
+
+describe("S3 connection configuration", () => {
+  it("keeps the AWS default credential chain when no keys are configured", () => {
+    const connection = S3ConnectionSchema.parse({ AWS_REGION: "ap-south-1" });
+
+    expect(createS3ClientOptions(connection)).toStrictEqual({
+      region: "ap-south-1",
+      forcePathStyle: false,
+    });
+  });
+
+  it("supplies explicit credentials and an emulator endpoint when configured", () => {
+    const connection = S3ConnectionSchema.parse({
+      AWS_REGION: "ap-south-1",
+      S3_ENDPOINT: "http://localhost:9000",
+      S3_FORCE_PATH_STYLE: "true",
+      S3_ACCESS_KEY_ID: accessKeyId,
+      S3_SECRET_ACCESS_KEY: secretAccessKey,
+    });
+
+    expect(createS3ClientOptions(connection)).toStrictEqual({
+      region: "ap-south-1",
+      endpoint: "http://localhost:9000",
+      forcePathStyle: true,
+      credentials: { accessKeyId, secretAccessKey },
+    });
+  });
+
+  it("treats an absent path-style flag as disabled", () => {
+    expect(
+      S3ConnectionSchema.parse({ AWS_REGION: "ap-south-1" })
+        .S3_FORCE_PATH_STYLE,
+    ).toBe(false);
+  });
+
+  it.each([
+    ["1", true],
+    ["true", true],
+    ["0", false],
+    ["false", false],
+  ])("reads the path-style flag %s as %s", (value, expected) => {
+    expect(
+      S3ConnectionSchema.parse({
+        AWS_REGION: "ap-south-1",
+        S3_FORCE_PATH_STYLE: value,
+      }).S3_FORCE_PATH_STYLE,
+    ).toBe(expected);
+  });
+
+  it("rejects an unrecognised path-style flag rather than guessing", () => {
+    expect(() =>
+      S3ConnectionSchema.parse({
+        AWS_REGION: "ap-south-1",
+        S3_FORCE_PATH_STYLE: "yes",
+      }),
+    ).toThrow();
+  });
+});
+
+describe("upload environment", () => {
+  it("parses a production configuration that relies on workload identity", () => {
+    const environment = parseUploadEnvironment(baseUploadEnvironment);
+
+    expect(createS3ClientOptions(environment)).toStrictEqual({
+      region: "ap-south-1",
+      forcePathStyle: false,
+    });
+  });
+
+  it("parses a local emulator configuration", () => {
+    const environment = parseUploadEnvironment({
+      ...baseUploadEnvironment,
+      S3_ENDPOINT: "http://localhost:9000",
+      S3_FORCE_PATH_STYLE: "true",
+      S3_ACCESS_KEY_ID: accessKeyId,
+      S3_SECRET_ACCESS_KEY: secretAccessKey,
+    });
+
+    expect(createS3ClientOptions(environment)).toStrictEqual({
+      region: "ap-south-1",
+      endpoint: "http://localhost:9000",
+      forcePathStyle: true,
+      credentials: { accessKeyId, secretAccessKey },
+    });
+  });
+
+  it("fails closed when only an access key id is configured", () => {
+    expect(() =>
+      parseUploadEnvironment({
+        ...baseUploadEnvironment,
+        S3_ACCESS_KEY_ID: accessKeyId,
+      }),
+    ).toThrow(/must be configured together/);
+  });
+
+  it("fails closed when only a secret access key is configured", () => {
+    expect(() =>
+      parseUploadEnvironment({
+        ...baseUploadEnvironment,
+        S3_SECRET_ACCESS_KEY: secretAccessKey,
+      }),
+    ).toThrow(/must be configured together/);
+  });
+
+  it("ignores unrelated secrets that share the process environment", () => {
+    const environment = parseUploadEnvironment({
+      ...baseUploadEnvironment,
+      RESEND_API_KEY: "must-not-cross-this-boundary",
+    });
+
+    expect(Object.keys(environment)).not.toContain("RESEND_API_KEY");
+  });
+});
+
+describe("storage cleanup and image worker environments", () => {
+  it("accepts the same S3 connection fields for storage cleanup", () => {
+    const environment = parseStorageCleanupEnvironment({
+      DATABASE_URL: databaseUrl,
+      AWS_REGION: "ap-south-1",
+      S3_BUCKET: "studiocar-private",
+      STORAGE_CLEANUP_TOKEN: "a".repeat(32),
+      S3_ENDPOINT: "http://localhost:9000",
+      S3_FORCE_PATH_STYLE: "true",
+      S3_ACCESS_KEY_ID: accessKeyId,
+      S3_SECRET_ACCESS_KEY: secretAccessKey,
+    });
+
+    expect(createS3ClientOptions(environment).endpoint).toBe(
+      "http://localhost:9000",
+    );
+  });
+
+  it("still enforces the storage deletion retry bound alongside credentials", () => {
+    expect(() =>
+      parseStorageCleanupEnvironment({
+        DATABASE_URL: databaseUrl,
+        AWS_REGION: "ap-south-1",
+        S3_BUCKET: "studiocar-private",
+        STORAGE_CLEANUP_TOKEN: "a".repeat(32),
+        STORAGE_DELETION_RETRY_BASE_MS: "60000",
+        STORAGE_DELETION_RETRY_MAX_MS: "30000",
+      }),
+    ).toThrow(/retry maximum must be at least the retry base/);
+  });
+
+  it("accepts the same S3 connection fields for the image worker", () => {
+    const environment = parseImageWorkerEnvironment({
+      DATABASE_URL: databaseUrl,
+      AWS_REGION: "ap-south-1",
+      S3_BUCKET: "studiocar-private",
+      BACKGROUND_REMOVAL_PROVIDER: "removebg",
+      REMOVEBG_API_KEY: "provider-key",
+      S3_ENDPOINT: "http://minio:9000",
+      S3_FORCE_PATH_STYLE: "1",
+      S3_ACCESS_KEY_ID: accessKeyId,
+      S3_SECRET_ACCESS_KEY: secretAccessKey,
+    });
+
+    expect(createS3ClientOptions(environment)).toStrictEqual({
+      region: "ap-south-1",
+      endpoint: "http://minio:9000",
+      forcePathStyle: true,
+      credentials: { accessKeyId, secretAccessKey },
+    });
+  });
+
+  it("still requires the selected provider credential", () => {
+    expect(() =>
+      parseImageWorkerEnvironment({
+        DATABASE_URL: databaseUrl,
+        AWS_REGION: "ap-south-1",
+        S3_BUCKET: "studiocar-private",
+        BACKGROUND_REMOVAL_PROVIDER: "fal",
+      }),
+    ).toThrow(/FAL_KEY is required/);
+  });
+});
+
+describe("SQS connection configuration", () => {
+  it("keeps the AWS default credential chain when no keys are configured", () => {
+    const connection = SqsConnectionSchema.parse({ AWS_REGION: "ap-south-1" });
+
+    expect(createSqsClientOptions(connection)).toStrictEqual({
+      region: "ap-south-1",
+    });
+  });
+
+  it("supplies an emulator endpoint and explicit credentials", () => {
+    const environment = parseProcessingEnvironment({
+      DATABASE_URL: databaseUrl,
+      AWS_REGION: "ap-south-1",
+      SQS_IMAGE_QUEUE_URL: "http://localhost:9324/queue/studiocar-images",
+      SQS_ENDPOINT: "http://localhost:9324",
+      SQS_ACCESS_KEY_ID: accessKeyId,
+      SQS_SECRET_ACCESS_KEY: secretAccessKey,
+      BACKGROUND_REMOVAL_PROVIDER: "removebg",
+      PROCESSING_DISPATCH_TOKEN: "b".repeat(32),
+    });
+
+    expect(createSqsClientOptions(environment)).toStrictEqual({
+      region: "ap-south-1",
+      endpoint: "http://localhost:9324",
+      credentials: { accessKeyId, secretAccessKey },
+    });
+  });
+
+  it("fails closed on half-configured queue credentials", () => {
+    expect(() =>
+      parseProcessingEnvironment({
+        DATABASE_URL: databaseUrl,
+        AWS_REGION: "ap-south-1",
+        SQS_IMAGE_QUEUE_URL: "http://localhost:9324/queue/studiocar-images",
+        SQS_ACCESS_KEY_ID: accessKeyId,
+        BACKGROUND_REMOVAL_PROVIDER: "removebg",
+        PROCESSING_DISPATCH_TOKEN: "b".repeat(32),
+      }),
+    ).toThrow(/must be configured together/);
+  });
+
+  it("still enforces the processing retry bound alongside credentials", () => {
+    expect(() =>
+      parseProcessingEnvironment({
+        DATABASE_URL: databaseUrl,
+        AWS_REGION: "ap-south-1",
+        SQS_IMAGE_QUEUE_URL: "http://localhost:9324/queue/studiocar-images",
+        BACKGROUND_REMOVAL_PROVIDER: "removebg",
+        PROCESSING_DISPATCH_TOKEN: "b".repeat(32),
+        PROCESSING_OUTBOX_RETRY_BASE_MS: "60000",
+        PROCESSING_OUTBOX_RETRY_MAX_MS: "1000",
+      }),
+    ).toThrow(/retry maximum must be at least the retry base/);
+  });
+});

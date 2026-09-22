@@ -323,6 +323,16 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Mirrored every moved source in the behaviour-test map: repository tests now live under `tests/unit/server/db` and `tests/integration/server/db`, with the shared client and worker repositories under `tests/unit/database-runtime` and `tests/integration/database-runtime`.
 - Verified Prisma generation and schema validation from the new location, all fourteen migrations applying cleanly to an empty PostgreSQL instance, lint, strict typecheck, source mapping, 217 web test files with 345 tests, 24 integration files with 43 tests against real PostgreSQL, and production builds for all eleven packages.
 
+### SC020 — Configurable S3 and SQS connections
+
+- Fixed the root cause of failing production-credential uploads. Every AWS client was constructed as `new S3Client({ region })`, and the upload parser accepted only `AWS_REGION` and `S3_BUCKET`, so credentials could reach the SDK only through the default provider chain. Where no workload identity or shared credentials file exists, presigning failed with `CredentialsProviderError` and the service converted it into an opaque `503`.
+- Added a shared `S3ConnectionSchema`/`SqsConnectionSchema` plus `createS3ClientOptions`/`createSqsClientOptions`, and routed all seven S3 and SQS construction sites through them: upload, dashboard, inventory, portfolio, storage cleanup, the processing dispatcher, the email dispatcher, and the image worker.
+- Optional `S3_ENDPOINT`, `S3_FORCE_PATH_STYLE`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `SQS_ENDPOINT`, `SQS_ACCESS_KEY_ID`, and `SQS_SECRET_ACCESS_KEY` now exist. Omitting the key pairs preserves the AWS default provider chain, which is how production resolves a workload identity; supplying half a pair is rejected at parse time rather than failing opaquely at the first signed request.
+- Left presign generation itself untouched. Inspecting a generated URL confirmed it was already correct, signing `content-length`, `host`, `x-amz-checksum-sha256`, and the three ownership metadata headers with an unsigned payload, and no spurious checksum algorithm header.
+- Allowed an optional second browser origin in the storage CloudFormation template so a non-production stack can accept a local development host for CORS; production still supplies one exact HTTPS origin.
+- Verified the complete data plane against a real S3-compatible endpoint: presign, a browser-equivalent `PUT` with the checksum and ownership headers, a `HEAD` matching content length, content type, SHA-256, and all three metadata values, and the bounded range read used by upload commit.
+- Verified lint, strict typecheck, source mapping, 35 configuration tests, the complete 217-file web suite with 345 tests, every package suite, and production builds for all eleven packages.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -383,6 +393,7 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - All future work follows the branch → PR → required CI → merge workflow in `/AGENTS.md`.
 - Browser security headers are generated from focused constants and applied through `next.config.ts`. The production CSP intentionally excludes eval; S3 is the only external browser data-plane origin class. Re-run browser tests whenever a new third-party client integration is introduced rather than broadening directives preemptively.
 - CI runs `pnpm audit --prod --audit-level moderate`. The workspace overrides for `deepmerge-ts` and `mysql2` are temporary reviewed transitive remediations for Prisma 7.10 and must be removed once Prisma pins patched versions upstream.
+- Explicit `S3_*` and `SQS_*` credentials exist for local emulators and deployments with no attachable role. Production must keep them unset and rely on workload identity; configuring only one half of a key pair fails closed at startup.
 - Production credential ownership is defined in `docs/security.md`. The root `.env.example` is a local-development union only; focused runtime parsers and deployment configuration must prevent unrelated secrets from crossing process boundaries.
 - No webhook route may trust parsed JSON before verifying the provider's signature over the exact raw bytes. The generic HMAC-SHA256 adapter may be selected only for a provider whose official protocol matches it; other protocols require their own verifier adapter.
 - Lifecycle cleanup deletes only records strictly older than configured cutoffs in bounded, skip-locked batches. Image bytes use the separate storage-deletion outbox: the asset status change and deletion intent are atomic, S3 deletion is idempotent, and exhausted failures remain queryable for explicit replay rather than being silently discarded.

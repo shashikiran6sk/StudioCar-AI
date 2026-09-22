@@ -1,5 +1,6 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import {
+  createS3ClientOptions,
   parseImageWorkerEnvironment,
   type ImageWorkerEnvironment,
 } from "@studiocar/config";
@@ -24,7 +25,7 @@ export function createImageProcessingWorker(
   });
   const jobs = new PrismaProcessingWorkerRepository(database);
   const storage = new S3ProcessingObjectStorage(
-    new S3Client({ region: environment.AWS_REGION }),
+    new S3Client(createS3ClientOptions(environment)),
     environment.S3_BUCKET,
     environment.MAX_PROVIDER_OUTPUT_BYTES,
   );

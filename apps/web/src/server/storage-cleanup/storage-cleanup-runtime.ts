@@ -1,5 +1,8 @@
 import { S3Client } from "@aws-sdk/client-s3";
-import { parseStorageCleanupEnvironment } from "@studiocar/config";
+import {
+  createS3ClientOptions,
+  parseStorageCleanupEnvironment,
+} from "@studiocar/config";
 import { createDatabaseClient } from "@studiocar/database-runtime";
 import { PrismaStorageDeletionRepository } from "../db/repositories/storage-deletion-repository";
 
@@ -26,7 +29,7 @@ export function getStorageCleanupRuntime(): StorageCleanupRuntime {
     service: new StorageCleanupService(
       new PrismaStorageDeletionRepository(database),
       new S3ObjectDeletionStorage(
-        new S3Client({ region: environment.AWS_REGION }),
+        new S3Client(createS3ClientOptions(environment)),
         environment.S3_BUCKET,
       ),
       {

@@ -1,5 +1,5 @@
 import { S3Client } from "@aws-sdk/client-s3";
-import { parseUploadEnvironment } from "@studiocar/config";
+import { createS3ClientOptions, parseUploadEnvironment } from "@studiocar/config";
 import { createDatabaseClient } from "@studiocar/database-runtime";
 import { PrismaDashboardRepository } from "../db/repositories/dashboard-repository";
 import { PrismaInventoryRepository } from "../db/repositories/inventory-repository";
@@ -20,7 +20,7 @@ export function getDashboardService(): DashboardService {
   const inventory = new InventoryService(
     new PrismaInventoryRepository(database),
     new S3InventoryPreviewSigner(
-      new S3Client({ region: environment.AWS_REGION }),
+      new S3Client(createS3ClientOptions(environment)),
       environment.S3_BUCKET,
     ),
     { previewUrlTtlSeconds: environment.PRESIGNED_URL_TTL_SECONDS },
