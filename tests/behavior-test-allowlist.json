@@ -494,5 +494,9 @@
   {
     "source": "apps/web/src/features/admin/admin.constants.ts",
     "reason": "Static administration overview stat configuration only."
+  },
+  {
+    "source": "apps/web/src/server/admin/admin-management-runtime.ts",
+    "reason": "Runtime wiring that constructs the covered management repository; it performs no logic of its own."
   }
 ]

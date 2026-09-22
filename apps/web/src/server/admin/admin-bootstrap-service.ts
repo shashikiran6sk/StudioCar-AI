@@ -5,13 +5,23 @@ export interface AdminBootstrapStore {
   bootstrap(userId: string, now: Date): Promise<AdminBootstrapOutcome>;
 }
 
+export interface AdminInvitationStore {
+  acceptForVerifiedEmail(command: {
+    userId: string;
+    email: string;
+    now: Date;
+  }): Promise<boolean>;
+}
+
 export interface AdminBootstrapServiceOptions {
   bootstrapEmail: string | undefined;
 }
 
 /**
- * Decides whether a completed Google sign-in should create the first
- * administrator.
+ * Decides what administrator access a completed Google sign-in should confer.
+ *
+ * It accepts a pending invitation for the verified address, and otherwise
+ * decides whether this sign-in should create the first administrator.
  *
  * It grants only when a configured email matches an email Google itself
  * verified. It never grants because an address appeared in a request, because
@@ -20,6 +30,7 @@ export interface AdminBootstrapServiceOptions {
 export class AdminBootstrapService {
   public constructor(
     private readonly store: AdminBootstrapStore,
+    private readonly invitations: AdminInvitationStore,
     private readonly options: AdminBootstrapServiceOptions,
   ) {}
 
@@ -28,6 +39,19 @@ export class AdminBootstrapService {
     verifiedEmail: string,
     now: Date,
   ): Promise<AdminBootstrapOutcome | null> {
+    /**
+     * A pending invitation is accepted here because this is the only moment
+     * that carries both a Google-verified address and a resolved internal user.
+     * It is checked first, so an invited administrator is granted even on a
+     * database where bootstrap already completed.
+     */
+    const accepted = await this.invitations.acceptForVerifiedEmail({
+      userId,
+      email: normalizeAdminEmail(verifiedEmail),
+      now,
+    });
+    if (accepted) return { kind: "BOOTSTRAPPED" };
+
     const configured = this.options.bootstrapEmail;
     if (!configured) return null;
     if (normalizeAdminEmail(configured) !== normalizeAdminEmail(verifiedEmail)) {
