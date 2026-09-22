@@ -24,25 +24,33 @@ export const DASHBOARD_ERROR_DESCRIPTION =
   "Your vehicles and processing jobs are safe. Try loading the workspace again.";
 export const DASHBOARD_RETRY_LABEL = "Try again";
 
+/**
+ * Each action carries its own imagery so the card shows what it does. The third
+ * action opens completed vehicles in inventory, which is why it is named for
+ * the results it reveals rather than for a destination that no longer exists.
+ */
 export const DASHBOARD_QUICK_ACTIONS = {
   inventory: {
     description: "Manage processing and completed vehicle image batches.",
     href: INVENTORY_PATH,
+    imageAlt: "Three vehicles side by side, representing your inventory.",
+    imagePath: "/images/dashboard/vehicle-inventory.webp",
     imageLabel: "Live",
     title: "View inventory",
   },
-  portfolio: {
+  results: {
     description: "Review, compare, and download showroom-ready images.",
     href: `${INVENTORY_PATH}?filter=COMPLETED`,
+    imageAlt: "A finished studio image of a vehicle on a white sweep.",
+    imagePath: "/images/dashboard/studio-results.webp",
     imageLabel: "Ready",
-    title: "View portfolio",
+    title: "Recent results",
   },
   upload: {
     description: "Add details, photos, and a consistent studio treatment.",
+    imageAlt: "A single vehicle photographed before studio processing.",
+    imagePath: "/images/dashboard/upload-vehicle.webp",
     imageLabel: "New",
     title: "Upload a vehicle",
   },
 };
-
-export const DASHBOARD_VEHICLE_IMAGE_PATH =
-  "/images/marketing/silver-sedan.png";

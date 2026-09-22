@@ -28,7 +28,9 @@ export function DashboardQuickActions({
         <DashboardQuickActionCard
           action={<VehicleCreateLauncher />}
           description={DASHBOARD_QUICK_ACTIONS.upload.description}
+          imageAlt={DASHBOARD_QUICK_ACTIONS.upload.imageAlt}
           imageLabel={DASHBOARD_QUICK_ACTIONS.upload.imageLabel}
+          imagePath={DASHBOARD_QUICK_ACTIONS.upload.imagePath}
           status={<StatusBadge status="processing">{NEW_BATCH_LABEL}</StatusBadge>}
           title={DASHBOARD_QUICK_ACTIONS.upload.title}
         />
@@ -43,7 +45,9 @@ export function DashboardQuickActions({
             </ButtonLink>
           }
           description={DASHBOARD_QUICK_ACTIONS.inventory.description}
+          imageAlt={DASHBOARD_QUICK_ACTIONS.inventory.imageAlt}
           imageLabel={DASHBOARD_QUICK_ACTIONS.inventory.imageLabel}
+          imagePath={DASHBOARD_QUICK_ACTIONS.inventory.imagePath}
           status={
             <StatusBadge status="processing">
               {formatDashboardCount(summary.vehiclesProcessing)} {PROCESSING_LABEL}
@@ -54,21 +58,23 @@ export function DashboardQuickActions({
         <DashboardQuickActionCard
           action={
             <ButtonLink
-              href={DASHBOARD_QUICK_ACTIONS.portfolio.href}
+              href={DASHBOARD_QUICK_ACTIONS.results.href}
               size="small"
               variant="ghost"
             >
               {OPEN_LABEL} →
             </ButtonLink>
           }
-          description={DASHBOARD_QUICK_ACTIONS.portfolio.description}
-          imageLabel={DASHBOARD_QUICK_ACTIONS.portfolio.imageLabel}
+          description={DASHBOARD_QUICK_ACTIONS.results.description}
+          imageAlt={DASHBOARD_QUICK_ACTIONS.results.imageAlt}
+          imageLabel={DASHBOARD_QUICK_ACTIONS.results.imageLabel}
+          imagePath={DASHBOARD_QUICK_ACTIONS.results.imagePath}
           status={
             <StatusBadge status="completed">
               {formatDashboardCount(summary.vehiclesProcessed)} {READY_LABEL}
             </StatusBadge>
           }
-          title={DASHBOARD_QUICK_ACTIONS.portfolio.title}
+          title={DASHBOARD_QUICK_ACTIONS.results.title}
         />
       </div>
     </section>

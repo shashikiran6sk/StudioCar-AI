@@ -1516,8 +1516,7 @@ body {
 }
 
 .dashboard-action-card__media img {
-  object-fit: contain;
-  transform: scale(1.18) translateY(7%);
+  object-fit: cover;
 }
 
 .dashboard-action-card__media > span {

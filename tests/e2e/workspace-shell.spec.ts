@@ -65,6 +65,27 @@ workspaceTest(
       await expect(
         page.getByRole("progressbar", { name: /images used/ }),
       ).toBeVisible();
+
+      // Each quick action shows its own imagery, described for assistive
+      // technology rather than hidden.
+      await expect(
+        page.getByRole("heading", { name: "Upload a vehicle" }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "View inventory" }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Recent results" }),
+      ).toBeVisible();
+      const actionImages = page.locator(".dashboard-action-card__media img");
+      await expect(actionImages).toHaveCount(3);
+      const sources = await actionImages.evaluateAll((images) =>
+        images.map((image) =>
+          decodeURIComponent(image.getAttribute("src") ?? ""),
+        ),
+      );
+      expect(new Set(sources).size).toBe(3);
+
       await page.screenshot({
         fullPage: true,
         path: testInfo.outputPath("workspace-dashboard.png"),
