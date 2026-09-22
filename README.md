@@ -10,6 +10,7 @@ Production-oriented automotive image processing built as a pnpm and Turborepo mo
 ## Workspace commands
 
 ```bash
+cp apps/web/.env.example apps/web/.env
 pnpm install --frozen-lockfile
 pnpm lint
 pnpm typecheck
@@ -81,6 +82,11 @@ has consented through `PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION`.
 
 Database commands are deliberately invoked directly rather than through
 Turborepo, so stateful migration work is never served from a task cache.
+
+They read `DATABASE_URL` from `apps/web/.env`, alongside the schema and the
+application that use it. Copy `apps/web/.env.example` to start. A variable
+already set in the environment always wins, so a deployment or CI run is never
+masked by a local file.
 
 ## Administration
 

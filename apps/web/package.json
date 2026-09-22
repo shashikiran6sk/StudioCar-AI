@@ -8,7 +8,7 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:status": "prisma migrate status",
-    "db:seed": "esbuild prisma/seed.ts --bundle --platform=node --target=node24 --format=esm --external:@prisma/adapter-pg --external:@prisma/client --external:pg --outfile=.prisma-seed.mjs && node .prisma-seed.mjs",
+    "db:seed": "esbuild prisma/seed.ts --bundle --platform=node --target=node24 --format=esm --external:@prisma/adapter-pg --external:@prisma/client --external:pg --outfile=.prisma-seed.mjs && node --env-file-if-exists=.env .prisma-seed.mjs",
     "db:validate": "prisma validate",
     "dev": "next dev",
     "e2e": "playwright test",
