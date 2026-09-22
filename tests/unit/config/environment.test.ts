@@ -233,9 +233,11 @@ describe("environment validation", () => {
         RESEND_API_KEY: "resend-secret",
       }),
     ).toEqual({
+      NODE_ENV: "development",
       APPLICATION_BASE_URL: validEnvironment.APPLICATION_BASE_URL,
       DATABASE_URL: validEnvironment.DATABASE_URL,
       EMAIL_DELIVERY_CLAIM_TTL_MS: 45_000,
+      EMAIL_DRIVER: "resend",
       EMAIL_FROM: "mail@studiocar.example",
       RESEND_API_KEY: "resend-secret",
       RESEND_TIMEOUT_MS: 8_000,
@@ -246,6 +248,7 @@ describe("environment validation", () => {
 
   it("validates bounded email outbox dispatch settings", () => {
     expect(parseEmailDispatchEnvironment(validEnvironment)).toEqual({
+      NODE_ENV: "test",
       APPLICATION_BASE_URL: validEnvironment.APPLICATION_BASE_URL,
       AWS_REGION: validEnvironment.AWS_REGION,
       DATABASE_URL: validEnvironment.DATABASE_URL,
@@ -294,6 +297,58 @@ describe("environment validation", () => {
         ...validEnvironment,
         STORAGE_DELETION_RETRY_BASE_MS: "60000",
         STORAGE_DELETION_RETRY_MAX_MS: "30000",
+      }),
+    ).toThrow();
+  });
+});
+
+describe("application base url", () => {
+  const emailWorker = {
+    DATABASE_URL: validEnvironment.DATABASE_URL,
+    EMAIL_FROM: "mail@studiocar.example",
+    RESEND_API_KEY: "resend-secret",
+  };
+
+  it("accepts a local base url outside production", () => {
+    expect(
+      parseEmailWorkerEnvironment({
+        ...emailWorker,
+        APPLICATION_BASE_URL: "http://localhost:3000",
+      }).APPLICATION_BASE_URL,
+    ).toBe("http://localhost:3000");
+  });
+
+  it("requires https and a public hostname in production", () => {
+    expect(() =>
+      parseEmailWorkerEnvironment({
+        ...emailWorker,
+        NODE_ENV: "production",
+        APPLICATION_BASE_URL: "http://localhost:3000",
+      }),
+    ).toThrow(/public hostname in production/);
+
+    expect(() =>
+      parseEmailWorkerEnvironment({
+        ...emailWorker,
+        NODE_ENV: "production",
+        APPLICATION_BASE_URL: "http://app.studiocar.example",
+      }),
+    ).toThrow(/public hostname in production/);
+
+    expect(
+      parseEmailWorkerEnvironment({
+        ...emailWorker,
+        NODE_ENV: "production",
+        APPLICATION_BASE_URL: "https://app.studiocar.example",
+      }).APPLICATION_BASE_URL,
+    ).toBe("https://app.studiocar.example");
+  });
+
+  it("rejects a value that is not an absolute http url", () => {
+    expect(() =>
+      parseEmailWorkerEnvironment({
+        ...emailWorker,
+        APPLICATION_BASE_URL: "ftp://app.studiocar.example",
       }),
     ).toThrow();
   });

@@ -1,17 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { describePhoneOtpWidget } from "../../../../../apps/web/src/server/auth/phone/describe-phone-otp-widget";
-import { parsePhoneAuthEnvironment } from "../../../../../packages/config/src/environment";
+import { parsePhoneOtpWidgetEnvironment } from "../../../../../packages/config/src/environment";
 
-const base = {
-  DATABASE_URL: "postgresql://studiocar:secret@localhost:5432/studiocar",
-  SESSION_SECRET: "s".repeat(32),
-};
+const base = {};
 
 describe("describePhoneOtpWidget", () => {
   it("publishes the widget id and public token for the msg91 driver", () => {
     const widget = describePhoneOtpWidget(
-      parsePhoneAuthEnvironment({
+      parsePhoneOtpWidgetEnvironment({
         ...base,
         PHONE_OTP_DRIVER: "msg91",
         MSG91_AUTH_KEY: "server-only-auth-key",
@@ -32,7 +29,7 @@ describe("describePhoneOtpWidget", () => {
 
   it("never exposes the server auth key to the browser", () => {
     const widget = describePhoneOtpWidget(
-      parsePhoneAuthEnvironment({
+      parsePhoneOtpWidgetEnvironment({
         ...base,
         PHONE_OTP_DRIVER: "msg91",
         MSG91_AUTH_KEY: "server-only-auth-key",
@@ -46,7 +43,7 @@ describe("describePhoneOtpWidget", () => {
 
   it("describes the development driver with its accepted code", () => {
     const widget = describePhoneOtpWidget(
-      parsePhoneAuthEnvironment({ ...base, PHONE_OTP_DRIVER: "fake" }),
+      parsePhoneOtpWidgetEnvironment({ ...base, PHONE_OTP_DRIVER: "fake" }),
     );
 
     expect(widget).toEqual({
@@ -57,5 +54,21 @@ describe("describePhoneOtpWidget", () => {
       devCode: "1234",
       reason: null,
     });
+  });
+});
+
+describe("describePhoneOtpWidget configuration isolation", () => {
+  it("needs no session secret or database url to describe the widget", () => {
+    expect(() =>
+      describePhoneOtpWidget(parsePhoneOtpWidgetEnvironment({})),
+    ).not.toThrow();
+  });
+
+  it("reports the msg91 driver as unavailable when credentials are absent", () => {
+    expect(
+      describePhoneOtpWidget(
+        parsePhoneOtpWidgetEnvironment({ PHONE_OTP_DRIVER: "msg91" }),
+      ),
+    ).toMatchObject({ enabled: false, driver: "msg91", widgetId: null });
   });
 });

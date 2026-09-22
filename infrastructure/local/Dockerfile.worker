@@ -1,0 +1,28 @@
+# Local development worker image, shared by both workers. It bundles the same
+# deployed handlers the Lambda runtime uses and drives them from long-polling
+# local entry points, so local behaviour matches production retry and
+# acknowledgement decisions rather than a parallel implementation.
+FROM node:24-bookworm-slim
+
+ENV PNPM_HOME=/usr/local/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+# Registry reads inside a container can be much slower than on the host.
+ENV npm_config_fetch_timeout=600000
+ENV npm_config_fetch_retries=5
+
+RUN corepack enable && corepack prepare pnpm@12.3.4 --activate
+WORKDIR /repo
+
+COPY . .
+
+# Only the two worker dependency trees are installed. Pulling the application's
+# build toolchain in as well would download far more than these processes run.
+# The Prisma client is generated on the host and copied in with the source.
+RUN pnpm install --frozen-lockfile \
+  --filter "@studiocar/image-processing-worker..." \
+  --filter "@studiocar/email-delivery-worker..."
+
+RUN pnpm --filter @studiocar/image-processing-worker build:local \
+  && pnpm --filter @studiocar/email-delivery-worker build:local
+
+CMD ["node", "--version"]

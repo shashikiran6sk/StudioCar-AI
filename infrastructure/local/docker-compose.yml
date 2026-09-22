@@ -1,0 +1,212 @@
+name: studiocar
+
+# Local StudioCar AI environment.
+#
+#   pnpm infra:up   starts everything except the Next.js application, so
+#                   `pnpm dev` can run it natively with fast reloads.
+#   pnpm app:up     additionally runs the application in a container.
+#
+# Every dependency declares a health check and every dependant waits on it, so
+# startup ordering is observed rather than slept through.
+
+x-worker-environment: &worker-environment
+  DATABASE_URL: postgresql://studiocar:studiocar@postgres:5432/studiocar
+  AWS_REGION: ap-south-1
+  S3_BUCKET: studiocar-local
+  S3_ENDPOINT: http://minio:9000
+  S3_FORCE_PATH_STYLE: "true"
+  S3_ACCESS_KEY_ID: studiocarlocal
+  S3_SECRET_ACCESS_KEY: studiocarlocal123
+  SQS_ENDPOINT: http://elasticmq:9324
+  SQS_ACCESS_KEY_ID: studiocarlocal
+  SQS_SECRET_ACCESS_KEY: studiocarlocal123
+  SQS_IMAGE_QUEUE_URL: http://elasticmq:9324/000000000000/studiocar-images
+  SQS_EMAIL_QUEUE_URL: http://elasticmq:9324/000000000000/studiocar-email
+  APPLICATION_BASE_URL: http://localhost:3000
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    profiles: [infra, app]
+    environment:
+      POSTGRES_USER: studiocar
+      POSTGRES_PASSWORD: studiocar
+      POSTGRES_DB: studiocar
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U studiocar -d studiocar"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Docker Hub's minio/minio repository is access gated; quay.io is not.
+  minio:
+    image: quay.io/minio/minio:latest
+    profiles: [infra, app]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: studiocarlocal
+      MINIO_ROOT_PASSWORD: studiocarlocal123
+      # Browser uploads go straight to this endpoint, so the application origin
+      # has to be allowed here just as it is on the deployed bucket.
+      MINIO_API_CORS_ALLOW_ORIGIN: ${BROWSER_ORIGIN:-http://localhost:3000}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Creates the private bucket and the browser CORS rule that direct uploads
+  # need, then exits. Re-running is harmless.
+  minio-init:
+    image: quay.io/minio/mc:latest
+    profiles: [infra, app]
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "/scripts/minio-init.sh"]
+    environment:
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ROOT_USER: studiocarlocal
+      MINIO_ROOT_PASSWORD: studiocarlocal123
+      S3_BUCKET: studiocar-local
+      BROWSER_ORIGIN: http://localhost:3000
+    volumes:
+      - ./minio-init.sh:/scripts/minio-init.sh:ro
+
+  elasticmq:
+    image: softwaremill/elasticmq-native:latest
+    profiles: [infra, app]
+    ports:
+      - "9324:9324"
+    volumes:
+      - ./elasticmq.conf:/opt/elasticmq.conf:ro
+    healthcheck:
+      # The image carries no HTTP client that treats an SQS error response as
+      # success, so readiness is the queue port accepting connections.
+      test: ["CMD-SHELL", "nc -z localhost 9324"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:latest
+    profiles: [infra, app]
+    environment:
+      MP_MAX_MESSAGES: "500"
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  image-worker:
+    profiles: [infra, app]
+    image: studiocar-local-worker
+    build:
+      context: ../..
+      dockerfile: infrastructure/local/Dockerfile.worker
+    command: ["node", "workers/image-processing/dist/local.mjs"]
+    environment:
+      <<: *worker-environment
+      BACKGROUND_REMOVAL_PROVIDER: ${BACKGROUND_REMOVAL_PROVIDER:-removebg}
+      REMOVEBG_API_KEY: ${REMOVEBG_API_KEY:-}
+      FAL_KEY: ${FAL_KEY:-}
+      SELF_HOSTED_BIREFNET_ENDPOINT: ${SELF_HOSTED_BIREFNET_ENDPOINT:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticmq:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+
+  email-worker:
+    profiles: [infra, app]
+    image: studiocar-local-worker
+    build:
+      context: ../..
+      dockerfile: infrastructure/local/Dockerfile.worker
+    command: ["node", "workers/email-delivery/dist/local.mjs"]
+    environment:
+      <<: *worker-environment
+      EMAIL_FROM: ${EMAIL_FROM:-no-reply@studiocar.local}
+      # Mailpit delivers to a local inbox and never forwards mail off this
+      # machine. Environment validation refuses this driver in production.
+      EMAIL_DRIVER: mailpit
+      MAILPIT_BASE_URL: http://mailpit:8025
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticmq:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+
+  # Stands in for the production scheduler: the outbox is drained by HTTP
+  # endpoints, not by the queue, so something has to call them on a cadence.
+  dispatcher:
+    image: curlimages/curl:latest
+    profiles: [infra, app]
+    environment:
+      DISPATCH_TARGET_URL: ${DISPATCH_TARGET_URL:-http://host.docker.internal:3000}
+      PROCESSING_DISPATCH_TOKEN: ${PROCESSING_DISPATCH_TOKEN:-local-processing-dispatch-token-000000}
+      EMAIL_DISPATCH_TOKEN: ${EMAIL_DISPATCH_TOKEN:-local-email-dispatch-token-0000000000}
+      DISPATCH_INTERVAL_SECONDS: ${DISPATCH_INTERVAL_SECONDS:-10}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    entrypoint: ["/bin/sh", "/scripts/dispatch-ticker.sh"]
+    volumes:
+      - ./dispatch-ticker.sh:/scripts/dispatch-ticker.sh:ro
+
+  web:
+    profiles: [app]
+    build:
+      context: ../..
+      dockerfile: infrastructure/local/Dockerfile.web
+    command: ["pnpm", "--filter", "@studiocar/web", "dev", "--hostname", "0.0.0.0"]
+    environment:
+      <<: *worker-environment
+      NODE_ENV: development
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      SESSION_SECRET: ${SESSION_SECRET:-local-development-session-secret-000000}
+      PHONE_OTP_DRIVER: ${PHONE_OTP_DRIVER:-fake}
+      PHONE_OTP_DEV_CODE: ${PHONE_OTP_DEV_CODE:-1234}
+      MSG91_AUTH_KEY: ${MSG91_AUTH_KEY:-}
+      MSG91_WIDGET_ID: ${MSG91_WIDGET_ID:-}
+      MSG91_WIDGET_TOKEN: ${MSG91_WIDGET_TOKEN:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:3000/api/auth/google/callback}
+      BACKGROUND_REMOVAL_PROVIDER: ${BACKGROUND_REMOVAL_PROVIDER:-removebg}
+      PROCESSING_DISPATCH_TOKEN: ${PROCESSING_DISPATCH_TOKEN:-local-processing-dispatch-token-000000}
+      EMAIL_DISPATCH_TOKEN: ${EMAIL_DISPATCH_TOKEN:-local-email-dispatch-token-0000000000}
+      LIFECYCLE_CLEANUP_TOKEN: ${LIFECYCLE_CLEANUP_TOKEN:-local-lifecycle-cleanup-token-00000000}
+      STORAGE_CLEANUP_TOKEN: ${STORAGE_CLEANUP_TOKEN:-local-storage-cleanup-token-0000000000}
+      EMAIL_FROM: ${EMAIL_FROM:-no-reply@studiocar.local}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+      elasticmq:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  minio-data:

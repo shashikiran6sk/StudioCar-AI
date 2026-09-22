@@ -1,0 +1,19 @@
+# Local development application image, used only by `pnpm app:up`. The default
+# workflow is `pnpm infra:up` plus a native `pnpm dev`, which reloads faster.
+FROM node:24-bookworm-slim
+
+ENV PNPM_HOME=/usr/local/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+
+ENV npm_config_fetch_timeout=600000
+ENV npm_config_fetch_retries=5
+
+RUN corepack enable && corepack prepare pnpm@12.3.4 --activate
+WORKDIR /repo
+
+COPY . .
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @studiocar/web db:generate
+
+EXPOSE 3000
+CMD ["pnpm", "--filter", "@studiocar/web", "dev", "--hostname", "0.0.0.0"]
