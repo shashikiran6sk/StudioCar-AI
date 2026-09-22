@@ -4,6 +4,7 @@ export const DASHBOARD_PATH = "/dashboard";
 export const INVENTORY_PATH = "/inventory";
 export const BILLING_PATH = "/settings/billing";
 export const PROFILE_PATH = "/settings/profile";
+export const ADMIN_PATH = "/admin";
 export const GOOGLE_AUTH_START_PATH = "/api/auth/google/start";
 export const PHONE_AUTH_START_PATH = "/api/auth/phone/start";
 export const PHONE_AUTH_WIDGET_PATH = "/api/auth/phone/widget";

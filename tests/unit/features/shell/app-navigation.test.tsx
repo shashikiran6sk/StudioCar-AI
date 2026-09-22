@@ -10,7 +10,7 @@ describe("AppNavigation", () => {
   it("links every workspace destination", () => {
     vi.mocked(usePathname).mockReturnValue("/dashboard");
 
-    render(<AppNavigation />);
+    render(<AppNavigation showAdmin={false} />);
 
     expect(screen.getByRole("link", { name: /Dashboard/ })).toHaveAttribute(
       "href",
@@ -34,7 +34,7 @@ describe("AppNavigation", () => {
   it("no longer offers the retired destinations", () => {
     vi.mocked(usePathname).mockReturnValue("/dashboard");
 
-    render(<AppNavigation />);
+    render(<AppNavigation showAdmin={false} />);
 
     expect(screen.queryByRole("link", { name: /Portfolio/ })).toBeNull();
     expect(screen.queryByRole("link", { name: /^Usage/ })).toBeNull();
@@ -44,7 +44,7 @@ describe("AppNavigation", () => {
   it("marks the current destination for assistive technology", () => {
     vi.mocked(usePathname).mockReturnValue("/settings/billing");
 
-    render(<AppNavigation />);
+    render(<AppNavigation showAdmin={false} />);
 
     expect(
       screen.getByRole("link", { name: /Packs & Billing/ }),
@@ -57,11 +57,34 @@ describe("AppNavigation", () => {
   it("keeps inventory current while a vehicle portfolio is open", () => {
     vi.mocked(usePathname).mockReturnValue("/inventory/vehicle-1");
 
-    render(<AppNavigation />);
+    render(<AppNavigation showAdmin={false} />);
 
     expect(screen.getByRole("link", { name: /Inventory/ })).toHaveAttribute(
       "aria-current",
       "page",
     );
+  });
+});
+
+describe("AppNavigation administration entry", () => {
+  it("offers the administration destination to an administrator", () => {
+    vi.mocked(usePathname).mockReturnValue("/dashboard");
+
+    render(<AppNavigation showAdmin />);
+
+    expect(screen.getByRole("link", { name: /Admin/ })).toHaveAttribute(
+      "href",
+      "/admin",
+    );
+    expect(screen.getAllByRole("link")).toHaveLength(5);
+  });
+
+  it("hides it from everybody else", () => {
+    vi.mocked(usePathname).mockReturnValue("/dashboard");
+
+    render(<AppNavigation showAdmin={false} />);
+
+    // Hiding is presentation only; the pages authorize for themselves.
+    expect(screen.queryByRole("link", { name: /Admin/ })).toBeNull();
   });
 });

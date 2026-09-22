@@ -10,7 +10,8 @@ provider keys into the Next.js application.
 | Runtime | Secret/config access | Explicitly excluded |
 | --- | --- | --- |
 | Next.js session and read models | `DATABASE_URL` | Provider, email-delivery, and scheduler secrets |
-| Google OAuth routes | `DATABASE_URL`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | MSG91, Resend, remove.bg, fal.ai |
+| Google OAuth routes | `DATABASE_URL`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, optional `BOOTSTRAP_ADMIN_EMAIL` | MSG91, Resend, remove.bg, fal.ai |
+| Administration pages and mutations | `DATABASE_URL` | Every provider and scheduler secret; authorization is read from the database |
 | Phone OTP start and verify routes | `DATABASE_URL`, `SESSION_SECRET`, `PHONE_OTP_DRIVER`, `MSG91_AUTH_KEY`, `MSG91_WIDGET_ID`, `MSG91_WIDGET_TOKEN` | Google, Resend, image-provider keys |
 | Phone OTP widget route | `PHONE_OTP_DRIVER`, `PHONE_OTP_DEV_CODE`, `MSG91_WIDGET_ID`, `MSG91_WIDGET_TOKEN` | `SESSION_SECRET`, `DATABASE_URL`, `MSG91_AUTH_KEY`, every other secret |
 | Upload, inventory, portfolio, and storage-cleanup control plane | `DATABASE_URL`, `AWS_REGION`, `S3_BUCKET`, optional `S3_ENDPOINT`/`S3_FORCE_PATH_STYLE`/`S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`, workload-role S3 read/write/delete permissions | Image bytes, worker queue-consumer permissions, provider keys |
@@ -35,6 +36,32 @@ The configuration package deliberately exposes focused runtime parsers. There is
 no aggregate parser that requires every product secret in one environment.
 Provider selection must fail closed when the selected provider's credential is
 absent.
+
+## Administrator authorization
+
+Authorization is a row in `UserRole`, never an environment value. Revoking a
+role takes effect on the next request everywhere, and nothing re-derives it from
+configuration.
+
+`BOOTSTRAP_ADMIN_EMAIL` names the one verified Google email that may become the
+first administrator on a database that has never had one. It is matched only
+against an email Google itself verified during a real sign-in, never against an
+address in a request, an address somebody typed, or a profile field on a
+phone-only account. Comparison trims and lowercases and does nothing else:
+Gmail dot and plus aliasing is deliberately not folded, because that would let
+one configured value match addresses its owner never chose.
+
+Completion is persisted in `AppConfig` under `admin.bootstrap`. That record, not
+the absence of an administrator, is what closes the window. Removing the
+environment variable afterwards revokes nothing, changing it transfers nothing,
+and an administrator who is later revoked is never re-granted by signing in
+again.
+
+Every administration page, route handler, and server action authorizes for
+itself against the database. Hiding the navigation entry is presentation, not a
+control: it stops nobody from requesting an endpoint directly. A signed-in
+non-administrator receives `404` rather than a refusal, so the existence of the
+administration area is not disclosed.
 
 ## Local development drivers
 

@@ -478,5 +478,21 @@
   {
     "source": "apps/web/src/server/plan-usage/plan-usage.types.ts",
     "reason": "Type-only plan usage summary definition with no runtime behavior."
+  },
+  {
+    "source": "apps/web/src/server/admin/admin.constants.ts",
+    "reason": "Static administration keys, labels, and refusal copy only."
+  },
+  {
+    "source": "apps/web/src/server/admin/admin-overview.types.ts",
+    "reason": "Type-only administration overview definition with no runtime behavior."
+  },
+  {
+    "source": "apps/web/src/server/admin/admin-runtime.ts",
+    "reason": "Runtime wiring that constructs the covered role repository; it performs no logic of its own."
+  },
+  {
+    "source": "apps/web/src/features/admin/admin.constants.ts",
+    "reason": "Static administration overview stat configuration only."
   }
 ]

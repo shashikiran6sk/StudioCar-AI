@@ -16,6 +16,15 @@ vi.mock("../../../../apps/web/src/server/auth/get-current-session", () => ({
   getCurrentSession: vi.fn(),
 }));
 
+vi.mock("../../../../apps/web/src/server/plan-usage/get-plan-usage-summary", () => ({
+  getPlanUsageSummary: vi.fn(async () => null),
+}));
+
+vi.mock(
+  "../../../../apps/web/src/server/admin/is-current-user-administrator",
+  () => ({ isCurrentUserAdministrator: vi.fn(async () => false) }),
+);
+
 describe("AuthenticatedLayout", () => {
   afterEach(() => {
     vi.clearAllMocks();
