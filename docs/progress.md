@@ -407,6 +407,17 @@ Payment checkout remains intentionally unavailable until a billing provider is s
 - Added link-href, link-handler, route, service-linking, and connect-form coverage, plus eight real-PostgreSQL integration tests covering adoption of a verified email, idempotent relinking, a refused identity that stays with its owner, a refused contact detail, phone linking, concurrent linking creating exactly one identity, and preserved ownership.
 - Verified lint, strict typecheck, source mapping, 244 web test files with 501 tests, 25 integration files with 55 tests against real PostgreSQL, production builds, and six Playwright tests.
 
+### SC027 — Administration and dynamic configuration data model
+
+- Added `UserRole`, `AppConfig`, `AdminInvite`, `PlanConfig`, and `SocialLink`, and extended `PlanSubscription` with `source`, `assignedByUserId`, and `note`. Every statement is additive and existing rows keep their meaning: `source` defaults to `PAYMENT_PROVIDER`.
+- Authorization is a row, never an environment value, so revoking a role takes effect everywhere immediately. `AppConfig` holds the one-time record that first-administrator bootstrap has happened, which is what will stop a revoked administrator regaining access from a still-set environment variable.
+- An invitation names an email, never a user, and creates no placeholder account. It can only be matched later by a verified Google identity carrying that address.
+- Added database `CHECK` constraints and partial unique indexes so invalid configuration is impossible however a row is written: no negative price, no zero or above-allowance batch limit, no negative allowance or display order, no non-`https` social URL, at most one pending invitation per email, and at most one active manual subscription per tenant. Each was verified against real PostgreSQL by attempting the violation.
+- Seeded the canonical plan catalog including **Studio Plus at ₹7,999 per month, 1,500 images, 20 per batch, on a billing-period allowance**. Prices are stored in minor units so money is never a float. No plan is purchasable while `BillingPort` is unimplemented, because advertising a checkout that cannot complete would be a lie.
+- Added `pnpm db:seed`. It installs configuration rather than sample data, creates no users, vehicles, or images, and never overwrites a plan an administrator has edited, so it is safe to re-run. Social links are deliberately not seeded: a row exists only once a real address is supplied, so the footer renders nothing instead of a placeholder that goes nowhere.
+- Excluded unrelated pre-existing drift from the migration. The generated diff wanted to drop `id` defaults on three existing tables; that is a difference between the live database and the schema, not part of this change.
+- Verified lint, strict typecheck, source mapping, all package suites, 26 integration files with 61 tests against real PostgreSQL, production builds, and `pnpm db:reset` followed by `pnpm db:seed` producing a clean, configured database.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -418,26 +429,24 @@ Payment checkout remains intentionally unavailable until a billing provider is s
 
 Ordered as agreed. UI work first, then the admin and billing foundation.
 
-1. **SC027 — Admin data model**: roles, application configuration, admin invitations, plan configuration, social links, and manual subscription source.
-2. **SC028 — Admin authorization and first-admin bootstrap**: database-backed `ADMIN` checks on every admin page, action, and handler, plus a persisted one-time bootstrap.
-3. **SC029 — Administrator management**: grant, invite, accept on verified Google sign-in, revoke, last-admin protection, and audit entries.
-4. **SC030 — Database-backed plan configuration**: move the hardcoded plan catalog behind validated configuration with safe defaults and cache invalidation.
-5. **SC031 — Manual subscriptions**: assign Studio Pro and Studio Plus by hand without ever overwriting a provider-backed subscription.
-6. **SC032 — Dynamic footer social links**: administered links with server-side URL validation.
-7. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
-8. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
+1. **SC028 — Admin authorization and first-admin bootstrap**: database-backed `ADMIN` checks on every admin page, action, and handler, plus a persisted one-time bootstrap.
+2. **SC029 — Administrator management**: grant, invite, accept on verified Google sign-in, revoke, last-admin protection, and audit entries.
+3. **SC030 — Database-backed plan configuration**: move the hardcoded plan catalog behind validated configuration with safe defaults and cache invalidation.
+4. **SC031 — Manual subscriptions**: assign Studio Pro and Studio Plus by hand without ever overwriting a provider-backed subscription.
+5. **SC032 — Dynamic footer social links**: administered links with server-side URL validation.
+6. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
+7. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
 
 ## Not yet implemented
 
 Tracked explicitly so the gap between the plan and the repository stays visible.
 
 - **Identity disconnection is not implemented.** Linking exists; removing a method still needs a "never leave an account without a usable sign-in method" rule and re-authentication, and nothing in the accepted scope requires it.
-- **No roles, permissions, admin surface, or admin audit log exist.** `AuditLog` is present in the schema and unused.
-- **Plan configuration is hardcoded** in `apps/web/src/features/pricing/pricing-plans.ts`, and `STUDIO_PLUS` does not exist yet. Its confirmed configuration is ₹7,999 per month, 1,500 images, 20 per batch, on a billing-period allowance.
+- **No admin surface exists yet.** The role, invitation, configuration, and audit models are in place, but nothing reads or writes them: there is no authorization check, no bootstrap, no admin route, and `AuditLog` is still unused.
+- **Plan configuration is stored but not yet read.** `PlanConfig` holds all four plans including Studio Plus, but the application still resolves allowances from the hardcoded `apps/web/src/features/pricing/pricing-plans.ts`. Wiring the database through is the next slice.
 - **Subscriptions are never written.** `PlanSubscription` is read when resolving a plan but nothing creates a row, and `BillingPort` is intentionally unimplemented until a payment provider is selected.
-- **The footer has no social links**, dynamic or otherwise; its company entries are inert text.
+- **The footer has no social links.** The `SocialLink` model and platform catalog exist, but nothing renders or administers them, and no row is seeded.
 - **Plan allowance values still come from the hardcoded catalog.** The limits are enforced, but changing 15 or 5 needs a deployment until plan configuration is database-backed.
-- **`pnpm db:seed` does not exist**; it will arrive with plan configuration, when there is something canonical to seed.
 
 ## Deployment state
 
