@@ -373,6 +373,17 @@ Payment checkout remains intentionally unavailable until a billing provider is s
 - Added navigation, active-destination, sidebar-summary, and request-memoisation coverage, plus an authenticated Playwright walk asserting the four destinations, the absence of the retired three, the plan summary, and that Profile becomes current.
 - Verified lint, strict typecheck, source mapping, 238 web test files with 459 tests, production builds for all twelve packages, and all six Playwright tests.
 
+### SC024 — Dashboard Quick Action imagery
+
+- Gave each quick action its own image. All three cards previously rendered the single marketing vehicle render, so the imagery said nothing about what the action did.
+- Composed three assets from the existing licensed `silver-sedan.png`, whose background is already transparent: one vehicle on a neutral ground for **Upload a vehicle**, three vehicles for **View inventory**, and one vehicle on a bright studio sweep with a floor reflection for **Recent results**. The third deliberately looks like a processed result, which is what the card opens.
+- Renamed the third action from **View portfolio** to **Recent results**. Portfolio is no longer a destination; the card opens completed vehicles in inventory, so it is now named for what it reveals.
+- The images carry meaningful alternative text instead of `alt="" aria-hidden`, because they now distinguish the actions rather than decorate them.
+- Authored at the card's own 1200×324 aspect and switched the media to `object-fit: cover`. The previous `contain` plus fixed scale only looked right because the old asset was transparent and its letterboxing blended into the card; an opaque ground would have shown bands. Card dimensions, structure, typography, spacing, buttons, and tags are unchanged.
+- Total asset weight is 73 KB across three WebP files, against 1.7 MB for the single PNG they replace. `fill` inside a fixed-height media band means no layout shift, and the existing `sizes` hint is unchanged.
+- Added card, action-grid, and Playwright coverage asserting three distinct sources, described imagery, and the new wording.
+- Verified lint, strict typecheck, source mapping, 238 web test files with 464 tests, production builds, and all six Playwright tests, then compared the rendered dashboard against `docs/screens/Dashboard_Page`.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -384,17 +395,16 @@ Payment checkout remains intentionally unavailable until a billing provider is s
 
 Ordered as agreed. UI work first, then the admin and billing foundation.
 
-1. **SC024 — Dashboard Quick Action imagery**: give each action a semantically distinct local asset instead of the single shared marketing render, and rename the third card once its wording is confirmed.
-2. **SC025 — Free plan limits**: make the Free allowance 15 total images with a maximum of 5 per batch, enforced in the reservation transaction rather than only in the wizard.
-3. **SC026 — Account linking and Profile sign-in methods**: let a signed-in user securely connect the provider they do not yet have, and surface Connect actions on Profile.
-4. **SC027 — Admin data model**: roles, application configuration, admin invitations, plan configuration, social links, and manual subscription source.
-5. **SC028 — Admin authorization and first-admin bootstrap**: database-backed `ADMIN` checks on every admin page, action, and handler, plus a persisted one-time bootstrap.
-6. **SC029 — Administrator management**: grant, invite, accept on verified Google sign-in, revoke, last-admin protection, and audit entries.
-7. **SC030 — Database-backed plan configuration**: move the hardcoded plan catalog behind validated configuration with safe defaults and cache invalidation.
-8. **SC031 — Manual subscriptions**: assign Studio Pro and Studio Plus by hand without ever overwriting a provider-backed subscription.
-9. **SC032 — Dynamic footer social links**: administered links with server-side URL validation.
-10. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
-11. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
+1. **SC025 — Free plan limits**: make the Free allowance 15 total images with a maximum of 5 per batch, enforced in the reservation transaction rather than only in the wizard.
+2. **SC026 — Account linking and Profile sign-in methods**: let a signed-in user securely connect the provider they do not yet have, and surface Connect actions on Profile.
+3. **SC027 — Admin data model**: roles, application configuration, admin invitations, plan configuration, social links, and manual subscription source.
+4. **SC028 — Admin authorization and first-admin bootstrap**: database-backed `ADMIN` checks on every admin page, action, and handler, plus a persisted one-time bootstrap.
+5. **SC029 — Administrator management**: grant, invite, accept on verified Google sign-in, revoke, last-admin protection, and audit entries.
+6. **SC030 — Database-backed plan configuration**: move the hardcoded plan catalog behind validated configuration with safe defaults and cache invalidation.
+7. **SC031 — Manual subscriptions**: assign Studio Pro and Studio Plus by hand without ever overwriting a provider-backed subscription.
+8. **SC032 — Dynamic footer social links**: administered links with server-side URL validation.
+9. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
+10. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
 
 ## Not yet implemented
 
@@ -408,7 +418,6 @@ Tracked explicitly so the gap between the plan and the repository stays visible.
 - **The dashboard reports the Free plan unconditionally**, ignoring `PlanSubscription`.
 - **Subscriptions are never written.** `PlanSubscription` is read when resolving a plan but nothing creates a row, and `BillingPort` is intentionally unimplemented until a payment provider is selected.
 - **The footer has no social links**, dynamic or otherwise; its company entries are inert text.
-- **All three Dashboard Quick Action cards share one image**, `/images/marketing/silver-sedan.png`.
 - **Usage is counted per calendar month.** A lifetime Free allowance, as specified, is a deliberate semantic change still to be made.
 - **`pnpm db:seed` does not exist**; it will arrive with plan configuration, when there is something canonical to seed.
 
@@ -453,7 +462,7 @@ Tracked explicitly so the gap between the plan and the repository stays visible.
 - Favorites, edit, reprocess, hero selection, and ZIP actions remain intentionally absent until their canonical persistence, mutation, and archive-generation flows exist; the UI does not expose controls that would falsely imply those operations are implemented.
 - Browser portfolio tests use explicit non-production AWS credentials solely to exercise local SigV4 generation and intercept the private S3 host before any network request; CI does not require or expose production AWS credentials.
 - Marketing pricing is illustrative and centralized in `apps/web/src/features/pricing/pricing-plans.ts`; no action claims payment success, and the same module must be reused by Usage & Billing until commercial configuration moves behind the billing boundary.
-- The marketing vehicle visual is an original generated RGBA asset stored at `apps/web/public/images/marketing/silver-sedan.png`; it has no embedded brand marks, readable plate, remote runtime dependency, or user-provided image content.
+- The marketing vehicle visual is an original generated RGBA asset stored at `apps/web/public/images/marketing/silver-sedan.png`; it has no embedded brand marks, readable plate, remote runtime dependency, or user-provided image content. The three dashboard quick-action assets under `apps/web/public/images/dashboard/` are compositions of that same asset over generated studio grounds, so they inherit its provenance and carry no new licensing question.
 - Turborepo's E2E task explicitly passes only `DATABASE_URL`, `AWS_REGION`, and `S3_BUCKET`; this ensures authenticated Playwright tests actually execute while keeping unrelated secrets out of the browser-test task.
 - Docker Hub's `minio/minio` repository is access gated; the local stack uses `quay.io/minio/minio`. MinIO applies browser CORS through `MINIO_API_CORS_ALLOW_ORIGIN` because the bundled `mc` build has no `cors` command.
 - The local worker bundles externalise `@aws-sdk/client-sqs` alongside Prisma and Sharp. esbuild's ESM output cannot satisfy that SDK's CommonJS `require` of Node builtins, and those packages are genuine runtime dependencies of the deployable artifact rather than of the bundle.

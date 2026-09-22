@@ -1,12 +1,12 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
 
-import { DASHBOARD_VEHICLE_IMAGE_PATH } from "./dashboard.constants";
-
 export interface DashboardQuickActionCardProps {
   action: ReactNode;
   description: string;
+  imageAlt: string;
   imageLabel: string;
+  imagePath: string;
   status: ReactNode;
   title: string;
 }
@@ -14,7 +14,9 @@ export interface DashboardQuickActionCardProps {
 export function DashboardQuickActionCard({
   action,
   description,
+  imageAlt,
   imageLabel,
+  imagePath,
   status,
   title,
 }: DashboardQuickActionCardProps) {
@@ -22,11 +24,10 @@ export function DashboardQuickActionCard({
     <article className="dashboard-action-card">
       <div className="dashboard-action-card__media">
         <Image
-          alt=""
-          aria-hidden="true"
+          alt={imageAlt}
           fill
           sizes="(max-width: 767px) 100vw, 33vw"
-          src={DASHBOARD_VEHICLE_IMAGE_PATH}
+          src={imagePath}
         />
         <span>{imageLabel}</span>
       </div>
