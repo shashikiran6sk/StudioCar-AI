@@ -5,8 +5,8 @@ import type {
   ObjectDeletionStoragePort,
   StorageCleanupRepositoryPort,
 } from "../../../../apps/web/src/server/storage-cleanup/storage-cleanup.types";
-import { StorageDeletionStatus } from "../../../../packages/database/generated/prisma/client";
-import type { StorageDeletionRecord } from "../../../../packages/database/src/repositories/storage-deletion-record";
+import { StorageDeletionStatus } from "../../../../packages/database-runtime/generated/prisma/client";
+import type { StorageDeletionRecord } from "../../../../apps/web/src/server/db/repositories/storage-deletion-record";
 
 const NOW = new Date("2026-09-20T12:00:00.000Z");
 const CLAIM_TOKEN = "storage-claim-token";

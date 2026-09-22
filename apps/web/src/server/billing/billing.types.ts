@@ -2,7 +2,7 @@ import type {
   PlanKey,
   UsageBillingSummary,
 } from "@studiocar/contracts";
-import type { UsageBillingRepositoryRecord } from "@studiocar/database";
+import type { UsageBillingRepositoryRecord } from "../db/repositories/usage-billing-repository";
 
 export interface BillingCheckoutRequest {
   planKey: Exclude<PlanKey, "FREE">;

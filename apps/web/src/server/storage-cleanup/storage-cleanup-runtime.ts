@@ -1,9 +1,7 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { parseStorageCleanupEnvironment } from "@studiocar/config";
-import {
-  createDatabaseClient,
-  PrismaStorageDeletionRepository,
-} from "@studiocar/database";
+import { createDatabaseClient } from "@studiocar/database-runtime";
+import { PrismaStorageDeletionRepository } from "../db/repositories/storage-deletion-repository";
 
 import { S3ObjectDeletionStorage } from "./s3-object-deletion-storage";
 import { STORAGE_CLEANUP_MILLISECONDS_PER_HOUR } from "./storage-cleanup.constants";

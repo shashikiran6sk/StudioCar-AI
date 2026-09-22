@@ -1,11 +1,8 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { parseUploadEnvironment } from "@studiocar/config";
-import {
-  CommandRateLimitScope,
-  createDatabaseClient,
-  PrismaCommandRateLimitRepository,
-  PrismaImageAssetRepository,
-} from "@studiocar/database";
+import { CommandRateLimitScope, createDatabaseClient } from "@studiocar/database-runtime";
+import { PrismaCommandRateLimitRepository } from "../db/repositories/command-rate-limit-repository";
+import { PrismaImageAssetRepository } from "../db/repositories/image-asset-repository";
 
 import { CommandRateLimiter } from "../security/command-rate-limiter";
 import { MILLISECONDS_PER_SECOND } from "../security/command-rate-limiter.constants";

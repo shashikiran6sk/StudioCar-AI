@@ -1,8 +1,6 @@
 import { parseLifecycleCleanupEnvironment } from "@studiocar/config";
-import {
-  createDatabaseClient,
-  PrismaLifecycleCleanupRepository,
-} from "@studiocar/database";
+import { createDatabaseClient } from "@studiocar/database-runtime";
+import { PrismaLifecycleCleanupRepository } from "../db/repositories/lifecycle-cleanup-repository";
 
 import {
   MILLISECONDS_PER_DAY,

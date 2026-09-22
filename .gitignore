@@ -2,7 +2,7 @@ node_modules/
 .next/
 .turbo/
 dist/
-packages/database/generated/
+packages/database-runtime/generated/
 coverage/
 playwright-report/
 test-results/

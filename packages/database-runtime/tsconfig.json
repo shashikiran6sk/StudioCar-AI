@@ -1,0 +1,14 @@
+{
+  "extends": "../config/typescript/node.json",
+  "compilerOptions": {
+    "types": [
+      "vitest/globals"
+    ]
+  },
+  "include": [
+    "src/**/*.ts",
+    "generated/**/*.ts",
+    "../../tests/unit/database-runtime/**/*.ts",
+    "../../tests/integration/database-runtime/**/*.ts"
+  ]
+}

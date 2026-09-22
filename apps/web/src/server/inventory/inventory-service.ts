@@ -3,7 +3,7 @@ import type {
   InventoryPage,
   InventoryQuery,
 } from "@studiocar/contracts";
-import type { InventoryVehicleRecord } from "@studiocar/database";
+import type { InventoryVehicleRecord } from "../db/repositories/inventory-repository";
 
 import type {
   InventoryPreviewSignerPort,

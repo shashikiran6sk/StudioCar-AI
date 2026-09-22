@@ -1,9 +1,7 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { parseUploadEnvironment } from "@studiocar/config";
-import {
-  createDatabaseClient,
-  PrismaPortfolioRepository,
-} from "@studiocar/database";
+import { createDatabaseClient } from "@studiocar/database-runtime";
+import { PrismaPortfolioRepository } from "../db/repositories/portfolio-repository";
 
 import { PortfolioService } from "./portfolio-service";
 import { S3PortfolioAssetSigner } from "./s3-portfolio-asset-signer";

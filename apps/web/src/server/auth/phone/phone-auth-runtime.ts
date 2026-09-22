@@ -1,10 +1,8 @@
 import { parsePhoneAuthEnvironment } from "@studiocar/config";
-import {
-  createDatabaseClient,
-  PrismaPhoneOtpChallengeRepository,
-  PrismaPhoneOtpCompletionRepository,
-  PrismaSessionRepository,
-} from "@studiocar/database";
+import { createDatabaseClient } from "@studiocar/database-runtime";
+import { PrismaPhoneOtpChallengeRepository } from "../../db/repositories/phone-otp-challenge-repository";
+import { PrismaPhoneOtpCompletionRepository } from "../../db/repositories/phone-otp-completion-repository";
+import { PrismaSessionRepository } from "../../db/repositories/session-repository";
 
 import { SensitiveIdentifierHasher } from "../hash-sensitive-identifier";
 import { SessionService } from "../session-service";

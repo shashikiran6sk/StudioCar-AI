@@ -1,8 +1,6 @@
 import { parseSessionEnvironment } from "@studiocar/config";
-import {
-  createDatabaseClient,
-  PrismaVehicleRepository,
-} from "@studiocar/database";
+import { createDatabaseClient } from "@studiocar/database-runtime";
+import { PrismaVehicleRepository } from "../db/repositories/vehicle-repository";
 
 import { VehicleService } from "./vehicle-service";
 

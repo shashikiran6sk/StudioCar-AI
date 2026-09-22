@@ -10,7 +10,7 @@
     "@aws-sdk/client-s3": "catalog:",
     "@studiocar/config": "workspace:*",
     "@studiocar/contracts": "workspace:*",
-    "@studiocar/database": "workspace:*",
+    "@studiocar/database-runtime": "workspace:*",
     "@studiocar/observability": "workspace:*",
     "@studiocar/processing": "workspace:*",
     "sharp": "catalog:"

@@ -1,9 +1,7 @@
 import { SQSClient } from "@aws-sdk/client-sqs";
 import { parseEmailDispatchEnvironment } from "@studiocar/config";
-import {
-  createDatabaseClient,
-  PrismaEmailOutboxPublisherRepository,
-} from "@studiocar/database";
+import { createDatabaseClient } from "@studiocar/database-runtime";
+import { PrismaEmailOutboxPublisherRepository } from "../db/repositories/email-outbox-publisher-repository";
 import { EmailOutboxDispatcher } from "@studiocar/email";
 
 import { SqsEmailQueue } from "./sqs-email-queue";

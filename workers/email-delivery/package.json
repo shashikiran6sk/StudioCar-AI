@@ -3,11 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "dependencies": {
     "@studiocar/config": "workspace:*",
     "@studiocar/contracts": "workspace:*",
-    "@studiocar/database": "workspace:*",
+    "@studiocar/database-runtime": "workspace:*",
     "@studiocar/email": "workspace:*",
     "zod": "catalog:"
   },
@@ -17,5 +19,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
-  "devDependencies": { "esbuild": "catalog:", "vitest": "5.0.1" }
+  "devDependencies": {
+    "esbuild": "catalog:",
+    "vitest": "5.0.1"
+  }
 }

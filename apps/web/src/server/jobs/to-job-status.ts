@@ -2,10 +2,8 @@ import {
   JobStatusSchema,
   type JobStatus,
 } from "@studiocar/contracts";
-import {
-  ProcessingJobStatus,
-  type ProcessingJobStatusRecord,
-} from "@studiocar/database";
+import { ProcessingJobStatus } from "@studiocar/database-runtime";
+import { type ProcessingJobStatusRecord } from "../db/repositories/processing-job-status-repository";
 
 import {
   PROCESSING_STATUS_FALLBACK_ERROR_CODE,

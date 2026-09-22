@@ -1,5 +1,5 @@
 import type { InventoryItemStatus } from "@studiocar/contracts";
-import { VehicleStatus } from "@studiocar/database";
+import { VehicleStatus } from "@studiocar/database-runtime";
 
 export function toInventoryItemStatus(
   status: VehicleStatus,

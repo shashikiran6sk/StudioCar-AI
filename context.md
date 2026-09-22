@@ -14,7 +14,7 @@ The architectural goal is to move from remove.bg to fal.ai BiRefNet v2 and event
 - Screen composition: `/docs/screens/`.
 - Current delivery state and implementation notes: `/docs/progress.md`.
 - Boundary contracts: `packages/contracts`.
-- Persistence model: `packages/database/prisma/schema.prisma` and committed migrations.
+- Persistence model: `apps/web/prisma/schema.prisma` and committed migrations.
 
 For conflicts, apply product behavior and architecture first, then design rules, then screenshot composition. Do not ignore either design source.
 
@@ -32,11 +32,11 @@ For conflicts, apply product behavior and architecture first, then design rules,
 
 Workspace layout:
 
-- `apps/web`: Next.js application and application-server code
+- `apps/web`: Next.js application, application-server code, and the Prisma schema, migrations, and tenant repositories
 - `workers/image-processing`: asynchronous image-processing worker
 - `packages/ui`: reusable design-system components
 - `packages/contracts`: canonical Zod schemas and inferred DTO types
-- `packages/database`: Prisma schema, migrations, client, and repositories
+- `packages/database-runtime`: generated Prisma client, pooled client factory, and the repositories shared with the deployable workers
 - `packages/email`: provider-neutral email outbox, delivery claims, and mailer ports
 - `packages/processing`: processing domain and provider ports/adapters
 - `packages/observability`: structured logging and metrics

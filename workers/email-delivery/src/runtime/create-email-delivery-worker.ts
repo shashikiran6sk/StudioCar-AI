@@ -2,7 +2,7 @@ import { parseEmailWorkerEnvironment } from "@studiocar/config";
 import {
   createDatabaseClient,
   PrismaEmailDeliveryRepository,
-} from "@studiocar/database";
+} from "@studiocar/database-runtime";
 import { EmailDeliveryProcessor } from "@studiocar/email";
 
 import { ResendMailer } from "../resend-mailer";

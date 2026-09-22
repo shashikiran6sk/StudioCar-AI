@@ -6,7 +6,7 @@ import { handleCreateUploadIntent } from "../../../../../../apps/web/src/server/
 import { getUploadRuntime } from "../../../../../../apps/web/src/server/uploads/upload-runtime";
 import { UploadService } from "../../../../../../apps/web/src/server/uploads/upload-service";
 import { CommandRateLimiter } from "../../../../../../apps/web/src/server/security/command-rate-limiter";
-import { CommandRateLimitScope } from "../../../../../../packages/database/generated/prisma/client";
+import { CommandRateLimitScope } from "../../../../../../packages/database-runtime/generated/prisma/client";
 
 vi.mock("../../../../../../apps/web/src/server/auth/get-current-session", () => ({
   getCurrentSession: vi.fn(),

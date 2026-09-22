@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ProcessingStatusService } from "../../../../apps/web/src/server/jobs/processing-status-service";
 import type { ProcessingJobStatusRepositoryPort } from "../../../../apps/web/src/server/jobs/processing-status.types";
-import { ProcessingJobStatus } from "../../../../packages/database/src";
+import { ProcessingJobStatus } from "../../../../packages/database-runtime/src";
 
 const JOB_ID = "8c879f46-1193-4d77-b785-057fe026d111";
 

@@ -6,7 +6,7 @@ import {
 import {
   createDatabaseClient,
   PrismaProcessingWorkerRepository,
-} from "@studiocar/database";
+} from "@studiocar/database-runtime";
 import { ProcessingWorker } from "@studiocar/processing";
 
 import { ProcessingJobExecutor } from "../execution/processing-job-executor";

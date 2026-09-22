@@ -1,8 +1,6 @@
 import { parseSessionEnvironment } from "@studiocar/config";
-import {
-  createDatabaseClient,
-  PrismaUsageBillingRepository,
-} from "@studiocar/database";
+import { createDatabaseClient } from "@studiocar/database-runtime";
+import { PrismaUsageBillingRepository } from "../db/repositories/usage-billing-repository";
 
 import { UsageBillingService } from "./usage-billing-service";
 

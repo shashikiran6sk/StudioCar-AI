@@ -1,5 +1,5 @@
 import type { CreateProcessingBatch } from "@studiocar/contracts";
-import type { ProcessingProvider } from "@studiocar/database";
+import type { ProcessingProvider } from "@studiocar/database-runtime";
 import {
   createProcessingBatchRequestHash,
   createProcessingJobIdempotencyKey,

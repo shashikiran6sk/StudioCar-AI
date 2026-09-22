@@ -1,4 +1,4 @@
-import { VehicleStatus } from "../../../../packages/database/src/index";
+import { VehicleStatus } from "../../../../packages/database-runtime/src";
 import { describe, expect, it } from "vitest";
 
 import { toInventoryItemStatus } from "../../../../apps/web/src/server/inventory/to-inventory-item-status";

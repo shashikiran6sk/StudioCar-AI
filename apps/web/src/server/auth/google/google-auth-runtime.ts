@@ -1,10 +1,8 @@
 import { parseGoogleAuthEnvironment } from "@studiocar/config";
-import {
-  createDatabaseClient,
-  PrismaGoogleIdentityRepository,
-  PrismaGoogleOAuthChallengeRepository,
-  PrismaSessionRepository,
-} from "@studiocar/database";
+import { createDatabaseClient } from "@studiocar/database-runtime";
+import { PrismaGoogleIdentityRepository } from "../../db/repositories/google-identity-repository";
+import { PrismaGoogleOAuthChallengeRepository } from "../../db/repositories/google-oauth-challenge-repository";
+import { PrismaSessionRepository } from "../../db/repositories/session-repository";
 
 import { OAuthChallengeProtector } from "../oauth-challenge-protector";
 import { SessionService } from "../session-service";

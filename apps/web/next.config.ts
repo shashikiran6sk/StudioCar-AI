@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
   transpilePackages: [
     "@studiocar/config",
     "@studiocar/contracts",
-    "@studiocar/database",
+    "@studiocar/database-runtime",
     "@studiocar/ui",
   ],
 };
