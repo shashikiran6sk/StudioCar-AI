@@ -54,7 +54,9 @@ export class AdminBootstrapService {
 
     const configured = this.options.bootstrapEmail;
     if (!configured) return null;
-    if (normalizeAdminEmail(configured) !== normalizeAdminEmail(verifiedEmail)) {
+    if (
+      normalizeAdminEmail(configured) !== normalizeAdminEmail(verifiedEmail)
+    ) {
       return null;
     }
 

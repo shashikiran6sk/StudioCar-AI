@@ -23,6 +23,8 @@ const EDITED_PLAN_KEY = "STUDIO_PRO";
 /** A price nothing else in the product uses, so seeing it proves the edit. */
 const EDITED_PRICE_RUPEES = "4321";
 const EDITED_PRICE_LABEL = "₹4,321";
+const CUSTOMER_TOKEN = "f".repeat(43);
+const CUSTOMER_EMAIL = "subscription-customer-e2e@studiocar.test";
 const SESSION_COOKIE_NAME = "__Host-studiocar_session";
 const SESSION_COOKIE_SCOPE_URL = "https://localhost:3100";
 
@@ -221,6 +223,115 @@ adminTest(
       await database.query('DELETE FROM "User" WHERE "primaryEmail" = $1', [
         EDITOR_EMAIL,
       ]);
+      await database.end();
+    }
+  },
+);
+
+adminTest(
+  "assigns a paid plan by hand and shows it to the account",
+  async ({ page }, testInfo) => {
+    if (!databaseUrl)
+      throw new Error("DATABASE_URL is required for this test.");
+    const database = new Pool({ connectionString: databaseUrl, max: 1 });
+    const adminId = randomUUID();
+    const customerId = randomUUID();
+
+    try {
+      await database.query(
+        'DELETE FROM "User" WHERE "primaryEmail" = ANY($1)',
+        [[EDITOR_EMAIL, CUSTOMER_EMAIL]],
+      );
+      for (const [id, name, email, token] of [
+        [adminId, "Plan Editor", EDITOR_EMAIL, EDITOR_TOKEN],
+        [customerId, "Priya", CUSTOMER_EMAIL, CUSTOMER_TOKEN],
+      ] as const) {
+        await database.query(
+          'INSERT INTO "User" ("id", "displayName", "primaryEmail", "updatedAt") VALUES ($1, $2, $3, CURRENT_TIMESTAMP)',
+          [id, name, email],
+        );
+        await database.query(
+          'INSERT INTO "Session" ("id", "userId", "tokenHash", "expiresAt") VALUES ($1, $2, $3, $4)',
+          [
+            randomUUID(),
+            id,
+            hashSessionToken(token),
+            new Date("2027-09-19T00:00:00.000Z"),
+          ],
+        );
+      }
+      // Only a verified Google identity makes an account findable.
+      await database.query(
+        'INSERT INTO "AuthIdentity" ("id", "userId", "provider", "providerSubject", "email", "emailVerifiedAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+        [
+          randomUUID(),
+          customerId,
+          "GOOGLE",
+          `google-${CUSTOMER_EMAIL}`,
+          CUSTOMER_EMAIL,
+        ],
+      );
+      await database.query(
+        'INSERT INTO "UserRole" ("id", "userId", "role", "source") VALUES ($1, $2, $3, $4)',
+        [randomUUID(), adminId, "ADMIN", "ADMIN_GRANT"],
+      );
+
+      async function signInAs(token: string): Promise<void> {
+        await page.context().clearCookies();
+        await page.context().addCookies([
+          {
+            name: SESSION_COOKIE_NAME,
+            value: token,
+            url: SESSION_COOKIE_SCOPE_URL,
+            httpOnly: true,
+            sameSite: "Lax",
+            secure: true,
+          },
+        ]);
+      }
+
+      // The account starts on the free plan.
+      await signInAs(CUSTOMER_TOKEN);
+      await page.goto("/settings/billing");
+      await expect(
+        page.getByRole("progressbar", { name: "0 of 15 images used" }),
+      ).toBeVisible();
+
+      await signInAs(EDITOR_TOKEN);
+      await page.goto(
+        `/admin/subscriptions?account=${encodeURIComponent(CUSTOMER_EMAIL)}`,
+      );
+      await expect(page.getByText("Priya — On Free.")).toBeVisible();
+
+      await page.getByLabel(/^Plan$/).selectOption("STUDIO_PLUS");
+      await page
+        .getByLabel(/recorded in the audit log/)
+        .fill("Pilot migration.");
+      await page.getByRole("button", { name: "Assign plan" }).click();
+      await expect(page.getByText("Plan assigned.")).toBeVisible();
+      await page.screenshot({
+        fullPage: true,
+        path: testInfo.outputPath("admin-subscriptions.png"),
+      });
+
+      // The account is on the assigned plan, with its real allowance.
+      await signInAs(CUSTOMER_TOKEN);
+      await page.goto("/settings/billing");
+      await expect(
+        page.getByRole("heading", { name: "Studio Plus", level: 2 }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("progressbar", { name: "0 of 1,500 images used" }),
+      ).toBeVisible();
+
+      // An account cannot reach the page that assigned it.
+      const refused = await page.goto("/admin/subscriptions");
+      expect(refused?.status()).toBe(404);
+    } finally {
+      await database.query(
+        'DELETE FROM "User" WHERE "primaryEmail" = ANY($1)',
+        [[EDITOR_EMAIL, CUSTOMER_EMAIL]],
+      );
       await database.end();
     }
   },
