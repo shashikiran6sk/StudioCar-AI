@@ -130,3 +130,20 @@ export const AUDIT_ACTION_SUBSCRIPTION_ASSIGNED = "SUBSCRIPTION_ASSIGNED";
 export const AUDIT_ACTION_SUBSCRIPTION_REVOKED = "SUBSCRIPTION_REVOKED";
 
 export const MANUAL_SUBSCRIPTION_LOCK_KEY = "manual-subscription";
+
+export const ADMIN_ACTIVITY_TITLE = "Recent administrative changes";
+export const ADMIN_ACTIVITY_EMPTY_LABEL =
+  "Nothing has been changed from the administration area yet.";
+/** Shown when StudioCar AI itself acted, which only first-run bootstrap does. */
+export const ADMIN_ACTIVITY_SYSTEM_ACTOR = "StudioCar AI";
+/**
+ * Shown when an administrator acted and their account has since been deleted.
+ *
+ * Deliberately distinct from the system actor: "nobody was signed in" and
+ * "somebody was, and is gone" are different facts, and an audit trail that
+ * conflated them would be misleading exactly where it matters most.
+ */
+export const ADMIN_ACTIVITY_REMOVED_ACTOR = "A removed account";
+export const ADMIN_PLAN_DISTRIBUTION_TITLE = "Accounts by plan";
+export const ADMIN_PLAN_DISTRIBUTION_EMPTY_LABEL =
+  "Every account is on the free plan.";

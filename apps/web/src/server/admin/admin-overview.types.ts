@@ -6,3 +6,8 @@ export interface AdminOverview {
   manualSubscriptionCount: number;
   enabledSocialLinkCount: number;
 }
+
+export interface PlanAccountCount {
+  accountCount: number;
+  planKey: string;
+}

@@ -317,6 +317,19 @@ adminTest(
         path: testInfo.outputPath("admin-subscriptions.png"),
       });
 
+      // The change the administrator just made appears on the overview.
+      await page.goto("/admin");
+      await expect(
+        page.getByText("Assigned a plan (STUDIO_PLUS)."),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Accounts by plan", level: 2 }),
+      ).toBeVisible();
+      await page.screenshot({
+        fullPage: true,
+        path: testInfo.outputPath("admin-overview-activity.png"),
+      });
+
       // The account is on the assigned plan, with its real allowance.
       await signInAs(CUSTOMER_TOKEN);
       await page.goto("/settings/billing");
