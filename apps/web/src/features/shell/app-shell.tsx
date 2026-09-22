@@ -4,7 +4,11 @@ import type { ReactNode } from "react";
 
 import { AccountMenu } from "./account-menu";
 import { AppNavigation } from "./app-navigation";
-import { WORKSPACE_LABEL } from "./app-shell.constants";
+import {
+  DEFAULT_MAX_IMAGES_PER_BATCH,
+  WORKSPACE_LABEL,
+} from "./app-shell.constants";
+import { PlanLimitsProvider } from "./plan-limits-context";
 import { SidebarPlanSummary } from "./sidebar-plan-summary";
 import type { PlanUsageSummary } from "../../server/plan-usage/plan-usage.types";
 import { ProcessingIndicator } from "../processing/processing-indicator";
@@ -31,7 +35,16 @@ export function AppShell({ children, planUsage, user }: AppShellProps) {
           </div>
           <AccountMenu user={user} />
         </header>
-        <main className="app-content">{children}</main>
+        <main className="app-content">
+          <PlanLimitsProvider
+            limits={{
+              maxImagesPerBatch:
+                planUsage?.maxImagesPerBatch ?? DEFAULT_MAX_IMAGES_PER_BATCH,
+            }}
+          >
+            {children}
+          </PlanLimitsProvider>
+        </main>
       </div>
     </div>
   );

@@ -7,12 +7,14 @@ describe("toPlanUsageSummary", () => {
     expect(
       toPlanUsageSummary({
         currentPlan: {
+          allowanceScope: "LIFETIME",
           description: "For individuals trying the StudioCar workflow.",
           imageCapacity: 15,
           key: "FREE",
+          maxImagesPerBatch: 5,
           name: "Free",
           storageCapacityBytes: 3_221_225_472,
-          uploadSessionCapacity: 3,
+          uploadSessionCapacity: null,
         },
         imagesRemaining: 7,
         imagesUsed: 8,
@@ -25,6 +27,7 @@ describe("toPlanUsageSummary", () => {
       planName: "Free",
       imagesUsed: 8,
       imageCapacity: 15,
+      maxImagesPerBatch: 5,
       storageUsedBytes: 1_288_490_188,
       storageCapacityBytes: 3_221_225_472,
     });
@@ -34,9 +37,11 @@ describe("toPlanUsageSummary", () => {
     expect(
       toPlanUsageSummary({
         currentPlan: {
+          allowanceScope: "LIFETIME",
           description: "A flexible credit pack.",
           imageCapacity: 100,
           key: "STUDIO_PACK",
+          maxImagesPerBatch: 20,
           name: "Studio Pack",
           storageCapacityBytes: null,
           uploadSessionCapacity: null,

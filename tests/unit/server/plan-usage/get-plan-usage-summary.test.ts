@@ -15,6 +15,7 @@ const summary = {
   currentPlan: {
     description: "For individuals trying the StudioCar workflow.",
     imageCapacity: 15,
+    maxImagesPerBatch: 5,
     key: "FREE" as const,
     name: "Free",
     storageCapacityBytes: 3_221_225_472,
@@ -39,6 +40,7 @@ describe("getPlanUsageSummary", () => {
       planKey: "FREE",
       imagesUsed: 8,
       imageCapacity: 15,
+      maxImagesPerBatch: 5,
     });
   });
 

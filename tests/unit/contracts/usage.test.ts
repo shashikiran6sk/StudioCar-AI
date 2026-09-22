@@ -23,17 +23,19 @@ describe("usage contracts", () => {
     expect(
       UsageBillingSummarySchema.safeParse({
         currentPlan: {
+          allowanceScope: "LIFETIME",
           description: "Free plan",
-          imageCapacity: 9,
+          imageCapacity: 15,
           key: "FREE",
+          maxImagesPerBatch: 5,
           name: "Free",
           storageCapacityBytes: 3_221_225_472,
-          uploadSessionCapacity: 3,
+          uploadSessionCapacity: null,
         },
-        imagesRemaining: 7,
+        imagesRemaining: 13,
         imagesUsed: 2,
         storageUsedBytes: 1_024,
-        uploadSessionsRemaining: 2,
+        uploadSessionsRemaining: null,
         uploadSessionsUsed: 1,
       }).success,
     ).toBe(true);

@@ -1,13 +1,24 @@
 import type { PlanKey } from "@studiocar/contracts";
 
+/**
+ * How a plan's image allowance is counted.
+ *
+ * `LIFETIME` is a one-off allowance that never refills, which is what a free
+ * trial means. `BILLING_PERIOD` refills each calendar month, which is what a
+ * paid plan means.
+ */
+export type PlanAllowanceScope = "LIFETIME" | "BILLING_PERIOD";
+
 export interface PricingPlan {
   action: string;
+  allowanceScope: PlanAllowanceScope;
   cadence: string;
   description: string;
   featured: boolean;
   features: readonly string[];
   imageCapacity: number;
   key: PlanKey;
+  maxImagesPerBatch: number;
   name: string;
   price: string;
   segment: string;
@@ -18,22 +29,25 @@ export interface PricingPlan {
 export const PRICING_PLANS: readonly PricingPlan[] = [
   {
     action: "Start free",
+    // A trial allowance that never refills.
+    allowanceScope: "LIFETIME",
     cadence: "forever",
     description: "For individuals trying the StudioCar workflow on a small set of vehicles.",
     featured: false,
     features: [
-      "3 upload sessions",
-      "Maximum 3 images per batch",
+      "15 images in total",
+      "Maximum 5 images per batch",
       "Standard background processing",
       "3 GB storage",
     ],
-    imageCapacity: 9,
+    imageCapacity: 15,
     key: "FREE",
+    maxImagesPerBatch: 5,
     name: "Free",
     price: "₹0",
     segment: "Explore",
     storageCapacityBytes: 3_221_225_472,
-    uploadSessionCapacity: 3,
+    uploadSessionCapacity: null,
   },
   {
     action: "Choose Studio Pack",
@@ -46,8 +60,10 @@ export const PRICING_PLANS: readonly PricingPlan[] = [
       "Premium studio backgrounds",
       "Re-processing included",
     ],
+    allowanceScope: "LIFETIME",
     imageCapacity: 100,
     key: "STUDIO_PACK",
+    maxImagesPerBatch: 20,
     name: "Studio Pack",
     price: "₹1,499",
     segment: "Most popular",
@@ -65,8 +81,10 @@ export const PRICING_PLANS: readonly PricingPlan[] = [
       "Increased storage",
       "Team-ready inventory workflow",
     ],
+    allowanceScope: "BILLING_PERIOD",
     imageCapacity: 500,
     key: "STUDIO_PRO",
+    maxImagesPerBatch: 20,
     name: "Studio Pro",
     price: "₹3,999",
     segment: "Teams",

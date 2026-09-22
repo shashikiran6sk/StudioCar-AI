@@ -384,6 +384,19 @@ Payment checkout remains intentionally unavailable until a billing provider is s
 - Added card, action-grid, and Playwright coverage asserting three distinct sources, described imagery, and the new wording.
 - Verified lint, strict typecheck, source mapping, 238 web test files with 464 tests, production builds, and all six Playwright tests, then compared the rendered dashboard against `docs/screens/Dashboard_Page`.
 
+### SC025 — Free plan limits, enforced on the server
+
+- The Free plan is now **15 images in total with a maximum of 5 per batch**. It was 9 images across 3 upload sessions with 3 per batch, and none of it was enforced: `FREE_PLAN_PHOTO_LIMIT` was a client constant, and the reservation checked ownership, vehicle state, and asset readiness but never quota.
+- Both limits are enforced **inside the reservation transaction**, after the vehicle is locked and before any job or outbox message is created. A check made before the transaction could be overtaken by a concurrent batch; this one cannot.
+- The allowance counts charged images **plus reserved-but-unfinished work**. Images are charged on successful completion, so committed usage alone would let a tenant reserve without limit while work was still in flight. Cancelled and failed jobs are excluded, because a failure must not consume someone's allowance.
+- Introduced `PlanAllowanceScope`. A `LIFETIME` allowance is counted across every billing period, which is what makes a free trial something that runs out; a `BILLING_PERIOD` allowance stays scoped to the current month and refills. Free and Studio Pack are lifetime; Studio Pro is monthly.
+- Free no longer advertises an upload-session cap. The accepted specification names exactly two limits, and enforcing a third the product never asked for would refuse work the plan permits.
+- Refusals are distinct and actionable: `BATCH_LIMIT_EXCEEDED` and `ALLOWANCE_EXHAUSTED` are new canonical API error codes returning `422` with a message naming the limit, so a client can offer an upgrade rather than a pointless retry. Neither queues any work.
+- The dashboard now reports allowance against the tenant's resolved plan instead of assuming Free, so its numbers agree with the sidebar and with billing.
+- The upload wizard reads the plan's batch limit through a shell-provided context rather than a hardcoded 3. Outside that context it falls back to the smallest allowance, so a failure to resolve never lets someone start work the server will refuse. This remains guidance; the transaction decides.
+- Added allowance-resolution, service-refusal, plan-limit-context, and contract coverage, plus real-PostgreSQL integration tests proving a six-image batch is refused with the vehicle left as a draft and no jobs created, a five-image batch is accepted, in-flight work counts against the allowance, and a failed job does not.
+- Verified lint, strict typecheck, source mapping, 19 package suites, 24 integration files with 43 tests against real PostgreSQL, production builds, and six Playwright tests.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -395,30 +408,27 @@ Payment checkout remains intentionally unavailable until a billing provider is s
 
 Ordered as agreed. UI work first, then the admin and billing foundation.
 
-1. **SC025 — Free plan limits**: make the Free allowance 15 total images with a maximum of 5 per batch, enforced in the reservation transaction rather than only in the wizard.
-2. **SC026 — Account linking and Profile sign-in methods**: let a signed-in user securely connect the provider they do not yet have, and surface Connect actions on Profile.
-3. **SC027 — Admin data model**: roles, application configuration, admin invitations, plan configuration, social links, and manual subscription source.
-4. **SC028 — Admin authorization and first-admin bootstrap**: database-backed `ADMIN` checks on every admin page, action, and handler, plus a persisted one-time bootstrap.
-5. **SC029 — Administrator management**: grant, invite, accept on verified Google sign-in, revoke, last-admin protection, and audit entries.
-6. **SC030 — Database-backed plan configuration**: move the hardcoded plan catalog behind validated configuration with safe defaults and cache invalidation.
-7. **SC031 — Manual subscriptions**: assign Studio Pro and Studio Plus by hand without ever overwriting a provider-backed subscription.
-8. **SC032 — Dynamic footer social links**: administered links with server-side URL validation.
-9. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
-10. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
+1. **SC026 — Account linking and Profile sign-in methods**: let a signed-in user securely connect the provider they do not yet have, and surface Connect actions on Profile.
+2. **SC027 — Admin data model**: roles, application configuration, admin invitations, plan configuration, social links, and manual subscription source.
+3. **SC028 — Admin authorization and first-admin bootstrap**: database-backed `ADMIN` checks on every admin page, action, and handler, plus a persisted one-time bootstrap.
+4. **SC029 — Administrator management**: grant, invite, accept on verified Google sign-in, revoke, last-admin protection, and audit entries.
+5. **SC030 — Database-backed plan configuration**: move the hardcoded plan catalog behind validated configuration with safe defaults and cache invalidation.
+6. **SC031 — Manual subscriptions**: assign Studio Pro and Studio Plus by hand without ever overwriting a provider-backed subscription.
+7. **SC032 — Dynamic footer social links**: administered links with server-side URL validation.
+8. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
+9. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
 
 ## Not yet implemented
 
 Tracked explicitly so the gap between the plan and the repository stays visible.
 
-- **Free plan allowance is still 9 images across 3 sessions with 3 per batch**, and it is not enforced on the server. `FREE_PLAN_PHOTO_LIMIT` is a client constant, and the processing reservation checks ownership, vehicle state, and asset readiness but never quota.
 - **Account linking does not exist.** Identity resolution correctly refuses to merge accounts and returns `LinkRequired`, but there is no flow to complete a link, so a phone-first user who chooses Google reaches an error page with no way forward. Profile therefore shows connected identities without Connect actions.
 - **Identity disconnection is out of scope** until linking exists and a "never leave an account without a usable sign-in method" rule is designed.
 - **No roles, permissions, admin surface, or admin audit log exist.** `AuditLog` is present in the schema and unused.
-- **Plan configuration is hardcoded** in `apps/web/src/features/pricing/pricing-plans.ts`, and `STUDIO_PLUS` does not exist. Pricing, allowances, and batch limits cannot be changed without a deployment.
-- **The dashboard reports the Free plan unconditionally**, ignoring `PlanSubscription`.
+- **Plan configuration is hardcoded** in `apps/web/src/features/pricing/pricing-plans.ts`, and `STUDIO_PLUS` does not exist.
 - **Subscriptions are never written.** `PlanSubscription` is read when resolving a plan but nothing creates a row, and `BillingPort` is intentionally unimplemented until a payment provider is selected.
 - **The footer has no social links**, dynamic or otherwise; its company entries are inert text.
-- **Usage is counted per calendar month.** A lifetime Free allowance, as specified, is a deliberate semantic change still to be made.
+- **Plan allowance values still come from the hardcoded catalog.** The limits are enforced, but changing 15 or 5 needs a deployment until plan configuration is database-backed.
 - **`pnpm db:seed` does not exist**; it will arrive with plan configuration, when there is something canonical to seed.
 
 ## Important implementation notes

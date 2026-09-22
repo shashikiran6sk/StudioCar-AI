@@ -2,7 +2,11 @@ import type {
   CreateProcessingBatch,
   CreateProcessingBatchResponse,
 } from "@studiocar/contracts";
-import type { ReserveProcessingBatchCommand, ReserveProcessingBatchResult } from "../db/repositories/processing-job-repository";
+import type {
+  ProcessingAllowance,
+  ReserveProcessingBatchCommand,
+  ReserveProcessingBatchResult,
+} from "../db/repositories/processing-job-repository";
 import type {
   ProcessingOutboxDispatchRequest,
   ProcessingOutboxDispatchResult,
@@ -20,6 +24,14 @@ export interface ProcessingDispatchPort {
   ): Promise<ProcessingOutboxDispatchResult>;
 }
 
+/**
+ * Resolves the limits the tenant's current plan imposes. Kept behind a port so
+ * the reservation does not depend on how plans are stored.
+ */
+export interface ProcessingAllowanceResolverPort {
+  resolve(userId: string, now: Date): Promise<ProcessingAllowance>;
+}
+
 export type CreateProcessingJobsResult =
   | { ok: true; response: CreateProcessingBatchResponse }
   | {
@@ -29,6 +41,13 @@ export type CreateProcessingJobsResult =
         | "IDEMPOTENCY_CONFLICT"
         | "VEHICLE_NOT_DRAFT"
         | "VEHICLE_NOT_FOUND";
+    }
+  | { ok: false; reason: "BATCH_LIMIT_EXCEEDED"; maxImagesPerBatch: number }
+  | {
+      ok: false;
+      reason: "ALLOWANCE_EXHAUSTED";
+      imageCapacity: number;
+      imagesRemaining: number;
     };
 
 export interface ProcessingJobApplication {

@@ -9,9 +9,11 @@ import { completeProcessingBatch } from "./complete-processing-batch";
 import { useProcessingStatusStore } from "../processing/processing-status-store";
 import { VehicleCreateDialog } from "./vehicle-create-dialog";
 import { VEHICLE_CREATE_TRIGGER_LABEL } from "./vehicle-create.constants";
+import { usePlanLimits } from "../shell/plan-limits-context";
 
 export function VehicleCreateLauncher() {
   const router = useRouter();
+  const { maxImagesPerBatch } = usePlanLimits();
 
   async function processBatch(
     vehicleId: string,
@@ -34,6 +36,7 @@ export function VehicleCreateLauncher() {
 
   return (
     <VehicleCreateDialog
+      maxImagesPerBatch={maxImagesPerBatch}
       onProcess={processBatch}
       trigger={<Button variant="primary">{VEHICLE_CREATE_TRIGGER_LABEL}</Button>}
     />

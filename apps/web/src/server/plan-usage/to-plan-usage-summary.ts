@@ -10,6 +10,7 @@ export function toPlanUsageSummary(
     planName: summary.currentPlan.name,
     imagesUsed: summary.imagesUsed,
     imageCapacity: summary.currentPlan.imageCapacity,
+    maxImagesPerBatch: summary.currentPlan.maxImagesPerBatch,
     storageUsedBytes: summary.storageUsedBytes,
     storageCapacityBytes: summary.currentPlan.storageCapacityBytes,
   };

@@ -41,7 +41,8 @@ describe("PhotoUploadStep", () => {
     const onContinue = vi.fn();
     render(
       <PhotoUploadStep
-        onBack={vi.fn()}
+        maximumPhotos={5}
+      onBack={vi.fn()}
         onContinue={onContinue}
         upload={upload}
       />,
@@ -77,7 +78,8 @@ describe("PhotoUploadStep", () => {
     }));
     render(
       <PhotoUploadStep
-        onBack={vi.fn()}
+        maximumPhotos={5}
+      onBack={vi.fn()}
         onContinue={vi.fn()}
         upload={upload}
       />,
@@ -109,7 +111,8 @@ describe("PhotoUploadStep", () => {
     );
     render(
       <PhotoUploadStep
-        onBack={vi.fn()}
+        maximumPhotos={5}
+      onBack={vi.fn()}
         onContinue={vi.fn()}
         upload={upload}
       />,

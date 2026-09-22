@@ -7,6 +7,8 @@ import { PrismaInventoryRepository } from "../db/repositories/inventory-reposito
 import { DashboardService } from "./dashboard-service";
 import { InventoryService } from "../inventory/inventory-service";
 import { S3InventoryPreviewSigner } from "../inventory/s3-inventory-preview-signer";
+import { getUsageBillingSummary } from "../billing/get-usage-billing-summary";
+import { toPlanUsageSummary } from "../plan-usage/to-plan-usage-summary";
 
 let dashboardService: DashboardService | undefined;
 
@@ -28,6 +30,10 @@ export function getDashboardService(): DashboardService {
   dashboardService = new DashboardService(
     new PrismaDashboardRepository(database),
     inventory,
+    {
+      resolve: async (userId) =>
+        toPlanUsageSummary(await getUsageBillingSummary(userId)),
+    },
   );
   return dashboardService;
 }

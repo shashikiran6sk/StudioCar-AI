@@ -18,13 +18,24 @@ export const UsageQuerySchema = CursorPaginationSchema.extend({
 
 export const PlanKeySchema = z.enum(["FREE", "STUDIO_PACK", "STUDIO_PRO"]);
 
+/**
+ * `LIFETIME` allowances never refill; `BILLING_PERIOD` allowances refill each
+ * calendar month.
+ */
+export const PlanAllowanceScopeSchema = z.enum([
+  "LIFETIME",
+  "BILLING_PERIOD",
+]);
+
 export const UsageBillingSummarySchema = z
   .object({
     currentPlan: z
       .object({
+        allowanceScope: PlanAllowanceScopeSchema,
         description: z.string().min(1),
         imageCapacity: z.number().int().positive(),
         key: PlanKeySchema,
+        maxImagesPerBatch: z.number().int().positive(),
         name: z.string().min(1),
         storageCapacityBytes: z.number().int().positive().nullable(),
         uploadSessionCapacity: z.number().int().positive().nullable(),
@@ -41,4 +52,5 @@ export const UsageBillingSummarySchema = z
 export type UsageEventType = z.infer<typeof UsageEventTypeSchema>;
 export type UsageQuery = z.infer<typeof UsageQuerySchema>;
 export type PlanKey = z.infer<typeof PlanKeySchema>;
+export type PlanAllowanceScope = z.infer<typeof PlanAllowanceScopeSchema>;
 export type UsageBillingSummary = z.infer<typeof UsageBillingSummarySchema>;

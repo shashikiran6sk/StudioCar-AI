@@ -9,6 +9,7 @@ import {
 
 import type {
   CreateProcessingJobsResult,
+  ProcessingAllowanceResolverPort,
   ProcessingDispatchPort,
   ProcessingJobApplication,
   ProcessingJobRepositoryPort,
@@ -19,6 +20,7 @@ export class ProcessingJobService implements ProcessingJobApplication {
     private readonly jobs: ProcessingJobRepositoryPort,
     private readonly dispatcher: ProcessingDispatchPort,
     private readonly provider: ProcessingProvider,
+    private readonly allowances: ProcessingAllowanceResolverPort,
     private readonly now: () => Date = () => new Date(),
   ) {}
 
@@ -27,13 +29,15 @@ export class ProcessingJobService implements ProcessingJobApplication {
     idempotencyKey: string,
     command: CreateProcessingBatch,
   ): Promise<CreateProcessingJobsResult> {
+    const now = this.now();
     const reservation = await this.jobs.reserveBatchOwned({
+      allowance: await this.allowances.resolve(userId, now),
       userId,
       vehicleId: command.vehicleId,
       batchIdempotencyKey: idempotencyKey,
       batchRequestHash: createProcessingBatchRequestHash(command),
       provider: this.provider,
-      usageBillingPeriodKey: createUsageBillingPeriodKey(this.now()),
+      usageBillingPeriodKey: createUsageBillingPeriodKey(now),
       usageIdempotencyKey:
         createUploadSessionUsageIdempotencyKey(idempotencyKey),
       options: command.options,
@@ -46,6 +50,21 @@ export class ProcessingJobService implements ProcessingJobApplication {
         ),
       })),
     });
+    if (reservation.kind === "BATCH_LIMIT_EXCEEDED") {
+      return {
+        ok: false,
+        reason: reservation.kind,
+        maxImagesPerBatch: reservation.maxImagesPerBatch,
+      };
+    }
+    if (reservation.kind === "ALLOWANCE_EXHAUSTED") {
+      return {
+        ok: false,
+        reason: reservation.kind,
+        imageCapacity: reservation.imageCapacity,
+        imagesRemaining: reservation.imagesRemaining,
+      };
+    }
     if (reservation.kind !== "CREATED" && reservation.kind !== "EXISTING") {
       return { ok: false, reason: reservation.kind };
     }

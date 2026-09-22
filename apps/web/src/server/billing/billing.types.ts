@@ -20,9 +20,10 @@ export interface BillingPort {
 }
 
 export interface UsageBillingRepositoryPort {
+  findOwnedPlanKey(userId: string, now: Date): Promise<string | null>;
   getOwnedSummary(
     userId: string,
-    billingPeriodKey: string,
+    billingPeriodKey: string | null,
     now: Date,
   ): Promise<UsageBillingRepositoryRecord>;
 }

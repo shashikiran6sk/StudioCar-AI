@@ -35,6 +35,11 @@ import {
   PROCESSING_UNAUTHENTICATED_CODE,
   PROCESSING_UNAUTHENTICATED_MESSAGE,
   PROCESSING_UNAUTHENTICATED_STATUS,
+  PROCESSING_ALLOWANCE_EXHAUSTED_CODE,
+  PROCESSING_BATCH_LIMIT_CODE,
+  processingAllowanceExhaustedMessage,
+  processingBatchLimitMessage,
+  PROCESSING_UNPROCESSABLE_STATUS,
   PROCESSING_UNAVAILABLE_CODE,
   PROCESSING_UNAVAILABLE_MESSAGE,
   PROCESSING_UNAVAILABLE_STATUS,
@@ -117,6 +122,25 @@ export async function handleCreateProcessingBatch(
         headers: {
           [PROCESSING_CACHE_CONTROL_HEADER]: PROCESSING_PRIVATE_CACHE_CONTROL,
         },
+      });
+    }
+    if (result.reason === "BATCH_LIMIT_EXCEEDED") {
+      return createApiErrorResponse({
+        status: PROCESSING_UNPROCESSABLE_STATUS,
+        code: PROCESSING_BATCH_LIMIT_CODE,
+        message: processingBatchLimitMessage(result.maxImagesPerBatch),
+        requestId: createRequestId(),
+      });
+    }
+    if (result.reason === "ALLOWANCE_EXHAUSTED") {
+      return createApiErrorResponse({
+        status: PROCESSING_UNPROCESSABLE_STATUS,
+        code: PROCESSING_ALLOWANCE_EXHAUSTED_CODE,
+        message: processingAllowanceExhaustedMessage(
+          result.imagesRemaining,
+          result.imageCapacity,
+        ),
+        requestId: createRequestId(),
       });
     }
     const error = result.reason;

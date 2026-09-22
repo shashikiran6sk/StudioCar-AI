@@ -47,6 +47,7 @@ describe("POST /api/internal/jobs/dispatch", () => {
       { reserveBatchOwned: vi.fn() },
       dispatcher,
       ProcessingProvider.REMOVEBG,
+      { resolve: vi.fn().mockResolvedValue({ imageCapacity: 100, maxImagesPerBatch: 20, allowanceBillingPeriodKey: null }) },
     );
     const dispatchToken = "processing-dispatch-token-at-least-32-characters";
     const rateLimiter = new CommandRateLimiter(

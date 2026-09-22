@@ -46,6 +46,7 @@ describe("DashboardPage", () => {
     const dashboardService = new DashboardService(
       { getOwnedMetrics: vi.fn() },
       { list: vi.fn() },
+      { resolve: vi.fn() },
     );
     const getSummary = vi.spyOn(dashboardService, "getSummary").mockResolvedValue({
       activeImageCount: 0,

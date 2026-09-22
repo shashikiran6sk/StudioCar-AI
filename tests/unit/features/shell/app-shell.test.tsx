@@ -39,6 +39,7 @@ describe("AppShell", () => {
           planName: "Free",
           imagesUsed: 8,
           imageCapacity: 15,
+          maxImagesPerBatch: 5,
           storageUsedBytes: 1_288_490_188,
           storageCapacityBytes: 3_221_225_472,
         }}

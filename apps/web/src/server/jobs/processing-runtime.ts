@@ -16,6 +16,7 @@ import { ProcessingJobService } from "./processing-job-service";
 import { ProcessingStatusService } from "./processing-status-service";
 import { SqsProcessingQueue } from "./sqs-processing-queue";
 import { toProcessingProvider } from "./to-processing-provider";
+import { resolveProcessingAllowance } from "./resolve-processing-allowance";
 
 export interface ProcessingRuntime {
   dispatchToken: string;
@@ -65,6 +66,7 @@ export function getProcessingRuntime(): ProcessingRuntime {
       new PrismaProcessingJobRepository(database),
       dispatcher,
       toProcessingProvider(environment.BACKGROUND_REMOVAL_PROVIDER),
+      { resolve: resolveProcessingAllowance },
     ),
     statusService: new ProcessingStatusService(
       new PrismaProcessingJobStatusRepository(database),

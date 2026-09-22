@@ -71,6 +71,11 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
       options,
     };
     const command = {
+      allowance: {
+        imageCapacity: 100,
+        maxImagesPerBatch: 20,
+        allowanceBillingPeriodKey: null,
+      },
       userId: owner.id,
       vehicleId: vehicle.id,
       batchIdempotencyKey,
@@ -146,6 +151,11 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
 
     await expect(
       repository.reserveBatchOwned({
+        allowance: {
+          imageCapacity: 100,
+          maxImagesPerBatch: 20,
+          allowanceBillingPeriodKey: null,
+        },
         userId: owner.id,
         vehicleId: vehicle.id,
         batchIdempotencyKey: "processing-integration-batch-2",
@@ -173,4 +183,205 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
       }),
     ).resolves.toEqual({ status: "DRAFT" });
   });
+});
+
+databaseDescribe("PrismaProcessingJobRepository plan limits", () => {
+  let database: ReturnType<typeof createDatabaseClient>;
+  let repository: PrismaProcessingJobRepository;
+  const limitOwnerEmail = "processing-limits@integration.studiocar.test";
+
+  beforeAll(() => {
+    if (!databaseUrl) {
+      throw new Error("DATABASE_URL is required for integration tests.");
+    }
+    database = createDatabaseClient({ connectionString: databaseUrl, log: [] });
+    repository = new PrismaProcessingJobRepository(database);
+  });
+
+  afterEach(async () => {
+    await database.user.deleteMany({
+      where: { primaryEmail: limitOwnerEmail },
+    });
+  });
+
+  afterAll(async () => {
+    await database.$disconnect();
+  });
+
+  async function seedVehicle(imageCount: number) {
+    const owner = await database.user.create({
+      data: { primaryEmail: limitOwnerEmail },
+    });
+    const vehicle = await database.vehicle.create({
+      data: { userId: owner.id, name: "Allowance test vehicle" },
+    });
+    const assetIds = Array.from({ length: imageCount }, () => randomUUID());
+    await Promise.all(
+      assetIds.map((assetId, displayOrder) =>
+        database.imageAsset.create({
+          data: {
+            id: assetId,
+            userId: owner.id,
+            vehicleId: vehicle.id,
+            status: "UPLOADED",
+            originalObjectKey: `users/${owner.id}/vehicles/${vehicle.id}/assets/${assetId}/original/source.jpg`,
+            originalFilename: `source-${String(displayOrder)}.jpg`,
+            mimeType: "image/jpeg",
+            sizeBytes: 1024,
+            displayOrder,
+            uploadExpiresAt: new Date("2026-09-19T12:05:00.000Z"),
+            uploadedAt: new Date("2026-09-19T12:01:00.000Z"),
+          },
+        }),
+      ),
+    );
+    return { owner, vehicle, assetIds };
+  }
+
+  function command(
+    owner: { id: string },
+    vehicle: { id: string },
+    assetIds: string[],
+    allowance: {
+      imageCapacity: number;
+      maxImagesPerBatch: number;
+      allowanceBillingPeriodKey: string | null;
+    },
+    batchKey: string,
+  ) {
+    const options = ProcessingOptionsSchema.parse({});
+    return {
+      allowance,
+      userId: owner.id,
+      vehicleId: vehicle.id,
+      batchIdempotencyKey: batchKey,
+      batchRequestHash: createProcessingBatchRequestHash({
+        vehicleId: vehicle.id,
+        assetIds,
+        options,
+      }),
+      provider: ProcessingProvider.REMOVEBG,
+      usageBillingPeriodKey: "2026-09",
+      usageIdempotencyKey: `usage:upload-session:${batchKey}`,
+      options,
+      jobs: assetIds.map((assetId, displayOrder) => ({
+        assetId,
+        displayOrder,
+        idempotencyKey: createProcessingJobIdempotencyKey(batchKey, assetId),
+      })),
+    };
+  }
+
+  const freeAllowance = {
+    imageCapacity: 15,
+    maxImagesPerBatch: 5,
+    allowanceBillingPeriodKey: null,
+  };
+
+  it("refuses a batch larger than the plan's per-batch limit", async () => {
+    const { owner, vehicle, assetIds } = await seedVehicle(6);
+
+    await expect(
+      repository.reserveBatchOwned(
+        command(owner, vehicle, assetIds, freeAllowance, "limits-batch-too-big"),
+      ),
+    ).resolves.toEqual({ kind: "BATCH_LIMIT_EXCEEDED", maxImagesPerBatch: 5 });
+
+    // Nothing was reserved, so the vehicle is still a draft.
+    const after = await database.vehicle.findUnique({
+      where: { id: vehicle.id },
+      select: { status: true },
+    });
+    expect(after?.status).toBe("DRAFT");
+    expect(
+      await database.processingJob.count({ where: { userId: owner.id } }),
+    ).toBe(0);
+  });
+
+  it("accepts a batch exactly at the per-batch limit", async () => {
+    const { owner, vehicle, assetIds } = await seedVehicle(5);
+
+    await expect(
+      repository.reserveBatchOwned(
+        command(owner, vehicle, assetIds, freeAllowance, "limits-batch-exact"),
+      ),
+    ).resolves.toMatchObject({ kind: "CREATED" });
+  });
+
+  it("counts reserved but unfinished work against the allowance", async () => {
+    const { owner, vehicle, assetIds } = await seedVehicle(5);
+    await repository.reserveBatchOwned(
+      command(owner, vehicle, assetIds, freeAllowance, "limits-in-flight-1"),
+    );
+
+    // Five images are in flight and none has completed, so an allowance of five
+    // must already be spent.
+    const second = await seedVehicleFor(owner.id, 1);
+    await expect(
+      repository.reserveBatchOwned(
+        command(
+          owner,
+          second.vehicle,
+          second.assetIds,
+          { ...freeAllowance, imageCapacity: 5 },
+          "limits-in-flight-2",
+        ),
+      ),
+    ).resolves.toEqual({
+      kind: "ALLOWANCE_EXHAUSTED",
+      imageCapacity: 5,
+      imagesRemaining: 0,
+    });
+  });
+
+  it("does not charge a failed job against the allowance", async () => {
+    const { owner, vehicle, assetIds } = await seedVehicle(2);
+    await repository.reserveBatchOwned(
+      command(owner, vehicle, assetIds, freeAllowance, "limits-failed-1"),
+    );
+    await database.processingJob.updateMany({
+      where: { userId: owner.id },
+      data: { status: "FAILED", failedAt: new Date() },
+    });
+
+    const second = await seedVehicleFor(owner.id, 2);
+    await expect(
+      repository.reserveBatchOwned(
+        command(
+          owner,
+          second.vehicle,
+          second.assetIds,
+          { ...freeAllowance, imageCapacity: 2 },
+          "limits-failed-2",
+        ),
+      ),
+    ).resolves.toMatchObject({ kind: "CREATED" });
+  });
+
+  async function seedVehicleFor(userId: string, imageCount: number) {
+    const vehicle = await database.vehicle.create({
+      data: { userId, name: "Second allowance vehicle" },
+    });
+    const assetIds = Array.from({ length: imageCount }, () => randomUUID());
+    await Promise.all(
+      assetIds.map((assetId, displayOrder) =>
+        database.imageAsset.create({
+          data: {
+            id: assetId,
+            userId,
+            vehicleId: vehicle.id,
+            status: "UPLOADED",
+            originalObjectKey: `users/${userId}/vehicles/${vehicle.id}/assets/${assetId}/original/source.jpg`,
+            originalFilename: `source-${String(displayOrder)}.jpg`,
+            mimeType: "image/jpeg",
+            sizeBytes: 1024,
+            displayOrder,
+            uploadExpiresAt: new Date("2026-09-19T12:05:00.000Z"),
+            uploadedAt: new Date("2026-09-19T12:01:00.000Z"),
+          },
+        }),
+      ),
+    );
+    return { vehicle, assetIds };
+  }
 });

@@ -2,6 +2,30 @@ import { describe, expect, it, vi } from "vitest";
 
 import { DashboardService } from "../../../../apps/web/src/server/dashboard/dashboard-service";
 
+
+/**
+ * The dashboard reports allowance against the tenant's resolved plan, so tests
+ * state that plan explicitly rather than assuming the free one.
+ */
+function planUsage(overrides: Partial<{
+  imagesUsed: number;
+  imageCapacity: number;
+  planName: string;
+  storageCapacityBytes: number | null;
+}> = {}) {
+  return {
+    resolve: vi.fn().mockResolvedValue({
+      planKey: "FREE" as const,
+      planName: "Free",
+      imagesUsed: 0,
+      imageCapacity: 15,
+      storageUsedBytes: 0,
+      storageCapacityBytes: 3_221_225_472,
+      ...overrides,
+    }),
+  };
+}
+
 describe("DashboardService", () => {
   it("maps tenant metrics and bounded recent inventory into a dashboard summary", async () => {
     const repository = {
@@ -30,7 +54,11 @@ describe("DashboardService", () => {
         nextCursor: null,
       }),
     };
-    const service = new DashboardService(repository, inventory);
+    const service = new DashboardService(
+      repository,
+      inventory,
+      planUsage({ imagesUsed: 6 }),
+    );
 
     const result = await service.getSummary(
       "user-1",
@@ -50,7 +78,7 @@ describe("DashboardService", () => {
     });
     expect(result).toMatchObject({
       imagesProcessed: 24,
-      imagesRemaining: 3,
+      imagesRemaining: 9,
       processingSuccessRate: 95,
       storageUsedBytes: 2_048,
       vehiclesProcessed: 5,
@@ -63,8 +91,8 @@ describe("DashboardService", () => {
         getOwnedMetrics: vi.fn().mockResolvedValue({
           activeImageCount: 0,
           completedJobCount: 0,
-          imagesProcessed: 12,
-          imagesProcessedThisPeriod: 12,
+          imagesProcessed: 20,
+          imagesProcessedThisPeriod: 20,
           storageUsedBytes: 0n,
           unsuccessfulJobCount: 0,
           vehiclesProcessed: 0,
@@ -85,6 +113,7 @@ describe("DashboardService", () => {
           nextCursor: null,
         }),
       },
+      planUsage({ imagesUsed: 20 }),
     );
 
     await expect(service.getSummary("user-1")).resolves.toMatchObject({
