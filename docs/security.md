@@ -12,9 +12,9 @@ provider keys into the Next.js application.
 | Next.js session and read models | `DATABASE_URL` | Provider, email-delivery, and scheduler secrets |
 | Google OAuth routes | `DATABASE_URL`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | MSG91, Resend, remove.bg, fal.ai |
 | Phone OTP routes | `DATABASE_URL`, `SESSION_SECRET`, `MSG91_AUTH_KEY`, `MSG91_TEMPLATE_ID` | Google, Resend, image-provider keys |
-| Upload, inventory, portfolio, and storage-cleanup control plane | `DATABASE_URL`, `AWS_REGION`, `S3_BUCKET`, workload-role S3 read/write/delete permissions | Image bytes, worker queue-consumer permissions, provider keys |
-| Processing outbox dispatcher | `DATABASE_URL`, `AWS_REGION`, `SQS_IMAGE_QUEUE_URL`, `PROCESSING_DISPATCH_TOKEN`, queue-publisher permission | Queue-consumer permission, provider keys, image-object write permission |
-| Email outbox dispatcher | `DATABASE_URL`, `AWS_REGION`, `SQS_EMAIL_QUEUE_URL`, `EMAIL_DISPATCH_TOKEN`, `APPLICATION_BASE_URL`, queue-publisher permission | `RESEND_API_KEY`, queue-consumer permission |
+| Upload, inventory, portfolio, and storage-cleanup control plane | `DATABASE_URL`, `AWS_REGION`, `S3_BUCKET`, optional `S3_ENDPOINT`/`S3_FORCE_PATH_STYLE`/`S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`, workload-role S3 read/write/delete permissions | Image bytes, worker queue-consumer permissions, provider keys |
+| Processing outbox dispatcher | `DATABASE_URL`, `AWS_REGION`, `SQS_IMAGE_QUEUE_URL`, optional `SQS_ENDPOINT`/`SQS_ACCESS_KEY_ID`/`SQS_SECRET_ACCESS_KEY`, `PROCESSING_DISPATCH_TOKEN`, queue-publisher permission | Queue-consumer permission, provider keys, image-object write permission |
+| Email outbox dispatcher | `DATABASE_URL`, `AWS_REGION`, `SQS_EMAIL_QUEUE_URL`, optional `SQS_ENDPOINT`/`SQS_ACCESS_KEY_ID`/`SQS_SECRET_ACCESS_KEY`, `EMAIL_DISPATCH_TOKEN`, `APPLICATION_BASE_URL`, queue-publisher permission | `RESEND_API_KEY`, queue-consumer permission |
 | Image-processing worker | `DATABASE_URL`, private-image S3 read/write, image-queue consume, only the selected provider credential | Session, OAuth, OTP, email, scheduler secrets |
 | Email-delivery worker | `DATABASE_URL`, `RESEND_API_KEY`, `EMAIL_FROM`, `APPLICATION_BASE_URL`, email-queue consume | S3, image queue, image-provider, auth secrets |
 | Trusted processing scheduler | Processing dispatch URL and `PROCESSING_DISPATCH_TOKEN` only | Database, AWS, provider, session secrets |
@@ -23,7 +23,10 @@ provider keys into the Next.js application.
 | Trusted storage-cleanup scheduler | Storage cleanup URL and `STORAGE_CLEANUP_TOKEN` only | Database, AWS, provider, auth, and dispatch secrets |
 
 Use workload identities and the checked-in least-privilege IAM policies instead
-of long-lived AWS access keys in production. Processing and email dispatch tokens
+of long-lived AWS access keys in production. Explicit `S3_*` and `SQS_*` key
+pairs exist for local emulators and for deployments with no attachable role;
+configuring only half of a pair is rejected at startup rather than failing
+opaquely at the first signed request. Processing and email dispatch tokens
 and both cleanup tokens must be independently generated. Rotate a credential inside its owning runtime,
 then revoke the old value; never log either value during rollout.
 
