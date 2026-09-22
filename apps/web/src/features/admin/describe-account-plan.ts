@@ -9,7 +9,9 @@ export interface AccountPlanDescription {
  *
  * Rendered as one sentence rather than as fragments a reader has to reassemble.
  */
-export function describeAccountPlan(description: AccountPlanDescription): string {
+export function describeAccountPlan(
+  description: AccountPlanDescription,
+): string {
   return description.providerManaged
     ? `On ${description.planName}, owned by the billing provider.`
     : `On ${description.planName}.`;

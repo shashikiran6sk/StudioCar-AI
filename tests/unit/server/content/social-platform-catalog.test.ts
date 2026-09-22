@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { SOCIAL_PLATFORM_CATALOG } from "../../../../apps/web/src/server/plans/social-platform-catalog";
+import { SOCIAL_PLATFORM_CATALOG } from "../../../../apps/web/src/server/content/social-platform-catalog";
 
 describe("social platform catalog", () => {
   it("offers only platforms the footer knows how to render", () => {

@@ -25,6 +25,9 @@ const EDITED_PRICE_RUPEES = "4321";
 const EDITED_PRICE_LABEL = "₹4,321";
 const CUSTOMER_TOKEN = "f".repeat(43);
 const CUSTOMER_EMAIL = "subscription-customer-e2e@studiocar.test";
+const CONTENT_EMAIL = "content-editor-e2e@studiocar.test";
+const CONTENT_TOKEN = "9".repeat(43);
+const SOCIAL_URL = "https://instagram.com/studiocar-e2e";
 const SESSION_COOKIE_NAME = "__Host-studiocar_session";
 const SESSION_COOKIE_SCOPE_URL = "https://localhost:3100";
 
@@ -332,6 +335,111 @@ adminTest(
         'DELETE FROM "User" WHERE "primaryEmail" = ANY($1)',
         [[EDITOR_EMAIL, CUSTOMER_EMAIL]],
       );
+      await database.end();
+    }
+  },
+);
+
+adminTest(
+  "configures a footer link and shows it to the public",
+  async ({ page }, testInfo) => {
+    if (!databaseUrl)
+      throw new Error("DATABASE_URL is required for this test.");
+    const database = new Pool({ connectionString: databaseUrl, max: 1 });
+    const adminId = randomUUID();
+
+    // Footer links are shared configuration, so whatever was there is restored.
+    const before = await database.query('SELECT * FROM "SocialLink"');
+
+    try {
+      await database.query('DELETE FROM "User" WHERE "primaryEmail" = $1', [
+        CONTENT_EMAIL,
+      ]);
+      await database.query('DELETE FROM "SocialLink"');
+      await database.query(
+        'INSERT INTO "User" ("id", "displayName", "primaryEmail", "updatedAt") VALUES ($1, $2, $3, CURRENT_TIMESTAMP)',
+        [adminId, "Content Editor", CONTENT_EMAIL],
+      );
+      await database.query(
+        'INSERT INTO "Session" ("id", "userId", "tokenHash", "expiresAt") VALUES ($1, $2, $3, $4)',
+        [
+          randomUUID(),
+          adminId,
+          hashSessionToken(CONTENT_TOKEN),
+          new Date("2027-09-19T00:00:00.000Z"),
+        ],
+      );
+      await database.query(
+        'INSERT INTO "UserRole" ("id", "userId", "role", "source") VALUES ($1, $2, $3, $4)',
+        [randomUUID(), adminId, "ADMIN", "ADMIN_GRANT"],
+      );
+
+      // Nothing is configured, so the footer shows no social section at all.
+      await page.goto("/");
+      await expect(
+        page.getByRole("navigation", { name: "Social links" }),
+      ).toHaveCount(0);
+
+      await page.context().addCookies([
+        {
+          name: SESSION_COOKIE_NAME,
+          value: CONTENT_TOKEN,
+          url: SESSION_COOKIE_SCOPE_URL,
+          httpOnly: true,
+          sameSite: "Lax",
+          secure: true,
+        },
+      ]);
+      await page.goto("/admin/content");
+      await expect(
+        page.getByRole("heading", {
+          name: "Content and social links",
+          level: 1,
+        }),
+      ).toBeVisible();
+
+      const instagram = page.locator(".admin-card", {
+        has: page.getByRole("heading", { name: "Instagram", level: 2 }),
+      });
+      await instagram.getByLabel(/^Address/).fill(SOCIAL_URL);
+      await instagram.getByLabel(/Show in the footer/).check();
+      await instagram.getByRole("button", { name: "Save link" }).click();
+      await expect(instagram.getByText("Footer link saved.")).toBeVisible();
+      await page.screenshot({
+        fullPage: true,
+        path: testInfo.outputPath("admin-content.png"),
+      });
+
+      // A plaintext address is refused rather than published.
+      await instagram.getByLabel(/^Address/).fill("http://instagram.com/x");
+      await instagram.getByRole("button", { name: "Save link" }).click();
+      await expect(
+        instagram.getByText(
+          "Enter a complete https:// address and the text to show.",
+        ),
+      ).toBeVisible();
+
+      await page.context().clearCookies();
+      await page.goto("/");
+      const social = page.getByRole("navigation", { name: "Social links" });
+      await expect(
+        social.getByRole("link", { name: "Instagram" }),
+      ).toHaveAttribute("href", SOCIAL_URL);
+      await page.locator(".marketing-footer").screenshot({
+        path: testInfo.outputPath("public-footer.png"),
+      });
+    } finally {
+      await database.query('DELETE FROM "SocialLink"');
+      for (const original of before.rows) {
+        const columns = Object.keys(original);
+        await database.query(
+          `INSERT INTO "SocialLink" (${columns.map((column) => `"${column}"`).join(", ")}) VALUES (${columns.map((_column, index) => `$${String(index + 1)}`).join(", ")})`,
+          columns.map((column) => original[column]),
+        );
+      }
+      await database.query('DELETE FROM "User" WHERE "primaryEmail" = $1', [
+        CONTENT_EMAIL,
+      ]);
       await database.end();
     }
   },

@@ -678,6 +678,13 @@ html {
   gap: 20px;
 }
 
+/* Only when there is a fourth column to make room for; without configured
+   links the footer keeps exactly the composition the screenshots show. */
+.marketing-footer--with-social {
+  grid-template-columns: 2fr repeat(4, 1fr);
+  gap: 40px;
+}
+
 .marketing-footer__brand p {
   max-width: 44ch;
   margin: 0;

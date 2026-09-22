@@ -8,7 +8,7 @@ The production foundation, authentication, private direct uploads, asynchronous 
 
 Database ownership now belongs to `apps/web`, S3 and SQS connections are configurable, phone OTP uses the MSG91 Widget flow, a deterministic local environment reproduces the production data plane, and workspace navigation carries a real plan and usage summary.
 
-Plan prices, allowances and batch limits are database-backed and editable at `/admin/pricing`; the application carries no second copy of a plan. An administrator can assign a paid plan by hand at `/admin/subscriptions`, and a subscription a payment provider owns is never overwritten from there. Payment checkout remains intentionally unavailable until a billing provider is selected. See **Not yet implemented** for everything the accepted plan still calls for.
+Plan prices, allowances and batch limits are database-backed and editable at `/admin/pricing`; the application carries no second copy of a plan. An administrator can assign a paid plan by hand at `/admin/subscriptions`, and a subscription a payment provider owns is never overwritten from there. The public footer's social links are administered at `/admin/content`. Payment checkout remains intentionally unavailable until a billing provider is selected. See **Not yet implemented** for everything the accepted plan still calls for.
 
 ## Completed
 
@@ -477,6 +477,21 @@ Plan prices, allowances and batch limits are database-backed and editable at `/a
 - Added contract, lookup-parsing, period-arithmetic, action-authorization, component and page coverage; eighteen real-PostgreSQL repository tests; and a Playwright walk that assigns Studio Plus to an account and asserts that account's own billing page shows the 1,500-image allowance.
 - Verified lint, strict typecheck, source mapping, every package suite (690 tests), 29 integration files with 110 tests against real PostgreSQL, production builds, and nine Playwright tests.
 
+### SC032 — Dynamic footer social links
+
+- The public footer now shows the links an administrator configures at `/admin/content`. `SocialLink` had a model and a platform catalog but nothing rendered or administered them.
+- **There is no fallback and no shipped default.** A footer link is an address somebody will follow, so it exists only once a real one is supplied. With nothing configured the footer renders no social section at all, rather than a heading with nothing under it or a placeholder that goes nowhere.
+- `https` only, which the database's `SocialLink_url_is_https` CHECK constraint mirrors. An administrator cannot downgrade the public to plaintext by pasting, and an integration test asserts the database refuses it even if the contract were bypassed.
+- **An address that carries credentials is refused.** `https://studiocar.example@evil.example/` reads as a StudioCar address in a status bar but is not one, and nothing legitimate needs a password in a link the whole world sees. An `@` in the *path* is still accepted, because that is how most handles are written.
+- A platform's position in the footer comes from the shipped catalog, not from the submission: the footer's order is a design decision, not something to retype on every edit. A test asserts a submitted `displayOrder` is ignored.
+- Only a platform the footer knows how to render can be saved. A platform nobody has configured still gets a form, and starts hidden rather than live, so saving a blank form can never publish a link nobody reviewed.
+- Hiding a link keeps the row; removing it deletes it. Both write an `AuditLog` entry naming the administrator. The address is public, so recording it discloses nothing.
+- Every save upserts under a per-platform advisory lock, so two administrators editing the same platform cannot create a second row; a concurrency test asserts one survives.
+- Moved the platform catalog from `server/plans/` to `server/content/`, where it belongs, and retyped it against the canonical `SocialPlatform` contract rather than a duplicated union.
+- The footer widens to a fourth column only when links exist, so with none configured its composition is byte-identical to the screenshots.
+- Added contract, mapper, reader, action, component and page coverage; eight real-PostgreSQL repository tests; and a Playwright walk that starts with an empty footer, configures a link, sees a plaintext address refused, and finds the link on the public homepage while signed out.
+- Verified lint, strict typecheck, source mapping, every package suite (725 tests), 30 integration files with 118 tests against real PostgreSQL, production builds, and ten Playwright tests.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -488,9 +503,8 @@ Plan prices, allowances and batch limits are database-backed and editable at `/a
 
 Ordered as agreed. UI work first, then the admin and billing foundation.
 
-1. **SC032 — Dynamic footer social links**: administered links with server-side URL validation.
-2. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
-3. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
+1. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
+2. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
 
 ## Not yet implemented
 
@@ -499,7 +513,7 @@ Tracked explicitly so the gap between the plan and the repository stays visible.
 - **Identity disconnection is not implemented.** Linking exists; removing a method still needs a "never leave an account without a usable sign-in method" rule and re-authentication, and nothing in the accepted scope requires it.
 - **Customers still cannot buy anything.** `BillingPort` is intentionally unimplemented until a payment provider is selected, and no plan is marked purchasable, because a checkout that cannot complete must not be advertised. A subscription exists only when an administrator assigns one by hand.
 - **An assignment does not expire by itself.** The period is honoured on read, so an expired assignment stops applying, but nothing sweeps the row back to `EXPIRED`. That belongs with the scheduled lifecycle jobs.
-- **The footer has no social links.** The `SocialLink` model and platform catalog exist, but nothing renders or administers them, and no row is seeded.
+- **No social link is seeded.** The footer shows what an administrator configures and nothing otherwise, which is deliberate — but it means a fresh deployment's footer has no social section until somebody adds one.
 - **New plans cannot be created from the interface.** `/admin/pricing` edits the four plans the deployment ships; adding a fifth still needs a code change, because `planKey` is the closed set that subscriptions and the usage contract are keyed by.
 - **A plan-catalog read failure is not observable.** The web application has no logger yet, so a failed `PlanConfig` query surfaces as an error page rather than as a recorded event. This belongs with the control-plane telemetry slice.
 
@@ -516,6 +530,7 @@ true when it does ship.
 - `allowanceScope` and `currency` are deliberately not editable. The scope decides how usage already charged is counted, so changing it would reinterpret history rather than change the future.
 - A manual subscription never overwrites one a payment provider owns. When the billing provider lands, the provider's webhook remains the only writer of `PAYMENT_PROVIDER` rows, and the administration page must keep refusing to touch them.
 - An account is found for subscription management only through a verified `AuthIdentity`, never through `User.primaryEmail` or `primaryPhone`. Those are profile values, not proof.
+- A footer link has no shipped default on purpose. It is an address the public will follow, so it exists only once an administrator supplies a real one; an empty result renders no section at all.
 - Do not modify the committed initial migration after it has been applied; add a new backward-compatible migration for every schema change.
 - Prisma CLI validation/generation can run without secrets; migration and integration commands require `DATABASE_URL`.
 - Real PostgreSQL integration tests currently cover schema constraints, tenant-scoped vehicle operations, sessions, one-time OAuth challenges, canonical Google identities, OTP throttling, canonical phone identities, atomic phone-session completion, image upload idempotency, and concurrent processing-batch reservation.

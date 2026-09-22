@@ -1,14 +1,9 @@
-export type SocialPlatformKey =
-  | "INSTAGRAM"
-  | "LINKEDIN"
-  | "X"
-  | "YOUTUBE"
-  | "FACEBOOK";
+import type { SocialPlatform } from "@studiocar/contracts";
 
 export interface SocialPlatformPresentation {
-  platform: SocialPlatformKey;
-  label: string;
   displayOrder: number;
+  label: string;
+  platform: SocialPlatform;
 }
 
 /**
@@ -19,9 +14,9 @@ export interface SocialPlatformPresentation {
  * nothing rather than a placeholder that goes nowhere.
  */
 export const SOCIAL_PLATFORM_CATALOG: readonly SocialPlatformPresentation[] = [
-  { platform: "INSTAGRAM", label: "Instagram", displayOrder: 0 },
-  { platform: "LINKEDIN", label: "LinkedIn", displayOrder: 1 },
-  { platform: "X", label: "X", displayOrder: 2 },
-  { platform: "YOUTUBE", label: "YouTube", displayOrder: 3 },
-  { platform: "FACEBOOK", label: "Facebook", displayOrder: 4 },
+  { displayOrder: 0, label: "Instagram", platform: "INSTAGRAM" },
+  { displayOrder: 1, label: "LinkedIn", platform: "LINKEDIN" },
+  { displayOrder: 2, label: "X", platform: "X" },
+  { displayOrder: 3, label: "YouTube", platform: "YOUTUBE" },
+  { displayOrder: 4, label: "Facebook", platform: "FACEBOOK" },
 ];
