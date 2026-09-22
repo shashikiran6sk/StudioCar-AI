@@ -8,7 +8,7 @@ The production foundation, authentication, private direct uploads, asynchronous 
 
 Database ownership now belongs to `apps/web`, S3 and SQS connections are configurable, phone OTP uses the MSG91 Widget flow, a deterministic local environment reproduces the production data plane, and workspace navigation carries a real plan and usage summary.
 
-Plan prices, allowances and batch limits are database-backed and editable at `/admin/pricing`; the application carries no second copy of a plan. Payment checkout remains intentionally unavailable until a billing provider is selected. See **Not yet implemented** for everything the accepted plan still calls for.
+Plan prices, allowances and batch limits are database-backed and editable at `/admin/pricing`; the application carries no second copy of a plan. An administrator can assign a paid plan by hand at `/admin/subscriptions`, and a subscription a payment provider owns is never overwritten from there. Payment checkout remains intentionally unavailable until a billing provider is selected. See **Not yet implemented** for everything the accepted plan still calls for.
 
 ## Completed
 
@@ -460,6 +460,23 @@ Plan prices, allowances and batch limits are database-backed and editable at `/a
 - Added catalog-resolution, formatting, form-parsing, action-authorization, contract, component and page coverage; five real-PostgreSQL repository tests including a concurrent-edit race; and a Playwright walk that edits Studio Pro as an administrator and asserts the new price appears on Packs & Billing and on the public homepage.
 - Verified lint, strict typecheck, source mapping, every package suite (644 tests), 28 integration files with 91 tests against real PostgreSQL, `prisma validate`, production builds, and eight Playwright tests.
 
+### SC031 — Manual subscriptions
+
+- An administrator can now hand a paid plan to one account at `/admin/subscriptions`, until a billing provider exists. `PlanSubscription` rows are finally written; the read path that resolves somebody's plan was already there.
+- **A subscription a payment provider owns is never overwritten.** The provider is the authority on what somebody has paid for, and two rows disagreeing with no way to tell which is right is worse than refusing. An integration test asserts the assignment is refused and the provider's plan survives untouched.
+- At most one assignment is ever in force. Reassigning cancels the previous one in the same transaction, which the partial unique index also enforces, so two administrators acting at once cannot create a second. A concurrency test runs exactly that race.
+- The cancellation sweep closes every manual row the unique index counts, not only those still inside their period. An expired row left `ACTIVE` still occupies the index, and an integration test covers that case directly.
+- Ending an assignment changes only the status. The row is kept and its period left as granted, so what somebody was given and when it was withdrawn both stay answerable. The database's `PlanSubscription_period_check` caught an earlier version that rewrote the end date, which would have erased exactly that.
+- **An account is found only by a sign-in method it has verified.** A Google identity with a verified email, or a phone identity — never a `primaryEmail` somebody merely typed into their profile. Two integration tests assert an unverified identity and a profile-only address both find nothing.
+- Exact match only. There is no partial search and no customer listing: an administrator assigning a subscription already knows who to, and a browsable directory would disclose more than the task needs. A malformed lookup queries nothing at all.
+- Ownership stays keyed by account. `ManualSubscriptionAssignmentSchema` takes a `userId` and rejects a contact detail in its place, so a subscription can never be attached to an address rather than to a person.
+- Assignments are bounded to 1–24 months, so no grant is open-ended. Period arithmetic is whole calendar months and never rolls into the next one: 31 January plus a month is 28 February, or 29 in a leap year.
+- Only a plan the catalog **currently offers** can be assigned, so nobody is put on a plan the product has deactivated or no longer describes. `FREE` is excluded on purpose: it is the absence of a subscription.
+- Every assignment and every withdrawal writes an `AuditLog` entry naming the acting administrator, with the reason they gave, in the same transaction as the change.
+- Fixed an email-normalisation ordering bug found while building this: `z.email().trim()` validates the format **before** trimming, so an address with a stray space was rejected rather than cleaned. The same pattern in the administrator grant action is corrected and covered.
+- Added contract, lookup-parsing, period-arithmetic, action-authorization, component and page coverage; eighteen real-PostgreSQL repository tests; and a Playwright walk that assigns Studio Plus to an account and asserts that account's own billing page shows the 1,500-image allowance.
+- Verified lint, strict typecheck, source mapping, every package suite (690 tests), 29 integration files with 110 tests against real PostgreSQL, production builds, and nine Playwright tests.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -471,17 +488,17 @@ Plan prices, allowances and batch limits are database-backed and editable at `/a
 
 Ordered as agreed. UI work first, then the admin and billing foundation.
 
-1. **SC031 — Manual subscriptions**: assign Studio Pro and Studio Plus by hand without ever overwriting a provider-backed subscription.
-2. **SC032 — Dynamic footer social links**: administered links with server-side URL validation.
-3. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
-4. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
+1. **SC032 — Dynamic footer social links**: administered links with server-side URL validation.
+2. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
+3. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
 
 ## Not yet implemented
 
 Tracked explicitly so the gap between the plan and the repository stays visible.
 
 - **Identity disconnection is not implemented.** Linking exists; removing a method still needs a "never leave an account without a usable sign-in method" rule and re-authentication, and nothing in the accepted scope requires it.
-- **Subscriptions are never written.** `PlanSubscription` is read when resolving a plan but nothing creates a row, and `BillingPort` is intentionally unimplemented until a payment provider is selected. No plan is marked purchasable, because a checkout that cannot complete must not be advertised.
+- **Customers still cannot buy anything.** `BillingPort` is intentionally unimplemented until a payment provider is selected, and no plan is marked purchasable, because a checkout that cannot complete must not be advertised. A subscription exists only when an administrator assigns one by hand.
+- **An assignment does not expire by itself.** The period is honoured on read, so an expired assignment stops applying, but nothing sweeps the row back to `EXPIRED`. That belongs with the scheduled lifecycle jobs.
 - **The footer has no social links.** The `SocialLink` model and platform catalog exist, but nothing renders or administers them, and no row is seeded.
 - **New plans cannot be created from the interface.** `/admin/pricing` edits the four plans the deployment ships; adding a fifth still needs a code change, because `planKey` is the closed set that subscriptions and the usage contract are keyed by.
 - **A plan-catalog read failure is not observable.** The web application has no logger yet, so a failed `PlanConfig` query surfaces as an error page rather than as a recorded event. This belongs with the control-plane telemetry slice.
@@ -497,6 +514,8 @@ true when it does ship.
 
 - Plan configuration is authoritative once a `PlanConfig` row exists; the shipped defaults in `apps/web/src/server/plans/default-plan-configurations.ts` are a fallback for an unseeded database and for a key the catalog no longer describes. `pnpm db:seed` installs missing plans and never overwrites an edited one.
 - `allowanceScope` and `currency` are deliberately not editable. The scope decides how usage already charged is counted, so changing it would reinterpret history rather than change the future.
+- A manual subscription never overwrites one a payment provider owns. When the billing provider lands, the provider's webhook remains the only writer of `PAYMENT_PROVIDER` rows, and the administration page must keep refusing to touch them.
+- An account is found for subscription management only through a verified `AuthIdentity`, never through `User.primaryEmail` or `primaryPhone`. Those are profile values, not proof.
 - Do not modify the committed initial migration after it has been applied; add a new backward-compatible migration for every schema change.
 - Prisma CLI validation/generation can run without secrets; migration and integration commands require `DATABASE_URL`.
 - Real PostgreSQL integration tests currently cover schema constraints, tenant-scoped vehicle operations, sessions, one-time OAuth challenges, canonical Google identities, OTP throttling, canonical phone identities, atomic phone-session completion, image upload idempotency, and concurrent processing-batch reservation.

@@ -199,4 +199,19 @@ describe("revokeInvitationAction", () => {
 
     expect(revokeInvite).not.toHaveBeenCalled();
   });
+  it("cleans an address before validating it", async () => {
+    // Zod checks an email's format first, so trimming must happen before that.
+    getCurrentSession.mockResolvedValue({ userId: ADMIN_ID });
+    isCurrentUserAdministrator.mockResolvedValue(true);
+    grantOrInvite.mockResolvedValue({ kind: "INVITED", inviteId: INVITE_ID });
+
+    await actions.grantAdministratorAction(
+      null,
+      form({ email: "  Owner@Example.COM  " }),
+    );
+
+    expect(grantOrInvite).toHaveBeenCalledWith(
+      expect.objectContaining({ email: "owner@example.com" }),
+    );
+  });
 });

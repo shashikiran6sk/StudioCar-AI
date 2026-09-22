@@ -9,10 +9,8 @@ import { getCurrentSession } from "../auth/get-current-session";
  * Every protected page, action, and handler asks this independently. Hiding a
  * navigation entry is presentation, never authorization.
  */
-export const isCurrentUserAdministrator = cache(
-  async (): Promise<boolean> => {
-    const session = await getCurrentSession();
-    if (!session) return false;
-    return getAdminRoleRepository().isAdministrator(session.userId);
-  },
-);
+export const isCurrentUserAdministrator = cache(async (): Promise<boolean> => {
+  const session = await getCurrentSession();
+  if (!session) return false;
+  return getAdminRoleRepository().isAdministrator(session.userId);
+});

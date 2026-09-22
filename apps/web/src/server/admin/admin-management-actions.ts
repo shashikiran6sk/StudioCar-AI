@@ -21,7 +21,8 @@ import {
 } from "./to-admin-action-message";
 import { getCurrentSession } from "../auth/get-current-session";
 
-const EmailSchema = z.email().trim().toLowerCase();
+/** Normalised before validation: `z.email()` checks the format first. */
+const EmailSchema = z.string().trim().toLowerCase().pipe(z.email());
 const IdSchema = z.uuid();
 
 /**

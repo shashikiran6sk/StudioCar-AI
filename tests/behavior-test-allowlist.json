@@ -514,5 +514,9 @@
   {
     "source": "apps/web/src/server/plans/plan-config-runtime.ts",
     "reason": "Composition root wiring the plan configuration repository to the database client."
+  },
+  {
+    "source": "apps/web/src/server/admin/manual-subscription-runtime.ts",
+    "reason": "Composition root wiring the manual subscription repository to the database client."
   }
 ]
