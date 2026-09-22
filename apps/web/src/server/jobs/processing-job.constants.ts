@@ -7,6 +7,7 @@ export const PROCESSING_UNAUTHENTICATED_STATUS = 401;
 export const PROCESSING_FORBIDDEN_STATUS = 403;
 export const PROCESSING_NOT_FOUND_STATUS = 404;
 export const PROCESSING_CONFLICT_STATUS = 409;
+export const PROCESSING_UNPROCESSABLE_STATUS = 422;
 export const PROCESSING_UNAVAILABLE_STATUS = 503;
 export const PROCESSING_BAD_REQUEST_CODE = "BAD_REQUEST";
 export const PROCESSING_UNAUTHENTICATED_CODE = "UNAUTHENTICATED";
@@ -14,6 +15,8 @@ export const PROCESSING_FORBIDDEN_CODE = "FORBIDDEN";
 export const PROCESSING_NOT_FOUND_CODE = "NOT_FOUND";
 export const PROCESSING_CONFLICT_CODE = "CONFLICT";
 export const PROCESSING_UNAVAILABLE_CODE = "SERVICE_UNAVAILABLE";
+export const PROCESSING_BATCH_LIMIT_CODE = "BATCH_LIMIT_EXCEEDED";
+export const PROCESSING_ALLOWANCE_EXHAUSTED_CODE = "ALLOWANCE_EXHAUSTED";
 export const PROCESSING_INVALID_REQUEST_MESSAGE =
   "Choose valid uploaded photos and processing options.";
 export const PROCESSING_INVALID_IDEMPOTENCY_MESSAGE =
@@ -33,3 +36,16 @@ export const PROCESSING_UNAVAILABLE_MESSAGE =
   "Processing could not be started. Your originals are preserved.";
 export const PROCESSING_RATE_LIMITED_MESSAGE =
   "Too many processing requests. Wait before trying again.";
+
+export function processingBatchLimitMessage(maxImagesPerBatch: number): string {
+  return `Your plan allows up to ${String(maxImagesPerBatch)} images in one batch. Remove some images and try again.`;
+}
+
+export function processingAllowanceExhaustedMessage(
+  imagesRemaining: number,
+  imageCapacity: number,
+): string {
+  return imagesRemaining === 0
+    ? `You have used all ${String(imageCapacity)} images included in your plan. Upgrade to process more.`
+    : `Only ${String(imagesRemaining)} of your ${String(imageCapacity)} plan images remain. Reduce this batch or upgrade to process more.`;
+}

@@ -16,21 +16,31 @@ export class UsageBillingService {
     userId: string,
     now = new Date(),
   ): Promise<UsageBillingSummary> {
-    const record = await this.repository.getOwnedSummary(
-      userId,
-      createUsageBillingPeriodKey(now),
-      now,
-    );
-    const parsedPlanKey = PlanKeySchema.safeParse(record.planKey);
+    /**
+     * The plan is resolved first because it decides how its own allowance is
+     * counted: a lifetime allowance never refills, so it must not be scoped to
+     * the current billing period.
+     */
+    const planKey = await this.repository.findOwnedPlanKey(userId, now);
+    const parsedPlanKey = PlanKeySchema.safeParse(planKey);
     const plan = findPricingPlan(
       parsedPlanKey.success ? parsedPlanKey.data : "FREE",
+    );
+    const record = await this.repository.getOwnedSummary(
+      userId,
+      plan.allowanceScope === "LIFETIME"
+        ? null
+        : createUsageBillingPeriodKey(now),
+      now,
     );
 
     return UsageBillingSummarySchema.parse({
       currentPlan: {
+        allowanceScope: plan.allowanceScope,
         description: plan.description,
         imageCapacity: plan.imageCapacity,
         key: plan.key,
+        maxImagesPerBatch: plan.maxImagesPerBatch,
         name: plan.name,
         storageCapacityBytes: plan.storageCapacityBytes,
         uploadSessionCapacity: plan.uploadSessionCapacity,

@@ -22,6 +22,27 @@ const OPTIONS = {
   shadow: "NATURAL",
 } satisfies Parameters<ProcessingJobService["createBatch"]>[2]["options"];
 
+/**
+ * A generous allowance by default, so tests that are not about plan limits are
+ * not accidentally constrained by them.
+ */
+function allowanceResolver(
+  overrides: Partial<{
+    imageCapacity: number;
+    maxImagesPerBatch: number;
+    allowanceBillingPeriodKey: string | null;
+  }> = {},
+) {
+  return {
+    resolve: vi.fn().mockResolvedValue({
+      imageCapacity: 100,
+      maxImagesPerBatch: 20,
+      allowanceBillingPeriodKey: null,
+      ...overrides,
+    }),
+  };
+}
+
 describe("ProcessingJobService", () => {
   it("reserves deterministic jobs and asks the outbox to publish them", async () => {
     const repository: ProcessingJobRepositoryPort = {
@@ -57,6 +78,7 @@ describe("ProcessingJobService", () => {
       repository,
       dispatcher,
       ProcessingProvider.REMOVEBG,
+      allowanceResolver(),
       () => NOW,
     );
 
@@ -93,6 +115,7 @@ describe("ProcessingJobService", () => {
       repository,
       dispatcher,
       ProcessingProvider.REMOVEBG,
+      allowanceResolver(),
     );
 
     await expect(
@@ -103,5 +126,105 @@ describe("ProcessingJobService", () => {
       }),
     ).resolves.toEqual({ ok: false, reason: "ASSETS_NOT_READY" });
     expect(dispatcher.dispatch).not.toHaveBeenCalled();
+  });
+});
+
+describe("ProcessingJobService plan limits", () => {
+  it("refuses a batch larger than the plan allows, naming the limit", async () => {
+    const repository = {
+      reserveBatchOwned: vi.fn().mockResolvedValue({
+        kind: "BATCH_LIMIT_EXCEEDED",
+        maxImagesPerBatch: 5,
+      }),
+    };
+    const dispatcher = { dispatch: vi.fn() };
+    const service = new ProcessingJobService(
+      repository,
+      dispatcher,
+      ProcessingProvider.REMOVEBG,
+      allowanceResolver({ maxImagesPerBatch: 5 }),
+      () => NOW,
+    );
+
+    await expect(
+      service.createBatch("user-1", "processing-request-0002", {
+        vehicleId: VEHICLE_ID,
+        assetIds: [ASSET_ID],
+        options: OPTIONS,
+      }),
+    ).resolves.toEqual({
+      ok: false,
+      reason: "BATCH_LIMIT_EXCEEDED",
+      maxImagesPerBatch: 5,
+    });
+    expect(dispatcher.dispatch).not.toHaveBeenCalled();
+  });
+
+  it("refuses a batch beyond the remaining allowance without queueing work", async () => {
+    const repository = {
+      reserveBatchOwned: vi.fn().mockResolvedValue({
+        kind: "ALLOWANCE_EXHAUSTED",
+        imageCapacity: 15,
+        imagesRemaining: 0,
+      }),
+    };
+    const dispatcher = { dispatch: vi.fn() };
+    const service = new ProcessingJobService(
+      repository,
+      dispatcher,
+      ProcessingProvider.REMOVEBG,
+      allowanceResolver({ imageCapacity: 15 }),
+      () => NOW,
+    );
+
+    await expect(
+      service.createBatch("user-1", "processing-request-0003", {
+        vehicleId: VEHICLE_ID,
+        assetIds: [ASSET_ID],
+        options: OPTIONS,
+      }),
+    ).resolves.toEqual({
+      ok: false,
+      reason: "ALLOWANCE_EXHAUSTED",
+      imageCapacity: 15,
+      imagesRemaining: 0,
+    });
+    expect(dispatcher.dispatch).not.toHaveBeenCalled();
+  });
+
+  it("passes the resolved plan limits into the reservation", async () => {
+    const repository = {
+      reserveBatchOwned: vi.fn().mockResolvedValue({
+        kind: "CREATED",
+        jobs: [],
+      }),
+    };
+    const allowances = allowanceResolver({
+      imageCapacity: 15,
+      maxImagesPerBatch: 5,
+    });
+    const service = new ProcessingJobService(
+      repository,
+      { dispatch: vi.fn() },
+      ProcessingProvider.REMOVEBG,
+      allowances,
+      () => NOW,
+    );
+
+    await service.createBatch("user-1", "processing-request-0004", {
+      vehicleId: VEHICLE_ID,
+      assetIds: [ASSET_ID],
+      options: OPTIONS,
+    });
+
+    expect(allowances.resolve).toHaveBeenCalledWith("user-1", NOW);
+    expect(repository.reserveBatchOwned).toHaveBeenCalledWith(
+      expect.objectContaining({
+        allowance: expect.objectContaining({
+          imageCapacity: 15,
+          maxImagesPerBatch: 5,
+        }),
+      }),
+    );
   });
 });

@@ -40,7 +40,20 @@ export interface ProcessingJobReservationInput {
   idempotencyKey: string;
 }
 
+/**
+ * The plan limits this reservation must respect. They are evaluated inside the
+ * reservation transaction, because a check made before it could be overtaken by
+ * a concurrent batch.
+ */
+export interface ProcessingAllowance {
+  imageCapacity: number;
+  maxImagesPerBatch: number;
+  /** Null counts every charged image ever; a key scopes to that period. */
+  allowanceBillingPeriodKey: string | null;
+}
+
 export interface ReserveProcessingBatchCommand {
+  allowance: ProcessingAllowance;
   batchIdempotencyKey: string;
   batchRequestHash: string;
   jobs: ProcessingJobReservationInput[];
@@ -61,13 +74,17 @@ export type ReserveProcessingBatchResult =
         | "IDEMPOTENCY_CONFLICT"
         | "VEHICLE_NOT_DRAFT"
         | "VEHICLE_NOT_FOUND";
-    };
+    }
+  | { kind: "BATCH_LIMIT_EXCEEDED"; maxImagesPerBatch: number }
+  | { kind: "ALLOWANCE_EXHAUSTED"; imageCapacity: number; imagesRemaining: number };
 
 type TransactionResult =
   | { kind: "CREATED"; jobs: ProcessingJobRecord[] }
   | { kind: "ASSETS_NOT_READY" }
   | { kind: "VEHICLE_NOT_DRAFT" }
   | { kind: "VEHICLE_NOT_FOUND" }
+  | { kind: "BATCH_LIMIT_EXCEEDED"; maxImagesPerBatch: number }
+  | { kind: "ALLOWANCE_EXHAUSTED"; imageCapacity: number; imagesRemaining: number }
   | { kind: "WRITE_RACE" };
 
 export class PrismaProcessingJobRepository {
@@ -128,6 +145,31 @@ export class PrismaProcessingJobRepository {
 
     const uniqueAssetIds = new Set(command.jobs.map((job) => job.assetId));
     if (command.jobs.length === 0) return { kind: "ASSETS_NOT_READY" };
+    if (command.jobs.length > command.allowance.maxImagesPerBatch) {
+      return {
+        kind: "BATCH_LIMIT_EXCEEDED",
+        maxImagesPerBatch: command.allowance.maxImagesPerBatch,
+      };
+    }
+
+    /**
+     * Images are charged on successful completion, so committed usage alone
+     * would let a tenant reserve without limit while work is still in flight.
+     * The allowance therefore counts charged images plus everything already
+     * reserved and not yet terminal.
+     */
+    const allowanceUsed = await this.countAllowanceUsed(transaction, command);
+    const imagesRemaining = Math.max(
+      0,
+      command.allowance.imageCapacity - allowanceUsed,
+    );
+    if (command.jobs.length > imagesRemaining) {
+      return {
+        kind: "ALLOWANCE_EXHAUSTED",
+        imageCapacity: command.allowance.imageCapacity,
+        imagesRemaining,
+      };
+    }
     if (uniqueAssetIds.size !== command.jobs.length) {
       return { kind: "ASSETS_NOT_READY" };
     }
@@ -189,6 +231,47 @@ export class PrismaProcessingJobRepository {
       },
     });
     return { kind: "CREATED", jobs };
+  }
+
+  /**
+   * Charged images plus reserved-but-unfinished ones. Cancelled and failed jobs
+   * are excluded because they are never charged, so a failure must not consume
+   * a tenant's allowance.
+   */
+  private async countAllowanceUsed(
+    transaction: Prisma.TransactionClient,
+    command: ReserveProcessingBatchCommand,
+  ): Promise<number> {
+    const period =
+      command.allowance.allowanceBillingPeriodKey === null
+        ? {}
+        : { billingPeriodKey: command.allowance.allowanceBillingPeriodKey };
+
+    const [charged, inFlight] = await Promise.all([
+      transaction.usageEvent.aggregate({
+        where: {
+          ...period,
+          type: UsageEventType.BACKGROUND_REMOVAL_COMPLETED,
+          userId: command.userId,
+        },
+        _sum: { quantity: true },
+      }),
+      transaction.processingJob.count({
+        where: {
+          userId: command.userId,
+          status: {
+            in: [
+              ProcessingJobStatus.CREATED,
+              ProcessingJobStatus.QUEUED,
+              ProcessingJobStatus.PROCESSING,
+              ProcessingJobStatus.RETRYING,
+            ],
+          },
+        },
+      }),
+    ]);
+
+    return (charged._sum.quantity ?? 0) + inFlight;
   }
 
   private resolveReplay(

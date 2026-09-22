@@ -5,9 +5,9 @@ import { findPricingPlan } from "../../../../apps/web/src/features/pricing/find-
 describe("findPricingPlan", () => {
   it("returns the canonical plan configuration", () => {
     expect(findPricingPlan("FREE")).toMatchObject({
-      imageCapacity: 9,
+      imageCapacity: 15,
       name: "Free",
-      uploadSessionCapacity: 3,
+      uploadSessionCapacity: null,
     });
   });
 });

@@ -67,6 +67,11 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
     const options = ProcessingOptionsSchema.parse({});
     const request = { vehicleId: vehicle.id, assetIds: [assetId], options };
     const reserved = await reservations.reserveBatchOwned({
+      allowance: {
+        imageCapacity: 100,
+        maxImagesPerBatch: 20,
+        allowanceBillingPeriodKey: null,
+      },
       userId: owner.id,
       vehicleId: vehicle.id,
       batchIdempotencyKey: batchKey,

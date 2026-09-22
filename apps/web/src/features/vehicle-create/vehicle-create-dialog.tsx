@@ -26,6 +26,8 @@ import { VehicleDetailsForm } from "./vehicle-details-form";
 
 export interface VehicleCreateDialogProps {
   createDraft?: typeof requestCreateVehicleDraft;
+  /** The plan's own limit, so the wizard stops where the server would. */
+  maxImagesPerBatch: number;
   onProcess: (
     vehicleId: string,
     assetIds: string[],
@@ -39,6 +41,7 @@ export interface VehicleCreateDialogProps {
 
 export function VehicleCreateDialog({
   createDraft = requestCreateVehicleDraft,
+  maxImagesPerBatch,
   onProcess,
   trigger,
   updateDraft = requestUpdateVehicleDraft,
@@ -117,6 +120,7 @@ export function VehicleCreateDialog({
         ) : null}
         {step === VehicleCreateStep.Photos ? (
           <PhotoUploadStep
+            maximumPhotos={maxImagesPerBatch}
             onBack={() => setStep(VehicleCreateStep.Details)}
             onContinue={() => setStep(VehicleCreateStep.Customize)}
             upload={upload}

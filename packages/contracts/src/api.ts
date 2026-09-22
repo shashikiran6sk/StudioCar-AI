@@ -11,6 +11,13 @@ export const ApiErrorCodeSchema = z.enum([
   "RATE_LIMITED",
   "INTERNAL_ERROR",
   "SERVICE_UNAVAILABLE",
+  /**
+   * The request was understood and permitted, but the tenant's plan does not
+   * allow it. Distinct from CONFLICT so a client can offer an upgrade rather
+   * than a retry.
+   */
+  "BATCH_LIMIT_EXCEEDED",
+  "ALLOWANCE_EXHAUSTED",
 ]);
 
 export const ApiErrorSchema = z

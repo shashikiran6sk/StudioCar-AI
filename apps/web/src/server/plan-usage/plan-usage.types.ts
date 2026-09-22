@@ -5,6 +5,7 @@ export interface PlanUsageSummary {
   planName: string;
   imagesUsed: number;
   imageCapacity: number;
+  maxImagesPerBatch: number;
   storageUsedBytes: number;
   storageCapacityBytes: number | null;
 }

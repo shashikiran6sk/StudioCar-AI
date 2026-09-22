@@ -165,7 +165,10 @@ inventoryTest(
       await page.goto("/settings/billing");
       await expect(page.getByRole("heading", { name: "Usage & Billing" }))
         .toBeVisible();
-      await expect(page.getByText("1 / 3")).toBeVisible();
+      // Free is a lifetime allowance of 15 images with no upload-session cap.
+      await expect(
+        page.getByRole("progressbar", { name: /of 15 images used/ }),
+      ).toBeVisible();
       await page.getByRole("button", { name: "Upgrade plan" }).click();
       await expect(page.getByRole("dialog")).toContainText(
         "No payment has been made",

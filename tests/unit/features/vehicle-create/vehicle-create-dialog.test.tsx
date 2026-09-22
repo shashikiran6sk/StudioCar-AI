@@ -45,7 +45,8 @@ describe("VehicleCreateDialog", () => {
     const updateDraft = vi.fn<typeof requestUpdateVehicleDraft>();
     render(
       <VehicleCreateDialog
-        createDraft={createDraft}
+        maxImagesPerBatch={5}
+      createDraft={createDraft}
         onProcess={onProcess}
         trigger={<button type="button">Upload vehicle</button>}
         updateDraft={updateDraft}

@@ -12,13 +12,13 @@ vi.mock("../../../../../../apps/web/src/server/billing/usage-billing-runtime", (
 describe("UsageBillingPage", () => {
   it("renders owned immutable usage in the plan surface", async () => {
     vi.mocked(getCurrentSession).mockResolvedValue({ id: "session-1", userId: "user-1", expiresAt: new Date("2027-01-01"), user: { id: "user-1", displayName: "Priya", primaryEmail: "priya@example.com", primaryPhone: null } });
-    const service = new UsageBillingService({ getOwnedSummary: vi.fn() });
-    vi.spyOn(service, "getSummary").mockResolvedValue({ currentPlan: { description: "Small batches.", imageCapacity: 9, key: "FREE", name: "Free", storageCapacityBytes: 3_221_225_472, uploadSessionCapacity: 3 }, imagesRemaining: 7, imagesUsed: 2, storageUsedBytes: 1_024, uploadSessionsRemaining: 2, uploadSessionsUsed: 1 });
+    const service = new UsageBillingService({ findOwnedPlanKey: vi.fn(), getOwnedSummary: vi.fn() });
+    vi.spyOn(service, "getSummary").mockResolvedValue({ currentPlan: { allowanceScope: "LIFETIME" as const, description: "Small batches.", imageCapacity: 15, key: "FREE" as const, maxImagesPerBatch: 5, name: "Free", storageCapacityBytes: 3_221_225_472, uploadSessionCapacity: null }, imagesRemaining: 13, imagesUsed: 2, storageUsedBytes: 1_024, uploadSessionsRemaining: null, uploadSessionsUsed: 1 });
     vi.mocked(getUsageBillingService).mockReturnValue(service);
 
     render(await UsageBillingPage());
     expect(screen.getByRole("heading", { name: "Usage & Billing" })).toBeInTheDocument();
-    expect(screen.getByText("1 / 3")).toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Upgrade plan" })).toBeInTheDocument();
   });
 });

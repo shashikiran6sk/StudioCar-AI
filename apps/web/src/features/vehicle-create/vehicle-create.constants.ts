@@ -17,7 +17,6 @@ export const VEHICLE_CREATE_DESCRIPTION =
   "Create a vehicle, upload its photos, and choose a studio treatment.";
 export const VEHICLE_CREATE_TOTAL_STEPS = 4;
 export const VEHICLE_NOTES_MAX_LENGTH = 2_000;
-export const FREE_PLAN_PHOTO_LIMIT = 3;
 export const PHOTO_UPLOAD_TITLE = "Upload photos";
 export const PHOTO_UPLOAD_DROP_LABEL = "Drop vehicle photos here";
 export const PHOTO_UPLOAD_SELECT_LABEL = "Select photos";

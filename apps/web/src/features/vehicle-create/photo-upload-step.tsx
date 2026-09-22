@@ -16,7 +16,6 @@ import { PhotoUploadStatus } from "./photo-upload-status";
 import { selectPhotoFiles } from "./select-photo-files";
 import { uploadPhoto } from "./upload-photo";
 import {
-  FREE_PLAN_PHOTO_LIMIT,
   PHOTO_UPLOAD_ACCEPT,
   PHOTO_UPLOAD_BACK_LABEL,
   PHOTO_UPLOAD_CONTINUE_LABEL,
@@ -32,14 +31,14 @@ import {
 import { useVehicleCreateStore } from "./vehicle-create-store";
 
 export interface PhotoUploadStepProps {
-  maximumPhotos?: number;
+  maximumPhotos: number;
   onBack: () => void;
   onContinue: () => void;
   upload?: typeof uploadPhoto;
 }
 
 export function PhotoUploadStep({
-  maximumPhotos = FREE_PLAN_PHOTO_LIMIT,
+  maximumPhotos,
   onBack,
   onContinue,
   upload = uploadPhoto,
