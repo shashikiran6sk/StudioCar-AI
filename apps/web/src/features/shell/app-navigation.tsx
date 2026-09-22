@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { APP_NAVIGATION_ITEMS } from "./app-navigation.constants";
+import { navigationItemIsActive } from "./navigation-item-is-active";
 
 export function AppNavigation() {
   const pathname = usePathname();
@@ -11,8 +12,8 @@ export function AppNavigation() {
   return (
     <nav aria-label="Workspace" className="app-navigation">
       {APP_NAVIGATION_ITEMS.map((item) => {
-        const active = pathname === item.href;
-        return item.available ? (
+        const active = navigationItemIsActive(pathname, item.href);
+        return (
           <Link
             aria-current={active ? "page" : undefined}
             className="app-navigation__item"
@@ -24,17 +25,6 @@ export function AppNavigation() {
             </span>
             {item.label}
           </Link>
-        ) : (
-          <span
-            aria-disabled="true"
-            className="app-navigation__item app-navigation__item--disabled"
-            key={item.href}
-          >
-            <span aria-hidden="true" className="app-navigation__icon">
-              {item.icon}
-            </span>
-            {item.label}
-          </span>
         );
       })}
     </nav>

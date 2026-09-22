@@ -1,35 +1,23 @@
-import { randomUUID } from "node:crypto";
 import type { PhoneOtpWidget } from "@studiocar/contracts";
 
-import { createApiErrorResponse } from "../create-api-error-response";
-import { isSameOriginRequest } from "../is-same-origin-request";
 import {
-  API_FORBIDDEN_CODE,
   CACHE_CONTROL_HEADER,
-  FORBIDDEN_REQUEST_MESSAGE,
-  HTTP_FORBIDDEN_STATUS,
   PRIVATE_RESPONSE_CACHE_CONTROL,
 } from "./phone-auth.constants";
 
 /**
- * Served from the application rather than inlined as `NEXT_PUBLIC_*` so the
- * widget can be rotated without a rebuild, and never cached: the widget sends
- * messages from the browser, so who may read its token is a real control.
+ * Serves the browser-safe half of the OTP widget configuration.
+ *
+ * There is deliberately no origin check here. Browsers omit `Origin` on
+ * same-origin GET requests, so requiring it would reject the sign-in page's own
+ * read. Origin checks defend state-changing requests against CSRF, and this
+ * changes nothing.
+ *
+ * What protects the MSG91 balance is that `MSG91_AUTH_KEY` is never in this
+ * response, and that MSG91 only honours the widget on domains allow-listed in
+ * its console. The response is `no-store` so a shared cache never holds it.
  */
-export function handlePhoneOtpWidget(
-  request: Request,
-  widget: PhoneOtpWidget,
-  createRequestId: () => string = randomUUID,
-): Response {
-  if (!isSameOriginRequest(request)) {
-    return createApiErrorResponse({
-      status: HTTP_FORBIDDEN_STATUS,
-      code: API_FORBIDDEN_CODE,
-      message: FORBIDDEN_REQUEST_MESSAGE,
-      requestId: createRequestId(),
-    });
-  }
-
+export function handlePhoneOtpWidget(widget: PhoneOtpWidget): Response {
   return Response.json(widget, {
     headers: { [CACHE_CONTROL_HEADER]: PRIVATE_RESPONSE_CACHE_CONTROL },
   });

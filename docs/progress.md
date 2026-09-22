@@ -4,7 +4,11 @@ Last updated: 2026-09-22
 
 ## Current status
 
-The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and durable transactional email are implemented. Browser response hardening, a blocking production dependency audit, durable authenticated command limits, runtime secret isolation, signed-webhook verification, bounded retention, durable abandoned-upload cleanup, production read-path hardening, and the image-worker observability foundation are also in place. Payment checkout remains intentionally unavailable until a billing provider is selected.
+The production foundation, authentication, private direct uploads, asynchronous provider-independent processing, truthful polling, screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and durable transactional email are implemented. Browser response hardening, a blocking production dependency audit, durable authenticated command limits, runtime secret isolation, signed-webhook verification, bounded retention, durable abandoned-upload cleanup, production read-path hardening, and the image-worker observability foundation are also in place.
+
+Database ownership now belongs to `apps/web`, S3 and SQS connections are configurable, phone OTP uses the MSG91 Widget flow, a deterministic local environment reproduces the production data plane, and workspace navigation carries a real plan and usage summary.
+
+Payment checkout remains intentionally unavailable until a billing provider is selected. See **Not yet implemented** for everything the accepted plan still calls for.
 
 ## Completed
 
@@ -358,6 +362,17 @@ The production foundation, authentication, private direct uploads, asynchronous 
 - Gave the widget endpoint a focused `PhoneOtpWidgetEnvironmentSchema` that reads only the driver, development code, and browser-safe widget identifiers. Describing browser configuration must not depend on, or fail because of, the session secret and database URL it has no business reading; requiring them made the endpoint return `500` wherever they were absent, which silently removed the phone sign-in form.
 - Verified the stack end to end: all four dependencies healthy, the bucket and four queues created, both workers polling, all fifteen migrations applied against the compose database, `pnpm db:reset` completing, and every safeguard refusing production-shaped input. Verified lint, strict typecheck, source mapping, every package suite, and production builds for all twelve packages.
 
+### SC023 — Workspace navigation, sidebar plan summary, and usage consolidation
+
+- Reduced workspace navigation to the four destinations that exist: Dashboard, Inventory, Packs & Billing, and Profile. Portfolio, Usage, and Help are gone rather than disabled, and their route constants were deleted so nothing can link to them by accident.
+- A vehicle portfolio is reached from its inventory card, which is where the vehicle is known; `/inventory/[vehicleId]` already served it. Inventory now stays the current destination while a portfolio is open, so the sidebar never claims nothing is active.
+- Replaced the static sidebar placeholder with the real plan and usage summary from the screenshot: plan name, an accessible progress bar labelled `used / allowance images used`, and storage against the plan allowance. It never reports more used than the allowance permits.
+- The summary degrades to a truthful notice rather than an error when usage is unavailable. The workspace must not become unreachable because one aggregate failed.
+- Memoised the usage summary for the request, so the sidebar and the billing page, which report the same numbers, run the aggregates once instead of twice on every visit to Packs & Billing.
+- Removed the origin check from the widget configuration read. Browsers omit `Origin` on same-origin GET requests, so requiring it rejected the sign-in page's own read and silently removed the phone form. Origin checks defend state-changing requests against CSRF; this changes nothing. The controls that matter are unchanged: `MSG91_AUTH_KEY` is never in the response, MSG91 honours the widget only on allow-listed domains, and the response stays `no-store`.
+- Added navigation, active-destination, sidebar-summary, and request-memoisation coverage, plus an authenticated Playwright walk asserting the four destinations, the absence of the retired three, the plan summary, and that Profile becomes current.
+- Verified lint, strict typecheck, source mapping, 238 web test files with 459 tests, production builds for all twelve packages, and all six Playwright tests.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -367,10 +382,35 @@ The production foundation, authentication, private direct uploads, asynchronous 
 
 ## Next planned slices
 
-1. **SC018C2 — Control-plane and delivery telemetry**: instrument email delivery, outbox dispatch, polling volume/API latency, and lifecycle/storage-cleanup outcomes with retained logs and actionable alarms.
-2. **SC018C3 — Capacity and cost telemetry**: emit storage growth and configured provider cost estimates without inventing commercial rates, and document the production dashboard/alarm wiring.
-3. **SC018D — Recovery operations**: document and implement bounded DLQ/outbox replay, backup verification, and cleanup failure recovery.
-4. **Later hardening**: load-test automation, AWS deployment, and BiRefNet substitution proof.
+Ordered as agreed. UI work first, then the admin and billing foundation.
+
+1. **SC024 — Dashboard Quick Action imagery**: give each action a semantically distinct local asset instead of the single shared marketing render, and rename the third card once its wording is confirmed.
+2. **SC025 — Free plan limits**: make the Free allowance 15 total images with a maximum of 5 per batch, enforced in the reservation transaction rather than only in the wizard.
+3. **SC026 — Account linking and Profile sign-in methods**: let a signed-in user securely connect the provider they do not yet have, and surface Connect actions on Profile.
+4. **SC027 — Admin data model**: roles, application configuration, admin invitations, plan configuration, social links, and manual subscription source.
+5. **SC028 — Admin authorization and first-admin bootstrap**: database-backed `ADMIN` checks on every admin page, action, and handler, plus a persisted one-time bootstrap.
+6. **SC029 — Administrator management**: grant, invite, accept on verified Google sign-in, revoke, last-admin protection, and audit entries.
+7. **SC030 — Database-backed plan configuration**: move the hardcoded plan catalog behind validated configuration with safe defaults and cache invalidation.
+8. **SC031 — Manual subscriptions**: assign Studio Pro and Studio Plus by hand without ever overwriting a provider-backed subscription.
+9. **SC032 — Dynamic footer social links**: administered links with server-side URL validation.
+10. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
+11. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
+
+## Not yet implemented
+
+Tracked explicitly so the gap between the plan and the repository stays visible.
+
+- **Free plan allowance is still 9 images across 3 sessions with 3 per batch**, and it is not enforced on the server. `FREE_PLAN_PHOTO_LIMIT` is a client constant, and the processing reservation checks ownership, vehicle state, and asset readiness but never quota.
+- **Account linking does not exist.** Identity resolution correctly refuses to merge accounts and returns `LinkRequired`, but there is no flow to complete a link, so a phone-first user who chooses Google reaches an error page with no way forward. Profile therefore shows connected identities without Connect actions.
+- **Identity disconnection is out of scope** until linking exists and a "never leave an account without a usable sign-in method" rule is designed.
+- **No roles, permissions, admin surface, or admin audit log exist.** `AuditLog` is present in the schema and unused.
+- **Plan configuration is hardcoded** in `apps/web/src/features/pricing/pricing-plans.ts`, and `STUDIO_PLUS` does not exist. Pricing, allowances, and batch limits cannot be changed without a deployment.
+- **The dashboard reports the Free plan unconditionally**, ignoring `PlanSubscription`.
+- **Subscriptions are never written.** `PlanSubscription` is read when resolving a plan but nothing creates a row, and `BillingPort` is intentionally unimplemented until a payment provider is selected.
+- **The footer has no social links**, dynamic or otherwise; its company entries are inert text.
+- **All three Dashboard Quick Action cards share one image**, `/images/marketing/silver-sedan.png`.
+- **Usage is counted per calendar month.** A lifetime Free allowance, as specified, is a deliberate semantic change still to be made.
+- **`pnpm db:seed` does not exist**; it will arrive with plan configuration, when there is something canonical to seed.
 
 ## Important implementation notes
 

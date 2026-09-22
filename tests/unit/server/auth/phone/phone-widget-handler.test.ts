@@ -11,24 +11,24 @@ const widget = {
   reason: null,
 };
 
-function request(origin: string | null): Request {
-  const headers = new Headers();
-  if (origin) headers.set("origin", origin);
-  return new Request("https://studiocar.test/api/auth/phone/widget", { headers });
-}
-
 describe("handlePhoneOtpWidget", () => {
-  it("returns the widget configuration without caching it", async () => {
-    const response = handlePhoneOtpWidget(request("https://studiocar.test"), widget);
+  it("returns the widget configuration", async () => {
+    const response = handlePhoneOtpWidget(widget);
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toBe("no-store");
     await expect(response.json()).resolves.toEqual(widget);
   });
 
-  it("refuses a cross-origin read of the widget token", () => {
-    expect(handlePhoneOtpWidget(request("https://attacker.example"), widget).status).toBe(
-      403,
+  it("never lets a shared cache hold the response", () => {
+    expect(handlePhoneOtpWidget(widget).headers.get("cache-control")).toBe(
+      "no-store",
     );
+  });
+
+  it("carries no server credential", async () => {
+    const body = await handlePhoneOtpWidget(widget).text();
+
+    expect(body).not.toContain("authkey");
+    expect(Object.keys(widget)).not.toContain("authKey");
   });
 });

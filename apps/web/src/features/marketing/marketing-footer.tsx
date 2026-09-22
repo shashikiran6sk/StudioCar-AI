@@ -5,7 +5,6 @@ import {
   DASHBOARD_PATH,
   INVENTORY_PATH,
   PROFILE_PATH,
-  USAGE_PATH,
 } from "../../app/app-routes";
 import {
   MARKETING_COMPANY_LINKS,
@@ -32,7 +31,6 @@ export function MarketingFooter() {
         <a href={DASHBOARD_PATH}>Dashboard</a>
         <a href={INVENTORY_PATH}>Inventory</a>
         <a href={PROFILE_PATH}>Profile</a>
-        <a href={USAGE_PATH}>Usage</a>
         <a href={BILLING_PATH}>Billing</a>
       </nav>
       <nav aria-label="Company footer links">

@@ -11,7 +11,7 @@ import {
   USAGE_BILLING_UPGRADE_LABEL,
 } from "../../../../features/billing/usage-billing.constants";
 import { getCurrentSession } from "../../../../server/auth/get-current-session";
-import { getUsageBillingService } from "../../../../server/billing/usage-billing-runtime";
+import { getUsageBillingSummary } from "../../../../server/billing/get-usage-billing-summary";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +19,7 @@ export default async function UsageBillingPage() {
   const session = await getCurrentSession();
   if (!session) redirect(LOGIN_PATH);
 
-  const summary = await getUsageBillingService().getSummary(session.userId);
+  const summary = await getUsageBillingSummary(session.userId);
 
   return (
     <div className="usage-billing-page">
