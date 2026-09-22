@@ -498,5 +498,21 @@
   {
     "source": "apps/web/src/server/admin/admin-management-runtime.ts",
     "reason": "Runtime wiring that constructs the covered management repository; it performs no logic of its own."
+  },
+  {
+    "source": "apps/web/src/features/admin/admin-navigation.constants.ts",
+    "reason": "Static administration navigation configuration only."
+  },
+  {
+    "source": "apps/web/src/features/pricing/pricing.constants.ts",
+    "reason": "Static marketing pricing copy only."
+  },
+  {
+    "source": "apps/web/src/server/plans/plans.constants.ts",
+    "reason": "Static plan formatting, audit and unit constants only."
+  },
+  {
+    "source": "apps/web/src/server/plans/plan-config-runtime.ts",
+    "reason": "Composition root wiring the plan configuration repository to the database client."
   }
 ]

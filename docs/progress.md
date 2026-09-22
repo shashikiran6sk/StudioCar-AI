@@ -8,7 +8,7 @@ The production foundation, authentication, private direct uploads, asynchronous 
 
 Database ownership now belongs to `apps/web`, S3 and SQS connections are configurable, phone OTP uses the MSG91 Widget flow, a deterministic local environment reproduces the production data plane, and workspace navigation carries a real plan and usage summary.
 
-Payment checkout remains intentionally unavailable until a billing provider is selected. See **Not yet implemented** for everything the accepted plan still calls for.
+Plan prices, allowances and batch limits are database-backed and editable at `/admin/pricing`; the application carries no second copy of a plan. Payment checkout remains intentionally unavailable until a billing provider is selected. See **Not yet implemented** for everything the accepted plan still calls for.
 
 ## Completed
 
@@ -444,6 +444,22 @@ Payment checkout remains intentionally unavailable until a billing provider is s
 - Added action-authorization, message-mapping, expiry, provenance, and component coverage, thirteen real-PostgreSQL management tests, and a Playwright walk asserting the last administrator's revoke control is disabled and that `/admin/admins` is a genuine `404` for everybody else.
 - Verified lint, strict typecheck, source mapping, every package suite, 29 integration files with 90 tests against real PostgreSQL, production builds, and seven Playwright tests.
 
+### SC030 — Database-backed plan configuration
+
+- **Plan configuration is now read, not just stored.** Prices, allowances, batch limits, storage and copy come from `PlanConfig`. `apps/web/src/features/pricing/pricing-plans.ts` and `find-pricing-plan.ts` are deleted; nothing in the product carries a second copy of a plan any more.
+- `getPlanCatalog` is memoised per request with React `cache`, deliberately not across requests: an allowance decides whether somebody's work is charged or refused, so it is read fresh from one indexed query rather than served from a stale copy.
+- Resolution never fails. A plan the live catalog does not describe falls back to the shipped default, and a key nothing describes falls back to the free plan — the smallest allowance, which can delay work but never over-grant it. Unit tests assert each step.
+- The shipped catalog stands in when the table holds no active plan, so an unseeded database shows correct prices rather than a blank pricing page.
+- Added `/admin/pricing`, where an administrator edits every plan. Prices are entered in rupees and storage in gibibytes and converted to the units the database stores, so no rounded float can reach a charge.
+- `planKey`, `allowanceScope` and `currency` are not editable. The key identifies existing subscriptions and the scope decides how usage **already charged** is counted, so editing either would silently reinterpret it. An integration test asserts an edit cannot change the scope of a row that already exists.
+- Only a plan the deployment ships can be saved, keeping `planKey` a closed set. The write upserts under an advisory lock and records a `PLAN_CONFIG_UPDATED` audit entry naming the acting administrator, in the same transaction.
+- Validation is layered: a Zod contract in `packages/contracts/src/plans.ts` refuses a batch larger than the whole allowance, and the database's own CHECK constraint refuses the same thing. An integration test asserts the transaction rolls back leaving neither the plan nor the audit trail changed.
+- `STUDIO_PLUS` joins `PlanKeySchema`, so a Studio Plus subscription now resolves to its real allowance of 1,500 images and 20 per batch.
+- Added administration sub-navigation (Overview, Plans and pricing, Administrators) so the new page is reachable.
+- The marketing homepage is now server-rendered per request. It previously shipped a static copy of the prices, which an administrator's edit would have left stale.
+- Added catalog-resolution, formatting, form-parsing, action-authorization, contract, component and page coverage; five real-PostgreSQL repository tests including a concurrent-edit race; and a Playwright walk that edits Studio Pro as an administrator and asserts the new price appears on Packs & Billing and on the public homepage.
+- Verified lint, strict typecheck, source mapping, every package suite (644 tests), 28 integration files with 91 tests against real PostgreSQL, `prisma validate`, production builds, and eight Playwright tests.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -455,21 +471,20 @@ Payment checkout remains intentionally unavailable until a billing provider is s
 
 Ordered as agreed. UI work first, then the admin and billing foundation.
 
-1. **SC030 — Database-backed plan configuration**: move the hardcoded plan catalog behind validated configuration with safe defaults and cache invalidation.
-2. **SC031 — Manual subscriptions**: assign Studio Pro and Studio Plus by hand without ever overwriting a provider-backed subscription.
-3. **SC032 — Dynamic footer social links**: administered links with server-side URL validation.
-4. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
-5. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
+1. **SC031 — Manual subscriptions**: assign Studio Pro and Studio Plus by hand without ever overwriting a provider-backed subscription.
+2. **SC032 — Dynamic footer social links**: administered links with server-side URL validation.
+3. **SC033 — Admin overview and user search**: bounded, tenant-safe lookup for subscription management.
+4. **Later hardening**: control-plane and delivery telemetry, capacity and cost telemetry, recovery operations, load-test automation, AWS deployment, and BiRefNet substitution proof.
 
 ## Not yet implemented
 
 Tracked explicitly so the gap between the plan and the repository stays visible.
 
 - **Identity disconnection is not implemented.** Linking exists; removing a method still needs a "never leave an account without a usable sign-in method" rule and re-authentication, and nothing in the accepted scope requires it.
-- **Plan configuration is stored but not yet read.** `PlanConfig` holds all four plans including Studio Plus, but the application still resolves allowances from the hardcoded `apps/web/src/features/pricing/pricing-plans.ts`. Wiring the database through is the next slice.
-- **Subscriptions are never written.** `PlanSubscription` is read when resolving a plan but nothing creates a row, and `BillingPort` is intentionally unimplemented until a payment provider is selected.
+- **Subscriptions are never written.** `PlanSubscription` is read when resolving a plan but nothing creates a row, and `BillingPort` is intentionally unimplemented until a payment provider is selected. No plan is marked purchasable, because a checkout that cannot complete must not be advertised.
 - **The footer has no social links.** The `SocialLink` model and platform catalog exist, but nothing renders or administers them, and no row is seeded.
-- **Plan allowance values still come from the hardcoded catalog.** The limits are enforced, but changing 15 or 5 needs a deployment until plan configuration is database-backed.
+- **New plans cannot be created from the interface.** `/admin/pricing` edits the four plans the deployment ships; adding a fifth still needs a code change, because `planKey` is the closed set that subscriptions and the usage contract are keyed by.
+- **A plan-catalog read failure is not observable.** The web application has no logger yet, so a failed `PlanConfig` query surfaces as an error page rather than as a recorded event. This belongs with the control-plane telemetry slice.
 
 ## Deployment state
 
@@ -480,6 +495,8 @@ true when it does ship.
 
 ## Important implementation notes
 
+- Plan configuration is authoritative once a `PlanConfig` row exists; the shipped defaults in `apps/web/src/server/plans/default-plan-configurations.ts` are a fallback for an unseeded database and for a key the catalog no longer describes. `pnpm db:seed` installs missing plans and never overwrites an edited one.
+- `allowanceScope` and `currency` are deliberately not editable. The scope decides how usage already charged is counted, so changing it would reinterpret history rather than change the future.
 - Do not modify the committed initial migration after it has been applied; add a new backward-compatible migration for every schema change.
 - Prisma CLI validation/generation can run without secrets; migration and integration commands require `DATABASE_URL`.
 - Real PostgreSQL integration tests currently cover schema constraints, tenant-scoped vehicle operations, sessions, one-time OAuth challenges, canonical Google identities, OTP throttling, canonical phone identities, atomic phone-session completion, image upload idempotency, and concurrent processing-batch reservation.

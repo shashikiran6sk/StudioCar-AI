@@ -1175,6 +1175,60 @@ body {
   gap: 14px;
 }
 
+.admin-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-navigation__item {
+  padding: 8px 14px;
+  border: 1px solid var(--sc-neutral-300);
+  border-radius: var(--sc-radius-pill);
+  color: var(--sc-neutral-700);
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+  transition: background 120ms ease-out, color 120ms ease-out;
+}
+
+.admin-navigation__item:hover,
+.admin-navigation__item[aria-current="page"] {
+  border-color: var(--sc-neutral-400);
+  background: var(--sc-neutral-150);
+  color: var(--sc-neutral-900);
+}
+
+.admin-navigation__item:focus-visible {
+  outline: 3px solid var(--sc-focus);
+  outline-offset: 2px;
+}
+
+.admin-plan-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.admin-plan-form {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-plan-form__toggles {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-plan-form__toggle {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  color: var(--sc-neutral-700);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .admin-grant-form {
   display: grid;
   gap: 12px;

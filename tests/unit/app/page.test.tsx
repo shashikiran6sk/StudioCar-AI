@@ -1,11 +1,21 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import HomePage from "../../../apps/web/src/app/page";
+const getPlanCatalog = vi.fn();
+vi.mock("../../../apps/web/src/server/plans/get-plan-catalog", () => ({
+  getPlanCatalog,
+}));
+
+const { default: HomePage } = await import("../../../apps/web/src/app/page");
+const { DEFAULT_PLAN_CATALOG } = await import(
+  "../../../apps/web/src/server/plans/default-plan-catalog"
+);
 
 describe("HomePage", () => {
-  it("assembles the complete screenshot-derived product page", () => {
-    render(<HomePage />);
+  it("assembles the complete screenshot-derived product page", async () => {
+    getPlanCatalog.mockResolvedValue(DEFAULT_PLAN_CATALOG);
+
+    render(await HomePage());
 
     expect(
       screen.getByRole("heading", {
@@ -17,5 +27,19 @@ describe("HomePage", () => {
     expect(screen.getByRole("heading", { name: /Start free. Add capacity/ }))
       .toBeVisible();
     expect(screen.getByText("© 2026 StudioCar AI. All rights reserved.")).toBeVisible();
+  });
+
+  it("quotes the prices an administrator configured", async () => {
+    getPlanCatalog.mockResolvedValue(
+      DEFAULT_PLAN_CATALOG.map((plan) =>
+        plan.planKey === "STUDIO_PRO"
+          ? { ...plan, priceMinorUnits: 449_900 }
+          : plan,
+      ),
+    );
+
+    render(await HomePage());
+
+    expect(screen.getByText("₹4,499")).toBeVisible();
   });
 });

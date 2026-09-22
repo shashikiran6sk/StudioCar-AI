@@ -1,12 +1,15 @@
+import type { PlanCatalogEntry } from "@studiocar/contracts";
 import { Button } from "@studiocar/ui";
 
 import { BillingUnavailableAction } from "./billing-unavailable-action";
 import { USAGE_BILLING_CURRENT_PLAN_LABEL } from "./usage-billing.constants";
-import type { PricingPlan } from "../pricing/pricing-plans";
+import { describePlanAction } from "../../server/plans/describe-plan-action";
+import { formatPlanCadence } from "../../server/plans/format-plan-cadence";
+import { formatPlanPrice } from "../../server/plans/format-plan-price";
 
 export interface BillingPlanCardProps {
   current: boolean;
-  plan: PricingPlan;
+  plan: PlanCatalogEntry;
 }
 
 export function BillingPlanCard({ current, plan }: BillingPlanCardProps) {
@@ -15,11 +18,12 @@ export function BillingPlanCard({ current, plan }: BillingPlanCardProps) {
       className={`billing-plan-card${plan.featured ? " billing-plan-card--featured" : ""}`}
     >
       <header>
-        <strong>{plan.name}</strong>
+        <strong>{plan.displayName}</strong>
         <span>{current ? USAGE_BILLING_CURRENT_PLAN_LABEL : plan.segment}</span>
       </header>
       <p className="billing-plan-card__price">
-        {plan.price} <small>{plan.cadence}</small>
+        {formatPlanPrice(plan.priceMinorUnits, plan.currency)}{" "}
+        <small>{formatPlanCadence(plan.billingInterval)}</small>
       </p>
       <p>{plan.description}</p>
       <ul>
@@ -31,9 +35,9 @@ export function BillingPlanCard({ current, plan }: BillingPlanCardProps) {
         <Button disabled>{USAGE_BILLING_CURRENT_PLAN_LABEL}</Button>
       ) : (
         <BillingUnavailableAction
-          label={plan.action}
-          planName={plan.name}
-          variant={plan.key === "STUDIO_PRO" ? "blue" : "secondary"}
+          label={describePlanAction(plan)}
+          planName={plan.displayName}
+          variant={plan.billingInterval === "MONTHLY" ? "blue" : "secondary"}
         />
       )}
     </article>

@@ -1,4 +1,4 @@
-import type { PlanKey } from "@studiocar/contracts";
+import type { PlanCatalogEntry, PlanKey } from "@studiocar/contracts";
 
 import { BillingPlanCard } from "./billing-plan-card";
 import {
@@ -6,13 +6,16 @@ import {
   USAGE_BILLING_PACKS_EYEBROW,
   USAGE_BILLING_PACKS_TITLE,
 } from "./usage-billing.constants";
-import { PRICING_PLANS } from "../pricing/pricing-plans";
 
 export interface BillingPlanGridProps {
   currentPlanKey: PlanKey;
+  plans: readonly PlanCatalogEntry[];
 }
 
-export function BillingPlanGrid({ currentPlanKey }: BillingPlanGridProps) {
+export function BillingPlanGrid({
+  currentPlanKey,
+  plans,
+}: BillingPlanGridProps) {
   return (
     <section className="billing-packs" id="packs">
       <div className="billing-packs__heading">
@@ -23,10 +26,10 @@ export function BillingPlanGrid({ currentPlanKey }: BillingPlanGridProps) {
         <p>{USAGE_BILLING_PACKS_DESCRIPTION}</p>
       </div>
       <div className="billing-packs__grid">
-        {PRICING_PLANS.map((plan) => (
+        {plans.map((plan) => (
           <BillingPlanCard
-            current={plan.key === currentPlanKey}
-            key={plan.key}
+            current={plan.planKey === currentPlanKey}
+            key={plan.planKey}
             plan={plan}
           />
         ))}

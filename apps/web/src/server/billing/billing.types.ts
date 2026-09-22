@@ -1,4 +1,5 @@
 import type {
+  PlanCatalogEntry,
   PlanKey,
   UsageBillingSummary,
 } from "@studiocar/contracts";
@@ -17,6 +18,11 @@ export interface BillingCheckout {
 export interface BillingPort {
   createCheckout(request: BillingCheckoutRequest): Promise<BillingCheckout>;
   getSubscription(userId: string): Promise<PlanKey | null>;
+}
+
+/** The plans currently on offer, however they are configured. */
+export interface PlanCatalogPort {
+  list(): Promise<readonly PlanCatalogEntry[]>;
 }
 
 export interface UsageBillingRepositoryPort {

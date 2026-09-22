@@ -5,12 +5,19 @@ import {
 } from "@studiocar/contracts";
 import { createUsageBillingPeriodKey } from "@studiocar/processing";
 
-import type { UsageBillingRepositoryPort } from "./billing.types";
+import type {
+  PlanCatalogPort,
+  UsageBillingRepositoryPort,
+} from "./billing.types";
 import { safeBigIntToNumber } from "../dashboard/safe-bigint-to-number";
-import { findPricingPlan } from "../../features/pricing/find-pricing-plan";
+import { FALLBACK_PLAN_KEY } from "../plans/plans.constants";
+import { resolvePlanEntry } from "../plans/resolve-plan-entry";
 
 export class UsageBillingService {
-  public constructor(private readonly repository: UsageBillingRepositoryPort) {}
+  public constructor(
+    private readonly repository: UsageBillingRepositoryPort,
+    private readonly planCatalog: PlanCatalogPort,
+  ) {}
 
   public async getSummary(
     userId: string,
@@ -21,10 +28,11 @@ export class UsageBillingService {
      * counted: a lifetime allowance never refills, so it must not be scoped to
      * the current billing period.
      */
-    const planKey = await this.repository.findOwnedPlanKey(userId, now);
-    const parsedPlanKey = PlanKeySchema.safeParse(planKey);
-    const plan = findPricingPlan(
-      parsedPlanKey.success ? parsedPlanKey.data : "FREE",
+    const ownedPlanKey = await this.repository.findOwnedPlanKey(userId, now);
+    const parsedPlanKey = PlanKeySchema.safeParse(ownedPlanKey);
+    const { key, plan } = resolvePlanEntry(
+      await this.planCatalog.list(),
+      parsedPlanKey.success ? parsedPlanKey.data : FALLBACK_PLAN_KEY,
     );
     const record = await this.repository.getOwnedSummary(
       userId,
@@ -38,23 +46,17 @@ export class UsageBillingService {
       currentPlan: {
         allowanceScope: plan.allowanceScope,
         description: plan.description,
-        imageCapacity: plan.imageCapacity,
-        key: plan.key,
+        imageCapacity: plan.includedImages,
+        key,
         maxImagesPerBatch: plan.maxImagesPerBatch,
-        name: plan.name,
-        storageCapacityBytes: plan.storageCapacityBytes,
-        uploadSessionCapacity: plan.uploadSessionCapacity,
+        name: plan.displayName,
+        storageCapacityBytes: plan.storageBytes,
+        uploadSessionCapacity: null,
       },
-      imagesRemaining: Math.max(0, plan.imageCapacity - record.imageUsage),
+      imagesRemaining: Math.max(0, plan.includedImages - record.imageUsage),
       imagesUsed: record.imageUsage,
       storageUsedBytes: safeBigIntToNumber(record.storageUsedBytes),
-      uploadSessionsRemaining:
-        plan.uploadSessionCapacity === null
-          ? null
-          : Math.max(
-              0,
-              plan.uploadSessionCapacity - record.uploadSessionUsage,
-            ),
+      uploadSessionsRemaining: null,
       uploadSessionsUsed: record.uploadSessionUsage,
     });
   }

@@ -58,3 +58,33 @@ export const ADMIN_INVITE_REVOKED_MESSAGE = "Invitation cancelled.";
 export const ADMIN_INVALID_EMAIL_MESSAGE = "Enter a valid email address.";
 export const ADMIN_ACTION_FAILED_MESSAGE =
   "That change could not be applied. Please try again.";
+
+export const ADMIN_PRICING_PATH = "/admin/pricing";
+export const ADMIN_PRICING_EYEBROW = "Administration";
+export const ADMIN_PRICING_TITLE = "Plans and pricing";
+export const ADMIN_PRICING_DESCRIPTION =
+  "What each plan costs and how much it allows. Changes apply to every new batch immediately; usage already charged is not recalculated.";
+
+export const ADMIN_PLAN_SAVE_LABEL = "Save plan";
+export const ADMIN_PLAN_NAME_LABEL = "Display name";
+export const ADMIN_PLAN_SEGMENT_LABEL = "Segment";
+export const ADMIN_PLAN_DESCRIPTION_LABEL = "Description";
+export const ADMIN_PLAN_PRICE_LABEL = "Price";
+export const ADMIN_PLAN_INTERVAL_LABEL = "Billing interval";
+export const ADMIN_PLAN_INCLUDED_IMAGES_LABEL = "Images included";
+export const ADMIN_PLAN_BATCH_LIMIT_LABEL = "Maximum images per batch";
+export const ADMIN_PLAN_STORAGE_LABEL = "Storage (GB, blank for unlimited)";
+export const ADMIN_PLAN_FEATURES_LABEL = "Features (one per line)";
+export const ADMIN_PLAN_ORDER_LABEL = "Display order";
+export const ADMIN_PLAN_ACTIVE_LABEL = "Offered to customers";
+export const ADMIN_PLAN_FEATURED_LABEL = "Highlighted on the pricing page";
+export const ADMIN_PLAN_PURCHASABLE_LABEL = "Available to buy";
+export const ADMIN_PLAN_PURCHASABLE_HINT =
+  "Leave off until the billing provider is connected. A checkout that cannot complete must not be advertised.";
+export const ADMIN_PLAN_PRICE_HINT =
+  "In rupees. Stored in paise so no price is ever a rounded float.";
+
+export const ADMIN_PLAN_SAVED_MESSAGE = "Plan updated.";
+export const ADMIN_PLAN_INVALID_MESSAGE =
+  "That plan could not be saved. Check the highlighted values.";
+export const ADMIN_PLAN_UNKNOWN_MESSAGE = "That plan does not exist.";

@@ -7,8 +7,17 @@ import { MarketingHero } from "../features/marketing/marketing-hero";
 import { MarketingStudioBackgrounds } from "../features/marketing/marketing-studio-backgrounds";
 import { MarketingWorkflow } from "../features/marketing/marketing-workflow";
 import { PricingSection } from "../features/pricing/pricing-section";
+import { getPlanCatalog } from "../server/plans/get-plan-catalog";
 
-export default function HomePage() {
+/**
+ * Prices are configuration, so the landing page reads them rather than shipping
+ * a copy that an administrator's edit would silently leave stale.
+ */
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const plans = await getPlanCatalog();
+
   return (
     <div className="marketing-page">
       <MarketingHeader />
@@ -18,7 +27,7 @@ export default function HomePage() {
         <MarketingAudienceStrip />
         <MarketingWorkflow />
         <MarketingStudioBackgrounds />
-        <PricingSection />
+        <PricingSection plans={plans} />
         <MarketingFinalCta />
       </main>
       <MarketingFooter />

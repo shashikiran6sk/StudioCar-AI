@@ -16,7 +16,12 @@ export const UsageQuerySchema = CursorPaginationSchema.extend({
   type: UsageEventTypeSchema.optional(),
 }).strict();
 
-export const PlanKeySchema = z.enum(["FREE", "STUDIO_PACK", "STUDIO_PRO"]);
+export const PlanKeySchema = z.enum([
+  "FREE",
+  "STUDIO_PACK",
+  "STUDIO_PRO",
+  "STUDIO_PLUS",
+]);
 
 /**
  * `LIFETIME` allowances never refill; `BILLING_PERIOD` allowances refill each
