@@ -13,6 +13,9 @@ export interface AccountIdentity {
  */
 export function describeAccountName(account: AccountIdentity): string {
   return (
-    account.displayName ?? account.email ?? account.phoneNumber ?? account.userId
+    account.displayName ??
+    account.email ??
+    account.phoneNumber ??
+    account.userId
   );
 }

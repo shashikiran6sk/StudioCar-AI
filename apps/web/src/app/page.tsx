@@ -7,16 +7,20 @@ import { MarketingHero } from "../features/marketing/marketing-hero";
 import { MarketingStudioBackgrounds } from "../features/marketing/marketing-studio-backgrounds";
 import { MarketingWorkflow } from "../features/marketing/marketing-workflow";
 import { PricingSection } from "../features/pricing/pricing-section";
+import { getEnabledSocialLinks } from "../server/content/get-social-links";
 import { getPlanCatalog } from "../server/plans/get-plan-catalog";
 
 /**
- * Prices are configuration, so the landing page reads them rather than shipping
- * a copy that an administrator's edit would silently leave stale.
+ * Prices and footer links are configuration, so the landing page reads them
+ * rather than shipping a copy that an administrator's edit would leave stale.
  */
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const plans = await getPlanCatalog();
+  const [plans, socialLinks] = await Promise.all([
+    getPlanCatalog(),
+    getEnabledSocialLinks(),
+  ]);
 
   return (
     <div className="marketing-page">
@@ -30,7 +34,7 @@ export default async function HomePage() {
         <PricingSection plans={plans} />
         <MarketingFinalCta />
       </main>
-      <MarketingFooter />
+      <MarketingFooter socialLinks={socialLinks} />
     </div>
   );
 }

@@ -518,5 +518,13 @@
   {
     "source": "apps/web/src/server/admin/manual-subscription-runtime.ts",
     "reason": "Composition root wiring the manual subscription repository to the database client."
+  },
+  {
+    "source": "apps/web/src/server/content/content.constants.ts",
+    "reason": "Static content administration labels, messages and audit constants only."
+  },
+  {
+    "source": "apps/web/src/server/content/social-link-runtime.ts",
+    "reason": "Composition root wiring the social link repository to the database client."
   }
 ]

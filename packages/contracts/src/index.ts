@@ -10,6 +10,7 @@ export * from "./phone-number";
 export * from "./plans";
 export * from "./portfolio";
 export * from "./profile";
+export * from "./social-links";
 export * from "./subscriptions";
 export * from "./upload";
 export * from "./usage";
