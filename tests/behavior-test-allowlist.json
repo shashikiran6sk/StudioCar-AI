@@ -438,5 +438,17 @@
   {
     "source": "apps/web/prisma.config.ts",
     "reason": "Prisma CLI configuration with no application runtime behavior."
+  },
+  {
+    "source": "apps/web/src/features/auth/msg91-widget/msg91-widget.constants.ts",
+    "reason": "Static MSG91 widget script location, timeouts, and message strings only."
+  },
+  {
+    "source": "apps/web/src/features/auth/msg91-widget/msg91-widget.types.ts",
+    "reason": "Type-only widget and global window declarations with no runtime behavior."
+  },
+  {
+    "source": "apps/web/src/features/auth/phone-sign-in.constants.ts",
+    "reason": "Static phone sign-in labels and messages only."
   }
 ]

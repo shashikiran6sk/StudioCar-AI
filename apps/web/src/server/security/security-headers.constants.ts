@@ -23,14 +23,20 @@ export const X_FRAME_OPTIONS_VALUE = "DENY";
 export const X_PERMITTED_CROSS_DOMAIN_POLICIES_VALUE = "none";
 
 export const CSP_DEFAULT_SOURCE = "default-src 'self'";
-export const CSP_SCRIPT_SOURCE = "script-src 'self' 'unsafe-inline'";
+/**
+ * The MSG91 OTP widget runs in the browser: it loads its provider script from
+ * verify.msg91.com and talks to control.msg91.com. Those are the only
+ * additional browser origins beyond private object storage.
+ */
+export const MSG91_WIDGET_SCRIPT_ORIGIN = "https://verify.msg91.com";
+export const MSG91_CONTROL_ORIGIN = "https://control.msg91.com";
+
+export const CSP_SCRIPT_SOURCE = `script-src 'self' 'unsafe-inline' ${MSG91_WIDGET_SCRIPT_ORIGIN}`;
 export const CSP_DEVELOPMENT_SCRIPT_SOURCE = "'unsafe-eval'";
 export const CSP_STYLE_SOURCE = "style-src 'self' 'unsafe-inline'";
-export const CSP_IMAGE_SOURCE =
-  "img-src 'self' blob: data: https://*.amazonaws.com";
+export const CSP_IMAGE_SOURCE = `img-src 'self' blob: data: https://*.amazonaws.com ${MSG91_WIDGET_SCRIPT_ORIGIN}`;
 export const CSP_FONT_SOURCE = "font-src 'self' data:";
-export const CSP_CONNECT_SOURCE =
-  "connect-src 'self' https://*.amazonaws.com";
+export const CSP_CONNECT_SOURCE = `connect-src 'self' https://*.amazonaws.com ${MSG91_WIDGET_SCRIPT_ORIGIN} ${MSG91_CONTROL_ORIGIN}`;
 export const CSP_DEVELOPMENT_CONNECT_SOURCE = "ws: wss:";
 export const CSP_WORKER_SOURCE = "worker-src 'self' blob:";
 export const CSP_MANIFEST_SOURCE = "manifest-src 'self'";

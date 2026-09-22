@@ -6,6 +6,7 @@ const OAUTH_VALUE_PATTERN = /^[A-Za-z0-9_-]+$/;
 const MINIMUM_OAUTH_VALUE_LENGTH = 43;
 const MAXIMUM_OAUTH_VALUE_LENGTH = 128;
 const MAXIMUM_RETURN_PATH_LENGTH = 2_048;
+const MAXIMUM_ACCESS_TOKEN_LENGTH = 4_096;
 export const GOOGLE_AUTH_DEFAULT_RETURN_PATH = "/dashboard";
 
 export enum GoogleIdentityResolutionStatus {
@@ -109,17 +110,36 @@ export const GoogleIdentityResolutionSchema = z.discriminatedUnion("status", [
     .strict(),
 ]);
 
+export const PhoneOtpDriverSchema = z.enum(["msg91", "fake"]);
+
 export const PhoneStartSchema = z
   .object({
     phoneNumber: IndianPhoneNumberSchema,
   })
   .strict();
 
+/**
+ * The six digits never reach this application. The browser widget exchanges
+ * them for a signed access token, and that token is what the server presents
+ * to the provider. `phoneNumber` is not trusted input: it is the assertion the
+ * provider's answer must match.
+ */
 export const PhoneVerifySchema = z
   .object({
     challengeId: z.uuid(),
     phoneNumber: IndianPhoneNumberSchema,
-    otp: z.string().regex(/^\d{4,8}$/, "OTP must contain 4 to 8 digits."),
+    accessToken: z.string().trim().min(1).max(MAXIMUM_ACCESS_TOKEN_LENGTH),
+  })
+  .strict();
+
+export const PhoneOtpWidgetSchema = z
+  .object({
+    enabled: z.boolean(),
+    driver: PhoneOtpDriverSchema,
+    widgetId: z.string().nullable(),
+    tokenAuth: z.string().nullable(),
+    devCode: z.string().nullable(),
+    reason: z.string().nullable(),
   })
   .strict();
 
@@ -185,7 +205,6 @@ export type ClaimPhoneOtpVerificationResult =
       status: PhoneOtpVerificationClaimStatus.Claimed;
       attemptId: string;
       phoneNumber: string;
-      providerAlreadyVerified: boolean;
     }
   | {
       status:
@@ -236,11 +255,12 @@ export const PhoneVerifyResponseSchema = z
   })
   .strict();
 
-export const Msg91OtpResponseSchema = z
+export const Msg91WidgetVerificationSchema = z
   .object({
     type: z.string().trim().toLowerCase(),
-    message: z.string().trim().optional(),
-    request_id: z.string().trim().min(1).optional(),
+    message: z.union([z.string().trim(), z.number()]).optional(),
+    identifier: z.union([z.string().trim(), z.number()]).optional(),
+    mobile: z.union([z.string().trim(), z.number()]).optional(),
   })
   .loose();
 
@@ -251,6 +271,11 @@ export const LogoutSchema = z
   .strict();
 
 export type PhoneStart = z.infer<typeof PhoneStartSchema>;
+export type PhoneOtpDriver = z.infer<typeof PhoneOtpDriverSchema>;
+export type PhoneOtpWidget = z.infer<typeof PhoneOtpWidgetSchema>;
+export type Msg91WidgetVerification = z.infer<
+  typeof Msg91WidgetVerificationSchema
+>;
 export type PhoneVerify = z.infer<typeof PhoneVerifySchema>;
 export type PhoneStartResponse = z.infer<typeof PhoneStartResponseSchema>;
 export type PhoneVerifyResponse = z.infer<typeof PhoneVerifyResponseSchema>;

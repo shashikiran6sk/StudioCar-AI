@@ -8,7 +8,7 @@ import {
 } from "@studiocar/contracts";
 
 import type { PrismaClient } from "@studiocar/database-runtime";
-import { PhoneOtpAttemptOutcome } from "@studiocar/database-runtime";
+import { PhoneOtpAttemptOutcome, Prisma } from "@studiocar/database-runtime";
 
 const PHONE_RATE_LIMIT_LOCK_PREFIX = "phone-otp-send-phone:";
 const IP_RATE_LIMIT_LOCK_PREFIX = "phone-otp-send-ip:";
@@ -169,7 +169,6 @@ export class PrismaPhoneOtpChallengeRepository {
         status: PhoneOtpVerificationClaimStatus.Claimed,
         attemptId: attempt.id,
         phoneNumber: challenge.phoneNumber,
-        providerAlreadyVerified: challenge.providerVerifiedAt !== null,
       };
     });
   }
@@ -187,22 +186,17 @@ export class PrismaPhoneOtpChallengeRepository {
     );
   }
 
-  public recordExpired(
-    challengeId: string,
-    attemptId: string,
-    completedAt: Date,
-  ): Promise<boolean> {
-    return this.recordProviderOutcome(
-      challengeId,
-      attemptId,
-      PhoneOtpAttemptOutcome.EXPIRED,
-      completedAt,
-    );
-  }
-
+  /**
+   * Claims the verified provider token for this challenge. The unique index on
+   * `providerTokenHash` is what makes a token single use: re-presenting one
+   * against a different challenge collides and is refused. Re-running the same
+   * challenge with the same token is idempotent, so a completion failure can be
+   * retried.
+   */
   public recordProviderVerified(
     challengeId: string,
     attemptId: string,
+    providerTokenHash: string,
     completedAt: Date,
   ): Promise<boolean> {
     return this.recordProviderOutcome(
@@ -210,6 +204,7 @@ export class PrismaPhoneOtpChallengeRepository {
       attemptId,
       PhoneOtpAttemptOutcome.PROVIDER_VERIFIED,
       completedAt,
+      providerTokenHash,
     );
   }
 
@@ -231,27 +226,45 @@ export class PrismaPhoneOtpChallengeRepository {
     attemptId: string,
     outcome: PhoneOtpAttemptOutcome,
     completedAt: Date,
+    providerTokenHash?: string,
   ): Promise<boolean> {
-    return this.database.$transaction(async (transaction) => {
-      const attempt = await transaction.phoneOtpAttempt.updateMany({
-        where: {
-          id: attemptId,
-          challengeId,
-          outcome: PhoneOtpAttemptOutcome.PENDING,
-        },
-        data: { outcome, completedAt },
-      });
-
-      if (attempt.count !== 1) return false;
-
-      if (outcome === PhoneOtpAttemptOutcome.PROVIDER_VERIFIED) {
-        await transaction.phoneOtpChallenge.updateMany({
-          where: { id: challengeId, providerVerifiedAt: null, consumedAt: null },
-          data: { providerVerifiedAt: completedAt },
+    try {
+      return await this.database.$transaction(async (transaction) => {
+        const attempt = await transaction.phoneOtpAttempt.updateMany({
+          where: {
+            id: attemptId,
+            challengeId,
+            outcome: PhoneOtpAttemptOutcome.PENDING,
+          },
+          data: { outcome, completedAt },
         });
-      }
 
-      return true;
-    });
+        if (attempt.count !== 1) return false;
+        if (outcome !== PhoneOtpAttemptOutcome.PROVIDER_VERIFIED) return true;
+        if (providerTokenHash === undefined) return false;
+
+        const claimed = await transaction.phoneOtpChallenge.updateMany({
+          where: {
+            id: challengeId,
+            consumedAt: null,
+            OR: [
+              { providerTokenHash: null },
+              { providerTokenHash },
+            ],
+          },
+          data: { providerVerifiedAt: completedAt, providerTokenHash },
+        });
+
+        return claimed.count === 1;
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        return false;
+      }
+      throw error;
+    }
   }
 }

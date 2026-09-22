@@ -1,17 +1,43 @@
-import { parsePhoneAuthEnvironment } from "@studiocar/config";
+import {
+  parsePhoneAuthEnvironment,
+  type PhoneAuthEnvironment,
+} from "@studiocar/config";
+import type { PhoneOtpWidget } from "@studiocar/contracts";
 import { createDatabaseClient } from "@studiocar/database-runtime";
+
 import { PrismaPhoneOtpChallengeRepository } from "../../db/repositories/phone-otp-challenge-repository";
 import { PrismaPhoneOtpCompletionRepository } from "../../db/repositories/phone-otp-completion-repository";
 import { PrismaSessionRepository } from "../../db/repositories/session-repository";
-
 import { SensitiveIdentifierHasher } from "../hash-sensitive-identifier";
 import { SessionService } from "../session-service";
 import { createPhoneOtpBrowserBinding } from "./create-phone-otp-browser-binding";
-import { Msg91OtpProvider } from "./msg91-otp-provider";
-import type { PhoneOtpApplication } from "./phone-auth.types";
+import { describePhoneOtpWidget } from "./describe-phone-otp-widget";
+import { DevelopmentOtpProvider } from "./development-otp-provider";
+import { Msg91WidgetOtpProvider } from "./msg91-widget-otp-provider";
+import type { PhoneOtpApplication, PhoneOtpProvider } from "./phone-auth.types";
 import { PhoneOtpService } from "./phone-otp-service";
 
+const MISSING_MSG91_AUTH_KEY_ERROR =
+  "MSG91_AUTH_KEY is required when PHONE_OTP_DRIVER is msg91.";
+
 let phoneOtpApplication: PhoneOtpApplication | undefined;
+let phoneOtpWidget: PhoneOtpWidget | undefined;
+
+function createProvider(
+  environment: PhoneAuthEnvironment,
+): PhoneOtpProvider {
+  if (environment.PHONE_OTP_DRIVER === "fake") {
+    return new DevelopmentOtpProvider(environment.PHONE_OTP_DEV_CODE);
+  }
+
+  const authKey = environment.MSG91_AUTH_KEY;
+  if (!authKey) throw new Error(MISSING_MSG91_AUTH_KEY_ERROR);
+
+  return new Msg91WidgetOtpProvider({
+    authKey,
+    timeoutMs: environment.MSG91_TIMEOUT_MS,
+  });
+}
 
 export function getPhoneOtpApplication(): PhoneOtpApplication {
   if (phoneOtpApplication) return phoneOtpApplication;
@@ -20,36 +46,31 @@ export function getPhoneOtpApplication(): PhoneOtpApplication {
   const database = createDatabaseClient({
     connectionString: environment.DATABASE_URL,
   });
-  const challenges = new PrismaPhoneOtpChallengeRepository(database);
-  const completions = new PrismaPhoneOtpCompletionRepository(database);
-  const provider = new Msg91OtpProvider({
-    authKey: environment.MSG91_AUTH_KEY,
-    templateId: environment.MSG91_TEMPLATE_ID,
-    timeoutMs: environment.MSG91_TIMEOUT_MS,
-  });
   const sessions = new SessionService(new PrismaSessionRepository(database));
-  const identifierHasher = new SensitiveIdentifierHasher(
-    environment.SESSION_SECRET,
-  );
 
   phoneOtpApplication = new PhoneOtpService(
-    challenges,
-    completions,
-    provider,
+    new PrismaPhoneOtpChallengeRepository(database),
+    new PrismaPhoneOtpCompletionRepository(database),
+    createProvider(environment),
     sessions,
-    identifierHasher,
+    new SensitiveIdentifierHasher(environment.SESSION_SECRET),
     {
       challengeTtlSeconds: environment.PHONE_OTP_CHALLENGE_TTL_SECONDS,
-      rateLimitWindowSeconds:
-        environment.PHONE_OTP_RATE_LIMIT_WINDOW_SECONDS,
+      rateLimitWindowSeconds: environment.PHONE_OTP_RATE_LIMIT_WINDOW_SECONDS,
       sendMaxPerPhone: environment.PHONE_OTP_SEND_MAX_PER_PHONE,
       sendMaxPerIp: environment.PHONE_OTP_SEND_MAX_PER_IP,
-      verifyMaxPerChallenge:
-        environment.PHONE_OTP_VERIFY_MAX_PER_CHALLENGE,
+      verifyMaxPerChallenge: environment.PHONE_OTP_VERIFY_MAX_PER_CHALLENGE,
       verifyMaxPerIp: environment.PHONE_OTP_VERIFY_MAX_PER_IP,
       generateBrowserBinding: createPhoneOtpBrowserBinding,
     },
   );
 
   return phoneOtpApplication;
+}
+
+export function getPhoneOtpWidget(): PhoneOtpWidget {
+  phoneOtpWidget ??= describePhoneOtpWidget(
+    parsePhoneAuthEnvironment(process.env),
+  );
+  return phoneOtpWidget;
 }

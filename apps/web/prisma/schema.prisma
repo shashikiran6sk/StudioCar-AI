@@ -196,6 +196,7 @@ model PhoneOtpChallenge {
   browserBindingHash   String            @db.Char(64)
   sendRequestIpHash    String            @db.Char(64)
   providerRequestId    String?           @db.VarChar(255)
+  providerTokenHash    String?           @unique @db.Char(64)
   verificationAttempts Int               @default(0)
   expiresAt            DateTime          @db.Timestamptz(3)
   sentAt               DateTime?         @db.Timestamptz(3)

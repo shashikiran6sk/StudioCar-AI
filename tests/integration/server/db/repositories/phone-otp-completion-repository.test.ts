@@ -3,6 +3,8 @@ import {
   PhoneOtpCompletionStatus,
   PhoneOtpVerificationClaimStatus,
 } from "../../../../../packages/contracts/src/auth";
+import { createHash } from "node:crypto";
+
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createDatabaseClient } from "../../../../../packages/database-runtime/src/client";
@@ -16,6 +18,10 @@ const CONFLICT_PHONE_NUMBER = "+919123456789";
 const phoneNumbers = [PRIMARY_PHONE_NUMBER, CONFLICT_PHONE_NUMBER];
 const browserBindingHash = "b".repeat(64);
 const requestIpHash = "i".repeat(64);
+
+function providerTokenHash(challengeId: string): string {
+  return createHash("sha256").update(challengeId).digest("hex");
+}
 
 databaseDescribe("PrismaPhoneOtpCompletionRepository", () => {
   let database: ReturnType<typeof createDatabaseClient>;
@@ -75,6 +81,7 @@ databaseDescribe("PrismaPhoneOtpCompletionRepository", () => {
     await challenges.recordProviderVerified(
       created.challenge.id,
       claim.attemptId,
+      providerTokenHash(created.challenge.id),
       now,
     );
     return { challengeId: created.challenge.id, attemptId: claim.attemptId, now };

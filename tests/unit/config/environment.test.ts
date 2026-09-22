@@ -21,8 +21,10 @@ const validEnvironment = {
   GOOGLE_CLIENT_ID: "google-client",
   GOOGLE_CLIENT_SECRET: "google-secret",
   GOOGLE_REDIRECT_URI: "http://localhost:3000/api/auth/google/callback",
+  PHONE_OTP_DRIVER: "msg91",
   MSG91_AUTH_KEY: "msg91-key",
-  MSG91_TEMPLATE_ID: "template-id",
+  MSG91_WIDGET_ID: "msg91-widget",
+  MSG91_WIDGET_TOKEN: "msg91-widget-token",
   RESEND_API_KEY: "resend-key",
   EMAIL_FROM: "StudioCar <hello@studiocar.example>",
   APPLICATION_BASE_URL: "https://app.studiocar.example",
@@ -90,8 +92,11 @@ describe("environment validation", () => {
       NODE_ENV: "test",
       DATABASE_URL: validEnvironment.DATABASE_URL,
       SESSION_SECRET: validEnvironment.SESSION_SECRET,
+      PHONE_OTP_DRIVER: "msg91",
+      PHONE_OTP_DEV_CODE: "1234",
       MSG91_AUTH_KEY: validEnvironment.MSG91_AUTH_KEY,
-      MSG91_TEMPLATE_ID: validEnvironment.MSG91_TEMPLATE_ID,
+      MSG91_WIDGET_ID: validEnvironment.MSG91_WIDGET_ID,
+      MSG91_WIDGET_TOKEN: validEnvironment.MSG91_WIDGET_TOKEN,
       MSG91_TIMEOUT_MS: 5_000,
       PHONE_OTP_CHALLENGE_TTL_SECONDS: 600,
       PHONE_OTP_RATE_LIMIT_WINDOW_SECONDS: 600,
@@ -100,6 +105,41 @@ describe("environment validation", () => {
       PHONE_OTP_VERIFY_MAX_PER_CHALLENGE: 5,
       PHONE_OTP_VERIFY_MAX_PER_IP: 30,
     });
+  });
+
+  it("never requires a DLT template identifier for the widget flow", () => {
+    expect(
+      Object.keys(parsePhoneAuthEnvironment(validEnvironment)),
+    ).not.toContain("MSG91_TEMPLATE_ID");
+  });
+
+  it("requires every widget credential when the msg91 driver is selected", () => {
+    for (const key of [
+      "MSG91_AUTH_KEY",
+      "MSG91_WIDGET_ID",
+      "MSG91_WIDGET_TOKEN",
+    ]) {
+      const incomplete = { ...validEnvironment, [key]: undefined };
+      expect(() => parsePhoneAuthEnvironment(incomplete)).toThrow();
+    }
+  });
+
+  it("defaults to the development driver and refuses it in production", () => {
+    const development = parsePhoneAuthEnvironment({
+      NODE_ENV: "development",
+      DATABASE_URL: validEnvironment.DATABASE_URL,
+      SESSION_SECRET: validEnvironment.SESSION_SECRET,
+    });
+    expect(development.PHONE_OTP_DRIVER).toBe("fake");
+
+    expect(() =>
+      parsePhoneAuthEnvironment({
+        NODE_ENV: "production",
+        DATABASE_URL: validEnvironment.DATABASE_URL,
+        SESSION_SECRET: validEnvironment.SESSION_SECRET,
+        PHONE_OTP_DRIVER: "fake",
+      }),
+    ).toThrow(/must be msg91 in production/);
   });
 
   it("validates the focused session runtime without unrelated credentials", () => {
