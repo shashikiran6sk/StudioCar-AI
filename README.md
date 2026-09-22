@@ -65,7 +65,13 @@ pnpm db:validate        # validate the schema
 pnpm db:migrate:deploy  # apply committed migrations
 pnpm db:migrate:status  # verify applied migrations
 pnpm db:reset           # LOCAL ONLY: drop, reapply every migration, regenerate
+pnpm db:seed            # install the canonical plan catalog
 ```
+
+`pnpm db:seed` installs configuration, not sample data: it creates no users,
+vehicles or images, and it never overwrites a plan an administrator has edited,
+so it is safe to re-run. Social links are deliberately not seeded; a link exists
+only once a real address is configured.
 
 `pnpm db:reset` creates no sample data. It refuses to run when `NODE_ENV` is
 `production` or when `DATABASE_URL` does not point at a known local host, and

@@ -15,6 +15,7 @@
     "db:migrate:deploy": "pnpm --filter @studiocar/web db:migrate:deploy",
     "db:migrate:status": "pnpm --filter @studiocar/web db:migrate:status",
     "db:reset": "node scripts/db-reset.mjs",
+    "db:seed": "pnpm --filter @studiocar/web db:seed",
     "db:validate": "pnpm --filter @studiocar/web db:validate",
     "dev": "turbo run dev",
     "e2e": "turbo run e2e",

@@ -104,6 +104,57 @@ enum EmailDeliveryStatus {
   FAILED
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
+/**
+ * Where a role came from, so an audit can distinguish the one-time bootstrap
+ * from a grant an administrator made.
+ */
+enum RoleGrantSource {
+  BOOTSTRAP
+  ADMIN_GRANT
+  INVITATION
+}
+
+enum AdminInviteStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+enum PlanBillingInterval {
+  NONE
+  ONE_TIME
+  MONTHLY
+}
+
+enum PlanAllowanceScope {
+  LIFETIME
+  BILLING_PERIOD
+}
+
+enum SocialPlatform {
+  INSTAGRAM
+  LINKEDIN
+  X
+  YOUTUBE
+  FACEBOOK
+}
+
+/**
+ * Distinguishes a subscription an administrator assigned by hand from one a
+ * payment provider owns. The two must never be confused: a manual change may
+ * not overwrite or cancel a provider-backed subscription.
+ */
+enum SubscriptionSource {
+  PAYMENT_PROVIDER
+  MANUAL_ADMIN
+}
+
 enum CommandRateLimitScope {
   UPLOAD_PRESIGN
   PROCESSING_BATCH
@@ -125,8 +176,108 @@ model User {
   usageEvents            UsageEvent[]
   planSubscriptions      PlanSubscription[]
   auditLogs              AuditLog[]
+  roles                  UserRole[]
+  grantedRoles           UserRole[]           @relation("UserRoleGrantedBy")
+  sentAdminInvites       AdminInvite[]        @relation("AdminInviteInvitedBy")
+  acceptedAdminInvites   AdminInvite[]        @relation("AdminInviteAcceptedBy")
+  assignedSubscriptions  PlanSubscription[]   @relation("PlanSubscriptionAssignedBy")
   emailOutboxMessages    EmailOutboxMessage[]
   commandRateLimitEvents CommandRateLimitEvent[]
+}
+
+/**
+ * Database-backed authorization. A role is a row, never an environment value,
+ * so revoking one takes effect everywhere immediately.
+ */
+model UserRole {
+  id               String          @id @default(uuid()) @db.Uuid
+  userId           String          @db.Uuid
+  role             Role
+  source           RoleGrantSource
+  grantedByUserId  String?         @db.Uuid
+  grantedAt        DateTime        @default(now()) @db.Timestamptz(3)
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grantedBy        User?           @relation("UserRoleGrantedBy", fields: [grantedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, role])
+  @@index([role, grantedAt])
+}
+
+/**
+ * Small keyed configuration store. Its first use is the one-time record that
+ * first-administrator bootstrap has already happened, which is what stops a
+ * revoked administrator regaining access by keeping an environment value set.
+ */
+model AppConfig {
+  key             String   @id @db.VarChar(120)
+  value           Json
+  updatedByUserId String?  @db.Uuid
+  updatedAt       DateTime @updatedAt @db.Timestamptz(3)
+}
+
+/**
+ * An invitation names an email, never a user. No placeholder account is
+ * created: the invitation is matched only when somebody signs in with a
+ * verified Google identity carrying that address.
+ */
+model AdminInvite {
+  id               String            @id @default(uuid()) @db.Uuid
+  email            String            @db.VarChar(320)
+  role             Role              @default(ADMIN)
+  status           AdminInviteStatus @default(PENDING)
+  invitedByUserId  String            @db.Uuid
+  acceptedByUserId String?           @db.Uuid
+  createdAt        DateTime          @default(now()) @db.Timestamptz(3)
+  acceptedAt       DateTime?         @db.Timestamptz(3)
+  expiresAt        DateTime          @db.Timestamptz(3)
+  updatedAt        DateTime          @updatedAt @db.Timestamptz(3)
+  invitedBy        User              @relation("AdminInviteInvitedBy", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+  acceptedBy       User?             @relation("AdminInviteAcceptedBy", fields: [acceptedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([email, status])
+  @@index([status, expiresAt])
+}
+
+/**
+ * Database-backed plan configuration. Allowances and batch limits live here so
+ * changing them is an administrative action rather than a deployment.
+ */
+model PlanConfig {
+  id                String              @id @default(uuid()) @db.Uuid
+  planKey           String              @unique @db.VarChar(80)
+  displayName       String              @db.VarChar(80)
+  description       String              @db.VarChar(500)
+  segment           String              @db.VarChar(80)
+  active            Boolean             @default(true)
+  purchasable       Boolean             @default(false)
+  featured          Boolean             @default(false)
+  priceMinorUnits   Int
+  currency          String              @db.Char(3)
+  billingInterval   PlanBillingInterval
+  allowanceScope    PlanAllowanceScope
+  includedImages    Int
+  maxImagesPerBatch Int
+  storageBytes      BigInt?
+  features          String[]
+  displayOrder      Int
+  providerPriceId   String?             @db.VarChar(255)
+  createdAt         DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime            @updatedAt @db.Timestamptz(3)
+
+  @@index([active, displayOrder])
+}
+
+model SocialLink {
+  id           String         @id @default(uuid()) @db.Uuid
+  platform     SocialPlatform @unique
+  label        String         @db.VarChar(80)
+  url          String         @db.VarChar(2048)
+  enabled      Boolean        @default(true)
+  displayOrder Int
+  createdAt    DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime       @updatedAt @db.Timestamptz(3)
+
+  @@index([enabled, displayOrder])
 }
 
 model CommandRateLimitEvent {
@@ -441,6 +592,7 @@ model UsageEvent {
 model PlanSubscription {
   id                     String             @id @default(uuid()) @db.Uuid
   userId                 String             @db.Uuid
+  source                 SubscriptionSource @default(PAYMENT_PROVIDER)
   provider               String?            @db.VarChar(50)
   providerSubscriptionId String?            @unique @db.VarChar(255)
   planKey                String             @db.VarChar(80)
@@ -448,11 +600,15 @@ model PlanSubscription {
   currentPeriodStart     DateTime           @db.Timestamptz(3)
   currentPeriodEnd       DateTime           @db.Timestamptz(3)
   cancelAtPeriodEnd      Boolean            @default(false)
+  assignedByUserId       String?            @db.Uuid
+  note                   String?            @db.VarChar(500)
   createdAt              DateTime           @default(now()) @db.Timestamptz(3)
   updatedAt              DateTime           @updatedAt @db.Timestamptz(3)
   user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedBy             User?              @relation("PlanSubscriptionAssignedBy", fields: [assignedByUserId], references: [id], onDelete: SetNull)
 
   @@index([userId, status, currentPeriodEnd])
+  @@index([userId, source, status])
 }
 
 model WebhookEvent {
@@ -507,6 +663,10 @@ model EmailOutboxMessage {
   @@index([userId, createdAt])
 }
 
+/**
+ * `userId` is the acting administrator. It is null for the one-time bootstrap,
+ * where the actor is the system rather than a person.
+ */
 model AuditLog {
   id           String   @id @default(uuid()) @db.Uuid
   userId       String?  @db.Uuid
