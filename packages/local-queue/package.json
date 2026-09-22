@@ -1,0 +1,24 @@
+{
+  "name": "@studiocar/local-queue",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --outDir dist",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sqs": "catalog:",
+    "@studiocar/config": "workspace:*",
+    "@studiocar/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.1",
+    "vitest": "5.0.1"
+  }
+}

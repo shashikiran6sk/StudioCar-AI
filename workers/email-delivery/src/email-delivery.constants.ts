@@ -16,3 +16,8 @@ export const EMAIL_PROCESSING_COMPLETE_INTRO =
   "Background processing is complete for";
 export const EMAIL_PROCESSING_COMPLETE_FOOTER =
   "Your original images remain preserved in StudioCar AI.";
+
+export const MAILPIT_SEND_PATH = "/api/v1/send";
+export const MAILPIT_CONTENT_TYPE = "application/json";
+export const MAILPIT_NETWORK_ERROR = "mailpit_unreachable";
+export const MAILPIT_INVALID_RESPONSE = "mailpit_invalid_response";

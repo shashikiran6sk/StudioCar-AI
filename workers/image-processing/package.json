@@ -8,20 +8,26 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "catalog:",
+    "@aws-sdk/client-sqs": "catalog:",
+    "@prisma/adapter-pg": "catalog:",
+    "@prisma/client": "catalog:",
     "@studiocar/config": "workspace:*",
     "@studiocar/contracts": "workspace:*",
     "@studiocar/database-runtime": "workspace:*",
     "@studiocar/observability": "workspace:*",
     "@studiocar/processing": "workspace:*",
+    "pg": "catalog:",
     "sharp": "catalog:"
   },
   "scripts": {
     "build": "tsc --noEmit && esbuild src/handler.ts --bundle --platform=node --target=node24 --format=esm --external:sharp --external:@aws-sdk/client-s3 --external:@prisma/adapter-pg --external:@prisma/client --external:pg --outfile=dist/handler.mjs",
+    "build:local": "esbuild src/local.ts --bundle --external:@aws-sdk/client-sqs --platform=node --target=node24 --format=esm --external:sharp --external:@aws-sdk/client-s3 --external:@prisma/adapter-pg --external:@prisma/client --external:pg --outfile=dist/local.mjs",
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@studiocar/local-queue": "workspace:*",
     "esbuild": "catalog:",
     "vitest": "5.0.1"
   }

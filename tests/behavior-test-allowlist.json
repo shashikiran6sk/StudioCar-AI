@@ -450,5 +450,25 @@
   {
     "source": "apps/web/src/features/auth/phone-sign-in.constants.ts",
     "reason": "Static phone sign-in labels and messages only."
+  },
+  {
+    "source": "packages/local-queue/src/index.ts",
+    "reason": "Stable public package exports only."
+  },
+  {
+    "source": "packages/local-queue/src/local-queue.constants.ts",
+    "reason": "Static SQS receive limits and polling delays only."
+  },
+  {
+    "source": "packages/local-queue/src/local-queue.types.ts",
+    "reason": "Type-only local queue consumer definitions with no runtime behavior."
+  },
+  {
+    "source": "workers/email-delivery/src/local.ts",
+    "reason": "Local development entry point that wires the covered handler to the covered consumer; it performs no logic of its own."
+  },
+  {
+    "source": "workers/image-processing/src/local.ts",
+    "reason": "Local development entry point that wires the covered handler to the covered consumer; it performs no logic of its own."
   }
 ]

@@ -44,6 +44,46 @@ const DEFAULT_STORAGE_DELETION_MAX_ATTEMPTS = 8;
 const DEFAULT_STORAGE_DELETION_RETRY_BASE_MS = 30_000;
 const DEFAULT_STORAGE_DELETION_RETRY_MAX_MS = 3_600_000;
 
+/**
+ * Any absolute HTTP(S) URL. A deployment-grade hostname is enforced separately,
+ * where the environment says it is production; requiring one everywhere would
+ * reject `http://localhost:3000` and make the application unrunnable locally.
+ */
+const ApplicationBaseUrlSchema = z
+  .url()
+  .refine(
+    (value) => /^https?:\/\//.test(value),
+    "APPLICATION_BASE_URL must use the http or https protocol.",
+  );
+
+const ProductionApplicationBaseUrlSchema = z.url({
+  protocol: /^https$/,
+  hostname: /^(?=.{1,253}$)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/,
+});
+
+function refineProductionApplicationBaseUrl(
+  value: {
+    NODE_ENV: "development" | "test" | "production";
+    APPLICATION_BASE_URL: string;
+  },
+  context: z.RefinementCtx,
+): void {
+  if (value.NODE_ENV !== "production") return;
+  if (
+    ProductionApplicationBaseUrlSchema.safeParse(value.APPLICATION_BASE_URL)
+      .success
+  ) {
+    return;
+  }
+
+  context.addIssue({
+    code: "custom",
+    message:
+      "APPLICATION_BASE_URL must be an https URL with a public hostname in production.",
+    path: ["APPLICATION_BASE_URL"],
+  });
+}
+
 const PostgresUrlSchema = z.url().refine(
   (value) => /^postgres(?:ql)?:\/\//.test(value),
   "DATABASE_URL must use the postgres or postgresql protocol.",
@@ -203,9 +243,12 @@ export const UploadEnvironmentSchema = z
   .strip()
   .superRefine(refineS3Connection);
 
+export const EmailDriverSchema = z.enum(["resend", "mailpit"]);
+
 export const EmailWorkerEnvironmentSchema = z
   .object({
-    APPLICATION_BASE_URL: z.httpUrl(),
+    NODE_ENV: EnvironmentNameSchema.default("development"),
+    APPLICATION_BASE_URL: ApplicationBaseUrlSchema,
     DATABASE_URL: PostgresUrlSchema,
     EMAIL_DELIVERY_CLAIM_TTL_MS: z.coerce
       .number()
@@ -213,15 +256,51 @@ export const EmailWorkerEnvironmentSchema = z
       .min(1_000)
       .max(300_000)
       .default(DEFAULT_EMAIL_DELIVERY_CLAIM_TTL_MS),
+    EMAIL_DRIVER: EmailDriverSchema.default("resend"),
     EMAIL_FROM: z.email(),
-    RESEND_API_KEY: z.string().trim().min(1),
+    MAILPIT_BASE_URL: ApplicationBaseUrlSchema.optional(),
+    RESEND_API_KEY: z.string().trim().min(1).optional(),
     RESEND_TIMEOUT_MS: z.coerce.number().int().min(500).max(30_000).default(8_000),
   })
-  .strip();
+  .strip()
+  .superRefine((value, context) => {
+    refineProductionApplicationBaseUrl(value, context);
+    if (value.EMAIL_DRIVER === "mailpit") {
+      /**
+       * The local inbox never forwards mail off this machine, which is exactly
+       * why it must not be selectable in production.
+       */
+      if (value.NODE_ENV === "production") {
+        context.addIssue({
+          code: "custom",
+          message:
+            "EMAIL_DRIVER must be resend in production; mailpit delivers only to a local inbox.",
+          path: ["EMAIL_DRIVER"],
+        });
+      }
+      if (!value.MAILPIT_BASE_URL) {
+        context.addIssue({
+          code: "custom",
+          message: "MAILPIT_BASE_URL is required when EMAIL_DRIVER is mailpit.",
+          path: ["MAILPIT_BASE_URL"],
+        });
+      }
+      return;
+    }
+
+    if (!value.RESEND_API_KEY) {
+      context.addIssue({
+        code: "custom",
+        message: "RESEND_API_KEY is required when EMAIL_DRIVER is resend.",
+        path: ["RESEND_API_KEY"],
+      });
+    }
+  });
 
 export const EmailDispatchEnvironmentSchema = z
   .object({
-    APPLICATION_BASE_URL: z.httpUrl(),
+    NODE_ENV: EnvironmentNameSchema.default("development"),
+    APPLICATION_BASE_URL: ApplicationBaseUrlSchema,
     ...SqsConnectionSchema.shape,
     DATABASE_URL: PostgresUrlSchema,
     EMAIL_DISPATCH_TOKEN: z.string().min(32),
@@ -254,6 +333,7 @@ export const EmailDispatchEnvironmentSchema = z
   .strip()
   .superRefine((value, context) => {
     refineSqsConnection(value, context);
+    refineProductionApplicationBaseUrl(value, context);
     if (value.EMAIL_OUTBOX_RETRY_MAX_MS < value.EMAIL_OUTBOX_RETRY_BASE_MS) {
       context.addIssue({
         code: "custom",
@@ -408,6 +488,27 @@ export const ProcessingEnvironmentSchema = z
     }
   });
 
+/**
+ * What a locally running worker needs to poll its own queue, and nothing more.
+ * A worker must never hold a dispatch token: publishing is the application's
+ * job, and consuming is the worker's.
+ */
+export const ImageWorkerQueueEnvironmentSchema = z
+  .object({
+    ...SqsConnectionSchema.shape,
+    SQS_IMAGE_QUEUE_URL: z.url(),
+  })
+  .strip()
+  .superRefine(refineSqsConnection);
+
+export const EmailWorkerQueueEnvironmentSchema = z
+  .object({
+    ...SqsConnectionSchema.shape,
+    SQS_EMAIL_QUEUE_URL: z.url(),
+  })
+  .strip()
+  .superRefine(refineSqsConnection);
+
 export const ImageWorkerEnvironmentSchema = z
   .object({
     DATABASE_URL: PostgresUrlSchema,
@@ -514,9 +615,16 @@ export type ProcessingEnvironment = z.infer<
 export type ImageWorkerEnvironment = z.infer<
   typeof ImageWorkerEnvironmentSchema
 >;
+export type ImageWorkerQueueEnvironment = z.infer<
+  typeof ImageWorkerQueueEnvironmentSchema
+>;
+export type EmailWorkerQueueEnvironment = z.infer<
+  typeof EmailWorkerQueueEnvironmentSchema
+>;
 export type EmailWorkerEnvironment = z.infer<
   typeof EmailWorkerEnvironmentSchema
 >;
+export type EmailDriver = z.infer<typeof EmailDriverSchema>;
 export type EmailDispatchEnvironment = z.infer<
   typeof EmailDispatchEnvironmentSchema
 >;
@@ -564,6 +672,18 @@ export function parseProcessingEnvironment(
   environment: Record<string, string | undefined>,
 ): ProcessingEnvironment {
   return ProcessingEnvironmentSchema.parse(environment);
+}
+
+export function parseImageWorkerQueueEnvironment(
+  environment: Record<string, string | undefined>,
+): ImageWorkerQueueEnvironment {
+  return ImageWorkerQueueEnvironmentSchema.parse(environment);
+}
+
+export function parseEmailWorkerQueueEnvironment(
+  environment: Record<string, string | undefined>,
+): EmailWorkerQueueEnvironment {
+  return EmailWorkerQueueEnvironmentSchema.parse(environment);
 }
 
 export function parseImageWorkerEnvironment(

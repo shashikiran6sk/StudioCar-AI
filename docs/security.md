@@ -15,8 +15,8 @@ provider keys into the Next.js application.
 | Upload, inventory, portfolio, and storage-cleanup control plane | `DATABASE_URL`, `AWS_REGION`, `S3_BUCKET`, optional `S3_ENDPOINT`/`S3_FORCE_PATH_STYLE`/`S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`, workload-role S3 read/write/delete permissions | Image bytes, worker queue-consumer permissions, provider keys |
 | Processing outbox dispatcher | `DATABASE_URL`, `AWS_REGION`, `SQS_IMAGE_QUEUE_URL`, optional `SQS_ENDPOINT`/`SQS_ACCESS_KEY_ID`/`SQS_SECRET_ACCESS_KEY`, `PROCESSING_DISPATCH_TOKEN`, queue-publisher permission | Queue-consumer permission, provider keys, image-object write permission |
 | Email outbox dispatcher | `DATABASE_URL`, `AWS_REGION`, `SQS_EMAIL_QUEUE_URL`, optional `SQS_ENDPOINT`/`SQS_ACCESS_KEY_ID`/`SQS_SECRET_ACCESS_KEY`, `EMAIL_DISPATCH_TOKEN`, `APPLICATION_BASE_URL`, queue-publisher permission | `RESEND_API_KEY`, queue-consumer permission |
-| Image-processing worker | `DATABASE_URL`, private-image S3 read/write, image-queue consume, only the selected provider credential | Session, OAuth, OTP, email, scheduler secrets |
-| Email-delivery worker | `DATABASE_URL`, `RESEND_API_KEY`, `EMAIL_FROM`, `APPLICATION_BASE_URL`, email-queue consume | S3, image queue, image-provider, auth secrets |
+| Image-processing worker | `DATABASE_URL`, private-image S3 read/write, image-queue consume, only the selected provider credential | Session, OAuth, OTP, email, scheduler secrets, dispatch tokens |
+| Email-delivery worker | `DATABASE_URL`, `EMAIL_DRIVER`, `RESEND_API_KEY`, `EMAIL_FROM`, `APPLICATION_BASE_URL`, email-queue consume | S3, image queue, image-provider, auth secrets, dispatch tokens |
 | Trusted processing scheduler | Processing dispatch URL and `PROCESSING_DISPATCH_TOKEN` only | Database, AWS, provider, session secrets |
 | Trusted email scheduler | Email dispatch URL and `EMAIL_DISPATCH_TOKEN` only | Database, AWS, Resend, session secrets |
 | Trusted lifecycle scheduler | Lifecycle cleanup URL and `LIFECYCLE_CLEANUP_TOKEN` only | Database, AWS, provider, auth, and dispatch secrets |
@@ -34,6 +34,17 @@ The configuration package deliberately exposes focused runtime parsers. There is
 no aggregate parser that requires every product secret in one environment.
 Provider selection must fail closed when the selected provider's credential is
 absent.
+
+## Local development drivers
+
+The local environment selects development drivers that cannot reach a customer:
+`PHONE_OTP_DRIVER=fake` sends no message, and `EMAIL_DRIVER=mailpit` delivers
+only to an inbox on the developer's own machine. Environment validation refuses
+both when `NODE_ENV` is `production`.
+
+Locally running workers consume their queue and nothing more. They parse only an
+SQS connection and their own queue URL, so a worker never holds a dispatch
+token: publishing is the application's job and consuming is the worker's.
 
 ## MSG91 OTP widget credentials
 
