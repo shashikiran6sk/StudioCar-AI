@@ -4,6 +4,6 @@ import { getPhoneOtpWidget } from "../../../../../server/auth/phone/phone-auth-r
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export function GET(request: Request): Response {
-  return handlePhoneOtpWidget(request, getPhoneOtpWidget());
+export function GET(): Response {
+  return handlePhoneOtpWidget(getPhoneOtpWidget());
 }

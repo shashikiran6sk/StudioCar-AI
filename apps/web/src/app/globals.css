@@ -1144,6 +1144,10 @@ body {
   line-height: 1.5;
 }
 
+.app-sidebar__plan-progress .sc-progress__labels {
+  font-size: 10px;
+}
+
 .app-shell__workspace {
   min-width: 0;
 }
