@@ -559,6 +559,11 @@ everything the accepted plan still leaves open.
 
 - The StudioCar AI logo in the workspace sidebar and on the sign-in card was plain text, so clicking it did nothing. Both now link to the homepage through one shared `BrandHomeLink`, labelled for screen readers and with a visible keyboard focus. The homepage header already linked to the top of its own page and is unchanged.
 
+### SC038 — A visible way out of the full-screen viewer
+
+- The portfolio viewer's close button existed but could not be seen. The `ghost` button style is designed for light surfaces, so its near-black label sat invisibly on the near-black viewer and appeared only on hover. It now uses light text, a subtle outline and a translucent hover on that surface, plus a decorative `×`; its accessible name is unchanged.
+- The end-to-end walk now opens the viewer and checks the button's rendered text colour, because `toBeVisible` passes for black-on-black text. It then closes the viewer with the button.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.

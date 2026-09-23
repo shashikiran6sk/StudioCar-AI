@@ -3139,6 +3139,24 @@ body {
   gap: 12px;
 }
 
+/*
+ * The ghost button is styled for light surfaces: its near-black text vanished
+ * against the dark viewer, so the only way out was a key nobody could see.
+ */
+.portfolio-viewer__close.sc-button--ghost {
+  border-color: rgb(255 255 255 / 28%);
+  color: var(--sc-neutral-0);
+}
+
+.portfolio-viewer__close.sc-button--ghost:hover:not(:disabled) {
+  background: rgb(255 255 255 / 14%);
+}
+
+.portfolio-viewer__close:focus-visible {
+  outline: 3px solid var(--sc-focus);
+  outline-offset: 2px;
+}
+
 .portfolio-viewer__image {
   width: min(1120px, 100%);
   min-height: 0;
