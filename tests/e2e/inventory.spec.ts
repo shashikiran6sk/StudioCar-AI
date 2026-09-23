@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { unzipSync } from "fflate";
 import { randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import { Pool } from "pg";
 
 import { hashSessionToken } from "../../apps/web/src/server/auth/session-service";
@@ -61,6 +63,8 @@ inventoryTest(
         await route.fulfill({
           body: TEST_IMAGE,
           contentType: "image/svg+xml",
+          // The deployed bucket's CORS rule allows GET for the ZIP download.
+          headers: { "access-control-allow-origin": "*" },
           status: 200,
         });
       });
@@ -243,6 +247,16 @@ inventoryTest(
         path: testInfo.outputPath("desktop-vehicle-portfolio.png"),
       });
 
+      // Every image of the version downloads as one ZIP built in the browser.
+      const zipDownload = page.waitForEvent("download");
+      await page.getByRole("button", { name: "Download all (ZIP)" }).click();
+      const zip = await zipDownload;
+      expect(zip.suggestedFilename()).toBe("2026-audi-q5-studio-images.zip");
+      const zipPath = await zip.path();
+      const zipEntries = unzipSync(new Uint8Array(await readFile(zipPath)));
+      expect(Object.keys(zipEntries)).toEqual(["processed-01.webp"]);
+      expect(new TextDecoder().decode(zipEntries["processed-01.webp"])).toContain("<svg");
+
       // The viewer's close control must be legible, not merely present:
       // near-black text on the near-black viewer passes `toBeVisible`.
       await page.getByRole("button", { name: "Enter full screen" }).click();
@@ -274,9 +288,21 @@ inventoryTest(
       await page.screenshot({
         path: testInfo.outputPath("desktop-create-studio-inventory.png"),
       });
+      // A short window forces the dialog to scroll; its actions must stay
+      // on screen rather than being pushed below the fold.
+      await page.setViewportSize({ height: 420, width: 1280 });
       await page.getByRole("link", { name: /Create images/ }).click();
       const variantDialog = page.getByRole("dialog", { name: "Choose photos" });
       await expect(variantDialog).toBeVisible();
+      await expect(
+        variantDialog.getByRole("button", { name: "Continue to customize →" }),
+      ).toBeInViewport();
+      await expect(variantDialog.getByRole("button", { name: "Cancel" })).toBeInViewport();
+      await page.screenshot({
+        animations: "disabled",
+        path: testInfo.outputPath("short-window-create-studio-dialog.png"),
+      });
+      await page.setViewportSize({ height: 720, width: 1280 });
       await expect(variantDialog).toContainText("New studio version");
       await expect(
         variantDialog.getByRole("checkbox", { name: "Include source.jpg" }),

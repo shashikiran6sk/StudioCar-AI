@@ -20,7 +20,7 @@ describe("PricingSection", () => {
 
   it("renders an administrator's edited price rather than a shipped one", () => {
     const edited = DEFAULT_PLAN_CATALOG.map((plan) =>
-      plan.planKey === "STUDIO_PACK"
+      plan.planKey === "STUDIO_PLUS"
         ? { ...plan, priceMinorUnits: 249_900 }
         : plan,
     );

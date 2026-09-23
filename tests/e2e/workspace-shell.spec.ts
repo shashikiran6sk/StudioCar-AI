@@ -98,12 +98,20 @@ workspaceTest(
       // to sign in again.
       await page.goto("/");
       const header = page.locator(".marketing-header");
-      await expect(header.getByRole("link", { name: "Dashboard" })).toBeVisible();
       await expect(header.getByRole("link", { name: "Log in" })).toHaveCount(0);
-      await header.screenshot({
-        path: testInfo.outputPath("homepage-signed-in-header.png"),
+      // There is no separate Dashboard button: the account menu leads back.
+      await expect(header.getByRole("link", { name: "Dashboard" })).toBeHidden();
+      await header.getByLabel(/^Account menu for /).click();
+      await expect(header.getByRole("link", { name: "Dashboard" })).toBeVisible();
+      await expect(
+        header.getByRole("link", { name: "Profile & security" }),
+      ).toBeVisible();
+      await expect(header.getByRole("button", { name: "Log out" })).toBeVisible();
+      await page.screenshot({
+        path: testInfo.outputPath("homepage-signed-in-account-menu.png"),
       });
-      await page.goto("/dashboard");
+      await header.getByRole("link", { name: "Dashboard" }).click();
+      await expect(page).toHaveURL(/\/dashboard$/);
 
       await navigation.getByRole("link", { name: /Profile/ }).click();
       await expect(page).toHaveURL(/\/settings\/profile$/);

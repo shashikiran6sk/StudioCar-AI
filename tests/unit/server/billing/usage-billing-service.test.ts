@@ -168,7 +168,7 @@ describe("UsageBillingService", () => {
     // The shipped default still describes it, so it keeps its own allowance.
     expect(summary.currentPlan).toMatchObject({
       key: "STUDIO_PLUS",
-      imageCapacity: 1_500,
+      imageCapacity: 100,
       maxImagesPerBatch: 20,
     });
   });

@@ -10,7 +10,7 @@ export interface DefaultPlanConfiguration {
   active: boolean;
   purchasable: boolean;
   featured: boolean;
-  /** Minor units, so ₹7,999 is 799900 paise and never a float. */
+  /** Minor units, so ₹3,999 is 399900 paise and never a float. */
   priceMinorUnits: number;
   currency: string;
   billingInterval: PlanBillingInterval;
@@ -54,9 +54,9 @@ export const FREE_PLAN_DEFAULT: DefaultPlanConfiguration = {
   displayOrder: 0,
 };
 
-const STUDIO_PACK_PLAN_DEFAULT: DefaultPlanConfiguration = {
-  planKey: "STUDIO_PACK",
-  displayName: "Studio Pack",
+const STUDIO_PLUS_PLAN_DEFAULT: DefaultPlanConfiguration = {
+  planKey: "STUDIO_PLUS",
+  displayName: "Studio Plus",
   description:
     "A flexible credit pack for sellers, photographers, and growing dealerships.",
   segment: "Most popular",
@@ -104,31 +104,6 @@ const STUDIO_PRO_PLAN_DEFAULT: DefaultPlanConfiguration = {
   displayOrder: 2,
 };
 
-const STUDIO_PLUS_PLAN_DEFAULT: DefaultPlanConfiguration = {
-  planKey: "STUDIO_PLUS",
-  displayName: "Studio Plus",
-  description:
-    "For marketplaces and large dealer groups processing inventory at scale.",
-  segment: "Scale",
-  active: true,
-  purchasable: false,
-  featured: false,
-  priceMinorUnits: 799_900,
-  currency: "INR",
-  billingInterval: "MONTHLY",
-  allowanceScope: "BILLING_PERIOD",
-  includedImages: 1_500,
-  maxImagesPerBatch: 20,
-  storageBytes: null,
-  features: [
-    "1,500 images each month",
-    "Up to 20 images per batch",
-    "Priority batch processing",
-    "Highest processing throughput",
-  ],
-  displayOrder: 3,
-};
-
 /**
  * The canonical plan catalog.
  *
@@ -143,7 +118,6 @@ const STUDIO_PLUS_PLAN_DEFAULT: DefaultPlanConfiguration = {
 export const DEFAULT_PLAN_CONFIGURATIONS: readonly DefaultPlanConfiguration[] =
   [
     FREE_PLAN_DEFAULT,
-    STUDIO_PACK_PLAN_DEFAULT,
-    STUDIO_PRO_PLAN_DEFAULT,
     STUDIO_PLUS_PLAN_DEFAULT,
+    STUDIO_PRO_PLAN_DEFAULT,
   ];

@@ -27,6 +27,7 @@ export const PORTFOLIO_TEST_DATA = {
   images: [
     {
       displayOrder: 0,
+      downloadFilename: "processed-01.webp",
       downloadUrl: "https://assets.example.test/processed-01-download.webp",
       height: 720,
       id: "6b8bc4df-b9eb-4205-8815-fc099505aa91",
@@ -38,6 +39,7 @@ export const PORTFOLIO_TEST_DATA = {
     },
     {
       displayOrder: 1,
+      downloadFilename: "processed-02.webp",
       downloadUrl: "https://assets.example.test/processed-02-download.webp",
       height: 720,
       id: "db38c0b7-a72a-427e-9e92-243f19ae0aa7",

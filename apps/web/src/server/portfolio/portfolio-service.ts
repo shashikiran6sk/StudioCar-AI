@@ -190,6 +190,10 @@ export class PortfolioService implements PortfolioApplication {
       throw new Error("Completed portfolio job has no processed asset.");
     }
     const ttl = this.options.assetUrlTtlSeconds;
+    const downloadFilename = createPortfolioDownloadFilename(
+      job.displayOrder,
+      job.processedAsset.mimeType,
+    );
     const [originalUrl, processedUrl, previewUrl, downloadUrl] = await Promise.all([
       this.signer.signInline(
         job.imageAsset.originalObjectKey,
@@ -209,16 +213,14 @@ export class PortfolioService implements PortfolioApplication {
       this.signer.signDownload(
         job.processedAsset.objectKey,
         job.processedAsset.mimeType,
-        createPortfolioDownloadFilename(
-          job.displayOrder,
-          job.processedAsset.mimeType,
-        ),
+        downloadFilename,
         ttl,
       ),
     ]);
 
     return {
       displayOrder: job.displayOrder,
+      downloadFilename,
       downloadUrl,
       height: job.processedAsset.height,
       id: job.processedAsset.id,

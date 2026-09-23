@@ -12,7 +12,7 @@ describe("toPlanConfigurationFields", () => {
       (plan) => plan.planKey === "STUDIO_PLUS",
     );
 
-    expect(plus && toPlanConfigurationFields(plus).priceRupees).toBe("7999");
+    expect(plus && toPlanConfigurationFields(plus).priceRupees).toBe("1499");
   });
 
   it("shows stored bytes as gigabytes", () => {

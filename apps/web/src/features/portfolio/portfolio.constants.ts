@@ -44,3 +44,13 @@ export const PORTFOLIO_BACKGROUND_LABELS: Readonly<
   ORIGINAL: "Original background",
   PREMIUM_WHITE: "Premium White",
 };
+export const PORTFOLIO_ZIP_DOWNLOAD_LABEL = "Download all (ZIP)";
+export const PORTFOLIO_ZIP_PREPARING_LABEL = "Preparing ZIP…";
+export const PORTFOLIO_ZIP_ERROR_MESSAGE =
+  "The ZIP couldn't be prepared. The download links may have expired, so refresh the page and try again.";
+export const PORTFOLIO_ZIP_FILENAME_SUFFIX = "studio-images";
+export const PORTFOLIO_ZIP_FALLBACK_NAME = "vehicle";
+export const PORTFOLIO_ZIP_EXTENSION = "zip";
+export const PORTFOLIO_ZIP_MIME_TYPE = "application/zip";
+/** Images fetched from storage at once while a ZIP is prepared. */
+export const PORTFOLIO_ZIP_FETCH_CONCURRENCY = 4;

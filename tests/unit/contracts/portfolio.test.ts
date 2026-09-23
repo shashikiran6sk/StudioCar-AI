@@ -12,6 +12,7 @@ const portfolio = {
   images: [
     {
       displayOrder: 0,
+      downloadFilename: "processed-01.webp",
       downloadUrl: "https://assets.example.test/download",
       height: 720,
       id: "6b8bc4df-b9eb-4205-8815-fc099505aa91",

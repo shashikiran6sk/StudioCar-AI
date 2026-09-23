@@ -18,9 +18,8 @@ export const UsageQuerySchema = CursorPaginationSchema.extend({
 
 export const PlanKeySchema = z.enum([
   "FREE",
-  "STUDIO_PACK",
-  "STUDIO_PRO",
   "STUDIO_PLUS",
+  "STUDIO_PRO",
 ]);
 
 /**

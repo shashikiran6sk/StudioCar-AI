@@ -109,6 +109,26 @@ describe("DashboardQuickActions", () => {
     );
   });
 
+  it("shows the attention action a picture of its own, not the studio one", () => {
+    const decodedSources = () =>
+      screen
+        .getAllByRole("img")
+        .map((image) => decodeURIComponent(image.getAttribute("src") ?? ""));
+    const { unmount } = render(<DashboardQuickActions summary={summary} />);
+    const studio = decodedSources()[2] ?? "";
+    unmount();
+
+    render(
+      <DashboardQuickActions
+        summary={{ ...summary, attention: { vehicleCount: 1, vehicleId: VEHICLE_ID } }}
+      />,
+    );
+    const attention = decodedSources()[2] ?? "";
+
+    expect(studio).toContain("/images/dashboard/studio-results.webp");
+    expect(attention).toContain("/images/dashboard/attention-needed.webp");
+  });
+
   it("describes each image for assistive technology", () => {
     render(<DashboardQuickActions summary={summary} />);
 

@@ -35,16 +35,18 @@ export const DASHBOARD_OPEN_LABEL = "Open";
 export const DASHBOARD_QUICK_ACTIONS = {
   attention: {
     cta: "Review issues",
-    imageAlt: "A finished studio image of a vehicle on a white sweep.",
+    imageAlt:
+      "A row of processed vehicle photos in which one blurred photo is flagged for review.",
     imageLabel: "Attention",
-    imagePath: "/images/dashboard/studio-results.webp",
+    imagePath: "/images/dashboard/attention-needed.webp",
     title: "Attention needed",
   },
   createStudio: {
     cta: "Create images",
     description: "Create another studio version from an existing vehicle.",
     href: INVENTORY_CREATE_STUDIO_HREF,
-    imageAlt: "A finished studio image of a vehicle on a white sweep.",
+    imageAlt:
+      "One vehicle photo split in two: parked on a street before, and on a white studio sweep after.",
     imageLabel: "Studio",
     imagePath: "/images/dashboard/studio-results.webp",
     title: "Create studio images",
@@ -52,14 +54,16 @@ export const DASHBOARD_QUICK_ACTIONS = {
   inventory: {
     description: "Manage processing and completed vehicle image batches.",
     href: INVENTORY_PATH,
-    imageAlt: "Three vehicles side by side, representing your inventory.",
+    imageAlt:
+      "Inventory cards for four vehicles, three ready and one still processing.",
     imagePath: "/images/dashboard/vehicle-inventory.webp",
     imageLabel: "Live",
     title: "View inventory",
   },
   upload: {
     description: "Add details, photos, and a consistent studio treatment.",
-    imageAlt: "A single vehicle photographed before studio processing.",
+    imageAlt:
+      "Vehicle photos being dropped into an upload area with a progress bar.",
     imagePath: "/images/dashboard/upload-vehicle.webp",
     imageLabel: "New",
     title: "Upload a vehicle",

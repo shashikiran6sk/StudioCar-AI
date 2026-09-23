@@ -9,7 +9,9 @@ into the Next.js runtime.
 for browser-to-S3 image uploads and a least-privilege managed policy for the
 Next.js application role. The policy also permits deletion under the same
 tenant-prefixed object namespace for the durable abandoned-upload cleanup
-command. Supply the exact deployed web origin for browser CORS. A non-production stack
+command. Supply the exact deployed web origin for browser CORS. The rule allows
+`PUT` for direct uploads and `GET` so the portfolio can assemble a ZIP in the
+browser from its short-lived signed links. A non-production stack
 may additionally supply `AdditionalBrowserOrigin` so a local development host
 can upload directly; leave it empty in production.
 

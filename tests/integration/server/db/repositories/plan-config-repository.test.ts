@@ -118,10 +118,11 @@ databaseDescribe("PrismaPlanConfigRepository", () => {
 
     const plus = stored.find((plan) => plan.planKey === "STUDIO_PLUS");
     expect(plus).toMatchObject({
-      priceMinorUnits: 799_900,
-      includedImages: 1_500,
+      displayName: "Studio Plus",
+      priceMinorUnits: 149_900,
+      includedImages: 100,
       maxImagesPerBatch: 20,
-      allowanceScope: "BILLING_PERIOD",
+      allowanceScope: "LIFETIME",
     });
   });
   /** Somebody to attribute an edit to, so the audit trail has a real actor. */

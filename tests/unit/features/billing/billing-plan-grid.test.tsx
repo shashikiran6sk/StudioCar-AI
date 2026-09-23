@@ -12,7 +12,8 @@ describe("BillingPlanGrid", () => {
 
     expect(screen.getByText("₹1,499")).toBeInTheDocument();
     expect(screen.getByText("₹3,999")).toBeInTheDocument();
-    expect(screen.getByText("₹7,999")).toBeInTheDocument();
+    expect(screen.getByText("Studio Plus")).toBeInTheDocument();
+    expect(screen.queryByText("Studio Pack")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Current plan" })).toBeDisabled();
   });
 

@@ -1,7 +1,7 @@
 import type { AuthUser } from "@studiocar/contracts";
 import { BrandMark, ButtonLink } from "@studiocar/ui";
 
-import { DASHBOARD_PATH, LOGIN_PATH } from "../../app/app-routes";
+import { LOGIN_PATH } from "../../app/app-routes";
 import { AccountMenu } from "../shell/account-menu";
 import {
   MARKETING_COPY,
@@ -15,8 +15,8 @@ export interface MarketingHeaderProps {
 }
 
 /**
- * A signed-in person sees their account and a way back into the workspace,
- * exactly as on the dashboard, rather than being invited to sign in again.
+ * A signed-in person sees their account menu, which also leads back into the
+ * workspace, rather than being invited to sign in again.
  */
 export function MarketingHeader({ user }: MarketingHeaderProps) {
   return (
@@ -38,12 +38,7 @@ export function MarketingHeader({ user }: MarketingHeaderProps) {
             </ButtonLink>
           </>
         ) : (
-          <>
-            <ButtonLink href={DASHBOARD_PATH} size="marketing">
-              {MARKETING_COPY.header.dashboardLabel}
-            </ButtonLink>
-            <AccountMenu user={user} />
-          </>
+          <AccountMenu showDashboardLink user={user} />
         )}
       </div>
     </header>

@@ -22,20 +22,26 @@ describe("default plan configurations", () => {
 
   it("states the confirmed Studio Plus configuration", () => {
     expect(plan("STUDIO_PLUS")).toMatchObject({
-      priceMinorUnits: 799_900,
+      displayName: "Studio Plus",
+      priceMinorUnits: 149_900,
       currency: "INR",
-      billingInterval: "MONTHLY",
-      allowanceScope: "BILLING_PERIOD",
-      includedImages: 1_500,
+      billingInterval: "ONE_TIME",
+      allowanceScope: "LIFETIME",
+      includedImages: 100,
       maxImagesPerBatch: 20,
     });
   });
 
+  it("ships exactly Free, Studio Plus and Studio Pro", () => {
+    expect(
+      DEFAULT_PLAN_CONFIGURATIONS.map((configuration) => configuration.planKey),
+    ).toEqual(["FREE", "STUDIO_PLUS", "STUDIO_PRO"]);
+  });
+
   it("refills a monthly plan and never refills a one-off allowance", () => {
     expect(plan("STUDIO_PRO").allowanceScope).toBe("BILLING_PERIOD");
-    expect(plan("STUDIO_PLUS").allowanceScope).toBe("BILLING_PERIOD");
     expect(plan("FREE").allowanceScope).toBe("LIFETIME");
-    expect(plan("STUDIO_PACK").allowanceScope).toBe("LIFETIME");
+    expect(plan("STUDIO_PLUS").allowanceScope).toBe("LIFETIME");
   });
 
   it("advertises no purchasable plan while checkout is unimplemented", () => {
