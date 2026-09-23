@@ -282,6 +282,18 @@ export const UploadEnvironmentSchema = z
   .strip()
   .superRefine(refineS3Connection);
 
+/**
+ * Uploads the studio processing assets to the configured bucket. Only the
+ * storage connection is read, so no application secret is needed to run it.
+ */
+export const StudioAssetSyncEnvironmentSchema = z
+  .object({
+    ...S3ConnectionSchema.shape,
+    S3_BUCKET: z.string().trim().min(3).max(63),
+  })
+  .strip()
+  .superRefine(refineS3Connection);
+
 export const EmailDriverSchema = z.enum(["resend", "mailpit"]);
 
 export const EmailWorkerEnvironmentSchema = z
@@ -654,6 +666,9 @@ export type PhoneOtpWidgetEnvironment = z.infer<
 >;
 export type SessionEnvironment = z.infer<typeof SessionEnvironmentSchema>;
 export type UploadEnvironment = z.infer<typeof UploadEnvironmentSchema>;
+export type StudioAssetSyncEnvironment = z.infer<
+  typeof StudioAssetSyncEnvironmentSchema
+>;
 export type ProcessingEnvironment = z.infer<
   typeof ProcessingEnvironmentSchema
 >;
@@ -723,6 +738,12 @@ export function parseUploadEnvironment(
   environment: Record<string, string | undefined>,
 ): UploadEnvironment {
   return UploadEnvironmentSchema.parse(environment);
+}
+
+export function parseStudioAssetSyncEnvironment(
+  environment: Record<string, string | undefined>,
+): StudioAssetSyncEnvironment {
+  return StudioAssetSyncEnvironmentSchema.parse(environment);
 }
 
 export function parseProcessingEnvironment(

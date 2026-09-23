@@ -1,9 +1,10 @@
 import type { VehiclePortfolio } from "@studiocar/contracts";
 
 import {
-  PORTFOLIO_BACKGROUND_LABELS,
-  PORTFOLIO_ORIGINALS_LABEL,
-} from "./portfolio.constants";
+  BACKGROUND_LABELS,
+  STUDIO_FLOOR_LABELS,
+} from "../studio-treatment/studio-treatment.constants";
+import { PORTFOLIO_ORIGINALS_LABEL } from "./portfolio.constants";
 
 const ENABLED_LABEL = "Enabled";
 const DISABLED_LABEL = "Disabled";
@@ -17,8 +18,14 @@ export function PortfolioFacts({ portfolio }: PortfolioFactsProps) {
     <dl className="portfolio-facts">
       <div>
         <dt>Background</dt>
-        <dd>{PORTFOLIO_BACKGROUND_LABELS[portfolio.options.background]}</dd>
+        <dd>{BACKGROUND_LABELS[portfolio.options.backgroundId]}</dd>
       </div>
+      {portfolio.options.backgroundId === "ORIGINAL" ? null : (
+        <div>
+          <dt>Floor</dt>
+          <dd>{STUDIO_FLOOR_LABELS[portfolio.options.floorId]}</dd>
+        </div>
+      )}
       <div>
         <dt>Shadow</dt>
         <dd>{portfolio.options.shadow.toLowerCase()}</dd>

@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["node", "vitest/globals"]
   },
-  "include": ["src/**/*.ts", "../../tests/unit/workers/image-processing/**/*.ts"]
+  "include": ["src/**/*.ts", "scripts/**/*.ts", "../../tests/unit/workers/image-processing/**/*.ts"]
 }

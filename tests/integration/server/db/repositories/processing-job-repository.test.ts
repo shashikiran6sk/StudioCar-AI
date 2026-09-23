@@ -64,7 +64,10 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
       ),
     );
     const batchIdempotencyKey = "processing-integration-batch-1";
-    const options = ProcessingOptionsSchema.parse({});
+    const options = ProcessingOptionsSchema.parse({
+      backgroundId: "GREY_STUDIO",
+      floorId: "GREY_TURNTABLE",
+    });
     const request = {
       vehicleId: vehicle.id,
       assetIds,
@@ -120,6 +123,14 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
     await expect(
       database.processingJob.count({ where: { vehicleId: vehicle.id } }),
     ).resolves.toBe(2);
+    // Every job stores the background and its floor exactly as requested.
+    const storedOptions = await database.processingJob.findMany({
+      where: { vehicleId: vehicle.id },
+      select: { options: true },
+    });
+    for (const stored of storedOptions) {
+      expect(ProcessingOptionsSchema.parse(stored.options)).toEqual(options);
+    }
     await expect(
       database.processingOutboxMessage.count({
         where: { job: { vehicleId: vehicle.id } },
@@ -147,7 +158,10 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
       data: { userId: owner.id, name: "Incomplete upload vehicle" },
     });
     const missingAssetId = randomUUID();
-    const options = ProcessingOptionsSchema.parse({});
+    const options = ProcessingOptionsSchema.parse({
+      backgroundId: "PREMIUM_WHITE",
+      floorId: "WHITE_STUDIO",
+    });
 
     await expect(
       repository.reserveBatchOwned({
@@ -249,7 +263,10 @@ databaseDescribe("PrismaProcessingJobRepository plan limits", () => {
     },
     batchKey: string,
   ) {
-    const options = ProcessingOptionsSchema.parse({});
+    const options = ProcessingOptionsSchema.parse({
+      backgroundId: "PREMIUM_WHITE",
+      floorId: "WHITE_STUDIO",
+    });
     return {
       allowance,
       userId: owner.id,

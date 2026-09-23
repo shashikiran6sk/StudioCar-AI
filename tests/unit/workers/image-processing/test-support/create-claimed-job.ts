@@ -15,8 +15,8 @@ export function createClaimedJob(
     imageAssetId: ASSET_ID,
     mimeType: "image/jpeg",
     options: {
-      background: "PREMIUM_WHITE",
-      floor: "HORIZON",
+      backgroundId: "PREMIUM_WHITE",
+      floorId: "WHITE_STUDIO",
       crop: "MAINTAIN_COMPOSITION",
       enhancement: true,
       outputFormat: "JPEG",

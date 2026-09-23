@@ -31,8 +31,8 @@ export const PORTFOLIO_TEST_DATA = {
   model: "3 Series",
   name: "2022 BMW 3 Series",
   options: {
-    background: "PREMIUM_WHITE",
-    floor: "HORIZON",
+    backgroundId: "PREMIUM_WHITE",
+    floorId: "WHITE_STUDIO",
     crop: "MAINTAIN_COMPOSITION",
     enhancement: true,
     outputFormat: "WEBP",

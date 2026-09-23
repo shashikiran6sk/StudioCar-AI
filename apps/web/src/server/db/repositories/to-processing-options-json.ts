@@ -2,20 +2,13 @@ import type { ProcessingOptions } from "@studiocar/contracts";
 
 import type { Prisma } from "@studiocar/database-runtime";
 
+/**
+ * Stores every validated option. Listing fields by hand once dropped the
+ * floor, so every turntable job was rendered on the standard floor; copying
+ * the validated object keeps the stored job identical to what was requested.
+ */
 export function toProcessingOptionsJson(
   options: ProcessingOptions,
 ): Prisma.InputJsonObject {
-  return {
-    background: options.background,
-    crop: options.crop,
-    ...(options.customBackgroundAssetId
-      ? { customBackgroundAssetId: options.customBackgroundAssetId }
-      : {}),
-    enhancement: options.enhancement,
-    outputFormat: options.outputFormat,
-    paddingPercent: options.paddingPercent,
-    platePrivacy: options.platePrivacy,
-    quality: options.quality,
-    shadow: options.shadow,
-  };
+  return { ...options };
 }

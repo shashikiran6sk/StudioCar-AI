@@ -60,7 +60,7 @@ databaseDescribe("PrismaProcessingJobStatusRepository", () => {
           vehicleId,
           imageAssetId: assetId,
           provider: "REMOVEBG",
-          options: {},
+          options: { backgroundId: "PREMIUM_WHITE", floorId: "WHITE_STUDIO" },
           idempotencyKey: `status-${suffix}`,
         },
       });

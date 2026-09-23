@@ -1,8 +1,15 @@
 import { create } from "zustand";
-import type { ProcessingOptions } from "@studiocar/contracts";
+import type {
+  ProcessingSettings,
+  StudioBackgroundId,
+  StudioFloorId,
+  StudioTreatment,
+} from "@studiocar/contracts";
 
+import { selectStudioBackground } from "../studio-treatment/select-studio-background";
+import { selectStudioFloor } from "../studio-treatment/select-studio-floor";
 import {
-  DEFAULT_PROCESSING_OPTIONS,
+  DEFAULT_PROCESSING_SETTINGS,
   EMPTY_VEHICLE_DETAILS,
 } from "./vehicle-create.constants";
 import { VehicleCreateStep } from "./vehicle-create-step";
@@ -14,7 +21,11 @@ import type { PhotoUploadItem } from "./photo-upload.types";
 
 interface VehicleCreateState {
   details: VehicleDetailsValues;
-  options: ProcessingOptions;
+  settings: ProcessingSettings;
+  /** Off keeps each photo's own background. */
+  studioBackgroundEnabled: boolean;
+  /** The chosen background and floor; `null` until a background is picked. */
+  studio: StudioTreatment | null;
   photos: PhotoUploadItem[];
   step: VehicleCreateStep;
   vehicleId: string | null;
@@ -22,7 +33,10 @@ interface VehicleCreateState {
   addPhotos: (photos: PhotoUploadItem[]) => void;
   movePhoto: (clientId: string, offset: -1 | 1) => void;
   removePhoto: (clientId: string) => void;
-  setOptions: (options: ProcessingOptions) => void;
+  setSettings: (settings: ProcessingSettings) => void;
+  setStudioBackgroundEnabled: (enabled: boolean) => void;
+  selectBackground: (backgroundId: StudioBackgroundId) => void;
+  selectFloor: (floorId: StudioFloorId) => void;
   setStep: (step: VehicleCreateStep) => void;
   setDetailsField: (field: VehicleDetailsField, value: string) => void;
   setDraft: (vehicleId: string) => void;
@@ -59,7 +73,9 @@ function updateVehicleDetails(
 
 export const useVehicleCreateStore = create<VehicleCreateState>((set) => ({
   details: EMPTY_VEHICLE_DETAILS,
-  options: DEFAULT_PROCESSING_OPTIONS,
+  settings: DEFAULT_PROCESSING_SETTINGS,
+  studioBackgroundEnabled: true,
+  studio: null,
   photos: [],
   step: VehicleCreateStep.Details,
   vehicleId: null,
@@ -68,7 +84,9 @@ export const useVehicleCreateStore = create<VehicleCreateState>((set) => ({
       state.photos.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
       return {
         details: EMPTY_VEHICLE_DETAILS,
-        options: DEFAULT_PROCESSING_OPTIONS,
+        settings: DEFAULT_PROCESSING_SETTINGS,
+        studioBackgroundEnabled: true,
+        studio: null,
         photos: [],
         step: VehicleCreateStep.Details,
         vehicleId: null,
@@ -110,7 +128,19 @@ export const useVehicleCreateStore = create<VehicleCreateState>((set) => ({
       details: updateVehicleDetails(state.details, field, value),
     })),
   setDraft: (vehicleId) => set({ step: VehicleCreateStep.Photos, vehicleId }),
-  setOptions: (options) => set({ options }),
+  setSettings: (settings) => set({ settings }),
+  setStudioBackgroundEnabled: (studioBackgroundEnabled) =>
+    set({ studioBackgroundEnabled }),
+  selectBackground: (backgroundId) =>
+    set((state) => ({
+      studio: selectStudioBackground(state.studio, backgroundId),
+    })),
+  selectFloor: (floorId) =>
+    set((state) =>
+      state.studio
+        ? { studio: selectStudioFloor(state.studio, floorId) }
+        : state,
+    ),
   setStep: (step) => set({ step }),
   updatePhoto: (clientId, update) =>
     set((state) => ({

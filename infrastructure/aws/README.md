@@ -39,14 +39,17 @@ explicit operational action.
 immutable, reviewed archive in a private artifact bucket. The archive must place
 `handler.mjs` and its production dependencies (including the Linux arm64 Sharp
 binary) at its root. The stack resolves database and remove.bg credentials from
-Secrets Manager, grants only tenant-prefix object access, caps both reserved and
+Secrets Manager, grants only tenant-prefix object access plus read-only access
+to the `studio-assets/` processing assets, caps both reserved and
 SQS event-source concurrency, and enables `ReportBatchItemFailures`. Configure
 alarm actions and ensure the queue visibility timeout is longer than the Lambda
 timeout before production deployment. The worker emits structured CloudWatch
 Embedded Metric Format events under `StudioCarAI/Operations`, with correlation
 IDs kept out of metric dimensions. The stack applies configurable log retention
 and alarms on Lambda errors/duration, terminal failures, retry spikes, provider
-rate limits, and end-to-end latency.
+rate limits, and end-to-end latency. Run `pnpm studio-assets:sync` against the
+bucket before deploying a worker; without those assets every studio job fails
+retryably before it reaches the provider.
 
 `email-delivery-queue.yml` provisions a separate encrypted standard queue,
 retained dead-letter queue, least-privilege publisher and consumer policies,

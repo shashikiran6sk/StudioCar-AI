@@ -2040,13 +2040,21 @@ body {
   font-size: 13px;
 }
 
-.background-treatment-grid {
+.studio-choice-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 9px;
 }
 
-.background-treatment-card {
+.studio-choice-grid--backgrounds {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.studio-choice-grid--floors {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.studio-choice-card {
+  position: relative;
   display: grid;
   min-width: 0;
   overflow: hidden;
@@ -2056,72 +2064,63 @@ body {
   background: var(--sc-neutral-0);
   color: var(--sc-neutral-900);
   cursor: pointer;
-  font: 800 9px/1.2 var(--sc-font-sans);
+  font: 800 11px/1.2 var(--sc-font-sans);
   text-align: left;
 }
 
-.background-treatment-card[aria-pressed="true"] {
+.studio-choice-card[aria-pressed="true"] {
   border-color: var(--sc-neutral-950);
   box-shadow: inset 0 0 0 1px var(--sc-neutral-950);
 }
 
-.background-treatment-card:disabled {
+.studio-choice-card:disabled {
   cursor: not-allowed;
-  opacity: 0.48;
+  opacity: 0.45;
 }
 
-.background-treatment-card > span:last-child {
+.studio-choice-card:focus-visible {
+  outline: 3px solid var(--sc-focus);
+  outline-offset: 2px;
+}
+
+.studio-choice-card__preview {
+  display: block;
+  width: 100%;
+  height: 70px;
+  border-bottom: 1px solid var(--sc-neutral-300);
+  object-fit: cover;
+}
+
+/* A background preview keeps the wall meeting the floor in view. */
+.studio-choice-card--background .studio-choice-card__preview {
+  object-position: center 72%;
+}
+
+/* A floor preview shows the lower part of the scene, where the floor is. */
+.studio-choice-card--floor .studio-choice-card__preview {
+  height: 64px;
+  object-position: center 88%;
+}
+
+.studio-choice-card__check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-content: center;
+  border-radius: var(--sc-radius-pill);
+  background: var(--sc-neutral-950);
+  color: var(--sc-neutral-0);
+  font-size: 10px;
+}
+
+.studio-choice-card__label {
   overflow: hidden;
   padding: 8px 9px;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.background-treatment-card__visual {
-  display: grid;
-  height: 58px;
-  place-content: center;
-  border-bottom: 1px solid var(--sc-neutral-300);
-  color: var(--sc-neutral-500);
-  font-size: 28px;
-  font-weight: 400;
-}
-
-/* Miniatures of the two floors the worker draws behind a studio vehicle. */
-.floor-style-card__visual--horizon {
-  background: linear-gradient(
-    to bottom,
-    #fbfbfa 0%,
-    #eeeeeb 58%,
-    #d6d6d2 58%,
-    #c4c4c0 100%
-  );
-}
-
-.floor-style-card__visual--turntable {
-  background:
-    radial-gradient(ellipse 44% 16% at 50% 76%, #c9c9c5 0 88%, #8f8f8b 90% 96%, transparent 98%),
-    linear-gradient(to bottom, #fbfbfa 0%, #eeeeeb 46%, #e2e2df 46%, #d3d3cf 100%);
-}
-
-.background-treatment-card__visual--white {
-  background: linear-gradient(160deg, #fff 0%, #f2f1ed 100%);
-}
-
-.background-treatment-card__visual--dark {
-  background: radial-gradient(circle at center, #454744 0%, #101211 70%);
-}
-
-.background-treatment-card__visual--grey {
-  background: linear-gradient(145deg, #f1f1ef 0%, #b8b8b7 100%);
-}
-
-.background-treatment-card__visual--dealership {
-  background: linear-gradient(135deg, #eef3f5 0 55%, #b8c3c8 55% 100%);
-}
-
-.background-treatment-card__visual--custom {
-  background: var(--sc-neutral-50);
 }
 
 .vehicle-create-note {
@@ -2491,10 +2490,6 @@ body {
   .customize-treatment-step__toggles,
   .review-process-step__summary {
     grid-template-columns: 1fr;
-  }
-
-  .background-treatment-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .review-process-step__image {

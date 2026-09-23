@@ -5,9 +5,11 @@ import { Button } from "@studiocar/ui";
 import Image from "next/image";
 import { useState } from "react";
 
-import { formatBackgroundTreatment } from "./format-background-treatment";
-import { formatFloorStyle } from "./format-floor-style";
-import { STUDIO_SCENE_BACKGROUNDS } from "./processing-option.constants";
+import { buildProcessingOptions } from "../studio-treatment/build-processing-options";
+import {
+  BACKGROUND_LABELS,
+  STUDIO_FLOOR_LABELS,
+} from "../studio-treatment/studio-treatment.constants";
 import { formatPhotoCount } from "./format-photo-count";
 import {
   REVIEW_BACKGROUND_LABEL,
@@ -42,7 +44,16 @@ export function ReviewProcessStep({
   onProcess,
 }: ReviewProcessStepProps) {
   const details = useVehicleCreateStore((state) => state.details);
-  const options = useVehicleCreateStore((state) => state.options);
+  const settings = useVehicleCreateStore((state) => state.settings);
+  const studio = useVehicleCreateStore((state) => state.studio);
+  const studioBackgroundEnabled = useVehicleCreateStore(
+    (state) => state.studioBackgroundEnabled,
+  );
+  const options = buildProcessingOptions({
+    settings,
+    studio,
+    studioBackgroundEnabled,
+  });
   const photos = useVehicleCreateStore((state) => state.photos);
   const vehicleId = useVehicleCreateStore((state) => state.vehicleId);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +64,7 @@ export function ReviewProcessStep({
   );
 
   async function processPhotos() {
-    if (!vehicleId || assetIds.length !== photos.length) {
+    if (!vehicleId || !options || assetIds.length !== photos.length) {
       setError(REVIEW_PROCESS_ERROR);
       return;
     }
@@ -94,25 +105,27 @@ export function ReviewProcessStep({
             <div>
               <dt>{REVIEW_PLATE_PRIVACY_LABEL}</dt>
               <dd>
-                {options.platePrivacy
+                {settings.platePrivacy
                   ? REVIEW_ENABLED_LABEL
                   : REVIEW_DISABLED_LABEL}
               </dd>
             </div>
             <div>
               <dt>{REVIEW_BACKGROUND_LABEL}</dt>
-              <dd>{formatBackgroundTreatment(options.background)}</dd>
+              <dd>
+                {BACKGROUND_LABELS[options?.backgroundId ?? "ORIGINAL"]}
+              </dd>
             </div>
-            {STUDIO_SCENE_BACKGROUNDS.includes(options.background) ? (
+            {options && options.backgroundId !== "ORIGINAL" ? (
               <div>
                 <dt>{REVIEW_FLOOR_LABEL}</dt>
-                <dd>{formatFloorStyle(options.floor)}</dd>
+                <dd>{STUDIO_FLOOR_LABELS[options.floorId]}</dd>
               </div>
             ) : null}
             <div>
               <dt>{REVIEW_ENHANCEMENT_LABEL}</dt>
               <dd>
-                {options.enhancement
+                {settings.enhancement
                   ? REVIEW_ENABLED_LABEL
                   : REVIEW_DISABLED_LABEL}
               </dd>

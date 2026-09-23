@@ -76,6 +76,7 @@ describe("VehicleCreateDialog", () => {
     ).toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: "Dark Studio" }));
+    fireEvent.click(screen.getByRole("button", { name: "Graphite Turntable" }));
     fireEvent.click(screen.getByRole("button", { name: "Review batch →" }));
     expect(screen.getByRole("dialog", { name: "Review & process" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Process Photos" }));
@@ -84,7 +85,10 @@ describe("VehicleCreateDialog", () => {
     expect(onProcess).toHaveBeenCalledWith(
       "0e879f46-1193-4d77-b785-057fe026d998",
       ["331a1e25-b9d8-4b1a-a398-8351a58f8c24"],
-      expect.objectContaining({ background: "DARK_STUDIO" }),
+      expect.objectContaining({
+        backgroundId: "DARK_STUDIO",
+        floorId: "DARK_TURNTABLE",
+      }),
       expect.any(String),
     );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

@@ -7,8 +7,8 @@ const VEHICLE_ID = "4bb7fa89-c907-4458-9786-8aafc2235728";
 const ASSET_ID = "5cc8fb90-d018-4569-a897-9bbfd3346839";
 const JOB_ID = "6dd90ca1-e129-467a-b9a8-acc0e445794a";
 const OPTIONS: ProcessingOptions = {
-  background: "PREMIUM_WHITE",
-  floor: "HORIZON",
+  backgroundId: "PREMIUM_WHITE",
+  floorId: "WHITE_STUDIO",
   crop: "MAINTAIN_COMPOSITION",
   enhancement: true,
   outputFormat: "JPEG",

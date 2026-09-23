@@ -57,7 +57,7 @@ describe("handleCreateProcessingBatch", () => {
       }),
     };
     const response = await handleCreateProcessingBatch(
-      createRequest({ vehicleId: VEHICLE_ID, assetIds: [ASSET_ID], options: {} }),
+      createRequest({ vehicleId: VEHICLE_ID, assetIds: [ASSET_ID], options: { backgroundId: "PREMIUM_WHITE", floorId: "WHITE_STUDIO" } }),
       session,
       jobs,
       allowingRateLimiter(),
@@ -89,7 +89,7 @@ describe("handleCreateProcessingBatch", () => {
       () => "request-0002",
     );
     const invalid = await handleCreateProcessingBatch(
-      createRequest({ vehicleId: VEHICLE_ID, assetIds: [], options: {} }),
+      createRequest({ vehicleId: VEHICLE_ID, assetIds: [], options: { backgroundId: "PREMIUM_WHITE", floorId: "WHITE_STUDIO" } }),
       session,
       jobs,
       allowingRateLimiter(),
@@ -110,7 +110,7 @@ describe("handleCreateProcessingBatch", () => {
         .mockResolvedValueOnce({ ok: false, reason: "ASSETS_NOT_READY" })
         .mockRejectedValueOnce(new Error("database unavailable")),
     };
-    const command = { vehicleId: VEHICLE_ID, assetIds: [ASSET_ID], options: {} };
+    const command = { vehicleId: VEHICLE_ID, assetIds: [ASSET_ID], options: { backgroundId: "PREMIUM_WHITE", floorId: "WHITE_STUDIO" } };
 
     expect(
       (
@@ -153,7 +153,7 @@ describe("handleCreateProcessingBatch", () => {
       })),
     };
     const response = await handleCreateProcessingBatch(
-      createRequest({ vehicleId: VEHICLE_ID, assetIds: [ASSET_ID], options: {} }),
+      createRequest({ vehicleId: VEHICLE_ID, assetIds: [ASSET_ID], options: { backgroundId: "PREMIUM_WHITE", floorId: "WHITE_STUDIO" } }),
       session,
       jobs,
       rateLimiter,

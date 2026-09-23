@@ -7,10 +7,12 @@ import type {
 } from "@studiocar/processing";
 
 import type { ProcessingObjectStoragePort } from "../storage/processing-object-storage.types";
+import { resolveStudioSceneAssetKeys } from "../studio-scene/resolve-studio-scene-asset-keys";
+import type { StudioSceneAssetSourcePort } from "../studio-scene/studio-scene-asset-source.types";
+import type { StudioSceneAssets } from "../studio-scene/studio-scene.types";
 import { buildProcessingObjectKeys } from "./build-processing-object-keys";
 import { calculateSha256 } from "./calculate-sha256";
 import {
-  CUSTOM_BACKGROUND_UNAVAILABLE_MESSAGE,
   INVALID_SOURCE_IMAGE_MESSAGE,
   OUTPUT_CHECKSUM_METADATA_KEY,
   OUTPUT_JOB_METADATA_KEY,
@@ -20,6 +22,7 @@ import {
   SOURCE_CHECKSUM_MISMATCH_MESSAGE,
   SOURCE_SIZE_MISMATCH_MESSAGE,
   STORAGE_FAILURE_MESSAGE,
+  STUDIO_ASSETS_UNAVAILABLE_MESSAGE,
 } from "./image-execution.constants";
 import { inspectSourceImage } from "./inspect-source-image";
 import type { ProcessingJobExecutorOptions } from "./processing-job-executor.types";
@@ -30,16 +33,27 @@ export class ProcessingJobExecutor implements ProcessingJobExecutorPort {
     private readonly storage: ProcessingObjectStoragePort,
     private readonly provider: BackgroundRemovalProvider,
     private readonly options: ProcessingJobExecutorOptions,
+    private readonly studioAssets: StudioSceneAssetSourcePort,
   ) {}
 
   public async execute(
     job: ClaimedProcessingJob,
   ): Promise<ProcessingExecutionResult> {
-    if (job.options.background === "CUSTOM") {
-      return this.failure("INVALID_REQUEST", CUSTOM_BACKGROUND_UNAVAILABLE_MESSAGE);
-    }
     if (job.sizeBytes > BigInt(this.options.maximumInputBytes)) {
       return this.failure("INVALID_IMAGE", SOURCE_SIZE_MISMATCH_MESSAGE);
+    }
+
+    // The studio is loaded before the provider is paid to cut the vehicle out,
+    // so a missing asset never costs a background removal.
+    let scene: StudioSceneAssets | null = null;
+    if (job.options.backgroundId !== "ORIGINAL") {
+      try {
+        scene = await this.studioAssets.load(
+          resolveStudioSceneAssetKeys(job.options),
+        );
+      } catch {
+        return this.failure("NETWORK", STUDIO_ASSETS_UNAVAILABLE_MESSAGE);
+      }
     }
 
     try {
@@ -70,7 +84,7 @@ export class ProcessingJobExecutor implements ProcessingJobExecutorPort {
       let treatmentBytes = inspection.image.bytes;
       let providerLatencyMilliseconds: number | null = null;
       let providerRequestId: string | null = null;
-      if (job.options.background !== "ORIGINAL") {
+      if (job.options.backgroundId !== "ORIGINAL") {
         const stagedProviderResult = await this.storage.getOptional(
           keys.providerResult,
         );
@@ -121,13 +135,14 @@ export class ProcessingJobExecutor implements ProcessingJobExecutorPort {
           bytes: treatmentBytes,
           options: job.options,
           previewMaxWidth: this.options.previewMaximumWidth,
+          scene,
         });
       } catch {
         return this.failure(
-          job.options.background === "ORIGINAL"
+          job.options.backgroundId === "ORIGINAL"
             ? "INVALID_IMAGE"
             : "PROVIDER_5XX",
-          job.options.background === "ORIGINAL"
+          job.options.backgroundId === "ORIGINAL"
             ? INVALID_SOURCE_IMAGE_MESSAGE
             : PROVIDER_RESULT_INVALID_MESSAGE,
           providerLatencyMilliseconds,

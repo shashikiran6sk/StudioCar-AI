@@ -109,6 +109,13 @@ Resources:
                   - s3:GetObject
                   - s3:PutObject
                 Resource: !Sub arn:${AWS::Partition}:s3:::${ImageBucketName}/users/*
+              # Studio backgrounds and floors are published by
+              # `pnpm studio-assets:sync`; the worker only ever reads them.
+              - Sid: ReadStudioProcessingAssets
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub arn:${AWS::Partition}:s3:::${ImageBucketName}/studio-assets/*
 
   ImageProcessingWorker:
     Type: AWS::Lambda::Function

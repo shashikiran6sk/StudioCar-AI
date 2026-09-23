@@ -2,10 +2,10 @@ import type { VehiclePortfolio } from "@studiocar/contracts";
 import { ButtonLink } from "@studiocar/ui";
 
 import { INVENTORY_PATH } from "../../app/app-routes";
+import { BACKGROUND_LABELS } from "../studio-treatment/studio-treatment.constants";
 import { formatPortfolioDate } from "./format-portfolio-date";
 import {
   PORTFOLIO_BACK_LABEL,
-  PORTFOLIO_BACKGROUND_LABELS,
   PORTFOLIO_EYEBROW,
   PORTFOLIO_IMAGE_PLURAL,
   PORTFOLIO_IMAGE_SINGULAR,
@@ -37,7 +37,7 @@ export function PortfolioHeader({ portfolio }: PortfolioHeaderProps) {
           <h1>{portfolio.name}</h1>
           <p className="portfolio-header__metadata">
             {metadata ? `${metadata} · ` : ""}
-            {portfolio.images.length} {imageLabel} · {PORTFOLIO_BACKGROUND_LABELS[portfolio.options.background]}
+            {portfolio.images.length} {imageLabel} · {BACKGROUND_LABELS[portfolio.options.backgroundId]}
           </p>
         </div>
       </div>

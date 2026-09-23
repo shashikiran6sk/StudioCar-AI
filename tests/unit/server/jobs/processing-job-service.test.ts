@@ -12,8 +12,8 @@ const ASSET_ID = "331a1e25-b9d8-4b1a-a398-8351a58f8c24";
 const VEHICLE_ID = "0e879f46-1193-4d77-b785-057fe026d998";
 const NOW = new Date("2026-09-19T12:00:00.000Z");
 const OPTIONS = {
-  background: "PREMIUM_WHITE",
-  floor: "HORIZON",
+  backgroundId: "DARK_STUDIO",
+  floorId: "DARK_TURNTABLE",
   crop: "MAINTAIN_COMPOSITION",
   enhancement: true,
   outputFormat: "JPEG",
@@ -57,7 +57,7 @@ describe("ProcessingJobService", () => {
             imageAssetId: ASSET_ID,
             status: "CREATED",
             provider: "REMOVEBG",
-            options: {},
+            options: { backgroundId: "PREMIUM_WHITE", floorId: "WHITE_STUDIO" },
             idempotencyKey: "job-key",
             batchIdempotencyKey: "processing-request-0001",
             batchRequestHash: "a".repeat(64),
@@ -99,6 +99,11 @@ describe("ProcessingJobService", () => {
     expect(dispatcher.dispatch).toHaveBeenCalledWith({ jobIds: [JOB_ID] });
     expect(repository.reserveBatchOwned).toHaveBeenCalledWith(
       expect.objectContaining({
+        // Both semantic IDs reach persistence, where the worker reads them.
+        options: expect.objectContaining({
+          backgroundId: "DARK_STUDIO",
+          floorId: "DARK_TURNTABLE",
+        }),
         usageBillingPeriodKey: "2026-09",
         usageIdempotencyKey: "usage:upload-session:processing-request-0001",
       }),

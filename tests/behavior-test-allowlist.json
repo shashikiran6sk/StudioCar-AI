@@ -24,14 +24,6 @@
     "reason": "Type-only transient form definitions with no runtime behavior."
   },
   {
-    "source": "apps/web/src/features/vehicle-create/background-treatment-choice.types.ts",
-    "reason": "Type-only background treatment presentation definitions with no runtime behavior."
-  },
-  {
-    "source": "apps/web/src/features/vehicle-create/background-treatment.constants.ts",
-    "reason": "Static background treatment labels and visual configuration only."
-  },
-  {
     "source": "apps/web/src/features/vehicle-create/processing-option.constants.ts",
     "reason": "Static canonical processing option values only."
   },
@@ -532,15 +524,35 @@
     "reason": "Composition root wiring the audit log repository to the database client."
   },
   {
-    "source": "apps/web/src/features/vehicle-create/floor-style-choice.types.ts",
-    "reason": "Type-only floor choice presentation definition with no runtime behavior."
+    "source": "apps/web/src/features/studio-treatment/studio-treatment-choice.types.ts",
+    "reason": "Type-only studio background and floor presentation definitions with no runtime behavior."
   },
   {
-    "source": "apps/web/src/features/vehicle-create/floor-style.constants.ts",
-    "reason": "Static floor labels and visual configuration only."
+    "source": "workers/image-processing/src/studio-scene/studio-floor-kind.ts",
+    "reason": "Type-only floor composition kind with no runtime behavior."
   },
   {
-    "source": "workers/image-processing/src/execution/studio-scene.constants.ts",
-    "reason": "Static studio scene palettes, shadow strengths and proportions only; exercised through the scene and renderer tests."
+    "source": "workers/image-processing/src/studio-scene/studio-scene.types.ts",
+    "reason": "Type-only studio scene, footprint, and layout definitions with no runtime behavior."
+  },
+  {
+    "source": "workers/image-processing/src/studio-scene/studio-scene-asset-source.types.ts",
+    "reason": "Type-only studio asset source port with no runtime behavior."
+  },
+  {
+    "source": "workers/image-processing/src/studio-scene/studio-scene-geometry.constants.ts",
+    "reason": "Static stage geometry shared with the asset generator; exercised by the layout and compositor tests."
+  },
+  {
+    "source": "workers/image-processing/src/studio-scene/studio-compositing.constants.ts",
+    "reason": "Static compositing thresholds and shadow strengths; exercised by the footprint and compositor tests."
+  },
+  {
+    "source": "workers/image-processing/src/studio-assets/studio-asset-sync.constants.ts",
+    "reason": "Static studio asset media types and messages only."
+  },
+  {
+    "source": "workers/image-processing/src/studio-assets/sync-studio-assets.types.ts",
+    "reason": "Type-only studio asset sync client and result definitions with no runtime behavior."
   }
 ]

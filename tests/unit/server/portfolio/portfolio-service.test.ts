@@ -23,7 +23,8 @@ function createPortfolioRecord(): PortfolioVehicleRecord {
           originalObjectKey: "private/original.jpg",
         },
         options: {
-          background: "PREMIUM_WHITE",
+          backgroundId: "PREMIUM_WHITE",
+          floorId: "WHITE_TURNTABLE",
           crop: "MAINTAIN_COMPOSITION",
           enhancement: true,
           outputFormat: "WEBP",

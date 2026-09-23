@@ -23,7 +23,7 @@ describe("VehiclePortfolioSchema", () => {
       ],
       model: "3 Series",
       name: "2022 BMW 3 Series",
-      options: {},
+      options: { backgroundId: "PREMIUM_WHITE", floorId: "WHITE_STUDIO" },
       status: "COMPLETED",
       stockId: "NL-3429",
       variant: null,
@@ -40,7 +40,7 @@ describe("VehiclePortfolioSchema", () => {
         id: "4bb7fa89-c907-4458-9786-8aafc2235728",
         images: [],
         name: "Empty",
-        options: {},
+        options: { backgroundId: "PREMIUM_WHITE", floorId: "WHITE_STUDIO" },
         status: "COMPLETED",
       }).success,
     ).toBe(false);

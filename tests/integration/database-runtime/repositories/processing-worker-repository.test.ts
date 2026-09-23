@@ -64,7 +64,10 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
         uploadedAt: new Date("2099-09-19T23:50:00.000Z"),
       },
     });
-    const options = ProcessingOptionsSchema.parse({});
+    const options = ProcessingOptionsSchema.parse({
+      backgroundId: "DARK_STUDIO",
+      floorId: "DARK_TURNTABLE",
+    });
     const request = { vehicleId: vehicle.id, assetIds: [assetId], options };
     const reserved = await reservations.reserveBatchOwned({
       allowance: {
@@ -131,6 +134,12 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       "CLAIMED",
       "NOT_READY",
     ]);
+    // The queue message names only the job; the worker's claim reads both
+    // semantic IDs back from PostgreSQL, the turntable included.
+    expect(claimed.job.options).toMatchObject({
+      backgroundId: "DARK_STUDIO",
+      floorId: "DARK_TURNTABLE",
+    });
 
     const completedAt = new Date("2099-09-20T00:00:10.000Z");
     const completion = await workers.completeJob({

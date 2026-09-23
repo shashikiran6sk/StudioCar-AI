@@ -28,7 +28,10 @@ const claimedJob: ClaimProcessingJobResult = {
     id: JOB_ID,
     imageAssetId: ASSET_ID,
     mimeType: "image/jpeg",
-    options: ProcessingOptionsSchema.parse({}),
+    options: ProcessingOptionsSchema.parse({
+      backgroundId: "PREMIUM_WHITE",
+      floorId: "WHITE_STUDIO",
+    }),
     originalObjectKey: "users/user/vehicles/vehicle/assets/asset/original/source.jpg",
     provider: "REMOVEBG",
     sizeBytes: 1_024n,

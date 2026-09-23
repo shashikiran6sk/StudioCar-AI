@@ -265,9 +265,9 @@ Standard track 6px high with pill radius. On images: white fill over a 25% white
 
 56px high, white surface, 1px border, 10px radius, `padding:7px 10px`, 10px gap. Thumbnail is 60×40px at 7px radius. Copy column truncates filename; status is visible text. Provide reorder handle and remove button with accessible labels.
 
-### 2.12 Background choice (`.bg-choice`)
+### 2.12 Studio choice (`.studio-choice-card`)
 
-Five equal columns in the modal. Base has a 1px border and 11px radius. Preview is 70px high; label is 9px/800 with 8px padding. Selected uses a 2px black inset outline. Custom uses a plus affordance and opens inline inside the modal.
+Backgrounds are three equal columns in the modal; the chosen background's two floors follow in two equal columns. Base has a 1px border and 10px radius. The preview is a bundled image, 70px high for a background and 64px for a floor, cropped to keep the floor in view; label is 11px/800 with 8px padding. Selected uses a 2px black inset outline and a black check, so the state never relies on colour alone.
 
 ### 2.13 Comparison slider (`.feature-stage`)
 
@@ -398,11 +398,11 @@ Four option rows in a two-column grid:
 - Studio Background
 - Maintain Original Composition
 
-Below: five background choices — Premium White, Dark Studio, Grey Studio, Dealership, Custom. Custom expands inline within the modal; it never opens a new page or disconnected dialog.
+Below: three studio backgrounds — Premium White, Dark Studio, Grey Studio. Until one is chosen, a note says floor options follow and the forward action reads “Next: Choose floor” and is disabled. Choosing a background shows “Choose a floor (Background)” with exactly its two floors — a studio floor and a turntable — and selects the first; choosing another background never keeps the previous background's floor. Previews come from bundled images, never from object storage. Visual reference: `docs/screens/Selection_Dialog/`.
 
 ### 3.8 Upload Vehicle — Step 4, Review & Process
 
-Two-column review area: 180px vehicle preview left; title, metadata, 2×2 summary, and credit estimate right. Summary includes image count, plate privacy, background, and enhancement. Include the assurance that originals are preserved and processing continues after navigation.
+Two-column review area: 180px vehicle preview left; title, metadata, 2×2 summary, and credit estimate right. Summary includes image count, plate privacy, background, floor, and enhancement. Include the assurance that originals are preserved and processing continues after navigation.
 
 Primary button: Process Photos. On activation, close the modal, return to Inventory, and insert a medium processing card immediately without reload.
 

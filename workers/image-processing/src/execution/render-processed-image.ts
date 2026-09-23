@@ -1,36 +1,15 @@
-import sharp from "sharp";
+import sharp, { type Sharp } from "sharp";
 
-import { createStudioSceneSvg } from "./create-studio-scene-svg";
-import { isStudioSceneBackground } from "./is-studio-scene-background";
-import { measureSubjectBox } from "./measure-subject-box";
+import { composeStudioScene } from "../studio-scene/compose-studio-scene";
+import { prepareOriginalImage } from "./prepare-original-image";
 import {
-  STUDIO_SCENE_PALETTES,
-  STUDIO_SHADOW_OPACITY,
-} from "./studio-scene.constants";
-import {
-  FIT_OUTPUT_HEIGHT_PIXELS,
-  FIT_OUTPUT_WIDTH_PIXELS,
   PREVIEW_WEBP_QUALITY,
-  SQUARE_OUTPUT_EDGE_PIXELS,
+  STUDIO_SCENE_MISSING_MESSAGE,
 } from "./image-execution.constants";
 import type {
   RenderProcessedImageInput,
   RenderedProcessedImage,
 } from "./image-execution.types";
-
-const backgrounds = {
-  ORIGINAL: { r: 255, g: 255, b: 255, alpha: 1 },
-  PREMIUM_WHITE: { r: 250, g: 250, b: 248, alpha: 1 },
-  DARK_STUDIO: { r: 27, g: 31, b: 36, alpha: 1 },
-  GREY_STUDIO: { r: 218, g: 220, b: 222, alpha: 1 },
-  DEALERSHIP: { r: 232, g: 238, b: 241, alpha: 1 },
-  CUSTOM: { r: 255, g: 255, b: 255, alpha: 1 },
-} satisfies Record<
-  RenderProcessedImageInput["options"]["background"],
-  { alpha: number; b: number; g: number; r: number }
->;
-
-const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
 
 const contentTypes = {
   JPEG: "image/jpeg",
@@ -41,83 +20,28 @@ const contentTypes = {
   "image/jpeg" | "image/png" | "image/webp"
 >;
 
+async function prepareImage(
+  input: RenderProcessedImageInput,
+): Promise<Sharp> {
+  if (input.options.backgroundId === "ORIGINAL") {
+    return prepareOriginalImage(input.bytes, input.options);
+  }
+  if (!input.scene) throw new Error(STUDIO_SCENE_MISSING_MESSAGE);
+  return sharp(
+    await composeStudioScene({
+      crop: input.options.crop,
+      cutout: input.bytes,
+      enhancement: input.options.enhancement,
+      scene: input.scene,
+      shadow: input.options.shadow,
+    }),
+  );
+}
+
 export async function renderProcessedImage(
   input: RenderProcessedImageInput,
 ): Promise<RenderedProcessedImage> {
-  const background = backgrounds[input.options.background];
-  const scene = isStudioSceneBackground(input.options.background)
-    ? input.options.background
-    : null;
-  // A studio scene is drawn behind the vehicle afterwards, so everything
-  // around it stays transparent until then.
-  const fill = scene === null ? background : TRANSPARENT;
-  let image = sharp(input.bytes, { failOn: "warning", pages: 1 });
-
-  if (input.options.crop === "SQUARE") {
-    image = image.resize({
-      background: fill,
-      fit: "contain",
-      height: SQUARE_OUTPUT_EDGE_PIXELS,
-      width: SQUARE_OUTPUT_EDGE_PIXELS,
-      withoutEnlargement: true,
-    });
-  } else if (input.options.crop === "FIT_VEHICLE") {
-    image = image.trim({ background: TRANSPARENT }).resize({
-      background: fill,
-      fit: "contain",
-      height: FIT_OUTPUT_HEIGHT_PIXELS,
-      width: FIT_OUTPUT_WIDTH_PIXELS,
-      withoutEnlargement: true,
-    });
-  }
-
-  if (input.options.paddingPercent > 0) {
-    const metadata = await image.clone().metadata();
-    const width = metadata.width;
-    const height = metadata.height;
-    const padding = Math.max(
-      1,
-      Math.round(
-        Math.min(width, height) * (input.options.paddingPercent / 100),
-      ),
-    );
-    image = image.extend({
-      background: fill,
-      bottom: padding,
-      left: padding,
-      right: padding,
-      top: padding,
-    });
-  }
-
-  if (scene !== null) {
-    const layer = await image.ensureAlpha().png().toBuffer({
-      resolveWithObject: true,
-    });
-    const subject = await measureSubjectBox(layer.data);
-    if (subject === null) {
-      image = sharp(layer.data).flatten({ background });
-    } else {
-      const backdrop = createStudioSceneSvg({
-        canvasWidth: layer.info.width,
-        canvasHeight: layer.info.height,
-        floor: input.options.floor,
-        palette: STUDIO_SCENE_PALETTES[scene],
-        shadowOpacity: STUDIO_SHADOW_OPACITY[input.options.shadow],
-        subject,
-      });
-      // Composited into a buffer first: sharp applies its operations before
-      // overlays, so enhancing afterwards must see the finished picture.
-      const composed = await sharp(Buffer.from(backdrop))
-        .composite([{ input: layer.data, left: 0, top: 0 }])
-        .png()
-        .toBuffer();
-      image = sharp(composed);
-    }
-  } else if (input.options.background !== "ORIGINAL") {
-    image = image.flatten({ background });
-  }
-  if (input.options.enhancement) image = image.normalise().sharpen();
+  let image = await prepareImage(input);
 
   if (input.options.outputFormat === "JPEG") {
     image = image.jpeg({ quality: input.options.quality, mozjpeg: true });
