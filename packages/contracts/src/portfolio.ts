@@ -1,10 +1,17 @@
 import { z } from "zod";
 
 import { EntityIdSchema, IsoDateTimeSchema } from "./common";
-import { ProcessingFailureReasonSchema } from "./jobs";
+import {
+  ProcessingBatchLabelSchema,
+  ProcessingFailureReasonSchema,
+} from "./jobs";
 import { ProcessingOptionsSchema } from "./processing";
 
-export const MAX_PORTFOLIO_VERSIONS = 12;
+/**
+ * Every version a vehicle's job history can hold stays reachable: a vehicle
+ * tested across the whole treatment matrix has 96 of them.
+ */
+export const MAX_PORTFOLIO_VERSIONS = 120;
 export const MAX_PORTFOLIO_VERSION_IMAGES = 100;
 export const MAX_PORTFOLIO_ATTENTION_IMAGES = 20;
 
@@ -15,7 +22,7 @@ export const PortfolioStatusSchema = z.enum([
   "ARCHIVED",
 ]);
 
-/** A studio treatment's key: the SHA-256 of its canonical options. */
+/** A studio version's key: the SHA-256 of its canonical options and label. */
 export const PortfolioVersionIdSchema = z
   .string()
   .regex(/^[0-9a-f]{64}$/, "A studio version ID is a SHA-256 hex digest.");
@@ -35,13 +42,16 @@ export const PortfolioImageSchema = z
   .strict();
 
 /**
- * Every completed image made with one treatment. Creating another version
- * with a different background or floor adds a version; it never replaces one.
+ * Every completed image made with one treatment and label. Creating another
+ * version with a different background, floor or label adds a version; it
+ * never replaces one.
  */
 export const PortfolioVersionSchema = z
   .object({
     id: PortfolioVersionIdSchema,
     options: ProcessingOptionsSchema,
+    /** The name given to the batches that made it, when they had one. */
+    label: ProcessingBatchLabelSchema.nullable(),
     imageCount: z.number().int().positive(),
     completedAt: IsoDateTimeSchema,
   })

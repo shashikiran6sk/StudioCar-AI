@@ -1,8 +1,8 @@
 "use client";
 
 import type {
+  CreateProcessingBatch,
   CreateVehicle,
-  ProcessingOptions,
   StudioSelectionContext,
 } from "@studiocar/contracts";
 import {
@@ -38,9 +38,7 @@ export interface VehicleCreateDialogProps {
   /** Called when the person leaves without processing. */
   onCancel?: () => void;
   onProcess: (
-    vehicleId: string,
-    assetIds: string[],
-    options: ProcessingOptions,
+    command: CreateProcessingBatch,
     idempotencyKey: string,
   ) => Promise<void>;
   trigger?: ReactElement;
@@ -132,18 +130,9 @@ export function VehicleCreateDialog({
     setDraft(result.vehicle.id);
   }
 
-  async function processPhotos(
-    persistedVehicleId: string,
-    assetIds: string[],
-    options: ProcessingOptions,
-  ) {
+  async function processPhotos(command: CreateProcessingBatch) {
     const activeSession = wizardSession.current;
-    await onProcess(
-      persistedVehicleId,
-      assetIds,
-      options,
-      processingIdempotencyKey,
-    );
+    await onProcess(command, processingIdempotencyKey);
     if (wizardSession.current !== activeSession) return;
     closeWizard();
   }

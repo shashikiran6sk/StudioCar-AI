@@ -56,6 +56,8 @@ export interface ProcessingAllowance {
 export interface ReserveProcessingBatchCommand {
   allowance: ProcessingAllowance;
   batchIdempotencyKey: string;
+  /** The batch's own name; null when the person gave none. */
+  batchLabel: string | null;
   batchRequestHash: string;
   jobs: ProcessingJobReservationInput[];
   options: ProcessingOptions;
@@ -215,6 +217,7 @@ export class PrismaProcessingJobRepository {
           options: toProcessingOptionsJson(command.options),
           idempotencyKey: job.idempotencyKey,
           batchIdempotencyKey: command.batchIdempotencyKey,
+          batchLabel: command.batchLabel,
           batchRequestHash: command.batchRequestHash,
           displayOrder: job.displayOrder,
         },

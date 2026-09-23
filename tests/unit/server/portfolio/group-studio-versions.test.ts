@@ -2,6 +2,7 @@ import { ProcessingJobStatus } from "../../../../packages/database-runtime/src";
 import { describe, expect, it } from "vitest";
 
 import { groupStudioVersions } from "../../../../apps/web/src/server/portfolio/group-studio-versions";
+import { createProcessingOptionsKey } from "../../../../packages/processing/src/create-processing-options-key";
 import {
   DARK_OPTIONS,
   portfolioJob,
@@ -67,5 +68,27 @@ describe("groupStudioVersions", () => {
     ]);
 
     expect(groupStudioVersions(record.processingJobs)).toEqual([]);
+  });
+
+  it("keeps same-treatment batches with different labels as separate versions", () => {
+    const record = portfolioRecord([
+      portfolioJob({ assetId: "front", batch: "t04-s01", createdAt: DAY_ONE, label: "T04-S01" }),
+      portfolioJob({ assetId: "front", batch: "t04-s03", createdAt: DAY_TWO, label: "T04-S03" }),
+      portfolioJob({ assetId: "front", batch: "plain", createdAt: DAY_ONE }),
+    ]);
+
+    const versions = groupStudioVersions(record.processingJobs);
+
+    expect(versions.map((version) => version.label)).toEqual([
+      "T04-S03",
+      "T04-S01",
+      null,
+    ]);
+    expect(versions.every((version) => version.jobs.length === 1)).toBe(true);
+    // An unlabelled version keeps the identity it had before labels existed.
+    const unlabelled = versions.at(-1);
+    expect(unlabelled?.id).toBe(
+      unlabelled ? createProcessingOptionsKey(unlabelled.options) : undefined,
+    );
   });
 });

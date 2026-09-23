@@ -1,17 +1,24 @@
 "use client";
 
-import type { ProcessingOptions } from "@studiocar/contracts";
-import { Button } from "@studiocar/ui";
+import {
+  MAX_PROCESSING_BATCH_LABEL_LENGTH,
+  type CreateProcessingBatch,
+} from "@studiocar/contracts";
+import { Button, Field } from "@studiocar/ui";
 import Image from "next/image";
 import { useRef, useState } from "react";
 
 import { formatBackgroundTreatment } from "./format-background-treatment";
+import { formatCropMode } from "./format-crop-mode";
 import { formatFloorStyle } from "./format-floor-style";
 import { STUDIO_SCENE_BACKGROUNDS } from "./processing-option.constants";
 import { formatPhotoCount } from "./format-photo-count";
 import { ProcessingBatchRequestError } from "./processing-batch-request-error";
 import {
   REVIEW_BACKGROUND_LABEL,
+  REVIEW_BATCH_LABEL_HINT,
+  REVIEW_BATCH_LABEL_LABEL,
+  REVIEW_COMPOSITION_LABEL,
   REVIEW_FLOOR_LABEL,
   REVIEW_BACK_LABEL,
   REVIEW_CREDIT_LABEL,
@@ -26,22 +33,21 @@ import {
   REVIEW_PROCESS_LABEL,
   REVIEW_PROCESS_PENDING_LABEL,
 } from "./vehicle-create.constants";
+import { toProcessingBatchCommand } from "./to-processing-batch-command";
 import { useVehicleCreateStore } from "./vehicle-create-store";
 import { vehicleReviewMetadata } from "./vehicle-review-metadata";
 
 export interface ReviewProcessStepProps {
   onBack: () => void;
-  onProcess: (
-    vehicleId: string,
-    assetIds: string[],
-    options: ProcessingOptions,
-  ) => Promise<void>;
+  onProcess: (command: CreateProcessingBatch) => Promise<void>;
 }
 
 export function ReviewProcessStep({
   onBack,
   onProcess,
 }: ReviewProcessStepProps) {
+  const batchLabel = useVehicleCreateStore((state) => state.batchLabel);
+  const setBatchLabel = useVehicleCreateStore((state) => state.setBatchLabel);
   const details = useVehicleCreateStore((state) => state.details);
   const options = useVehicleCreateStore((state) => state.options);
   const photos = useVehicleCreateStore((state) => state.photos);
@@ -71,7 +77,9 @@ export function ReviewProcessStep({
     setError(null);
     setPending(true);
     try {
-      await onProcess(vehicleId, assetIds, options);
+      await onProcess(
+        toProcessingBatchCommand(vehicleId, assetIds, options, batchLabel),
+      );
     } catch (caught) {
       setError(
         caught instanceof ProcessingBatchRequestError
@@ -133,7 +141,19 @@ export function ReviewProcessStep({
                   : REVIEW_DISABLED_LABEL}
               </dd>
             </div>
+            <div>
+              <dt>{REVIEW_COMPOSITION_LABEL}</dt>
+              <dd>{formatCropMode(options.crop)}</dd>
+            </div>
           </dl>
+          <Field
+            disabled={pending}
+            hint={REVIEW_BATCH_LABEL_HINT}
+            label={REVIEW_BATCH_LABEL_LABEL}
+            maxLength={MAX_PROCESSING_BATCH_LABEL_LENGTH}
+            onChange={(event) => setBatchLabel(event.target.value)}
+            value={batchLabel}
+          />
           <div className="review-process-step__usage">
             <span>{REVIEW_ESTIMATED_USAGE_LABEL}</span>
             <strong>

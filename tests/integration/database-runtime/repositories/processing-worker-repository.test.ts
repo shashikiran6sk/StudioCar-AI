@@ -75,6 +75,7 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       userId: owner.id,
       vehicleId: vehicle.id,
       batchIdempotencyKey: batchKey,
+      batchLabel: null,
       batchRequestHash: createProcessingBatchRequestHash(request),
       provider: ProcessingProvider.REMOVEBG,
       usageBillingPeriodKey: "2099-09",

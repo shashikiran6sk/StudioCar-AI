@@ -31,15 +31,16 @@ describe("ReviewProcessStep", () => {
     fireEvent.click(screen.getByRole("button", { name: "Process Photos" }));
 
     await waitFor(() => expect(onProcess).toHaveBeenCalledOnce());
-    expect(onProcess).toHaveBeenCalledWith(
-      "0e879f46-1193-4d77-b785-057fe026d998",
-      ["331a1e25-b9d8-4b1a-a398-8351a58f8c24"],
-      expect.objectContaining({
+    expect(onProcess).toHaveBeenCalledWith({
+      assetIds: ["331a1e25-b9d8-4b1a-a398-8351a58f8c24"],
+      options: expect.objectContaining({
         background: "PREMIUM_WHITE",
         enhancement: true,
         platePrivacy: true,
       }),
-    );
+      vehicleId: "0e879f46-1193-4d77-b785-057fe026d998",
+    });
+    expect(screen.getByText("Maintained")).toBeVisible();
   });
 
   it("announces a processing-command failure without losing the draft", async () => {
@@ -102,11 +103,11 @@ describe("ReviewProcessStep", () => {
     fireEvent.click(screen.getByRole("button", { name: "Process Photos" }));
 
     await waitFor(() => expect(onProcess).toHaveBeenCalledOnce());
-    expect(onProcess).toHaveBeenCalledWith(
-      "0e879f46-1193-4d77-b785-057fe026d998",
-      [SECOND_ASSET_ID],
-      expect.objectContaining({ background: "PREMIUM_WHITE" }),
-    );
+    expect(onProcess).toHaveBeenCalledWith({
+      assetIds: [SECOND_ASSET_ID],
+      options: expect.objectContaining({ background: "PREMIUM_WHITE" }),
+      vehicleId: "0e879f46-1193-4d77-b785-057fe026d998",
+    });
   });
 
   it("submits once however quickly Process is clicked again", async () => {
@@ -135,10 +136,42 @@ describe("ReviewProcessStep", () => {
       finish();
       await Promise.resolve();
     });
+    expect(onProcess).toHaveBeenCalledWith({
+      assetIds: [FIRST_ASSET_ID],
+      options: expect.any(Object),
+      vehicleId: "0e879f46-1193-4d77-b785-057fe026d998",
+    });
+  });
+
+  it("submits a typed reference label, trimmed, and leaves a blank one out", async () => {
+    act(() => {
+      const state = useVehicleCreateStore.getState();
+      state.setDraft("0e879f46-1193-4d77-b785-057fe026d998");
+      state.addPhotos([uploadedPhoto()]);
+    });
+    const onProcess = vi.fn(async () => undefined);
+    const { unmount } = render(
+      <ReviewProcessStep onBack={vi.fn()} onProcess={onProcess} />,
+    );
+
+    const label = screen.getByRole("textbox", { name: "Reference label (optional)" });
+    expect(label).toHaveAccessibleDescription(
+      "Shown with this version in the portfolio, such as a test ID. It never changes the images.",
+    );
+    fireEvent.change(label, { target: { value: "  T02-S04 | Plate OFF  " } });
+    fireEvent.click(screen.getByRole("button", { name: "Process Photos" }));
+    await waitFor(() => expect(onProcess).toHaveBeenCalledOnce());
     expect(onProcess).toHaveBeenCalledWith(
-      "0e879f46-1193-4d77-b785-057fe026d998",
-      [FIRST_ASSET_ID],
-      expect.any(Object),
+      expect.objectContaining({ label: "T02-S04 | Plate OFF" }),
+    );
+
+    unmount();
+    act(() => useVehicleCreateStore.getState().setBatchLabel("   "));
+    render(<ReviewProcessStep onBack={vi.fn()} onProcess={onProcess} />);
+    fireEvent.click(screen.getByRole("button", { name: "Process Photos" }));
+    await waitFor(() => expect(onProcess).toHaveBeenCalledTimes(2));
+    expect(onProcess).toHaveBeenLastCalledWith(
+      expect.not.objectContaining({ label: expect.anything() }),
     );
   });
 });

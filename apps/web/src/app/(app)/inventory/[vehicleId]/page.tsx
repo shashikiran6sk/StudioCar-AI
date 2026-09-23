@@ -82,7 +82,7 @@ export default async function VehiclePortfolioPage({
           title={PORTFOLIO_EMPTY_TITLE}
         />
       )}
-      {version ? <PortfolioFacts options={version.options} /> : null}
+      {version ? <PortfolioFacts version={version} /> : null}
       <PortfolioVersions portfolio={portfolio} />
       {selection ? (
         <StudioSelectionLauncher

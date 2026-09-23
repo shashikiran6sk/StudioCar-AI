@@ -607,6 +607,26 @@ Before this slice a vehicle could be processed exactly once: the batch reservati
 - **Deploy the image worker before, or with, the web application.** Re-process and Replace are offered by the web application, but the worker decides the resulting vehicle status. A worker older than this slice would mark a successful re-process as failed again; the migration only repairs vehicles that exist when it runs.
 - **Verification.** Lint, strict typecheck, the test mapping, every package unit suite (896 web tests), 137 real-PostgreSQL integration tests including new ones for variant creation, preserved results, racing submissions, replacement originals, the scoped worker status and the attention query, the production build, and all ten Playwright tests including a new walk through Create studio images and Attention needed → Re-process. The new screens were compared with `docs/screens/`.
 
+### SC044 — Batch reference labels and the 96-case treatment matrix
+
+- **Reference label.** The Review step has an optional "Reference label" field, such as a QA test ID. It is sent as `label` on `CreateProcessingBatch` (trimmed, 1–120 characters, left out when blank) and stored on every job of the batch as `ProcessingJob.batchLabel` (migration `20260923200000_processing_batch_label`, additive and nullable). It is kept out of `ProcessingOptions`, so the worker, the provider and the treatment never see it.
+- **Versions by treatment and label.** `createStudioVersionKey` groups the portfolio by treatment and label. An unlabelled version keeps exactly the key it had before (`createProcessingOptionsKey`), so existing `?version=` links are unchanged. A label is part of the batch request hash, so reusing an idempotency key with another label is a conflict; an unlabelled request hashes exactly as before, and a test pins the old digest.
+- **Showing what made a version.** The portfolio lists a labelled version under its label with its treatment beneath. The facts row now names the composition (Maintained / Fit to vehicle) and shows the label beside the stored options. The label is the person's own text, so the facts always come from the stored options. The Review summary now also names the composition, and a facts-grid border bug with an odd number of facts is fixed.
+- **`MAX_PORTFOLIO_VERSIONS` raised from 12 to 120.** A vehicle tested across the whole matrix has 96 versions; before this change only the newest 12 could be reached.
+- **96-case treatment matrix.** `tests/support/studio-treatment-matrix.ts` generates the QA plan's 16 switch combinations × 6 background/floor combinations, in plan order (`T01-S01` … `T16-S06`), and every consumer asserts there are exactly 96. It drives:
+  - contract validation of every labelled request;
+  - request, treatment and version keys;
+  - the real Customize and Review steps, clicked through for all 96 and checked against the submitted command;
+  - the worker's executor and renderer, with a fixed cutout replacing the provider, including cross-case checks A–F;
+  - real PostgreSQL: service → reservation → outbox → worker claim → portfolio versions for all 96 on one vehicle and one photo.
+- **Known defects are pinned, not hidden.** Each is a Vitest `it.fails` that will flip when the defect is fixed:
+  - **Hide Number Plate does nothing.** `platePrivacy` is validated, stored and hashed, but no worker or provider code reads it. remove.bg has no plate option.
+  - **Studio Background off + Maintain Composition on** puts a white 8% border round the original photo.
+  - **Studio Background off + Maintain Composition off** letterboxes the whole photo on a white 4:3 canvas; "fit vehicle" only trims transparency, which a photo has none of.
+  - **Image Enhancement shifts the studio colours.** `normalise()` runs on the finished picture, background included; a low-contrast photo moves them by up to 39 levels.
+  - **The floor is stored while Studio Background is off.** It splits one rendering into two treatment versions.
+- **Verification.** Lint, strict typecheck, the test mapping, every unit suite (1004 web and 317 image-worker tests, the latter including 4 expected failures), 138 real-PostgreSQL integration tests, schema validation, migration status, the production build, and all ten Playwright tests against an isolated database with no queue.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.

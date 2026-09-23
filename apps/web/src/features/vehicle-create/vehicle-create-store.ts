@@ -22,6 +22,8 @@ import type {
 import type { PhotoUploadItem } from "./photo-upload.types";
 
 interface VehicleCreateState {
+  /** The optional batch label as typed; trimmed only when submitted. */
+  batchLabel: string;
   details: VehicleDetailsValues;
   mode: StudioSelectionMode;
   options: ProcessingOptions;
@@ -37,6 +39,7 @@ interface VehicleCreateState {
   /** Puts a newly chosen photo in a failed photo's place. */
   replacePhoto: (clientId: string, replacement: PhotoUploadItem) => void;
   togglePhotoSelected: (clientId: string) => void;
+  setBatchLabel: (batchLabel: string) => void;
   setOptions: (options: ProcessingOptions) => void;
   setStep: (step: VehicleCreateStep) => void;
   setDetailsField: (field: VehicleDetailsField, value: string) => void;
@@ -73,6 +76,7 @@ function updateVehicleDetails(
 }
 
 export const useVehicleCreateStore = create<VehicleCreateState>((set) => ({
+  batchLabel: "",
   details: EMPTY_VEHICLE_DETAILS,
   mode: NEW_UPLOAD_MODE,
   options: DEFAULT_PROCESSING_OPTIONS,
@@ -83,6 +87,7 @@ export const useVehicleCreateStore = create<VehicleCreateState>((set) => ({
     set((state) => {
       state.photos.forEach(releasePhotoPreview);
       return {
+        batchLabel: "",
         details: EMPTY_VEHICLE_DETAILS,
         mode: NEW_UPLOAD_MODE,
         options: DEFAULT_PROCESSING_OPTIONS,
@@ -95,6 +100,8 @@ export const useVehicleCreateStore = create<VehicleCreateState>((set) => ({
     set((state) => {
       state.photos.forEach(releasePhotoPreview);
       return {
+        // A label names one batch, so a new version never inherits one.
+        batchLabel: "",
         details: toVehicleDetailsValues(context.vehicle),
         mode: context.mode,
         options: context.options,
@@ -158,6 +165,7 @@ export const useVehicleCreateStore = create<VehicleCreateState>((set) => ({
     set((state) => ({
       details: updateVehicleDetails(state.details, field, value),
     })),
+  setBatchLabel: (batchLabel) => set({ batchLabel }),
   setDraft: (vehicleId) => set({ step: VehicleCreateStep.Photos, vehicleId }),
   setOptions: (options) => set({ options }),
   setStep: (step) => set({ step }),

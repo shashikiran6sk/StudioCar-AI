@@ -562,5 +562,9 @@
   {
     "source": "packages/processing/src/processing-attention.constants.ts",
     "reason": "Static list of job states that wait for the user; exercised by jobRequiresUserAttention tests."
+  },
+  {
+    "source": "apps/web/src/features/vehicle-create/crop-mode.constants.ts",
+    "reason": "Static composition label configuration only."
   }
 ]

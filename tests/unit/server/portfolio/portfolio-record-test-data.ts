@@ -39,6 +39,7 @@ export interface JobFixture {
   createdAt: Date;
   displayOrder?: number;
   errorCode?: string | null;
+  label?: string | null;
   options?: PortfolioJobRecord["options"];
   status?: ProcessingJobStatus;
 }
@@ -51,6 +52,7 @@ export function portfolioJob(fixture: JobFixture): PortfolioJobRecord {
   const completed = status === ProcessingJobStatus.COMPLETED;
   return {
     batchIdempotencyKey: fixture.batch,
+    batchLabel: fixture.label ?? null,
     completedAt: completed
       ? (fixture.completedAt ?? fixture.createdAt)
       : null,

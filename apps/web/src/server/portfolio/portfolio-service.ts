@@ -83,6 +83,7 @@ export class PortfolioService implements PortfolioApplication {
         completedAt: version.completedAt.toISOString(),
         id: version.id,
         imageCount: version.jobs.length,
+        label: version.label,
         options: version.options,
       })),
       year: record.year,

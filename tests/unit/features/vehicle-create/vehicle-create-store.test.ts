@@ -167,4 +167,16 @@ describe("useVehicleCreateStore", () => {
       vehicleId: null,
     });
   });
+
+  it("keeps a typed batch label only for the batch being prepared", () => {
+    useVehicleCreateStore.getState().setBatchLabel("T02-S04");
+    expect(useVehicleCreateStore.getState().batchLabel).toBe("T02-S04");
+
+    useVehicleCreateStore.getState().initialize(selectionContext());
+    expect(useVehicleCreateStore.getState().batchLabel).toBe("");
+
+    useVehicleCreateStore.getState().setBatchLabel("T03-S01");
+    useVehicleCreateStore.getState().reset();
+    expect(useVehicleCreateStore.getState().batchLabel).toBe("");
+  });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ProcessingOptions } from "@studiocar/contracts";
+import type { CreateProcessingBatch } from "@studiocar/contracts";
 import { Button } from "@studiocar/ui";
 import { useRouter } from "next/navigation";
 
@@ -17,22 +17,14 @@ export function VehicleCreateLauncher() {
   const limits = usePlanLimits();
 
   async function processBatch(
-    vehicleId: string,
-    assetIds: string[],
-    options: ProcessingOptions,
+    command: CreateProcessingBatch,
     idempotencyKey: string,
   ): Promise<void> {
-    await completeProcessingBatch(
-      vehicleId,
-      assetIds,
-      options,
-      idempotencyKey,
-      {
-        navigate: () => router.push(INVENTORY_PATH),
-        refresh: () => router.refresh(),
-        register: (jobs) => useProcessingStatusStore.getState().register(jobs),
-      },
-    );
+    await completeProcessingBatch(command, idempotencyKey, {
+      navigate: () => router.push(INVENTORY_PATH),
+      refresh: () => router.refresh(),
+      register: (jobs) => useProcessingStatusStore.getState().register(jobs),
+    });
   }
 
   return (

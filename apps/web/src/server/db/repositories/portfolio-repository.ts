@@ -23,6 +23,7 @@ const portfolioVehicleSelect = {
     select: {
       id: true,
       batchIdempotencyKey: true,
+      batchLabel: true,
       completedAt: true,
       createdAt: true,
       displayOrder: true,

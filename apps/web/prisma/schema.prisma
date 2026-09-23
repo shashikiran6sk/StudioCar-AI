@@ -472,6 +472,7 @@ model ProcessingJob {
   idempotencyKey      String                   @db.VarChar(128)
   batchIdempotencyKey String?                  @db.VarChar(128)
   batchRequestHash    String?                  @db.Char(64)
+  batchLabel          String?                  @db.VarChar(120)
   displayOrder        Int                      @default(0)
   providerRequestId   String?                  @db.VarChar(255)
   attemptCount        Int                      @default(0)

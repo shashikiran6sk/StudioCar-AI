@@ -7,6 +7,7 @@ export * from "./create-processing-batch-request-hash";
 export * from "./create-processing-job-idempotency-key";
 export * from "./create-processing-options-key";
 export * from "./create-processing-usage-idempotency-key";
+export * from "./create-studio-version-key";
 export * from "./create-usage-billing-period-key";
 export * from "./create-upload-session-usage-idempotency-key";
 export * from "./job-requires-user-attention";

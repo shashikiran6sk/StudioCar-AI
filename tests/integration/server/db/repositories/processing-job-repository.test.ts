@@ -79,6 +79,7 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
       userId: owner.id,
       vehicleId: vehicle.id,
       batchIdempotencyKey,
+      batchLabel: null,
       batchRequestHash: createProcessingBatchRequestHash(request),
       provider: ProcessingProvider.REMOVEBG,
       usageBillingPeriodKey: "2026-09",
@@ -159,6 +160,7 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
         userId: owner.id,
         vehicleId: vehicle.id,
         batchIdempotencyKey: "processing-integration-batch-2",
+        batchLabel: null,
         batchRequestHash: "a".repeat(64),
         provider: ProcessingProvider.REMOVEBG,
         usageBillingPeriodKey: "2026-09",
@@ -255,6 +257,7 @@ databaseDescribe("PrismaProcessingJobRepository plan limits", () => {
       userId: owner.id,
       vehicleId: vehicle.id,
       batchIdempotencyKey: batchKey,
+      batchLabel: null,
       batchRequestHash: createProcessingBatchRequestHash({
         vehicleId: vehicle.id,
         assetIds,
@@ -479,6 +482,7 @@ databaseDescribe("PrismaProcessingJobRepository studio versions", () => {
     return {
       allowance,
       batchIdempotencyKey: batchKey,
+      batchLabel: null,
       batchRequestHash: createProcessingBatchRequestHash({ assetIds, options, vehicleId }),
       jobs: assetIds.map((assetId, displayOrder) => ({
         assetId,

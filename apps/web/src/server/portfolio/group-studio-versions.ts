@@ -3,7 +3,7 @@ import {
   type ProcessingOptions,
 } from "@studiocar/contracts";
 import { ProcessingJobStatus } from "@studiocar/database-runtime";
-import { createProcessingOptionsKey } from "@studiocar/processing";
+import { createStudioVersionKey } from "@studiocar/processing";
 
 import type { PortfolioJobRecord } from "../db/repositories/portfolio-repository";
 import { sortByDisplayOrder } from "./sort-by-display-order";
@@ -12,18 +12,19 @@ export interface StudioVersionGroup {
   completedAt: Date;
   id: string;
   jobs: PortfolioJobRecord[];
+  label: string | null;
   options: ProcessingOptions;
 }
 
 /**
- * Groups completed images into studio versions: one version per treatment,
- * holding the newest completed image of each original.
+ * Groups completed images into studio versions: one version per treatment and
+ * batch label, holding the newest completed image of each original.
  *
  * A re-process of only the failed photos, made with the same treatment,
  * therefore completes the version it was retrying instead of hiding the
- * photos that had already succeeded. A different background or floor starts
- * a version of its own and leaves the others untouched. Expects jobs newest
- * first; returns versions most recently completed first.
+ * photos that had already succeeded. A different background, floor or label
+ * starts a version of its own and leaves the others untouched. Expects jobs
+ * newest first; returns versions most recently completed first.
  */
 export function groupStudioVersions(
   jobs: PortfolioJobRecord[],
@@ -40,7 +41,7 @@ export function groupStudioVersions(
       continue;
     }
     const options = ProcessingOptionsSchema.parse(job.options);
-    const id = createProcessingOptionsKey(options);
+    const id = createStudioVersionKey(options, job.batchLabel);
     const assets = seenAssets.get(id) ?? new Set<string>();
     if (assets.has(job.imageAsset.id)) continue;
     assets.add(job.imageAsset.id);
@@ -48,7 +49,13 @@ export function groupStudioVersions(
 
     const version = versions.get(id);
     if (!version) {
-      versions.set(id, { completedAt: job.completedAt, id, jobs: [job], options });
+      versions.set(id, {
+        completedAt: job.completedAt,
+        id,
+        jobs: [job],
+        label: job.batchLabel,
+        options,
+      });
       continue;
     }
     version.jobs.push(job);

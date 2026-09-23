@@ -31,6 +31,7 @@ export const PORTFOLIO_VERSION_SELECTED_LABEL = "Showing";
 export const PORTFOLIO_STUDIO_UNAVAILABLE_MESSAGE =
   "That action isn't available for this vehicle right now. It may still be processing, or there may be nothing left to fix.";
 export const PORTFOLIO_ORIGINALS_LABEL = "Originals preserved";
+export const PORTFOLIO_BATCH_LABEL_TITLE = "Reference label";
 export const PORTFOLIO_FLOOR_LABELS: Readonly<Record<FloorStyle, string>> = {
   HORIZON: "Standard floor",
   PLAIN: "Plain background",

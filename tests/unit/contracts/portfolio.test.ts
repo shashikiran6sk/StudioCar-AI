@@ -33,6 +33,7 @@ const portfolio = {
       completedAt: "2026-09-19T10:00:00.000Z",
       id: VERSION_ID,
       imageCount: 1,
+      label: null,
       options: {},
     },
   ],
@@ -96,6 +97,20 @@ describe("VehiclePortfolioSchema", () => {
       VehiclePortfolioSchema.safeParse({
         ...portfolio,
         attention: { ...attention, failedImages: [] },
+      }).success,
+    ).toBe(false);
+  });
+
+  it("carries a version's label, trimmed, and refuses a blank one", () => {
+    const labelled = VehiclePortfolioSchema.parse({
+      ...portfolio,
+      versions: [{ ...portfolio.versions[0], label: "  T02-S04  " }],
+    });
+    expect(labelled.versions[0]?.label).toBe("T02-S04");
+    expect(
+      VehiclePortfolioSchema.safeParse({
+        ...portfolio,
+        versions: [{ ...portfolio.versions[0], label: "   " }],
       }).success,
     ).toBe(false);
   });

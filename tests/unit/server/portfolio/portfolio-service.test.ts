@@ -63,11 +63,30 @@ describe("PortfolioService", () => {
       id: VEHICLE_ID,
       selectedVersionId: WHITE_KEY,
       status: "COMPLETED",
-      versions: [{ completedAt: DAY_ONE.toISOString(), id: WHITE_KEY, imageCount: 1 }],
+      versions: [
+        { completedAt: DAY_ONE.toISOString(), id: WHITE_KEY, imageCount: 1, label: null },
+      ],
     });
     expect(result?.images[0]?.originalUrl).toBe(
       `https://signed.test/inline/${job.imageAsset.originalObjectKey}`,
     );
+  });
+
+  it("lists a labelled batch as its own version, carrying the label", async () => {
+    const { service: portfolio } = service(
+      portfolioRecord([
+        portfolioJob({ batch: "white", createdAt: DAY_ONE }),
+        portfolioJob({ batch: "t01-s02", createdAt: DAY_TWO, label: "T01-S02" }),
+      ]),
+    );
+
+    const result = await portfolio.get("owner-1", VEHICLE_ID);
+
+    expect(result?.versions.map((version) => version.label)).toEqual([
+      "T01-S02",
+      null,
+    ]);
+    expect(result?.versions[1]?.id).toBe(WHITE_KEY);
   });
 
   it("does not sign anything when the portfolio is not owned or ready", async () => {

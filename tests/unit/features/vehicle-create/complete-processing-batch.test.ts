@@ -19,7 +19,7 @@ const OPTIONS: ProcessingOptions = {
 };
 
 describe("completeProcessingBatch", () => {
-  it("registers accepted jobs before navigating and refreshing", async () => {
+  it("submits the command as built, label included, then registers, navigates and refreshes", async () => {
     const calls: string[] = [];
     const request = vi.fn().mockResolvedValue({
       jobs: [{ assetId: ASSET_ID, jobId: JOB_ID, state: "QUEUED" }],
@@ -27,9 +27,7 @@ describe("completeProcessingBatch", () => {
     });
 
     await completeProcessingBatch(
-      VEHICLE_ID,
-      [ASSET_ID],
-      OPTIONS,
+      { assetIds: [ASSET_ID], label: "T02-S04", options: OPTIONS, vehicleId: VEHICLE_ID },
       "processing-idempotency-key",
       {
         navigate: () => calls.push("navigate"),
@@ -40,7 +38,7 @@ describe("completeProcessingBatch", () => {
     );
 
     expect(request).toHaveBeenCalledWith(
-      { assetIds: [ASSET_ID], options: OPTIONS, vehicleId: VEHICLE_ID },
+      { assetIds: [ASSET_ID], label: "T02-S04", options: OPTIONS, vehicleId: VEHICLE_ID },
       "processing-idempotency-key",
     );
     expect(calls).toEqual(["register", "navigate", "refresh"]);
@@ -53,9 +51,7 @@ describe("completeProcessingBatch", () => {
 
     await expect(
       completeProcessingBatch(
-        VEHICLE_ID,
-        [ASSET_ID],
-        OPTIONS,
+        { assetIds: [ASSET_ID], options: OPTIONS, vehicleId: VEHICLE_ID },
         "processing-idempotency-key",
         {
           navigate,

@@ -33,7 +33,12 @@ export function PortfolioVersions({ portfolio }: PortfolioVersionsProps) {
                 href={createPortfolioHref(portfolio.id, { versionId: version.id })}
                 scroll={false}
               >
-                <strong>{formatStudioTreatment(version.options)}</strong>
+                <strong>
+                  {version.label ?? formatStudioTreatment(version.options)}
+                </strong>
+                {version.label ? (
+                  <span>{formatStudioTreatment(version.options)}</span>
+                ) : null}
                 <span>
                   {version.imageCount}{" "}
                   {version.imageCount === 1

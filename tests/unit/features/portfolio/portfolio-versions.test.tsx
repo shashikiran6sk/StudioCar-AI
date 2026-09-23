@@ -21,6 +21,7 @@ describe("PortfolioVersions", () => {
               completedAt: "2026-09-21T10:30:00.000Z",
               id: DARK_VERSION_ID,
               imageCount: 3,
+              label: null,
               options: { ...PORTFOLIO_OPTIONS, background: "DARK_STUDIO" },
             },
             ...PORTFOLIO_TEST_DATA.versions,
@@ -46,5 +47,29 @@ describe("PortfolioVersions", () => {
     );
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("titles a labelled version by its label and still names its treatment", () => {
+    render(
+      <PortfolioVersions
+        portfolio={{
+          ...PORTFOLIO_TEST_DATA,
+          versions: [
+            {
+              completedAt: "2026-09-21T10:30:00.000Z",
+              id: DARK_VERSION_ID,
+              imageCount: 1,
+              label: "T02-S04",
+              options: { ...PORTFOLIO_OPTIONS, background: "DARK_STUDIO" },
+            },
+            ...PORTFOLIO_TEST_DATA.versions,
+          ],
+        }}
+      />,
+    );
+
+    const labelled = screen.getByRole("link", { name: /^T02-S04/ });
+    expect(labelled).toHaveTextContent("Dark Studio · Standard floor");
+    expect(labelled).toHaveTextContent("1 image · Sep 21, 2026");
   });
 });

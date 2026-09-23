@@ -1,7 +1,7 @@
 "use client";
 
 import type {
-  ProcessingOptions,
+  CreateProcessingBatch,
   StudioSelectionContext,
 } from "@studiocar/contracts";
 import { useRouter } from "next/navigation";
@@ -34,12 +34,10 @@ export function StudioSelectionLauncher({
   const limits = usePlanLimits();
 
   async function processBatch(
-    vehicleId: string,
-    assetIds: string[],
-    options: ProcessingOptions,
+    command: CreateProcessingBatch,
     idempotencyKey: string,
   ): Promise<void> {
-    await completeProcessingBatch(vehicleId, assetIds, options, idempotencyKey, {
+    await completeProcessingBatch(command, idempotencyKey, {
       navigate: () => router.replace(successHref),
       refresh: () => router.refresh(),
       register: (jobs) => useProcessingStatusStore.getState().register(jobs),

@@ -88,9 +88,11 @@ describe("VehicleCreateDialog", () => {
 
     await waitFor(() => expect(onProcess).toHaveBeenCalledOnce());
     expect(onProcess).toHaveBeenCalledWith(
-      "0e879f46-1193-4d77-b785-057fe026d998",
-      ["331a1e25-b9d8-4b1a-a398-8351a58f8c24"],
-      expect.objectContaining({ background: "DARK_STUDIO" }),
+      {
+        assetIds: ["331a1e25-b9d8-4b1a-a398-8351a58f8c24"],
+        options: expect.objectContaining({ background: "DARK_STUDIO" }),
+        vehicleId: "0e879f46-1193-4d77-b785-057fe026d998",
+      },
       expect.any(String),
     );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -133,9 +135,11 @@ describe("VehicleCreateDialog", () => {
 
     await waitFor(() => expect(onProcess).toHaveBeenCalledOnce());
     expect(onProcess).toHaveBeenCalledWith(
-      VEHICLE_ID,
-      ["331a1e25-b9d8-4b1a-a398-8351a58f8c24", SECOND_ASSET_ID],
-      expect.objectContaining({ background: "DARK_STUDIO", floor: "PLAIN" }),
+      {
+        assetIds: ["331a1e25-b9d8-4b1a-a398-8351a58f8c24", SECOND_ASSET_ID],
+        options: expect.objectContaining({ background: "DARK_STUDIO", floor: "PLAIN" }),
+        vehicleId: VEHICLE_ID,
+      },
       expect.any(String),
     );
     expect(createDraft).not.toHaveBeenCalled();
@@ -165,9 +169,11 @@ describe("VehicleCreateDialog", () => {
 
     await waitFor(() => expect(onProcess).toHaveBeenCalledOnce());
     expect(onProcess).toHaveBeenCalledWith(
-      VEHICLE_ID,
-      [SECOND_ASSET_ID],
-      expect.objectContaining({ background: "DARK_STUDIO", floor: "PLAIN" }),
+      {
+        assetIds: [SECOND_ASSET_ID],
+        options: expect.objectContaining({ background: "DARK_STUDIO", floor: "PLAIN" }),
+        vehicleId: VEHICLE_ID,
+      },
       expect.any(String),
     );
   });

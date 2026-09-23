@@ -59,6 +59,7 @@ export const PORTFOLIO_TEST_DATA = {
       completedAt: "2026-09-19T10:30:00.000Z",
       id: WHITE_VERSION_ID,
       imageCount: 2,
+      label: null,
       options: PORTFOLIO_OPTIONS,
     },
   ],

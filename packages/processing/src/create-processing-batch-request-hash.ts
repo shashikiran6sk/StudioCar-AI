@@ -9,8 +9,11 @@ const HEX_ENCODING = "hex";
 export function createProcessingBatchRequestHash(
   command: CreateProcessingBatch,
 ): string {
+  // A label is part of what was asked for, so reusing a key with another
+  // label is a conflict. An unlabelled request hashes exactly as before.
   const canonicalRequest = JSON.stringify({
     assetIds: command.assetIds,
+    ...(command.label === undefined ? {} : { label: command.label }),
     options: canonicalProcessingOptions(command.options),
     vehicleId: command.vehicleId,
   });

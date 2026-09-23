@@ -2184,7 +2184,9 @@ body {
   border-right: 0;
 }
 
-.review-process-step__facts > div:nth-last-child(-n + 2) {
+/* The last row: the final fact, and the one beside it when the row is full. */
+.review-process-step__facts > div:last-child,
+.review-process-step__facts > div:nth-last-child(2):nth-child(odd) {
   border-bottom: 0;
 }
 
@@ -3078,9 +3080,40 @@ body {
   gap: 10px;
 }
 
+.portfolio-treatment {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+}
+
+.portfolio-treatment__label {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.portfolio-treatment__label span {
+  color: var(--sc-neutral-500);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.portfolio-treatment__label strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--sc-neutral-900);
+  font-weight: 750;
+}
+
 .portfolio-facts {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   margin: 0;
   overflow: hidden;
   border: 1px solid var(--sc-neutral-300);

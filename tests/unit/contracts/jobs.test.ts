@@ -5,6 +5,7 @@ import {
   JobStatusQuerySchema,
   JobStatusResponseSchema,
   JobStatusSchema,
+  MAX_PROCESSING_BATCH_LABEL_LENGTH,
   ProcessingFailureReasonSchema,
 } from "../../../packages/contracts/src/jobs";
 
@@ -85,6 +86,23 @@ describe("job contracts", () => {
         vehicleId,
         assetIds: [assetId, assetId],
         options: {},
+      }).success,
+    ).toBe(false);
+  });
+
+  it("accepts an optional batch label, trimmed and bounded", () => {
+    const base = { vehicleId, assetIds: [assetId], options: {} };
+    expect(CreateProcessingBatchSchema.parse(base).label).toBeUndefined();
+    expect(
+      CreateProcessingBatchSchema.parse({ ...base, label: "  T02-S04  " }).label,
+    ).toBe("T02-S04");
+    expect(
+      CreateProcessingBatchSchema.safeParse({ ...base, label: "   " }).success,
+    ).toBe(false);
+    expect(
+      CreateProcessingBatchSchema.safeParse({
+        ...base,
+        label: "x".repeat(MAX_PROCESSING_BATCH_LABEL_LENGTH + 1),
       }).success,
     ).toBe(false);
   });
