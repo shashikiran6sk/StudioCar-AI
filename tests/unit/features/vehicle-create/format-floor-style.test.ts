@@ -4,7 +4,7 @@ import { formatFloorStyle } from "../../../../apps/web/src/features/vehicle-crea
 
 describe("formatFloorStyle", () => {
   it("names each floor the way the chooser does", () => {
-    expect(formatFloorStyle("HORIZON")).toBe("Studio floor");
-    expect(formatFloorStyle("TURNTABLE")).toBe("Turntable");
+    expect(formatFloorStyle("PLAIN")).toBe("Plain background");
+    expect(formatFloorStyle("HORIZON")).toBe("Standard floor");
   });
 });

@@ -9,7 +9,6 @@ describe("BackgroundTreatmentCard", () => {
     render(
       <BackgroundTreatmentCard
         choice={{
-          disabled: false,
           label: "Dark Studio",
           value: "DARK_STUDIO",
           visualClassName: "background-treatment-card__visual--dark",

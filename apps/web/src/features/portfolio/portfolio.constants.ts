@@ -17,9 +17,7 @@ export const PORTFOLIO_ORIGINALS_LABEL = "Originals preserved";
 export const PORTFOLIO_BACKGROUND_LABELS: Readonly<
   Record<BackgroundTreatment, string>
 > = {
-  CUSTOM: "Custom background",
   DARK_STUDIO: "Dark Studio",
-  DEALERSHIP: "Dealership",
   GREY_STUDIO: "Grey Studio",
   ORIGINAL: "Original background",
   PREMIUM_WHITE: "Premium White",

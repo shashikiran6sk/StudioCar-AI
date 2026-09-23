@@ -34,24 +34,34 @@ describe("CustomizeTreatmentStep", () => {
     );
     expect(screen.getByRole("button", { name: "Premium White" })).toBeDisabled();
   });
-  it("lets a studio background stand the vehicle on a turntable", () => {
+  it("offers exactly three studio backgrounds", () => {
     render(<CustomizeTreatmentStep onBack={vi.fn()} onContinue={vi.fn()} />);
 
-    expect(screen.getByRole("button", { name: "Studio floor" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Turntable" }));
-
-    expect(useVehicleCreateStore.getState().options.floor).toBe("TURNTABLE");
+    for (const name of ["Premium White", "Dark Studio", "Grey Studio"]) {
+      expect(screen.getByRole("button", { name })).toBeEnabled();
+    }
+    expect(screen.queryByRole("button", { name: "Dealership" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Custom" })).toBeNull();
   });
 
-  it("offers no floor when the background has none", () => {
+  it("offers a plain background or the standard floor, and no turntable", () => {
     render(<CustomizeTreatmentStep onBack={vi.fn()} onContinue={vi.fn()} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Dealership" }));
+    expect(
+      screen.getByRole("button", { name: "Standard floor" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("button", { name: /Turntable/ })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Plain background" }));
 
-    // Only the three studio backgrounds are drawn with a wall and a floor.
-    expect(screen.getByRole("button", { name: "Turntable" })).toBeDisabled();
+    expect(useVehicleCreateStore.getState().options.floor).toBe("PLAIN");
+  });
+
+  it("offers no floor when the studio background is off", () => {
+    render(<CustomizeTreatmentStep onBack={vi.fn()} onContinue={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("switch", { name: "Studio Background" }));
+
+    expect(screen.getByRole("button", { name: "Plain background" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Standard floor" })).toBeDisabled();
   });
 });

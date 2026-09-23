@@ -8,10 +8,8 @@ export function toProcessingOptionsJson(
   return {
     background: options.background,
     crop: options.crop,
-    ...(options.customBackgroundAssetId
-      ? { customBackgroundAssetId: options.customBackgroundAssetId }
-      : {}),
     enhancement: options.enhancement,
+    floor: options.floor,
     outputFormat: options.outputFormat,
     paddingPercent: options.paddingPercent,
     platePrivacy: options.platePrivacy,

@@ -22,4 +22,13 @@ describe("createProcessingBatchRequestHash", () => {
     expect(replay).toBe(first);
     expect(changed).not.toBe(first);
   });
+
+  it("changes when only the floor changes", () => {
+    const plain = createProcessingBatchRequestHash({
+      ...baseCommand,
+      options: { ...baseCommand.options, floor: "PLAIN" },
+    });
+
+    expect(plain).not.toBe(createProcessingBatchRequestHash(baseCommand));
+  });
 });

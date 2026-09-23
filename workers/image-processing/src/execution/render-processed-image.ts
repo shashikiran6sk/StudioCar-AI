@@ -23,8 +23,6 @@ const backgrounds = {
   PREMIUM_WHITE: { r: 250, g: 250, b: 248, alpha: 1 },
   DARK_STUDIO: { r: 27, g: 31, b: 36, alpha: 1 },
   GREY_STUDIO: { r: 218, g: 220, b: 222, alpha: 1 },
-  DEALERSHIP: { r: 232, g: 238, b: 241, alpha: 1 },
-  CUSTOM: { r: 255, g: 255, b: 255, alpha: 1 },
 } satisfies Record<
   RenderProcessedImageInput["options"]["background"],
   { alpha: number; b: number; g: number; r: number }
@@ -45,9 +43,13 @@ export async function renderProcessedImage(
   input: RenderProcessedImageInput,
 ): Promise<RenderedProcessedImage> {
   const background = backgrounds[input.options.background];
-  const scene = isStudioSceneBackground(input.options.background)
-    ? input.options.background
-    : null;
+  // A plain background is the studio's colour alone; only the standard floor
+  // is drawn as a scene with a wall and a floor.
+  const scene =
+    isStudioSceneBackground(input.options.background) &&
+    input.options.floor === "HORIZON"
+      ? input.options.background
+      : null;
   // A studio scene is drawn behind the vehicle afterwards, so everything
   // around it stays transparent until then.
   const fill = scene === null ? background : TRANSPARENT;
@@ -101,7 +103,6 @@ export async function renderProcessedImage(
       const backdrop = createStudioSceneSvg({
         canvasWidth: layer.info.width,
         canvasHeight: layer.info.height,
-        floor: input.options.floor,
         palette: STUDIO_SCENE_PALETTES[scene],
         shadowOpacity: STUDIO_SHADOW_OPACITY[input.options.shadow],
         subject,

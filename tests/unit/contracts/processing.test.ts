@@ -17,10 +17,12 @@ describe("processing contracts", () => {
     });
   });
 
-  it("requires an asset only for custom backgrounds", () => {
-    expect(
-      ProcessingOptionsSchema.safeParse({ background: "CUSTOM" }).success,
-    ).toBe(false);
+  it("no longer accepts the retired Dealership and Custom backgrounds", () => {
+    for (const background of ["DEALERSHIP", "CUSTOM"]) {
+      expect(ProcessingOptionsSchema.safeParse({ background }).success).toBe(
+        false,
+      );
+    }
     expect(
       ProcessingOptionsSchema.safeParse({
         background: "PREMIUM_WHITE",
@@ -28,12 +30,13 @@ describe("processing contracts", () => {
       }).success,
     ).toBe(false);
   });
-  it("accepts either floor and refuses one the worker cannot draw", () => {
-    expect(ProcessingOptionsSchema.parse({ floor: "TURNTABLE" }).floor).toBe(
-      "TURNTABLE",
+
+  it("offers a plain background or the standard floor, and nothing else", () => {
+    expect(ProcessingOptionsSchema.parse({ floor: "PLAIN" }).floor).toBe(
+      "PLAIN",
     );
-    expect(ProcessingOptionsSchema.safeParse({ floor: "MIRROR" }).success).toBe(
-      false,
-    );
+    for (const floor of ["TURNTABLE", "MIRROR"]) {
+      expect(ProcessingOptionsSchema.safeParse({ floor }).success).toBe(false);
+    }
   });
 });

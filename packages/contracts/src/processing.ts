@@ -5,18 +5,16 @@ export const BackgroundTreatmentSchema = z.enum([
   "PREMIUM_WHITE",
   "DARK_STUDIO",
   "GREY_STUDIO",
-  "DEALERSHIP",
-  "CUSTOM",
 ]);
 
 /**
- * The floor a studio background stands the vehicle on.
+ * What a studio background stands the vehicle on.
  *
- * `HORIZON` is a flat floor meeting the wall at a straight line, as on the
- * homepage. `TURNTABLE` is a round display platform seen in perspective, as
- * used by car marketplaces.
+ * `PLAIN` is the background colour alone, with no floor. `HORIZON` is the
+ * standard floor: a flat floor meeting the wall at a straight line, as on the
+ * homepage.
  */
-export const FloorStyleSchema = z.enum(["HORIZON", "TURNTABLE"]);
+export const FloorStyleSchema = z.enum(["PLAIN", "HORIZON"]);
 
 export const ShadowTreatmentSchema = z.enum([
   "NONE",
@@ -43,26 +41,8 @@ export const ProcessingOptionsSchema = z
     paddingPercent: z.number().int().min(0).max(40).default(8),
     outputFormat: OutputFormatSchema.default("JPEG"),
     quality: z.number().int().min(60).max(100).default(90),
-    customBackgroundAssetId: z.uuid().optional(),
   })
-  .strict()
-  .superRefine((value, context) => {
-    if (value.background === "CUSTOM" && !value.customBackgroundAssetId) {
-      context.addIssue({
-        code: "custom",
-        message: "A custom background asset is required.",
-        path: ["customBackgroundAssetId"],
-      });
-    }
-
-    if (value.background !== "CUSTOM" && value.customBackgroundAssetId) {
-      context.addIssue({
-        code: "custom",
-        message: "A custom background asset is only valid for CUSTOM treatment.",
-        path: ["customBackgroundAssetId"],
-      });
-    }
-  });
+  .strict();
 
 export type ProcessingOptions = z.infer<typeof ProcessingOptionsSchema>;
 export type BackgroundTreatment = z.infer<typeof BackgroundTreatmentSchema>;

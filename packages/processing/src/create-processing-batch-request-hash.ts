@@ -12,10 +12,8 @@ export function createProcessingBatchRequestHash(
     options: {
       background: command.options.background,
       crop: command.options.crop,
-      ...(command.options.customBackgroundAssetId
-        ? { customBackgroundAssetId: command.options.customBackgroundAssetId }
-        : {}),
       enhancement: command.options.enhancement,
+      floor: command.options.floor,
       outputFormat: command.options.outputFormat,
       paddingPercent: command.options.paddingPercent,
       platePrivacy: command.options.platePrivacy,

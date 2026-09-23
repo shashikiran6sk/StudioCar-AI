@@ -16,9 +16,14 @@ export interface ClaimedProcessingJob {
   vehicleId: string;
 }
 
+/**
+ * `AWAITING_PUBLICATION` is a job whose queue message arrived before the
+ * dispatcher recorded it as queued. It is about to become claimable, so its
+ * message must not be dropped.
+ */
 export type ClaimProcessingJobResult =
   | { kind: "CLAIMED"; job: ClaimedProcessingJob }
-  | { kind: "NOT_FOUND" | "NOT_READY" | "TERMINAL" };
+  | { kind: "AWAITING_PUBLICATION" | "NOT_FOUND" | "NOT_READY" | "TERMINAL" };
 
 export interface ClaimProcessingJobInput {
   claimExpiresAt: Date;

@@ -6,7 +6,12 @@ import { classifyProcessingFailure } from "./classify-processing-failure";
 import { createProcessingUsageIdempotencyKey } from "./create-processing-usage-idempotency-key";
 import { createUsageBillingPeriodKey } from "./create-usage-billing-period-key";
 import { normalizeProcessingErrorMessage } from "./normalize-processing-error-message";
+import {
+  PROCESSING_PUBLICATION_WAIT_ATTEMPTS,
+  PROCESSING_PUBLICATION_WAIT_MS,
+} from "./processing-worker.constants";
 import type {
+  ClaimProcessingJobResult,
   ProcessingJobExecutorPort,
   ProcessingWorkerOptions,
   ProcessingWorkerRepositoryPort,
@@ -22,6 +27,9 @@ export class ProcessingWorker {
     private readonly now: () => Date = () => new Date(),
     private readonly createWorkerId: () => string = randomUUID,
     private readonly random: () => number = Math.random,
+    private readonly sleep: (milliseconds: number) => Promise<void> = (
+      milliseconds,
+    ) => new Promise((resolve) => setTimeout(resolve, milliseconds)),
   ) {
     validateProcessingWorkerOptions(options);
   }
@@ -30,15 +38,11 @@ export class ProcessingWorker {
     message: WorkerMessage,
   ): Promise<ProcessWorkerMessageResult> {
     const workerId = this.createWorkerId();
-    const claimedAt = this.now();
-    const claim = await this.jobs.claimJob({
-      claimExpiresAt: new Date(
-        claimedAt.getTime() + this.options.claimTtlMilliseconds,
-      ),
-      jobId: message.jobId,
-      now: claimedAt,
-      workerId,
-    });
+    const claim = await this.claim(message.jobId, workerId);
+    if (claim.kind === "AWAITING_PUBLICATION") {
+      // Never drop the job's only message: the queue delivers it again.
+      return { kind: "RETRY_DELIVERY" };
+    }
     if (claim.kind !== "CLAIMED") {
       return { kind: "IGNORED", reason: claim.kind };
     }
@@ -156,5 +160,33 @@ export class ProcessingWorker {
         providerRequestId: execution.failure.providerRequestId,
       },
     };
+  }
+
+  /**
+   * Claims the job, waiting briefly for one whose message arrived before the
+   * dispatcher recorded it as queued.
+   */
+  private async claim(
+    jobId: string,
+    workerId: string,
+  ): Promise<ClaimProcessingJobResult> {
+    for (let attempt = 1; ; attempt += 1) {
+      const claimedAt = this.now();
+      const claim = await this.jobs.claimJob({
+        claimExpiresAt: new Date(
+          claimedAt.getTime() + this.options.claimTtlMilliseconds,
+        ),
+        jobId,
+        now: claimedAt,
+        workerId,
+      });
+      if (
+        claim.kind !== "AWAITING_PUBLICATION" ||
+        attempt >= PROCESSING_PUBLICATION_WAIT_ATTEMPTS
+      ) {
+        return claim;
+      }
+      await this.sleep(PROCESSING_PUBLICATION_WAIT_MS);
+    }
   }
 }

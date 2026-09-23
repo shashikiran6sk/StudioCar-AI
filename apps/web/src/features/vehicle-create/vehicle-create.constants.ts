@@ -82,7 +82,6 @@ export const STUDIO_BACKGROUND_DESCRIPTION =
 export const MAINTAIN_COMPOSITION_LABEL = "Maintain Composition";
 export const MAINTAIN_COMPOSITION_DESCRIPTION =
   "Preserve crop and vehicle position";
-export const CUSTOM_BACKGROUND_UNAVAILABLE_LABEL = "Custom background unavailable";
 export const REVIEW_PROCESS_TITLE = "Review & process";
 export const REVIEW_BACK_LABEL = "← Back";
 export const REVIEW_PROCESS_LABEL = "Process Photos";

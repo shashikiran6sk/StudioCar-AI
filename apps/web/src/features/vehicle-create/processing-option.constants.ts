@@ -10,8 +10,8 @@ export const FIT_VEHICLE_CROP: CropMode = "FIT_VEHICLE";
 export const DEFAULT_FLOOR_STYLE: FloorStyle = "HORIZON";
 
 /**
- * Backgrounds drawn as a studio with a wall and a floor. The others are either
- * the original photo or a scene of their own, so a floor means nothing there.
+ * The studio backgrounds, which offer a plain background or a standard floor.
+ * The original photo keeps its own surroundings, so a floor means nothing there.
  */
 export const STUDIO_SCENE_BACKGROUNDS: readonly BackgroundTreatment[] = [
   "PREMIUM_WHITE",

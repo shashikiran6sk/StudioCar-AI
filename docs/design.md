@@ -267,7 +267,7 @@ Standard track 6px high with pill radius. On images: white fill over a 25% white
 
 ### 2.12 Background choice (`.bg-choice`)
 
-Five equal columns in the modal. Base has a 1px border and 11px radius. Preview is 70px high; label is 9px/800 with 8px padding. Selected uses a 2px black inset outline. Custom uses a plus affordance and opens inline inside the modal.
+Three equal columns in the modal. Base has a 1px border and 11px radius. Preview is 70px high; label is 9px/800 with 8px padding. Selected uses a 2px black inset outline.
 
 ### 2.13 Comparison slider (`.feature-stage`)
 
@@ -398,7 +398,7 @@ Four option rows in a two-column grid:
 - Studio Background
 - Maintain Original Composition
 
-Below: five background choices — Premium White, Dark Studio, Grey Studio, Dealership, Custom. Custom expands inline within the modal; it never opens a new page or disconnected dialog.
+Below: three background choices — Premium White, Dark Studio, Grey Studio — then two floor choices for the selected background: Plain background and Standard floor.
 
 ### 3.8 Upload Vehicle — Step 4, Review & Process
 

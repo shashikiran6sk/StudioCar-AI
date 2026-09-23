@@ -10,8 +10,6 @@ export const UNSUPPORTED_SOURCE_IMAGE_MESSAGE =
   "The source image format is not supported.";
 export const PROVIDER_RESULT_INVALID_MESSAGE =
   "The background-removal provider returned an invalid image.";
-export const CUSTOM_BACKGROUND_UNAVAILABLE_MESSAGE =
-  "Custom backgrounds require an owned background asset and are not available in this worker.";
 export const STORAGE_FAILURE_MESSAGE =
   "Private image storage was unavailable during processing.";
 export const OUTPUT_CHECKSUM_METADATA_KEY = "checksum-sha256";

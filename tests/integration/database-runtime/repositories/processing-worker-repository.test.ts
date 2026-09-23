@@ -107,6 +107,40 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
     return { assetId, jobId: job.id, ownerId: owner.id, vehicleId: vehicle.id };
   }
 
+  it("reports a job whose message arrived before it was queued, then claims it once queued", async () => {
+    const record = await createQueuedJob("worker-early-message-batch");
+    // The state a fast worker sees between the queue send and the
+    // dispatcher recording the job as queued.
+    await database.processingJob.update({
+      where: { id: record.jobId },
+      data: { queuedAt: null, status: "CREATED" },
+    });
+    const claim = {
+      claimExpiresAt: CLAIM_EXPIRES_AT,
+      jobId: record.jobId,
+      now: NOW,
+      workerId: "worker-early",
+    };
+
+    await expect(workers.claimJob(claim)).resolves.toEqual({
+      kind: "AWAITING_PUBLICATION",
+    });
+    await expect(
+      database.processingJob.findUnique({
+        where: { id: record.jobId },
+        select: { attemptCount: true, status: true },
+      }),
+    ).resolves.toEqual({ attemptCount: 0, status: "CREATED" });
+
+    await database.processingJob.update({
+      where: { id: record.jobId },
+      data: { queuedAt: NOW, status: "QUEUED" },
+    });
+    await expect(workers.claimJob(claim)).resolves.toMatchObject({
+      kind: "CLAIMED",
+    });
+  });
+
   it("claims duplicate deliveries once and atomically completes usage", async () => {
     const record = await createQueuedJob("worker-completion-batch");
     const [first, duplicate] = await Promise.all([

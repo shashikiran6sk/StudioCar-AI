@@ -10,7 +10,6 @@ import type { ProcessingObjectStoragePort } from "../storage/processing-object-s
 import { buildProcessingObjectKeys } from "./build-processing-object-keys";
 import { calculateSha256 } from "./calculate-sha256";
 import {
-  CUSTOM_BACKGROUND_UNAVAILABLE_MESSAGE,
   INVALID_SOURCE_IMAGE_MESSAGE,
   OUTPUT_CHECKSUM_METADATA_KEY,
   OUTPUT_JOB_METADATA_KEY,
@@ -35,9 +34,6 @@ export class ProcessingJobExecutor implements ProcessingJobExecutorPort {
   public async execute(
     job: ClaimedProcessingJob,
   ): Promise<ProcessingExecutionResult> {
-    if (job.options.background === "CUSTOM") {
-      return this.failure("INVALID_REQUEST", CUSTOM_BACKGROUND_UNAVAILABLE_MESSAGE);
-    }
     if (job.sizeBytes > BigInt(this.options.maximumInputBytes)) {
       return this.failure("INVALID_IMAGE", SOURCE_SIZE_MISMATCH_MESSAGE);
     }

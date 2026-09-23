@@ -251,4 +251,89 @@ describe("ProcessingWorker", () => {
       reason: "TERMINAL",
     });
   });
+
+  describe("a message that arrives before its job is recorded as queued", () => {
+    const options = {
+      claimTtlMilliseconds: 30_000,
+      retryBaseMilliseconds: 1_000,
+      retryMaximumMilliseconds: 60_000,
+    };
+    const waiting: ClaimProcessingJobResult = { kind: "AWAITING_PUBLICATION" };
+
+    /** Answers each claim in turn, repeating the last answer. */
+    class SequenceRepository extends StubRepository {
+      public claims = 0;
+
+      public constructor(private readonly answers: ClaimProcessingJobResult[]) {
+        super(claimedJob);
+      }
+
+      public override claimJob(): Promise<ClaimProcessingJobResult> {
+        const answer = this.answers[Math.min(this.claims, this.answers.length - 1)];
+        this.claims += 1;
+        if (!answer) return Promise.reject(new Error("No claim answer."));
+        return Promise.resolve(answer);
+      }
+    }
+
+    const executor = new StubExecutor({
+      ok: true,
+      output: {
+        checksumSha256: "b".repeat(64),
+        height: 900,
+        mimeType: "image/png",
+        objectKey: "processed.png",
+        outputFormat: "PNG",
+        previewObjectKey: "preview.webp",
+        sizeBytes: 2_048n,
+        width: 1_600,
+      },
+      providerLatencyMilliseconds: 850,
+      providerRequestId: "provider-request-1",
+    });
+
+    it("waits for the job to be queued and then processes it", async () => {
+      const repository = new SequenceRepository([waiting, waiting, claimedJob]);
+      const pauses: number[] = [];
+      const worker = new ProcessingWorker(
+        repository,
+        executor,
+        options,
+        () => new Date("2026-09-20T00:01:00.000Z"),
+        () => "worker-1",
+        () => 0.5,
+        (milliseconds) => {
+          pauses.push(milliseconds);
+          return Promise.resolve();
+        },
+      );
+
+      await expect(worker.process(createMessage())).resolves.toMatchObject({
+        kind: "COMPLETED",
+      });
+      expect(repository.claims).toBe(3);
+      expect(pauses).toEqual([200, 200]);
+    });
+
+    // Regression: the message was acknowledged and deleted, and the job,
+    // queued a moment later, stayed "Processing" forever.
+    it("hands the message back to the queue rather than dropping it", async () => {
+      const repository = new SequenceRepository([waiting]);
+      const worker = new ProcessingWorker(
+        repository,
+        executor,
+        options,
+        () => new Date("2026-09-20T00:01:00.000Z"),
+        () => "worker-1",
+        () => 0.5,
+        () => Promise.resolve(),
+      );
+
+      await expect(worker.process(createMessage())).resolves.toEqual({
+        kind: "RETRY_DELIVERY",
+      });
+      expect(repository.claims).toBe(5);
+      expect(repository.completions).toHaveLength(0);
+    });
+  });
 });

@@ -2042,7 +2042,7 @@ body {
 
 .background-treatment-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 9px;
 }
 
@@ -2087,7 +2087,11 @@ body {
   font-weight: 400;
 }
 
-/* Miniatures of the two floors the worker draws behind a studio vehicle. */
+/* Miniatures of what the worker draws behind a studio vehicle. */
+.floor-style-card__visual--plain {
+  background: linear-gradient(to bottom, #fbfbfa 0%, #eeeeeb 100%);
+}
+
 .floor-style-card__visual--horizon {
   background: linear-gradient(
     to bottom,
@@ -2096,12 +2100,6 @@ body {
     #d6d6d2 58%,
     #c4c4c0 100%
   );
-}
-
-.floor-style-card__visual--turntable {
-  background:
-    radial-gradient(ellipse 44% 16% at 50% 76%, #c9c9c5 0 88%, #8f8f8b 90% 96%, transparent 98%),
-    linear-gradient(to bottom, #fbfbfa 0%, #eeeeeb 46%, #e2e2df 46%, #d3d3cf 100%);
 }
 
 .background-treatment-card__visual--white {
@@ -2114,14 +2112,6 @@ body {
 
 .background-treatment-card__visual--grey {
   background: linear-gradient(145deg, #f1f1ef 0%, #b8b8b7 100%);
-}
-
-.background-treatment-card__visual--dealership {
-  background: linear-gradient(135deg, #eef3f5 0 55%, #b8c3c8 55% 100%);
-}
-
-.background-treatment-card__visual--custom {
-  background: var(--sc-neutral-50);
 }
 
 .vehicle-create-note {

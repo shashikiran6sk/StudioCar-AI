@@ -582,6 +582,13 @@ everything the accepted plan still leaves open.
 - An empty cutout is detected from its alpha channel and falls back to a plain background. `trim` does not fail on a fully transparent image; it returns the whole frame, which would have drawn a floor for a car that is not there. A test found this.
 - Existing batches keep working: `floor` defaults to the studio floor, so options stored before this change parse unchanged.
 
+### SC042 — Plain background or standard floor; Dealership and Custom retired
+
+- After choosing a studio background the customise step now offers **Plain background** (the studio colour alone, with no floor) or **Standard floor** (the wall and floor from SC041, still the default). The turntable is removed.
+- Dealership and Custom are removed from the background choices, the processing contract, the worker, the portfolio labels, and the homepage copy. A migration records any stored Dealership or Custom job as Premium White so its options still parse.
+- **Jobs stuck on "Processing".** The dispatcher sends a job's queue message and then records the job as queued. A worker that received the message first found the job not yet queued, ignored it, and deleted the message; the job became queued a moment later with no message left, and nothing sends a published message again. Ten real jobs stranded this way. The claim now reports such a job as awaiting publication; the worker waits briefly for it and otherwise hands the message back to the queue for redelivery, so the job's only message is never dropped. Unit and real-PostgreSQL tests pin both paths, and the ten stranded jobs were re-queued and completed.
+- The floor choice is now stored with the job. The repository that stores a job's options listed its fields by hand and left the floor out, so the worker always read the default back; the batch request hash had the same omission. A regression test pins both.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -638,7 +645,7 @@ true when it does ship.
 - Upload commits perform bounded structural header validation in Next.js. The processing worker must perform a full decoder validation before any provider call; malformed or unsupported images must transition to `INVALID` without a provider charge.
 - Expired pending-upload objects are deleted only through the durable storage-deletion outbox after the configured grace period. Invalid objects remain retained for deterministic audit behavior until a separately reviewed retention policy exists.
 - Vehicle creation requires an `Idempotency-Key`; exact retries return the original draft, while reuse with different normalized details returns a conflict. Only `DRAFT` vehicles can be changed through the creation workflow update endpoint.
-- The complete four-step wizard is mounted from the dashboard and submits only through the real authenticated processing command. Custom studio backgrounds are visible but disabled until a private background-asset upload and ownership flow is implemented.
+- The complete four-step wizard is mounted from the dashboard and submits only through the real authenticated processing command. Dealership and Custom backgrounds were removed in SC042; a custom background would need a private background-asset upload and ownership flow first.
 - Processing reservation moves the vehicle from `DRAFT` to `PROCESSING` only in the same transaction that creates every job and its outbox message. SC012B2 may expose this command only through the dispatcher and scheduled recovery path established on top of that durable intent.
 - Publishing an outbox message and marking its job `QUEUED` cannot be one cross-system transaction. The dispatcher therefore retains the database claim until SQS acknowledges the message, updates outbox and job state atomically afterward, and safely republishes after a crash; the worker must treat duplicate `jobId` deliveries as harmless.
 - `PROCESSING_DISPATCH_TOKEN` protects the recovery endpoint and must be distinct, randomly generated, and server-only. A trusted scheduler must invoke recovery at least once per minute; the endpoint returns only aggregate dispatch counts and never queue payloads or errors.

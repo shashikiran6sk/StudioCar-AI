@@ -88,6 +88,12 @@ export class PrismaProcessingWorkerRepository
         return { kind: "TERMINAL" };
       }
 
+      // The dispatcher sends a message before recording its job as queued,
+      // so a fast worker can see the job a moment early.
+      if (job.status === ProcessingJobStatus.CREATED) {
+        return { kind: "AWAITING_PUBLICATION" };
+      }
+
       const expiredProcessingClaim =
         job.status === ProcessingJobStatus.PROCESSING &&
         job.claimExpiresAt !== null &&

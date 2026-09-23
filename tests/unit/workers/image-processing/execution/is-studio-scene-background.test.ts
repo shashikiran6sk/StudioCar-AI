@@ -9,9 +9,7 @@ describe("isStudioSceneBackground", () => {
     }
   });
 
-  it("leaves the original, dealership and custom backgrounds alone", () => {
-    for (const background of ["ORIGINAL", "DEALERSHIP", "CUSTOM"] as const) {
-      expect(isStudioSceneBackground(background)).toBe(false);
-    }
+  it("leaves the original background alone", () => {
+    expect(isStudioSceneBackground("ORIGINAL")).toBe(false);
   });
 });

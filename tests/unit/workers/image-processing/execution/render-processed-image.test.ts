@@ -53,7 +53,7 @@ describe("renderProcessedImage", () => {
   }
 
   async function render(
-    floor: "HORIZON" | "TURNTABLE",
+    floor: "PLAIN" | "HORIZON",
     shadow: "NONE" | "NATURAL" = "NATURAL",
   ) {
     const result = await renderProcessedImage({
@@ -99,12 +99,13 @@ describe("renderProcessedImage", () => {
     expect(pixel(image, 400, 350)).toBe(200);
   });
 
-  it("stands the vehicle on a turntable when that floor is chosen", async () => {
-    const horizon = await render("HORIZON");
-    const turntable = await render("TURNTABLE");
+  it("draws no floor for a plain background", async () => {
+    const plain = await render("PLAIN");
 
-    // Beside the car, at tyre level: plain floor on one, the disc on the other.
-    expect(pixel(turntable, 160, 440)).not.toBe(pixel(horizon, 160, 440));
+    // Below the tyre line the plain background keeps its single colour.
+    expect(pixel(plain, 20, 480)).toBe(pixel(plain, 20, 40));
+    expect(pixel(plain, 20, 480)).toBe(250);
+    expect(pixel(plain, 400, 350)).toBe(200);
   });
 
   it("draws a contact shadow only when a shadow is requested", async () => {
