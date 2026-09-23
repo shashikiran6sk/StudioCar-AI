@@ -1,10 +1,14 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getPlanCatalog = vi.fn();
 const getEnabledSocialLinks = vi.fn();
 vi.mock("../../../apps/web/src/server/plans/get-plan-catalog", () => ({
   getPlanCatalog,
+}));
+const getCurrentSession = vi.fn();
+vi.mock("../../../apps/web/src/server/auth/get-current-session", () => ({
+  getCurrentSession,
 }));
 vi.mock("../../../apps/web/src/server/content/get-social-links", () => ({
   getEnabledSocialLinks,
@@ -17,6 +21,10 @@ const { DEFAULT_PLAN_CATALOG } = await import(
 );
 
 describe("HomePage", () => {
+  beforeEach(() => {
+    getCurrentSession.mockResolvedValue(null);
+  });
+
   it("assembles the complete screenshot-derived product page", async () => {
     getPlanCatalog.mockResolvedValue(DEFAULT_PLAN_CATALOG);
     getEnabledSocialLinks.mockResolvedValue([]);
@@ -65,5 +73,27 @@ describe("HomePage", () => {
     expect(
       screen.getByRole("navigation", { name: "Social links" }),
     ).toBeVisible();
+  });
+  it("greets a signed-in visitor with their account, not a sign-in prompt", async () => {
+    getPlanCatalog.mockResolvedValue(DEFAULT_PLAN_CATALOG);
+    getEnabledSocialLinks.mockResolvedValue([]);
+    getCurrentSession.mockResolvedValue({
+      id: "session-1",
+      userId: "user-1",
+      expiresAt: new Date("2027-01-01T00:00:00.000Z"),
+      user: {
+        id: "user-1",
+        displayName: "Shashi Kiran",
+        primaryEmail: "shashi@example.com",
+        primaryPhone: null,
+      },
+    });
+
+    render(await HomePage());
+
+    expect(
+      screen.getByLabelText("Account menu for Shashi Kiran"),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Log in" })).not.toBeInTheDocument();
   });
 });
