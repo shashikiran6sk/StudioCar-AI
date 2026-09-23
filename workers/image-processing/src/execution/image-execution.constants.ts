@@ -20,3 +20,10 @@ export const PREVIEW_WEBP_QUALITY = 82;
 export const SQUARE_OUTPUT_EDGE_PIXELS = 1_600;
 export const FIT_OUTPUT_WIDTH_PIXELS = 1_600;
 export const FIT_OUTPUT_HEIGHT_PIXELS = 1_200;
+/**
+ * How far "fit to vehicle" may enlarge a studio cutout. Without it a small
+ * cutout keeps its own size and sits small on the fixed canvas; beyond it an
+ * enlarged cutout starts to look soft. A photo kept on its own background is
+ * never enlarged.
+ */
+export const FIT_VEHICLE_MAXIMUM_ENLARGEMENT = 1.3;

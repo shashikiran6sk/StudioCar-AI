@@ -115,4 +115,47 @@ describe("renderProcessedImage", () => {
     // Just below the tyre line, where the shadow falls.
     expect(pixel(withShadow, 400, 456)).toBeLessThan(pixel(without, 400, 456));
   });
+
+  /** How many pixels of the red "car" body one row of the output crosses. */
+  function carWidth(
+    image: { data: Buffer; info: { channels: number; height: number; width: number } },
+  ): number {
+    let widest = 0;
+    for (let y = 0; y < image.info.height; y++) {
+      let row = 0;
+      for (let x = 0; x < image.info.width; x++) {
+        const index = (y * image.info.width + x) * image.info.channels;
+        if ((image.data[index] ?? 0) > 150 && (image.data[index + 1] ?? 255) < 100) row++;
+      }
+      widest = Math.max(widest, row);
+    }
+    return widest;
+  }
+
+  it("fits a studio vehicle 30% larger, and never enlarges an original photo", async () => {
+    const fitted = async (background: "ORIGINAL" | "PREMIUM_WHITE") => {
+      const result = await renderProcessedImage({
+        bytes: await cutout(),
+        options: {
+          background,
+          floor: "PLAIN",
+          crop: "FIT_VEHICLE",
+          enhancement: false,
+          outputFormat: "PNG",
+          paddingPercent: 0,
+          platePrivacy: false,
+          quality: 90,
+          shadow: "NONE",
+        },
+        previewMaxWidth: 320,
+      });
+      return sharp(result.bytes).raw().toBuffer({ resolveWithObject: true });
+    };
+
+    const studio = await fitted("PREMIUM_WHITE");
+    const original = await fitted("ORIGINAL");
+    expect([studio.info.width, studio.info.height]).toEqual([1_600, 1_200]);
+    expect(carWidth(studio)).toBe(520);
+    expect(carWidth(original)).toBe(400);
+  });
 });

@@ -627,6 +627,26 @@ Before this slice a vehicle could be processed exactly once: the batch reservati
   - **The floor is stored while Studio Background is off.** It splits one rendering into two treatment versions.
 - **Verification.** Lint, strict typecheck, the test mapping, every unit suite (1004 web and 317 image-worker tests, the latter including 4 expected failures), 138 real-PostgreSQL integration tests, schema validation, migration status, the production build, and all ten Playwright tests against an isolated database with no queue.
 
+### SC045 — Real 96-case treatment run; studio vehicles fitted 30% larger
+
+- **Real run.** All 96 cases ran on one vehicle and one photo through the real `/api/jobs` → outbox → queue → worker → remove.bg → S3 path. T02-S04 was clicked through the dialog; the others were sent to the same route from the signed-in page. The six existing all-on outputs matched T01-S01…S06 and were kept as the baseline. All 96 jobs completed on the first attempt. remove.bg was called exactly once per studio case (42 new calls) and never with Studio Background off. The account had no paid credits, so every new cutout is remove.bg's 665×375 preview size.
+- **Verification beyond "completed".**
+  - Every stored option matched its case.
+  - Re-rendering each job's stored input with its stored options using the worker's renderer reproduces the stored output with zero pixel difference in all 96.
+  - With Studio Background off, the six background/floor variants of each switch combination are byte-identical: no studio asset leaks.
+  - Flipping Hide Number Plate changes zero pixels in all 96, and the Cars24 plate is readable in every output.
+- **Result: 20 PASS, 76 FAIL, 0 BLOCKED, 0 not applicable.** Failures, by cause:
+  - Hide Number Plate is never applied (48).
+  - Studio Background off adds a white border (24) or letterboxes the photo instead of fitting it (24).
+  - Enhancement with Composition off shifts the studio colours by up to 28 levels (8). Composition on is unaffected.
+  - Many cases fail for more than one cause.
+- **Studio vehicles fitted 30% larger.** With Studio Background on and Composition off, "fit to vehicle" never enlarged the cutout, so a preview-size car filled 35% of the 1600×1200 canvas. `fitVehicle` now enlarges a studio cutout by up to 1.3× (`FIT_VEHICLE_MAXIMUM_ENLARGEMENT`), capped so it always fits the canvas. A photo kept on its own background is never enlarged. Re-rendering the stored inputs of the real run confirms:
+  - the 72 cases this change should not touch are pixel-identical;
+  - the 24 studio fit cases now show the vehicle at 754 px instead of 580 (45% of the width instead of 35%).
+- **Still open, not changed here.**
+  - Padding is measured on the source image before any crop, so the fit canvas's margin depends on the input size (1660×1260 for a preview cutout, 1716×1316 for a full photo).
+  - `providerRequestId` is empty for every remove.bg job, so the provider request ID header is not being captured.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
