@@ -1,5 +1,12 @@
 export const PROCESSING_WORKER_MINIMUM_DURATION_MS = 100;
 export const PROCESSING_WORKER_MAXIMUM_DURATION_MS = 3_600_000;
+/**
+ * The dispatcher records a job as queued moments after sending its message,
+ * so a worker that receives it first waits briefly before asking the queue to
+ * deliver it again later.
+ */
+export const PROCESSING_PUBLICATION_WAIT_ATTEMPTS = 5;
+export const PROCESSING_PUBLICATION_WAIT_MS = 200;
 export const PROCESSING_USAGE_EVENT_PREFIX = "processing-job";
 export const PROCESSING_USAGE_EVENT_SUFFIX = "background-removal-completed";
 export const PROCESSING_ERROR_MESSAGE_MAX_LENGTH = 1_000;
