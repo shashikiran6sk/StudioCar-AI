@@ -10,6 +10,7 @@ vi.mock("next/navigation", () => ({
     throw new Error("NEXT_REDIRECT");
   }),
   usePathname: vi.fn(),
+  useRouter: () => ({ refresh: vi.fn() }),
 }));
 
 vi.mock("../../../../apps/web/src/server/auth/get-current-session", () => ({

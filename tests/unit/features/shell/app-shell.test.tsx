@@ -4,7 +4,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { AppShell } from "../../../../apps/web/src/features/shell/app-shell";
 
-vi.mock("next/navigation", () => ({ usePathname: vi.fn() }));
+vi.mock("next/navigation", () => ({
+  usePathname: vi.fn(),
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
 
 describe("AppShell", () => {
   it("provides the workspace navigation, account control, and content landmark", () => {
