@@ -589,6 +589,10 @@ everything the accepted plan still leaves open.
 - **Jobs stuck on "Processing".** The dispatcher sends a job's queue message and then records the job as queued. A worker that received the message first found the job not yet queued, ignored it, and deleted the message; the job became queued a moment later with no message left, and nothing sends a published message again. Ten real jobs stranded this way. The claim now reports such a job as awaiting publication; the worker waits briefly for it and otherwise hands the message back to the queue for redelivery, so the job's only message is never dropped. Unit and real-PostgreSQL tests pin both paths, and the ten stranded jobs were re-queued and completed.
 - The floor choice is now stored with the job. The repository that stores a job's options listed its fields by hand and left the floor out, so the worker always read the default back; the batch request hash had the same omission. A regression test pins both.
 
+### SC043 — Whole vehicles in the inventory grid and the portfolio
+
+- The inventory's box layout, the portfolio comparison, its full-screen viewer and its thumbnails cropped each image to fill its frame, cutting off parts of the vehicle. They now show the whole image, letterboxed on the existing neutral ground. The list layout and the homepage comparison are unchanged.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
