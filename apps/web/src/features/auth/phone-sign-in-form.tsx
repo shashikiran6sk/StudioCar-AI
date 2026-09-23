@@ -9,7 +9,14 @@ import {
   type PhoneOtpWidget,
 } from "@studiocar/contracts";
 import { Button, Field } from "@studiocar/ui";
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 
 import {
   PHONE_AUTH_START_PATH,
@@ -74,7 +81,12 @@ export function PhoneSignInForm({ returnTo }: PhoneSignInFormProps) {
     };
   }, []);
 
-  useEffect(() => {
+  /**
+   * A layout effect, so focus moves in the same commit that reveals the code
+   * field. A passive effect runs in a later task, leaving a moment where the
+   * field exists but a keyboard user's focus is still on the page body.
+   */
+  useLayoutEffect(() => {
     if (awaitingOtp) otpInput.current?.focus();
   }, [awaitingOtp]);
 

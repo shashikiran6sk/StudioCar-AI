@@ -119,6 +119,35 @@ describe("PhoneSignInForm", () => {
     );
   });
 
+  it("focuses the verification code in the same update that reveals it", async () => {
+    await renderWithWidget(developmentWidget);
+
+    /**
+     * A mutation observer runs the moment the code field is inserted, before
+     * any work React defers to a later task. Checking focus there proves focus
+     * moves with the field itself, not at some later point a slower machine
+     * might not have reached yet.
+     */
+    let focusedWhenRevealed: Element | null | undefined;
+    const observer = new MutationObserver(() => {
+      if (focusedWhenRevealed !== undefined) return;
+      const code = screen.queryByRole("textbox", { name: /Verification code/ });
+      if (code) focusedWhenRevealed = document.activeElement;
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    fireEvent.change(screen.getByRole("textbox", { name: /Phone number/ }), {
+      target: { value: "98765 43210" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Continue with phone" }));
+    const code = await screen.findByRole("textbox", {
+      name: /Verification code/,
+    });
+    observer.disconnect();
+
+    expect(focusedWhenRevealed).toBe(code);
+  });
+
   it("shows a safe API error and preserves the entered number", async () => {
     stubFetch({
       [WIDGET_PATH]: () => json(developmentWidget),

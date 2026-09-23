@@ -29,6 +29,23 @@ const CONTENT_EMAIL = "content-editor-e2e@studiocar.test";
 const CONTENT_TOKEN = "9".repeat(43);
 const SOCIAL_URL = "https://instagram.com/studiocar-e2e";
 const SESSION_COOKIE_NAME = "__Host-studiocar_session";
+/**
+ * `AuditLog` deliberately outlives the accounts that wrote to it, so deleting
+ * a test's users leaves its trail entries behind. Each walk removes the
+ * entries it created, or a local database accumulates them on every run and
+ * assertions about "the newest change" stop meaning anything.
+ */
+const AUDITED_ACTIONS = [
+  "ADMIN_GRANTED",
+  "ADMIN_REVOKED",
+  "ADMIN_INVITED",
+  "ADMIN_INVITATION_REVOKED",
+  "PLAN_CONFIG_UPDATED",
+  "SUBSCRIPTION_ASSIGNED",
+  "SUBSCRIPTION_REVOKED",
+  "SOCIAL_LINK_SAVED",
+  "SOCIAL_LINK_REMOVED",
+];
 const SESSION_COOKIE_SCOPE_URL = "https://localhost:3100";
 
 adminTest(
@@ -37,6 +54,7 @@ adminTest(
     if (!databaseUrl)
       throw new Error("DATABASE_URL is required for this test.");
     const database = new Pool({ connectionString: databaseUrl, max: 1 });
+    const startedAt = new Date();
     const plainId = randomUUID();
     const adminId = randomUUID();
 
@@ -136,6 +154,10 @@ adminTest(
         'DELETE FROM "User" WHERE "primaryEmail" = ANY($1)',
         [[PLAIN_EMAIL, ADMIN_EMAIL]],
       );
+      await database.query(
+        'DELETE FROM "AuditLog" WHERE "createdAt" >= $1 AND "action" = ANY($2)',
+        [startedAt, AUDITED_ACTIONS],
+      );
       await database.end();
     }
   },
@@ -147,6 +169,7 @@ adminTest(
     if (!databaseUrl)
       throw new Error("DATABASE_URL is required for this test.");
     const database = new Pool({ connectionString: databaseUrl, max: 1 });
+    const startedAt = new Date();
     const adminId = randomUUID();
 
     // The plan is configuration the deployment shares, so it is put back.
@@ -226,6 +249,10 @@ adminTest(
       await database.query('DELETE FROM "User" WHERE "primaryEmail" = $1', [
         EDITOR_EMAIL,
       ]);
+      await database.query(
+        'DELETE FROM "AuditLog" WHERE "createdAt" >= $1 AND "action" = ANY($2)',
+        [startedAt, AUDITED_ACTIONS],
+      );
       await database.end();
     }
   },
@@ -237,6 +264,7 @@ adminTest(
     if (!databaseUrl)
       throw new Error("DATABASE_URL is required for this test.");
     const database = new Pool({ connectionString: databaseUrl, max: 1 });
+    const startedAt = new Date();
     const adminId = randomUUID();
     const customerId = randomUUID();
 
@@ -317,11 +345,19 @@ adminTest(
         path: testInfo.outputPath("admin-subscriptions.png"),
       });
 
-      // The change the administrator just made appears on the overview.
+      // The change the administrator just made is the newest on the overview.
+      // Scoped to the first entry: the trail accumulates across runs, so
+      // "appears somewhere" would pass even if nothing had been recorded now.
       await page.goto("/admin");
-      await expect(
-        page.getByText("Assigned a plan (STUDIO_PLUS)."),
-      ).toBeVisible();
+      const activity = page.locator(".admin-card", {
+        has: page.getByRole("heading", {
+          name: "Recent administrative changes",
+          level: 2,
+        }),
+      });
+      await expect(activity.getByRole("listitem").first()).toContainText(
+        "Assigned a plan (STUDIO_PLUS).",
+      );
       await expect(
         page.getByRole("heading", { name: "Accounts by plan", level: 2 }),
       ).toBeVisible();
@@ -348,6 +384,10 @@ adminTest(
         'DELETE FROM "User" WHERE "primaryEmail" = ANY($1)',
         [[EDITOR_EMAIL, CUSTOMER_EMAIL]],
       );
+      await database.query(
+        'DELETE FROM "AuditLog" WHERE "createdAt" >= $1 AND "action" = ANY($2)',
+        [startedAt, AUDITED_ACTIONS],
+      );
       await database.end();
     }
   },
@@ -359,6 +399,7 @@ adminTest(
     if (!databaseUrl)
       throw new Error("DATABASE_URL is required for this test.");
     const database = new Pool({ connectionString: databaseUrl, max: 1 });
+    const startedAt = new Date();
     const adminId = randomUUID();
 
     // Footer links are shared configuration, so whatever was there is restored.
@@ -453,6 +494,10 @@ adminTest(
       await database.query('DELETE FROM "User" WHERE "primaryEmail" = $1', [
         CONTENT_EMAIL,
       ]);
+      await database.query(
+        'DELETE FROM "AuditLog" WHERE "createdAt" >= $1 AND "action" = ANY($2)',
+        [startedAt, AUDITED_ACTIONS],
+      );
       await database.end();
     }
   },
