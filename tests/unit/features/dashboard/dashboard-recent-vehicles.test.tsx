@@ -27,6 +27,7 @@ describe("DashboardRecentVehicles", () => {
             completedImageCount: 1,
             createdAt: "2026-09-18T10:00:00.000Z",
             failedImageCount: 0,
+            hasCompletedOutput: true,
             id: "4bb7fa89-c907-4458-9786-8aafc2235728",
             imageCount: 1,
             model: "3 Series",

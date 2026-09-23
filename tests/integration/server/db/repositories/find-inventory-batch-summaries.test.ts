@@ -140,6 +140,7 @@ databaseDescribe("findInventoryBatchSummaries", () => {
       {
         completedImageCount: 1,
         failedImageCount: 0,
+        hasCompletedOutput: true,
         imageCount: 2,
         previewObjectKey: `users/${owner.id}/latest-preview.webp`,
         vehicleId: vehicle.id,
@@ -148,5 +149,70 @@ databaseDescribe("findInventoryBatchSummaries", () => {
     await expect(
       findInventoryBatchSummaries(database, owner.id, []),
     ).resolves.toEqual(new Map());
+  });
+
+  it("counts an unchanged re-process as its own batch and keeps the earlier preview", async () => {
+    const owner = await database.user.create({ data: { primaryEmail: OWNER_EMAIL } });
+    const vehicle = await database.vehicle.create({
+      data: { name: "Retried vehicle", status: "PROCESSING", userId: owner.id },
+    });
+    const assetId = randomUUID();
+    await database.imageAsset.create({
+      data: {
+        id: assetId,
+        mimeType: "image/jpeg",
+        originalFilename: "front.jpg",
+        originalObjectKey: `users/${owner.id}/vehicles/${vehicle.id}/assets/${assetId}/original/source.jpg`,
+        sizeBytes: 1_024,
+        status: "UPLOADED",
+        uploadExpiresAt: new Date("2026-09-19T10:00:00.000Z"),
+        userId: owner.id,
+        vehicleId: vehicle.id,
+      },
+    });
+    const job = (batch: string, createdAt: string, status: "COMPLETED" | "FAILED" | "QUEUED") =>
+      database.processingJob.create({
+        data: {
+          batchIdempotencyKey: batch,
+          // An unchanged re-process repeats the request hash exactly.
+          batchRequestHash: OLD_BATCH_HASH,
+          createdAt: new Date(createdAt),
+          idempotencyKey: `${batch}-job`,
+          imageAssetId: assetId,
+          options: {},
+          provider: "REMOVEBG",
+          status,
+          userId: owner.id,
+          vehicleId: vehicle.id,
+        },
+      });
+    const completed = await job("first-summary-batch", "2026-09-19T10:00:00.000Z", "COMPLETED");
+    await job("failed-summary-batch", "2026-09-20T10:00:00.000Z", "FAILED");
+    await job("retry-summary-batch", "2026-09-21T10:00:00.000Z", "QUEUED");
+    await database.processedAsset.create({
+      data: {
+        height: 720,
+        jobId: completed.id,
+        mimeType: "image/webp",
+        objectKey: `users/${owner.id}/first.webp`,
+        outputFormat: "WEBP",
+        previewObjectKey: `users/${owner.id}/first-preview.webp`,
+        sizeBytes: 2_048,
+        userId: owner.id,
+        vehicleId: vehicle.id,
+        width: 1_280,
+      },
+    });
+
+    const summaries = await findInventoryBatchSummaries(database, owner.id, [vehicle.id]);
+
+    expect(summaries.get(vehicle.id)).toEqual({
+      completedImageCount: 0,
+      failedImageCount: 0,
+      hasCompletedOutput: true,
+      imageCount: 1,
+      previewObjectKey: `users/${owner.id}/first-preview.webp`,
+      vehicleId: vehicle.id,
+    });
   });
 });

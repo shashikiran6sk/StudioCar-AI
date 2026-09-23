@@ -5,6 +5,8 @@ import {
   JobStatusQuerySchema,
   JobStatusResponseSchema,
   JobStatusSchema,
+  MAX_PROCESSING_BATCH_LABEL_LENGTH,
+  ProcessingFailureReasonSchema,
 } from "../../../packages/contracts/src/jobs";
 
 const jobId = "4f9d4891-157f-49ed-aa5a-c026abc0a768";
@@ -86,5 +88,37 @@ describe("job contracts", () => {
         options: {},
       }).success,
     ).toBe(false);
+  });
+
+  it("accepts an optional batch label, trimmed and bounded", () => {
+    const base = { vehicleId, assetIds: [assetId], options: {} };
+    expect(CreateProcessingBatchSchema.parse(base).label).toBeUndefined();
+    expect(
+      CreateProcessingBatchSchema.parse({ ...base, label: "  T02-S04  " }).label,
+    ).toBe("T02-S04");
+    expect(
+      CreateProcessingBatchSchema.safeParse({ ...base, label: "   " }).success,
+    ).toBe(false);
+    expect(
+      CreateProcessingBatchSchema.safeParse({
+        ...base,
+        label: "x".repeat(MAX_PROCESSING_BATCH_LABEL_LENGTH + 1),
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe("ProcessingFailureReasonSchema", () => {
+  it("accepts only reasons written for the user, never provider codes", () => {
+    expect(ProcessingFailureReasonSchema.options).toEqual([
+      "UNUSABLE_IMAGE",
+      "BACKGROUND_REMOVAL_FAILED",
+      "SERVICE_UNAVAILABLE",
+      "PROCESSING_FAILED",
+      "CANCELLED",
+    ]);
+    expect(ProcessingFailureReasonSchema.safeParse("PROVIDER_TIMEOUT").success).toBe(
+      false,
+    );
   });
 });

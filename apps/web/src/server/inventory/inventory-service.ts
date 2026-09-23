@@ -51,6 +51,7 @@ export class InventoryService {
       completedImageCount: record.completedImageCount,
       createdAt: record.createdAt.toISOString(),
       failedImageCount: record.failedImageCount,
+      hasCompletedOutput: record.hasCompletedOutput,
       id: record.id,
       imageCount: record.imageCount,
       model: record.model,

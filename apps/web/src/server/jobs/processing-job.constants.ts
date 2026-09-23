@@ -25,13 +25,13 @@ export const PROCESSING_UNAUTHENTICATED_MESSAGE =
   "Sign in to process vehicle photos.";
 export const PROCESSING_FORBIDDEN_MESSAGE = "The request is not allowed.";
 export const PROCESSING_NOT_FOUND_MESSAGE =
-  "The vehicle draft could not be found.";
+  "The vehicle could not be found.";
 export const PROCESSING_ASSETS_NOT_READY_MESSAGE =
   "Every selected photo must finish uploading before processing starts.";
 export const PROCESSING_IDEMPOTENCY_CONFLICT_MESSAGE =
   "That request key was already used for a different processing batch.";
-export const PROCESSING_VEHICLE_NOT_DRAFT_MESSAGE =
-  "This vehicle is no longer available for initial processing.";
+export const PROCESSING_VEHICLE_UNAVAILABLE_MESSAGE =
+  "This vehicle is still processing another batch. Wait for it to finish, then try again.";
 export const PROCESSING_UNAVAILABLE_MESSAGE =
   "Processing could not be started. Your originals are preserved.";
 export const PROCESSING_RATE_LIMITED_MESSAGE =

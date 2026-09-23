@@ -1,14 +1,12 @@
 import type { Prisma, PrismaClient } from "@studiocar/database-runtime";
-import {
-  ProcessingJobStatus,
-  VehicleStatus,
-} from "@studiocar/database-runtime";
 
-const PORTFOLIO_VEHICLE_STATUSES = [
-  VehicleStatus.READY,
-  VehicleStatus.PARTIALLY_FAILED,
-  VehicleStatus.ARCHIVED,
-];
+import { OPERATIONAL_VEHICLE_STATUSES } from "../../vehicles/vehicle-status-groups.constants";
+
+/**
+ * Enough history for every studio version and the newest batch. A vehicle
+ * rarely holds more than a handful of 20-image batches.
+ */
+const PORTFOLIO_JOB_LIMIT = 200;
 
 const portfolioVehicleSelect = {
   id: true,
@@ -20,17 +18,28 @@ const portfolioVehicleSelect = {
   stockId: true,
   status: true,
   processingJobs: {
-    orderBy: [{ displayOrder: "asc" }, { id: "asc" }],
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: PORTFOLIO_JOB_LIMIT,
     select: {
       id: true,
-      displayOrder: true,
+      batchIdempotencyKey: true,
+      batchLabel: true,
       completedAt: true,
+      createdAt: true,
+      displayOrder: true,
+      errorCode: true,
       options: true,
+      status: true,
       imageAsset: {
         select: {
+          id: true,
+          height: true,
           mimeType: true,
           originalFilename: true,
           originalObjectKey: true,
+          sizeBytes: true,
+          status: true,
+          width: true,
         },
       },
       processedAsset: {
@@ -51,44 +60,27 @@ export type PortfolioVehicleRecord = Prisma.VehicleGetPayload<{
   select: typeof portfolioVehicleSelect;
 }>;
 
+export type PortfolioJobRecord = PortfolioVehicleRecord["processingJobs"][number];
+
 export class PrismaPortfolioRepository {
   public constructor(private readonly database: PrismaClient) {}
 
-  public async findOwned(
+  /**
+   * An owned vehicle that has left the creation workflow, with its newest
+   * processing jobs first. Every batch is kept, so earlier studio versions and
+   * failed attempts stay visible after another batch is started.
+   */
+  public findOwned(
     userId: string,
     vehicleId: string,
   ): Promise<PortfolioVehicleRecord | null> {
-    const latestJob = await this.database.processingJob.findFirst({
-      where: {
-        userId,
-        vehicleId,
-        status: ProcessingJobStatus.COMPLETED,
-        processedAsset: { isNot: null },
-      },
-      orderBy: [{ completedAt: "desc" }, { id: "desc" }],
-      select: { batchRequestHash: true, id: true },
-    });
-    if (!latestJob) return null;
-
     return this.database.vehicle.findFirst({
       where: {
         id: vehicleId,
         userId,
-        status: { in: PORTFOLIO_VEHICLE_STATUSES },
+        status: { in: OPERATIONAL_VEHICLE_STATUSES },
       },
-      select: {
-        ...portfolioVehicleSelect,
-        processingJobs: {
-          ...portfolioVehicleSelect.processingJobs,
-          where: {
-            status: ProcessingJobStatus.COMPLETED,
-            processedAsset: { isNot: null },
-            ...(latestJob.batchRequestHash
-              ? { batchRequestHash: latestJob.batchRequestHash }
-              : { id: latestJob.id }),
-          },
-        },
-      },
+      select: portfolioVehicleSelect,
     });
   }
 }

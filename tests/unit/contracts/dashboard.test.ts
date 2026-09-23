@@ -6,6 +6,10 @@ describe("DashboardSummarySchema", () => {
   it("accepts bounded server-derived dashboard data", () => {
     const result = DashboardSummarySchema.safeParse({
       activeImageCount: 4,
+      attention: {
+        vehicleCount: 1,
+        vehicleId: "4bb7fa89-c907-4458-9786-8aafc2235728",
+      },
       imagesProcessed: 20,
       imagesProcessedThisPeriod: 6,
       imagesRemaining: 3,
@@ -25,6 +29,7 @@ describe("DashboardSummarySchema", () => {
   it("rejects fabricated out-of-range metrics", () => {
     const result = DashboardSummarySchema.safeParse({
       activeImageCount: 0,
+      attention: { vehicleCount: -1, vehicleId: null },
       imagesProcessed: 0,
       imagesProcessedThisPeriod: 0,
       imagesRemaining: -1,

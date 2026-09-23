@@ -1,6 +1,7 @@
 import { ProcessingOptionsSchema } from "@studiocar/contracts";
 import {
   PROCESSING_FAILURE_CODES,
+  USER_ATTENTION_JOB_STATES,
   type ClaimProcessingJobInput,
   type ClaimProcessingJobResult,
   type CompleteProcessingJobInput,
@@ -61,9 +62,8 @@ const activeJobStatuses = [
   ProcessingJobStatus.RETRYING,
 ];
 
-const failedJobStatuses = [
-  ProcessingJobStatus.FAILED,
-  ProcessingJobStatus.CANCELLED,
+const attentionJobStatuses: ProcessingJobStatus[] = [
+  ...USER_ATTENTION_JOB_STATES,
 ];
 
 export class PrismaProcessingWorkerRepository
@@ -430,9 +430,29 @@ export class PrismaProcessingWorkerRepository
       where: { vehicleId, status: { in: activeJobStatuses } },
     });
     if (activeCount > 0) return;
-    const failedCount = await transaction.processingJob.count({
-      where: { vehicleId, status: { in: failedJobStatuses } },
+    /**
+     * A vehicle keeps every batch it was ever processed with, and only one
+     * batch runs at a time. Once nothing is active, the newest batch is the
+     * one that just finished, and only its failures decide whether the vehicle
+     * needs attention: a failure an earlier batch already superseded must not
+     * mark a successful re-process as failed.
+     */
+    const latestJob = await transaction.processingJob.findFirst({
+      where: { vehicleId },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      select: { batchIdempotencyKey: true, id: true },
     });
+    const failedCount = latestJob
+      ? await transaction.processingJob.count({
+          where: {
+            vehicleId,
+            status: { in: attentionJobStatuses },
+            ...(latestJob.batchIdempotencyKey
+              ? { batchIdempotencyKey: latestJob.batchIdempotencyKey }
+              : { id: latestJob.id }),
+          },
+        })
+      : 0;
     const transition = await transaction.vehicle.updateMany({
       where: { id: vehicleId, status: VehicleStatus.PROCESSING },
       data: {

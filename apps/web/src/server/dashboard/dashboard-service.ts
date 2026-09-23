@@ -27,14 +27,16 @@ export class DashboardService {
   ): Promise<DashboardSummary> {
     const billingPeriodKey = createUsageBillingPeriodKey(now);
     const plan = await this.planUsage.resolve(userId, now);
-    const [metrics, recent] = await Promise.all([
+    const [metrics, attention, recent] = await Promise.all([
       this.repository.getOwnedMetrics(
         userId,
         billingPeriodKey,
         dashboardPeriodStart(now),
       ),
+      this.repository.getOwnedAttention(userId),
       this.inventory.list(userId, {
         filter: "ALL",
+        mode: "BROWSE",
         limit: DASHBOARD_RECENT_VEHICLE_LIMIT,
         sort: "CREATED_DESC",
         view: "GRID",
@@ -43,6 +45,7 @@ export class DashboardService {
 
     return DashboardSummarySchema.parse({
       activeImageCount: metrics.activeImageCount,
+      attention,
       imagesProcessed: metrics.imagesProcessed,
       imagesProcessedThisPeriod: metrics.imagesProcessedThisPeriod,
       imagesRemaining: Math.max(0, plan.imageCapacity - plan.imagesUsed),

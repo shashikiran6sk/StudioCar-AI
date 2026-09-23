@@ -31,4 +31,20 @@ describe("createProcessingBatchRequestHash", () => {
 
     expect(plain).not.toBe(createProcessingBatchRequestHash(baseCommand));
   });
+
+  it("keeps an unlabelled request's hash and treats a label as part of the request", () => {
+    // Pinned: the digest every unlabelled batch stored before labels existed.
+    const unlabelled = createProcessingBatchRequestHash(baseCommand);
+    expect(unlabelled).toBe(
+      "76ba328e1a56a1ee3bcb73ada2ba47b9e0896412a2288bc6068bda32c43e30f9",
+    );
+    const labelled = createProcessingBatchRequestHash({
+      ...baseCommand,
+      label: "T02-S04",
+    });
+    expect(labelled).not.toBe(unlabelled);
+    expect(
+      createProcessingBatchRequestHash({ ...baseCommand, label: "T02-S05" }),
+    ).not.toBe(labelled);
+  });
 });

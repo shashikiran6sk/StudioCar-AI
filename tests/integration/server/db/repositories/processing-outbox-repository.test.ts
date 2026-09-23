@@ -71,6 +71,7 @@ databaseDescribe("PrismaProcessingOutboxRepository", () => {
       userId: owner.id,
       vehicleId: vehicle.id,
       batchIdempotencyKey,
+      batchLabel: null,
       batchRequestHash: createProcessingBatchRequestHash(request),
       provider: ProcessingProvider.REMOVEBG,
       usageBillingPeriodKey: "2026-09",

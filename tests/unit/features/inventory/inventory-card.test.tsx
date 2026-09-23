@@ -8,6 +8,7 @@ const BASE_ITEM = {
   completedImageCount: 13,
   createdAt: "2026-09-18T10:00:00.000Z",
   failedImageCount: 0,
+  hasCompletedOutput: false,
   id: "4bb7fa89-c907-4458-9786-8aafc2235728",
   imageCount: 20,
   model: "Q5",
@@ -27,15 +28,30 @@ describe("InventoryCard", () => {
     expect(screen.getByText("65%")).toBeVisible();
     expect(screen.getByRole("progressbar", { name: "13 of 20 images complete" }))
       .toHaveAttribute("aria-valuenow", "65");
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 
-  it("presents partial failures with redundant visible counts", () => {
+  it("keeps earlier studio versions reachable while a new one processes", () => {
+    render(
+      <InventoryCard
+        item={{ ...BASE_ITEM, completedImageCount: 0, hasCompletedOutput: true }}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: /Open portfolio/ })).toHaveAttribute(
+      "href",
+      `/inventory/${BASE_ITEM.id}`,
+    );
+  });
+
+  it("presents partial failures with counts and a way to review them", () => {
     render(
       <InventoryCard
         item={{
           ...BASE_ITEM,
           completedImageCount: 18,
           failedImageCount: 2,
+          hasCompletedOutput: true,
           status: "FAILED",
         }}
       />,
@@ -44,9 +60,46 @@ describe("InventoryCard", () => {
     expect(screen.getByText("Needs attention")).toBeVisible();
     expect(screen.getByText(/18 of 20 images complete/)).toBeVisible();
     expect(screen.getByText(/2 images need attention/)).toBeVisible();
-    expect(screen.getByRole("link", { name: /Open portfolio/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Review issues/ })).toHaveAttribute(
       "href",
-      `/inventory/${BASE_ITEM.id}`,
+      `/inventory/${BASE_ITEM.id}#attention`,
     );
+  });
+
+  it("offers a failed vehicle for review even when nothing completed", () => {
+    render(
+      <InventoryCard
+        item={{
+          ...BASE_ITEM,
+          completedImageCount: 0,
+          failedImageCount: 20,
+          status: "FAILED",
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: /Review issues/ })).toBeVisible();
+  });
+
+  it("opens the Selection Dialog while choosing a vehicle for a new version", () => {
+    render(
+      <InventoryCard
+        item={{
+          ...BASE_ITEM,
+          completedImageCount: 20,
+          hasCompletedOutput: true,
+          status: "COMPLETED",
+        }}
+        selectHref="/inventory?mode=CREATE_STUDIO&vehicle=4bb7fa89-c907-4458-9786-8aafc2235728"
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: /Create images/ })).toHaveAttribute(
+      "href",
+      "/inventory?mode=CREATE_STUDIO&vehicle=4bb7fa89-c907-4458-9786-8aafc2235728",
+    );
+    expect(
+      screen.queryByRole("link", { name: /Open portfolio/ }),
+    ).not.toBeInTheDocument();
   });
 });

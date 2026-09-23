@@ -39,7 +39,7 @@ export type CreateProcessingJobsResult =
       reason:
         | "ASSETS_NOT_READY"
         | "IDEMPOTENCY_CONFLICT"
-        | "VEHICLE_NOT_DRAFT"
+        | "VEHICLE_UNAVAILABLE"
         | "VEHICLE_NOT_FOUND";
     }
   | { ok: false; reason: "BATCH_LIMIT_EXCEEDED"; maxImagesPerBatch: number }

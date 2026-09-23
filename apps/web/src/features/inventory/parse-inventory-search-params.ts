@@ -23,6 +23,10 @@ export function parseInventorySearchParams(
         ? searchParams["filter"]
         : undefined,
     limit: INVENTORY_PAGE_LIMIT,
+    mode:
+      typeof searchParams["mode"] === "string"
+        ? searchParams["mode"]
+        : undefined,
     query:
       typeof searchParams["query"] === "string"
         ? searchParams["query"]

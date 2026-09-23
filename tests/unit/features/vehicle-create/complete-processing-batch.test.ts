@@ -19,7 +19,7 @@ const OPTIONS: ProcessingOptions = {
 };
 
 describe("completeProcessingBatch", () => {
-  it("registers accepted jobs before navigating to refreshed inventory", async () => {
+  it("submits the command as built, label included, then registers, navigates and refreshes", async () => {
     const calls: string[] = [];
     const request = vi.fn().mockResolvedValue({
       jobs: [{ assetId: ASSET_ID, jobId: JOB_ID, state: "QUEUED" }],
@@ -27,12 +27,10 @@ describe("completeProcessingBatch", () => {
     });
 
     await completeProcessingBatch(
-      VEHICLE_ID,
-      [ASSET_ID],
-      OPTIONS,
+      { assetIds: [ASSET_ID], label: "T02-S04", options: OPTIONS, vehicleId: VEHICLE_ID },
       "processing-idempotency-key",
       {
-        navigateToInventory: () => calls.push("navigate"),
+        navigate: () => calls.push("navigate"),
         refresh: () => calls.push("refresh"),
         register: () => calls.push("register"),
         request,
@@ -40,25 +38,23 @@ describe("completeProcessingBatch", () => {
     );
 
     expect(request).toHaveBeenCalledWith(
-      { assetIds: [ASSET_ID], options: OPTIONS, vehicleId: VEHICLE_ID },
+      { assetIds: [ASSET_ID], label: "T02-S04", options: OPTIONS, vehicleId: VEHICLE_ID },
       "processing-idempotency-key",
     );
     expect(calls).toEqual(["register", "navigate", "refresh"]);
   });
 
   it("keeps the wizard in place when the processing command fails", async () => {
-    const navigateToInventory = vi.fn();
+    const navigate = vi.fn();
     const refresh = vi.fn();
     const register = vi.fn();
 
     await expect(
       completeProcessingBatch(
-        VEHICLE_ID,
-        [ASSET_ID],
-        OPTIONS,
+        { assetIds: [ASSET_ID], options: OPTIONS, vehicleId: VEHICLE_ID },
         "processing-idempotency-key",
         {
-          navigateToInventory,
+          navigate,
           refresh,
           register,
           request: vi.fn().mockRejectedValue(new Error("queue unavailable")),
@@ -66,7 +62,7 @@ describe("completeProcessingBatch", () => {
       ),
     ).rejects.toThrow("queue unavailable");
     expect(register).not.toHaveBeenCalled();
-    expect(navigateToInventory).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
     expect(refresh).not.toHaveBeenCalled();
   });
 });

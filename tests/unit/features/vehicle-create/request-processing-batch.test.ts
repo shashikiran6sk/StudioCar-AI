@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { ProcessingBatchRequestError } from "../../../../apps/web/src/features/vehicle-create/processing-batch-request-error";
 import { requestProcessingBatch } from "../../../../apps/web/src/features/vehicle-create/request-processing-batch";
 
 const command = {
@@ -66,5 +67,8 @@ describe("requestProcessingBatch", () => {
     await expect(
       requestProcessingBatch(command, "processing-request-0001", fetcher),
     ).rejects.toThrow("Every photo must finish uploading.");
+    await expect(
+      requestProcessingBatch(command, "processing-request-0001", fetcher),
+    ).rejects.toBeInstanceOf(ProcessingBatchRequestError);
   });
 });

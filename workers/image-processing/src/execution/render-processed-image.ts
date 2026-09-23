@@ -1,6 +1,7 @@
 import sharp from "sharp";
 
 import { createStudioSceneSvg } from "./create-studio-scene-svg";
+import { fitVehicle } from "./fit-vehicle";
 import { isStudioSceneBackground } from "./is-studio-scene-background";
 import { measureSubjectBox } from "./measure-subject-box";
 import {
@@ -8,8 +9,7 @@ import {
   STUDIO_SHADOW_OPACITY,
 } from "./studio-scene.constants";
 import {
-  FIT_OUTPUT_HEIGHT_PIXELS,
-  FIT_OUTPUT_WIDTH_PIXELS,
+  FIT_VEHICLE_MAXIMUM_ENLARGEMENT,
   PREVIEW_WEBP_QUALITY,
   SQUARE_OUTPUT_EDGE_PIXELS,
 } from "./image-execution.constants";
@@ -54,6 +54,8 @@ export async function renderProcessedImage(
   // around it stays transparent until then.
   const fill = scene === null ? background : TRANSPARENT;
   let image = sharp(input.bytes, { failOn: "warning", pages: 1 });
+  // Padding has always been measured on the source image, before any crop.
+  const source = await image.clone().metadata();
 
   if (input.options.crop === "SQUARE") {
     image = image.resize({
@@ -64,19 +66,18 @@ export async function renderProcessedImage(
       withoutEnlargement: true,
     });
   } else if (input.options.crop === "FIT_VEHICLE") {
-    image = image.trim({ background: TRANSPARENT }).resize({
-      background: fill,
-      fit: "contain",
-      height: FIT_OUTPUT_HEIGHT_PIXELS,
-      width: FIT_OUTPUT_WIDTH_PIXELS,
-      withoutEnlargement: true,
-    });
+    image = await fitVehicle(
+      image,
+      fill,
+      isStudioSceneBackground(input.options.background)
+        ? FIT_VEHICLE_MAXIMUM_ENLARGEMENT
+        : 1,
+    );
   }
 
   if (input.options.paddingPercent > 0) {
-    const metadata = await image.clone().metadata();
-    const width = metadata.width;
-    const height = metadata.height;
+    const width = source.width;
+    const height = source.height;
     const padding = Math.max(
       1,
       Math.round(

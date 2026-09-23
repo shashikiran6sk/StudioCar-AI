@@ -75,8 +75,11 @@ workspaceTest(
         page.getByRole("heading", { name: "View inventory" }),
       ).toBeVisible();
       await expect(
-        page.getByRole("heading", { name: "Recent results" }),
+        page.getByRole("heading", { name: "Create studio images" }),
       ).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Recent results" }),
+      ).toHaveCount(0);
       const actionImages = page.locator(".dashboard-action-card__media img");
       await expect(actionImages).toHaveCount(3);
       const sources = await actionImages.evaluateAll((images) =>

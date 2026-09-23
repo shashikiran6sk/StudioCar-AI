@@ -10,19 +10,20 @@ describe("InventoryQuerySchema", () => {
     expect(InventoryQuerySchema.parse({})).toEqual({
       filter: "ALL",
       limit: 24,
+      mode: "BROWSE",
       sort: "CREATED_DESC",
       view: "GRID",
     });
     expect(
       InventoryQuerySchema.parse({
-        filter: "FAILED",
+        filter: "NEEDS_ATTENTION",
         limit: "12",
         query: "  Audi  ",
         sort: "NAME_ASC",
         view: "LIST",
       }),
     ).toMatchObject({
-      filter: "FAILED",
+      filter: "NEEDS_ATTENTION",
       limit: 12,
       query: "Audi",
       sort: "NAME_ASC",
@@ -34,7 +35,17 @@ describe("InventoryQuerySchema", () => {
     expect(
       InventoryQuerySchema.safeParse({ filter: "FAVOURITE" }).success,
     ).toBe(false);
+    expect(InventoryQuerySchema.safeParse({ filter: "FAILED" }).success).toBe(false);
+    expect(InventoryQuerySchema.safeParse({ mode: "PICK" }).success).toBe(false);
     expect(InventoryQuerySchema.safeParse({ limit: 101 }).success).toBe(false);
+  });
+});
+
+describe("InventoryQuerySchema mode", () => {
+  it("accepts the create-studio selection mode", () => {
+    expect(InventoryQuerySchema.parse({ mode: "CREATE_STUDIO" }).mode).toBe(
+      "CREATE_STUDIO",
+    );
   });
 });
 
@@ -45,7 +56,7 @@ describe("InventoryPageSchema", () => {
         all: 1,
         archived: 0,
         completed: 1,
-        failed: 0,
+        needsAttention: 0,
         processing: 0,
       },
       items: [
@@ -54,6 +65,7 @@ describe("InventoryPageSchema", () => {
           completedImageCount: 1,
           createdAt: "2026-09-19T10:00:00.000Z",
           failedImageCount: 0,
+          hasCompletedOutput: true,
           id: "4bb7fa89-c907-4458-9786-8aafc2235728",
           imageCount: 1,
           model: "3 Series",

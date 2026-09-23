@@ -228,4 +228,33 @@ describe("ProcessingJobService plan limits", () => {
       }),
     );
   });
+
+  it("stores a batch's label on its jobs and counts it as part of the request", async () => {
+    const repository = {
+      reserveBatchOwned: vi
+        .fn<ProcessingJobRepositoryPort["reserveBatchOwned"]>()
+        .mockResolvedValue({ kind: "CREATED", jobs: [] }),
+    };
+    const service = new ProcessingJobService(
+      repository,
+      { dispatch: vi.fn() },
+      ProcessingProvider.REMOVEBG,
+      allowanceResolver(),
+      () => NOW,
+    );
+    const command = { vehicleId: VEHICLE_ID, assetIds: [ASSET_ID], options: OPTIONS };
+
+    await service.createBatch("user-1", "processing-request-0005", command);
+    await service.createBatch("user-1", "processing-request-0006", {
+      ...command,
+      label: "T02-S04",
+    });
+
+    const [unlabelled, labelled] = repository.reserveBatchOwned.mock.calls.map(
+      ([reservation]) => reservation,
+    );
+    expect(unlabelled?.batchLabel).toBeNull();
+    expect(labelled?.batchLabel).toBe("T02-S04");
+    expect(labelled?.batchRequestHash).not.toBe(unlabelled?.batchRequestHash);
+  });
 });

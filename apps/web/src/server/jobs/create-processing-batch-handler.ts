@@ -43,7 +43,7 @@ import {
   PROCESSING_UNAVAILABLE_CODE,
   PROCESSING_UNAVAILABLE_MESSAGE,
   PROCESSING_UNAVAILABLE_STATUS,
-  PROCESSING_VEHICLE_NOT_DRAFT_MESSAGE,
+  PROCESSING_VEHICLE_UNAVAILABLE_MESSAGE,
 } from "./processing-job.constants";
 import type { ProcessingJobApplication } from "./processing-job.types";
 
@@ -160,7 +160,7 @@ export async function handleCreateProcessingBatch(
           ? PROCESSING_ASSETS_NOT_READY_MESSAGE
           : error === "IDEMPOTENCY_CONFLICT"
             ? PROCESSING_IDEMPOTENCY_CONFLICT_MESSAGE
-            : PROCESSING_VEHICLE_NOT_DRAFT_MESSAGE,
+            : PROCESSING_VEHICLE_UNAVAILABLE_MESSAGE,
       requestId: createRequestId(),
     });
   } catch {

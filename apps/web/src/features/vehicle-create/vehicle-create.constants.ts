@@ -93,6 +93,10 @@ export const REVIEW_PLATE_PRIVACY_LABEL = "Plate privacy";
 export const REVIEW_BACKGROUND_LABEL = "Background";
 export const REVIEW_FLOOR_LABEL = "Floor";
 export const REVIEW_ENHANCEMENT_LABEL = "Enhancement";
+export const REVIEW_COMPOSITION_LABEL = "Composition";
+export const REVIEW_BATCH_LABEL_LABEL = "Reference label (optional)";
+export const REVIEW_BATCH_LABEL_HINT =
+  "Shown with this version in the portfolio, such as a test ID. It never changes the images.";
 export const REVIEW_ESTIMATED_USAGE_LABEL = "Estimated usage";
 export const REVIEW_ENABLED_LABEL = "Enabled";
 export const REVIEW_DISABLED_LABEL = "Disabled";

@@ -5,6 +5,7 @@ import {
   type CreateProcessingBatchResponse,
 } from "@studiocar/contracts";
 
+import { ProcessingBatchRequestError } from "./processing-batch-request-error";
 import {
   PROCESSING_BATCH_GENERIC_ERROR,
   PROCESSING_BATCH_IDEMPOTENCY_HEADER,
@@ -30,7 +31,7 @@ export async function requestProcessingBatch(
   const body: unknown = await response.json().catch(() => null);
   if (!response.ok) {
     const error = ApiErrorSchema.safeParse(body);
-    throw new Error(
+    throw new ProcessingBatchRequestError(
       error.success ? error.data.error.message : PROCESSING_BATCH_GENERIC_ERROR,
     );
   }

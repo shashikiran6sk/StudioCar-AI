@@ -1,10 +1,24 @@
 import { z } from "zod";
 
+import { EntityIdSchema } from "./common";
 import { InventoryItemSchema } from "./inventory";
+
+/**
+ * Vehicles whose newest processing batch ended with images the user has to
+ * act on. `vehicleId` names the vehicle when it is the only one, so the
+ * dashboard can open it directly.
+ */
+export const DashboardAttentionSchema = z
+  .object({
+    vehicleCount: z.number().int().nonnegative(),
+    vehicleId: EntityIdSchema.nullable(),
+  })
+  .strict();
 
 export const DashboardSummarySchema = z
   .object({
     activeImageCount: z.number().int().nonnegative(),
+    attention: DashboardAttentionSchema,
     imagesProcessed: z.number().int().nonnegative(),
     imagesProcessedThisPeriod: z.number().int().nonnegative(),
     imagesRemaining: z.number().int().nonnegative(),
@@ -19,4 +33,5 @@ export const DashboardSummarySchema = z
   })
   .strict();
 
+export type DashboardAttention = z.infer<typeof DashboardAttentionSchema>;
 export type DashboardSummary = z.infer<typeof DashboardSummarySchema>;

@@ -5,6 +5,17 @@ import { ProcessingOptionsSchema } from "./processing";
 
 export const MAX_PROCESSING_BATCH_ASSETS = 20;
 export const MAX_JOB_STATUS_QUERY_IDS = 100;
+export const MAX_PROCESSING_BATCH_LABEL_LENGTH = 120;
+
+/**
+ * A person's own name for a batch, such as a QA test reference. It identifies
+ * the studio version the batch produces and never changes the treatment.
+ */
+export const ProcessingBatchLabelSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(MAX_PROCESSING_BATCH_LABEL_LENGTH);
 
 export const JobStateSchema = z.enum([
   "CREATED",
@@ -13,6 +24,18 @@ export const JobStateSchema = z.enum([
   "RETRYING",
   "COMPLETED",
   "FAILED",
+  "CANCELLED",
+]);
+
+/**
+ * Why a job ended without a processed image, in terms a person can act on.
+ * Provider error codes and worker messages never cross this boundary.
+ */
+export const ProcessingFailureReasonSchema = z.enum([
+  "UNUSABLE_IMAGE",
+  "BACKGROUND_REMOVAL_FAILED",
+  "SERVICE_UNAVAILABLE",
+  "PROCESSING_FAILED",
   "CANCELLED",
 ]);
 
@@ -94,6 +117,7 @@ export const CreateProcessingBatchSchema = z
         "Asset IDs must be unique.",
       ),
     options: ProcessingOptionsSchema,
+    label: ProcessingBatchLabelSchema.optional(),
   })
   .strict();
 
@@ -113,6 +137,10 @@ export const CreateProcessingBatchResponseSchema = z
   .strict();
 
 export type JobState = z.infer<typeof JobStateSchema>;
+export type ProcessingBatchLabel = z.infer<typeof ProcessingBatchLabelSchema>;
+export type ProcessingFailureReason = z.infer<
+  typeof ProcessingFailureReasonSchema
+>;
 export type ProcessingStage = z.infer<typeof ProcessingStageSchema>;
 export type JobStatus = z.infer<typeof JobStatusSchema>;
 export type JobStatusQuery = z.infer<typeof JobStatusQuerySchema>;

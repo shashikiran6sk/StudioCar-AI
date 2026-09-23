@@ -44,12 +44,13 @@ describe("DashboardPage", () => {
       },
     });
     const dashboardService = new DashboardService(
-      { getOwnedMetrics: vi.fn() },
+      { getOwnedAttention: vi.fn(), getOwnedMetrics: vi.fn() },
       { list: vi.fn() },
       { resolve: vi.fn() },
     );
     const getSummary = vi.spyOn(dashboardService, "getSummary").mockResolvedValue({
       activeImageCount: 0,
+      attention: { vehicleCount: 0, vehicleId: null },
       imagesProcessed: 0,
       imagesProcessedThisPeriod: 0,
       imagesRemaining: 9,
@@ -72,6 +73,9 @@ describe("DashboardPage", () => {
     expect(screen.getByText("Saturday, 19 September")).toBeInTheDocument();
     expect(screen.getByText("No vehicle activity yet")).toBeInTheDocument();
     expect(screen.getByText("Usage remaining")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Create studio images" }),
+    ).toBeInTheDocument();
     expect(
       screen.getAllByRole("button", { name: "+ Upload Vehicle" }),
     ).toHaveLength(3);

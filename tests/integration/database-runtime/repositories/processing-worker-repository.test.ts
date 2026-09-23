@@ -75,6 +75,7 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       userId: owner.id,
       vehicleId: vehicle.id,
       batchIdempotencyKey: batchKey,
+      batchLabel: null,
       batchRequestHash: createProcessingBatchRequestHash(request),
       provider: ProcessingProvider.REMOVEBG,
       usageBillingPeriodKey: "2099-09",
@@ -336,5 +337,96 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
         where: { vehicleId: record.vehicleId },
       }),
     ).resolves.toBe(0);
+  });
+
+  it("clears attention once a re-process of the failed batch completes", async () => {
+    const record = await createQueuedJob("worker-reprocess-batch");
+    // An earlier batch of this vehicle failed; the user then re-processed it.
+    await database.processingJob.create({
+      data: {
+        batchIdempotencyKey: "worker-earlier-failed-batch",
+        createdAt: new Date("2000-01-01T00:00:00.000Z"),
+        errorCode: "PROVIDER_TIMEOUT",
+        failedAt: new Date("2000-01-01T00:01:00.000Z"),
+        idempotencyKey: "worker-earlier-failed-job",
+        imageAssetId: record.assetId,
+        options: ProcessingOptionsSchema.parse({}),
+        provider: "REMOVEBG",
+        status: "FAILED",
+        userId: record.ownerId,
+        vehicleId: record.vehicleId,
+      },
+    });
+    const claim = await workers.claimJob({
+      claimExpiresAt: CLAIM_EXPIRES_AT,
+      jobId: record.jobId,
+      now: NOW,
+      workerId: "worker-reprocess",
+    });
+    if (claim.kind !== "CLAIMED") throw new Error("Expected a processing claim.");
+
+    // A transient failure retries automatically and never asks for attention.
+    await workers.failJob({
+      attemptNumber: claim.job.attemptNumber,
+      errorCode: "PROVIDER_UNAVAILABLE",
+      errorMessage: "Provider unavailable.",
+      failedAt: NOW,
+      jobId: record.jobId,
+      nextAttemptAt: NEXT_ATTEMPT_AT,
+      providerLatencyMilliseconds: 10,
+      providerRequestId: null,
+      retryable: true,
+      workerId: "worker-reprocess",
+    });
+    await expect(
+      database.vehicle.findUnique({
+        where: { id: record.vehicleId },
+        select: { status: true },
+      }),
+    ).resolves.toEqual({ status: "PROCESSING" });
+
+    await database.processingJob.update({
+      where: { id: record.jobId },
+      data: { status: "QUEUED" },
+    });
+    const retry = await workers.claimJob({
+      claimExpiresAt: new Date("2099-09-20T00:06:00.000Z"),
+      jobId: record.jobId,
+      now: NEXT_ATTEMPT_AT,
+      workerId: "worker-reprocess-2",
+    });
+    if (retry.kind !== "CLAIMED") throw new Error("Expected the retry claim.");
+    await workers.completeJob({
+      attemptNumber: retry.job.attemptNumber,
+      completedAt: NEXT_ATTEMPT_AT,
+      jobId: record.jobId,
+      output: {
+        checksumSha256: "c".repeat(64),
+        height: 900,
+        mimeType: "image/png",
+        objectKey: `users/${record.ownerId}/vehicles/${record.vehicleId}/reprocess.png`,
+        outputFormat: "PNG",
+        previewObjectKey: `users/${record.ownerId}/vehicles/${record.vehicleId}/reprocess-preview.webp`,
+        sizeBytes: 2_048n,
+        width: 1_600,
+      },
+      providerLatencyMilliseconds: 900,
+      providerRequestId: "removebg-request-reprocess",
+      usageBillingPeriodKey: "2099-09",
+      usageIdempotencyKey: createProcessingUsageIdempotencyKey(record.jobId),
+      workerId: "worker-reprocess-2",
+    });
+
+    await expect(
+      database.vehicle.findUnique({
+        where: { id: record.vehicleId },
+        select: { status: true },
+      }),
+    ).resolves.toEqual({ status: "READY" });
+    await expect(
+      database.processingJob.count({
+        where: { vehicleId: record.vehicleId, status: "FAILED" },
+      }),
+    ).resolves.toBe(1);
   });
 });

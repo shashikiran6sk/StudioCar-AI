@@ -35,6 +35,7 @@ export class ProcessingJobService implements ProcessingJobApplication {
       userId,
       vehicleId: command.vehicleId,
       batchIdempotencyKey: idempotencyKey,
+      batchLabel: command.label ?? null,
       batchRequestHash: createProcessingBatchRequestHash(command),
       provider: this.provider,
       usageBillingPeriodKey: createUsageBillingPeriodKey(now),
