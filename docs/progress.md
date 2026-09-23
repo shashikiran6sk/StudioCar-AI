@@ -564,6 +564,11 @@ everything the accepted plan still leaves open.
 - The portfolio viewer's close button existed but could not be seen. The `ghost` button style is designed for light surfaces, so its near-black label sat invisibly on the near-black viewer and appeared only on hover. It now uses light text, a subtle outline and a translucent hover on that surface, plus a decorative `×`; its accessible name is unchanged.
 - The end-to-end walk now opens the viewer and checks the button's rendered text colour, because `toBeVisible` passes for black-on-black text. It then closes the viewer with the button.
 
+### SC039 — Progress updates without a page refresh
+
+- A batch could finish while its inventory card still said 0%. The cards, dashboard counts and sidebar allowance are rendered on the server, and polling only updated the top-bar indicator. The indicator now asks the page to re-render whenever the number of running jobs drops, so a three-photo batch moves 33% → 67% → 100% on its own. Nothing re-renders on first load or when jobs are added.
+- The indicator said "0 images need attention" once a batch completed without failures. It now reports running work first, then failures, and otherwise how many images are ready.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.

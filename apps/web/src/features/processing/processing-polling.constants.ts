@@ -16,3 +16,10 @@ export const PROCESSING_FAILED_LABEL = "Needs attention";
 export const PROCESSING_CANCELLED_LABEL = "Cancelled";
 export const PROCESSING_COMPLETE_LABEL = "Complete";
 export const PROCESSING_DISMISS_LABEL = "Dismiss";
+
+export const PROCESSING_IMAGE_SINGULAR = "image";
+export const PROCESSING_IMAGE_PLURAL = "images";
+export const PROCESSING_ACTIVE_SUFFIX = "processing";
+export const PROCESSING_FAILED_SUFFIX_SINGULAR = "needs attention";
+export const PROCESSING_FAILED_SUFFIX_PLURAL = "need attention";
+export const PROCESSING_READY_SUFFIX = "ready";

@@ -1,6 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+import { describeProcessingActivity } from "./describe-processing-activity";
 
 import { jobStatusIsTerminal } from "./job-status-is-terminal";
 import {
@@ -11,6 +14,7 @@ import {
 import { processingStageLabel } from "./processing-stage-label";
 import { ProcessingStatusPoller } from "./processing-status-poller";
 import { useProcessingStatusStore } from "./processing-status-store";
+import { useRefreshWhenJobsSettle } from "./use-refresh-when-jobs-settle";
 
 export function ProcessingIndicator() {
   const [open, setOpen] = useState(false);
@@ -24,6 +28,11 @@ export function ProcessingIndicator() {
   const failedCount = entries.filter(
     (job) => job.status?.state === "FAILED",
   ).length;
+  const completedCount = entries.filter(
+    (job) => job.status?.state === "COMPLETED",
+  ).length;
+  const router = useRouter();
+  useRefreshWhenJobsSettle(activeCount, router.refresh);
 
   return (
     <div className="processing-indicator">
@@ -38,9 +47,11 @@ export function ProcessingIndicator() {
             type="button"
           >
             <span aria-hidden="true" className="processing-indicator__dot" />
-            {activeCount > 0
-              ? `${String(activeCount)} ${activeCount === 1 ? "image" : "images"} processing`
-              : `${String(failedCount)} ${failedCount === 1 ? "image needs" : "images need"} attention`}
+            {describeProcessingActivity({
+              activeCount,
+              completedCount,
+              failedCount,
+            })}
           </button>
           {open ? (
             <section
