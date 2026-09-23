@@ -2688,11 +2688,6 @@ body {
   object-fit: cover;
 }
 
-/* The box layout shows the whole vehicle rather than cropping it to fill. */
-.inventory-grid--grid .inventory-card__media img {
-  object-fit: contain;
-}
-
 .inventory-card--processing .inventory-card__media img {
   filter: blur(1.5px) brightness(0.55);
   transform: scale(1.02);
@@ -3039,12 +3034,6 @@ body {
   border-radius: 16px;
 }
 
-/* Show each image whole, in the gallery and the full-screen viewer alike. */
-.portfolio-gallery__stage .sc-comparison__layer > img,
-.portfolio-viewer__image .sc-comparison__layer > img {
-  object-fit: contain;
-}
-
 .portfolio-gallery__thumbnails {
   display: grid;
   min-width: 0;
@@ -3074,7 +3063,7 @@ body {
 }
 
 .portfolio-gallery__thumbnail img {
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .portfolio-gallery__footer {
