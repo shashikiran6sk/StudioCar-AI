@@ -536,6 +536,13 @@ everything the accepted plan still leaves open.
 - Confirmed the end-to-end suite restores what it changes: Studio Pro's price was back to ₹3,999 after the pricing walk edited it.
 - Every gate green on a clean `main`: lint, strict typecheck, source mapping, 749 unit tests, 127 integration tests against real PostgreSQL, `prisma validate`, production builds, and 10 Playwright tests.
 
+### SC035 — Batch-limit sentence built from the account's plan
+
+- The upload step told every account "Free plan · Up to 3 images per batch. Upgrade for 20-image batches." That was a stored constant predating SC030, which missed it: the server enforced 5 while the page said 3. SC030's claim that the application carried no second copy of a plan was therefore wrong until now.
+- The sentence is now built from the signed-in account's plan name and limit, plus the largest batch any plan **on offer** allows. It offers an upgrade only when one genuinely allows more, so an account already on the largest batch is never told to upgrade to what it has, and a deactivated plan is never advertised.
+- The shell's fallback when a plan cannot be resolved was a second hardcoded `5`. It now comes from the canonical free-plan definition.
+- Added sentence, largest-batch, context-fallback and upload-step coverage.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.

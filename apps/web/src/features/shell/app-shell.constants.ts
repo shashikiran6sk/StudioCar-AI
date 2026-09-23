@@ -7,8 +7,3 @@ export const SIDEBAR_PLAN_FALLBACK_HEADING = "Your workspace";
 export const SIDEBAR_PLAN_FALLBACK_DESCRIPTION =
   "Plan and usage details are available from Packs & Billing.";
 
-/**
- * Used only when the server could not resolve a plan. Deliberately the smallest
- * allowance, so a failure never lets someone start work the server will refuse.
- */
-export const DEFAULT_MAX_IMAGES_PER_BATCH = 5;

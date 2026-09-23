@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { INVENTORY_PATH } from "../../app/app-routes";
 import { completeProcessingBatch } from "./complete-processing-batch";
+import { describeBatchLimit } from "./describe-batch-limit";
 import { useProcessingStatusStore } from "../processing/processing-status-store";
 import { VehicleCreateDialog } from "./vehicle-create-dialog";
 import { VEHICLE_CREATE_TRIGGER_LABEL } from "./vehicle-create.constants";
@@ -13,7 +14,7 @@ import { usePlanLimits } from "../shell/plan-limits-context";
 
 export function VehicleCreateLauncher() {
   const router = useRouter();
-  const { maxImagesPerBatch } = usePlanLimits();
+  const limits = usePlanLimits();
 
   async function processBatch(
     vehicleId: string,
@@ -36,7 +37,8 @@ export function VehicleCreateLauncher() {
 
   return (
     <VehicleCreateDialog
-      maxImagesPerBatch={maxImagesPerBatch}
+      batchLimitLabel={describeBatchLimit(limits)}
+      maxImagesPerBatch={limits.maxImagesPerBatch}
       onProcess={processBatch}
       trigger={<Button variant="primary">{VEHICLE_CREATE_TRIGGER_LABEL}</Button>}
     />

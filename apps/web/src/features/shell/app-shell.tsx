@@ -4,17 +4,16 @@ import type { ReactNode } from "react";
 
 import { AccountMenu } from "./account-menu";
 import { AppNavigation } from "./app-navigation";
-import {
-  DEFAULT_MAX_IMAGES_PER_BATCH,
-  WORKSPACE_LABEL,
-} from "./app-shell.constants";
-import { PlanLimitsProvider } from "./plan-limits-context";
+import { WORKSPACE_LABEL } from "./app-shell.constants";
+import { FALLBACK_PLAN_LIMITS, PlanLimitsProvider } from "./plan-limits-context";
 import { SidebarPlanSummary } from "./sidebar-plan-summary";
 import type { PlanUsageSummary } from "../../server/plan-usage/plan-usage.types";
 import { ProcessingIndicator } from "../processing/processing-indicator";
 
 export interface AppShellProps {
   children: ReactNode;
+  /** The largest batch any plan on offer allows, or null when none is. */
+  largestAvailableBatch: number | null;
   planUsage: PlanUsageSummary | null;
   showAdmin: boolean;
   user: AuthUser;
@@ -22,6 +21,7 @@ export interface AppShellProps {
 
 export function AppShell({
   children,
+  largestAvailableBatch,
   planUsage,
   showAdmin,
   user,
@@ -43,10 +43,15 @@ export function AppShell({
         </header>
         <main className="app-content">
           <PlanLimitsProvider
-            limits={{
-              maxImagesPerBatch:
-                planUsage?.maxImagesPerBatch ?? DEFAULT_MAX_IMAGES_PER_BATCH,
-            }}
+            limits={
+              planUsage === null
+                ? FALLBACK_PLAN_LIMITS
+                : {
+                    largestAvailableBatch,
+                    maxImagesPerBatch: planUsage.maxImagesPerBatch,
+                    planName: planUsage.planName,
+                  }
+            }
           >
             {children}
           </PlanLimitsProvider>

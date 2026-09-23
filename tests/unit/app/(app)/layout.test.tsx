@@ -25,6 +25,10 @@ vi.mock(
   () => ({ isCurrentUserAdministrator: vi.fn(async () => false) }),
 );
 
+vi.mock("../../../../apps/web/src/server/plans/get-plan-catalog", () => ({
+  getPlanCatalog: vi.fn(async () => []),
+}));
+
 describe("AuthenticatedLayout", () => {
   afterEach(() => {
     vi.clearAllMocks();

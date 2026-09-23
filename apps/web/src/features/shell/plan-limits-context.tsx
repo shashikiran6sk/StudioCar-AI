@@ -2,15 +2,27 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 
-import { DEFAULT_MAX_IMAGES_PER_BATCH } from "./app-shell.constants";
+import { FREE_PLAN_DEFAULT } from "../../server/plans/default-plan-configurations";
 
 export interface PlanLimits {
+  /** The largest batch any plan on offer allows, or null when none is. */
+  largestAvailableBatch: number | null;
   maxImagesPerBatch: number;
+  planName: string;
 }
 
-const PlanLimitsContext = createContext<PlanLimits>({
-  maxImagesPerBatch: DEFAULT_MAX_IMAGES_PER_BATCH,
-});
+/**
+ * The free plan's limits, taken from the one canonical definition. A failure
+ * to resolve somebody's plan must never let them start work the server will
+ * refuse, so the fallback is the smallest allowance there is.
+ */
+export const FALLBACK_PLAN_LIMITS: PlanLimits = {
+  largestAvailableBatch: null,
+  maxImagesPerBatch: FREE_PLAN_DEFAULT.maxImagesPerBatch,
+  planName: FREE_PLAN_DEFAULT.displayName,
+};
+
+const PlanLimitsContext = createContext<PlanLimits>(FALLBACK_PLAN_LIMITS);
 
 export interface PlanLimitsProviderProps {
   children: ReactNode;
