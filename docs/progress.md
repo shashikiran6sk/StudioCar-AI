@@ -569,6 +569,10 @@ everything the accepted plan still leaves open.
 - A batch could finish while its inventory card still said 0%. The cards, dashboard counts and sidebar allowance are rendered on the server, and polling only updated the top-bar indicator. The indicator now asks the page to re-render whenever the number of running jobs drops, so a three-photo batch moves 33% → 67% → 100% on its own. Nothing re-renders on first load or when jobs are added.
 - The indicator said "0 images need attention" once a batch completed without failures. It now reports running work first, then failures, and otherwise how many images are ready.
 
+### SC040 — The homepage recognises a signed-in visitor
+
+- A signed-in person visiting the homepage was shown Log in and Start free. The homepage now reads the session and, when there is one, shows the same account menu as the dashboard plus a Dashboard button, so there is a way back into the workspace. Visitors see the header unchanged. The page was already rendered per request, so reading the session adds no caching concern.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.

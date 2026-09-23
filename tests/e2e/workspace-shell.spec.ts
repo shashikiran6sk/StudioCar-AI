@@ -91,6 +91,17 @@ workspaceTest(
         path: testInfo.outputPath("workspace-dashboard.png"),
       });
 
+      // The homepage recognises a signed-in visitor instead of inviting them
+      // to sign in again.
+      await page.goto("/");
+      const header = page.locator(".marketing-header");
+      await expect(header.getByRole("link", { name: "Dashboard" })).toBeVisible();
+      await expect(header.getByRole("link", { name: "Log in" })).toHaveCount(0);
+      await header.screenshot({
+        path: testInfo.outputPath("homepage-signed-in-header.png"),
+      });
+      await page.goto("/dashboard");
+
       await navigation.getByRole("link", { name: /Profile/ }).click();
       await expect(page).toHaveURL(/\/settings\/profile$/);
       await expect(

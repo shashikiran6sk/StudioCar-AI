@@ -7,6 +7,7 @@ import { MarketingHero } from "../features/marketing/marketing-hero";
 import { MarketingStudioBackgrounds } from "../features/marketing/marketing-studio-backgrounds";
 import { MarketingWorkflow } from "../features/marketing/marketing-workflow";
 import { PricingSection } from "../features/pricing/pricing-section";
+import { getCurrentSession } from "../server/auth/get-current-session";
 import { getEnabledSocialLinks } from "../server/content/get-social-links";
 import { getPlanCatalog } from "../server/plans/get-plan-catalog";
 
@@ -17,14 +18,15 @@ import { getPlanCatalog } from "../server/plans/get-plan-catalog";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [plans, socialLinks] = await Promise.all([
+  const [plans, socialLinks, session] = await Promise.all([
     getPlanCatalog(),
     getEnabledSocialLinks(),
+    getCurrentSession(),
   ]);
 
   return (
     <div className="marketing-page">
-      <MarketingHeader />
+      <MarketingHeader user={session?.user ?? null} />
       <main>
         <MarketingHero />
         <MarketingFeatureSelector />
