@@ -34,4 +34,24 @@ describe("CustomizeTreatmentStep", () => {
     );
     expect(screen.getByRole("button", { name: "Premium White" })).toBeDisabled();
   });
+  it("lets a studio background stand the vehicle on a turntable", () => {
+    render(<CustomizeTreatmentStep onBack={vi.fn()} onContinue={vi.fn()} />);
+
+    expect(screen.getByRole("button", { name: "Studio floor" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Turntable" }));
+
+    expect(useVehicleCreateStore.getState().options.floor).toBe("TURNTABLE");
+  });
+
+  it("offers no floor when the background has none", () => {
+    render(<CustomizeTreatmentStep onBack={vi.fn()} onContinue={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Dealership" }));
+
+    // Only the three studio backgrounds are drawn with a wall and a floor.
+    expect(screen.getByRole("button", { name: "Turntable" })).toBeDisabled();
+  });
 });

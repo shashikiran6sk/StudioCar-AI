@@ -7,6 +7,7 @@ const command = {
   assetIds: ["331a1e25-b9d8-4b1a-a398-8351a58f8c24"],
   options: {
     background: "PREMIUM_WHITE",
+    floor: "HORIZON",
     crop: "MAINTAIN_COMPOSITION",
     enhancement: true,
     outputFormat: "JPEG",

@@ -3,6 +3,7 @@ import type { ProcessingOptions } from "@studiocar/contracts";
 import type { VehicleDetailsValues } from "./vehicle-details.types";
 import {
   DEFAULT_BACKGROUND_TREATMENT,
+  DEFAULT_FLOOR_STYLE,
   MAINTAIN_COMPOSITION_CROP,
 } from "./processing-option.constants";
 
@@ -68,6 +69,7 @@ export const CUSTOMIZE_TREATMENT_TITLE = "Customize treatment";
 export const CUSTOMIZE_BACK_LABEL = "← Back";
 export const CUSTOMIZE_CONTINUE_LABEL = "Review batch →";
 export const CUSTOMIZE_BACKGROUND_HEADING = "Choose a studio background";
+export const CUSTOMIZE_FLOOR_HEADING = "Choose a floor";
 export const CUSTOMIZE_PRESERVATION_NOTE =
   "Preview updates preserve the original photo. You can compare and re-process later.";
 export const PLATE_PRIVACY_LABEL = "Hide Number Plate";
@@ -90,6 +92,7 @@ export const REVIEW_PROCESS_ERROR =
 export const REVIEW_IMAGE_LABEL = "Images";
 export const REVIEW_PLATE_PRIVACY_LABEL = "Plate privacy";
 export const REVIEW_BACKGROUND_LABEL = "Background";
+export const REVIEW_FLOOR_LABEL = "Floor";
 export const REVIEW_ENHANCEMENT_LABEL = "Enhancement";
 export const REVIEW_ESTIMATED_USAGE_LABEL = "Estimated usage";
 export const REVIEW_ENABLED_LABEL = "Enabled";
@@ -145,6 +148,7 @@ export const EMPTY_VEHICLE_DETAILS: VehicleDetailsValues = {
 };
 export const DEFAULT_PROCESSING_OPTIONS: ProcessingOptions = {
   background: DEFAULT_BACKGROUND_TREATMENT,
+  floor: DEFAULT_FLOOR_STYLE,
   crop: MAINTAIN_COMPOSITION_CROP,
   enhancement: true,
   outputFormat: "JPEG",

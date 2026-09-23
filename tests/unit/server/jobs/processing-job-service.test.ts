@@ -13,6 +13,7 @@ const VEHICLE_ID = "0e879f46-1193-4d77-b785-057fe026d998";
 const NOW = new Date("2026-09-19T12:00:00.000Z");
 const OPTIONS = {
   background: "PREMIUM_WHITE",
+  floor: "HORIZON",
   crop: "MAINTAIN_COMPOSITION",
   enhancement: true,
   outputFormat: "JPEG",

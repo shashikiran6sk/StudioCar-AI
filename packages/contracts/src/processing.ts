@@ -9,6 +9,15 @@ export const BackgroundTreatmentSchema = z.enum([
   "CUSTOM",
 ]);
 
+/**
+ * The floor a studio background stands the vehicle on.
+ *
+ * `HORIZON` is a flat floor meeting the wall at a straight line, as on the
+ * homepage. `TURNTABLE` is a round display platform seen in perspective, as
+ * used by car marketplaces.
+ */
+export const FloorStyleSchema = z.enum(["HORIZON", "TURNTABLE"]);
+
 export const ShadowTreatmentSchema = z.enum([
   "NONE",
   "NATURAL",
@@ -26,6 +35,7 @@ export const OutputFormatSchema = z.enum(["JPEG", "PNG", "WEBP"]);
 export const ProcessingOptionsSchema = z
   .object({
     background: BackgroundTreatmentSchema.default("PREMIUM_WHITE"),
+    floor: FloorStyleSchema.default("HORIZON"),
     enhancement: z.boolean().default(true),
     platePrivacy: z.boolean().default(true),
     shadow: ShadowTreatmentSchema.default("NATURAL"),
@@ -56,5 +66,6 @@ export const ProcessingOptionsSchema = z
 
 export type ProcessingOptions = z.infer<typeof ProcessingOptionsSchema>;
 export type BackgroundTreatment = z.infer<typeof BackgroundTreatmentSchema>;
+export type FloorStyle = z.infer<typeof FloorStyleSchema>;
 export type CropMode = z.infer<typeof CropModeSchema>;
 export type ShadowTreatment = z.infer<typeof ShadowTreatmentSchema>;

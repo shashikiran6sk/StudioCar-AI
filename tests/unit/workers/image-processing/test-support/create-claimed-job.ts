@@ -16,6 +16,7 @@ export function createClaimedJob(
     mimeType: "image/jpeg",
     options: {
       background: "PREMIUM_WHITE",
+      floor: "HORIZON",
       crop: "MAINTAIN_COMPOSITION",
       enhancement: true,
       outputFormat: "JPEG",
