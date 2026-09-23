@@ -555,6 +555,10 @@ everything the accepted plan still leaves open.
 - Fixed a validation-order bug in `BOOTSTRAP_ADMIN_EMAIL` found along the way: `z.email()` checked the format before trimming, so an address with a stray space was rejected. The same pattern was fixed elsewhere in SC031 but missed here.
 - Verified on the real stuck uploads: the job stuck at `CREATED` processed as soon as the dispatcher authenticated, and the one parked in the dead-letter queue processed once moved back. Both outputs are in the configured bucket and usage was charged once each.
 
+### SC037 — The logo leads home
+
+- The StudioCar AI logo in the workspace sidebar and on the sign-in card was plain text, so clicking it did nothing. Both now link to the homepage through one shared `BrandHomeLink`, labelled for screen readers and with a visible keyboard focus. The homepage header already linked to the top of its own page and is unchanged.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.

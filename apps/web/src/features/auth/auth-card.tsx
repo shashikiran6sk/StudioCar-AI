@@ -1,4 +1,4 @@
-import { BrandMark } from "@studiocar/ui";
+import { BrandHomeLink } from "../shell/brand-home-link";
 import type { ReactNode } from "react";
 
 const AUTH_EYEBROW = "Secure workspace access";
@@ -14,7 +14,7 @@ export function AuthCard({ children, description, footer, title }: AuthCardProps
   return (
     <main className="auth-page">
       <section aria-labelledby="auth-title" className="auth-card">
-        <BrandMark className="auth-card__brand" withName />
+        <BrandHomeLink className="auth-card__brand" />
         <div className="auth-card__heading">
           <p className="eyebrow">{AUTH_EYEBROW}</p>
           <h1 id="auth-title">{title}</h1>

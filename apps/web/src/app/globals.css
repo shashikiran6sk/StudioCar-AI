@@ -1086,6 +1086,19 @@ body {
   margin: 0 12px 28px;
 }
 
+/* The logo is a link home everywhere it appears, so it keeps its own colour. */
+.brand-home-link {
+  display: inline-flex;
+  border-radius: var(--sc-radius-control);
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand-home-link:focus-visible {
+  outline: 3px solid var(--sc-focus);
+  outline-offset: 2px;
+}
+
 .app-navigation {
   display: grid;
   gap: 3px;

@@ -21,4 +21,15 @@ describe("AuthCard", () => {
     expect(screen.getByText("Use a verified identity.")).toBeInTheDocument();
     expect(screen.getByText("Secure access")).toBeInTheDocument();
   });
+  it("links its logo back to the homepage", () => {
+    render(
+      <AuthCard description="Continue to your workspace." title="Sign in">
+        content
+      </AuthCard>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "StudioCar AI home" }),
+    ).toHaveAttribute("href", "/");
+  });
 });
