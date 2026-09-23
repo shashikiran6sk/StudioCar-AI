@@ -243,6 +243,23 @@ inventoryTest(
         path: testInfo.outputPath("desktop-vehicle-portfolio.png"),
       });
 
+      // The viewer's close control must be legible, not merely present:
+      // near-black text on the near-black viewer passes `toBeVisible`.
+      await page.getByRole("button", { name: "Enter full screen" }).click();
+      const close = page.getByRole("button", { name: "Close full screen" });
+      await expect(close).toBeVisible();
+      const textLuminance = await close.evaluate((element) => {
+        const channels = getComputedStyle(element).color.match(/\d+/g) ?? [];
+        const [red = 0, green = 0, blue = 0] = channels.map(Number);
+        return (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255;
+      });
+      expect(textLuminance).toBeGreaterThan(0.8);
+      await page.screenshot({
+        path: testInfo.outputPath("desktop-portfolio-viewer.png"),
+      });
+      await close.click();
+      await expect(close).toHaveCount(0);
+
       await page.setViewportSize({ height: 844, width: 390 });
       await page.goto(`/inventory/${vehicleId}`);
       await expect(page.getByRole("button", { name: "Enter full screen" }))

@@ -109,8 +109,13 @@ export function PortfolioGallery({ portfolio }: PortfolioGalleryProps) {
             <span>
               {selectedIndex + 1} / {portfolio.images.length}
             </span>
-            <Button autoFocus onClick={() => setViewerOpen(false)} variant="ghost">
-              {PORTFOLIO_CLOSE_VIEWER_LABEL}
+            <Button
+              autoFocus
+              className="portfolio-viewer__close"
+              onClick={() => setViewerOpen(false)}
+              variant="ghost"
+            >
+              <span aria-hidden="true">×</span> {PORTFOLIO_CLOSE_VIEWER_LABEL}
             </Button>
           </div>
           <div className="portfolio-viewer__image">{comparison}</div>

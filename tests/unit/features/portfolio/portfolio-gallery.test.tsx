@@ -28,4 +28,15 @@ describe("PortfolioGallery", () => {
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
+  it("closes the viewer from a labelled button, not only with Escape", () => {
+    render(<PortfolioGallery portfolio={PORTFOLIO_TEST_DATA} />);
+    fireEvent.click(screen.getByRole("button", { name: "Enter full screen" }));
+
+    // The × is decorative; the control is still announced by its words.
+    const close = screen.getByRole("button", { name: "Close full screen" });
+    expect(close).toHaveClass("portfolio-viewer__close");
+
+    fireEvent.click(close);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
 });
