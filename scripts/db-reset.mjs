@@ -4,12 +4,11 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
-const webDirectory = path.join(
+const repositoryRoot = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
-  "apps",
-  "web",
 );
+const webDirectory = path.join(repositoryRoot, "apps", "web");
 
 /**
  * Hosts that can only be a developer's own machine or a compose network. Any
