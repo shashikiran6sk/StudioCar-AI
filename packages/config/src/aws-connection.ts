@@ -1,20 +1,22 @@
 import { z } from "zod";
 
+import { emptyAsUnset } from "./empty-as-unset";
+
 /**
- * Environment flags arrive as strings. Absent means disabled rather than
- * invalid, so every runtime resolves a concrete boolean.
+ * Environment flags arrive as strings. Absent or empty means disabled rather
+ * than invalid, so every runtime resolves a concrete boolean.
  */
 const BooleanFlagSchema = z
-  .enum(["true", "false", "1", "0"])
+  .enum(["true", "false", "1", "0", ""])
   .optional()
   .transform((value) => value === "true" || value === "1");
 
-const AccessKeyIdSchema = z.string().trim().min(1).optional();
-const SecretAccessKeySchema = z.string().trim().min(1).optional();
+const AccessKeyIdSchema = emptyAsUnset(z.string().trim().min(1));
+const SecretAccessKeySchema = emptyAsUnset(z.string().trim().min(1));
 
 export const S3ConnectionSchema = z.object({
   AWS_REGION: z.string().trim().min(1),
-  S3_ENDPOINT: z.url().optional(),
+  S3_ENDPOINT: emptyAsUnset(z.url()),
   S3_FORCE_PATH_STYLE: BooleanFlagSchema,
   S3_ACCESS_KEY_ID: AccessKeyIdSchema,
   S3_SECRET_ACCESS_KEY: SecretAccessKeySchema,
@@ -22,7 +24,7 @@ export const S3ConnectionSchema = z.object({
 
 export const SqsConnectionSchema = z.object({
   AWS_REGION: z.string().trim().min(1),
-  SQS_ENDPOINT: z.url().optional(),
+  SQS_ENDPOINT: emptyAsUnset(z.url()),
   SQS_ACCESS_KEY_ID: AccessKeyIdSchema,
   SQS_SECRET_ACCESS_KEY: SecretAccessKeySchema,
 });

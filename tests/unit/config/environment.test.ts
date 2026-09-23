@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  parseAdminBootstrapEnvironment,
   parseClientEnvironment,
   parseEmailDispatchEnvironment,
   parseEmailWorkerEnvironment,
@@ -350,6 +351,31 @@ describe("application base url", () => {
         ...emailWorker,
         APPLICATION_BASE_URL: "ftp://app.studiocar.example",
       }),
+    ).toThrow();
+  });
+});
+
+describe("parseAdminBootstrapEnvironment", () => {
+  it("reads an empty value as no bootstrap administrator", () => {
+    // The example file ships `BOOTSTRAP_ADMIN_EMAIL=` with nothing after it.
+    expect(
+      parseAdminBootstrapEnvironment({ BOOTSTRAP_ADMIN_EMAIL: "" })
+        .BOOTSTRAP_ADMIN_EMAIL,
+    ).toBeUndefined();
+  });
+
+  it("cleans an address before validating it", () => {
+    // `z.email()` checks the format first, so it must run after trimming.
+    expect(
+      parseAdminBootstrapEnvironment({
+        BOOTSTRAP_ADMIN_EMAIL: "  Owner@Example.COM ",
+      }).BOOTSTRAP_ADMIN_EMAIL,
+    ).toBe("owner@example.com");
+  });
+
+  it("refuses a value that is not an address", () => {
+    expect(() =>
+      parseAdminBootstrapEnvironment({ BOOTSTRAP_ADMIN_EMAIL: "owner" }),
     ).toThrow();
   });
 });
