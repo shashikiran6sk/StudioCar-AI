@@ -1,5 +1,12 @@
 import sharp from "sharp";
 
+import { createStudioSceneSvg } from "./create-studio-scene-svg";
+import { isStudioSceneBackground } from "./is-studio-scene-background";
+import { measureSubjectBox } from "./measure-subject-box";
+import {
+  STUDIO_SCENE_PALETTES,
+  STUDIO_SHADOW_OPACITY,
+} from "./studio-scene.constants";
 import {
   FIT_OUTPUT_HEIGHT_PIXELS,
   FIT_OUTPUT_WIDTH_PIXELS,
@@ -23,6 +30,8 @@ const backgrounds = {
   { alpha: number; b: number; g: number; r: number }
 >;
 
+const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
+
 const contentTypes = {
   JPEG: "image/jpeg",
   PNG: "image/png",
@@ -36,19 +45,25 @@ export async function renderProcessedImage(
   input: RenderProcessedImageInput,
 ): Promise<RenderedProcessedImage> {
   const background = backgrounds[input.options.background];
+  const scene = isStudioSceneBackground(input.options.background)
+    ? input.options.background
+    : null;
+  // A studio scene is drawn behind the vehicle afterwards, so everything
+  // around it stays transparent until then.
+  const fill = scene === null ? background : TRANSPARENT;
   let image = sharp(input.bytes, { failOn: "warning", pages: 1 });
 
   if (input.options.crop === "SQUARE") {
     image = image.resize({
-      background,
+      background: fill,
       fit: "contain",
       height: SQUARE_OUTPUT_EDGE_PIXELS,
       width: SQUARE_OUTPUT_EDGE_PIXELS,
       withoutEnlargement: true,
     });
   } else if (input.options.crop === "FIT_VEHICLE") {
-    image = image.trim({ background: { r: 0, g: 0, b: 0, alpha: 0 } }).resize({
-      background,
+    image = image.trim({ background: TRANSPARENT }).resize({
+      background: fill,
       fit: "contain",
       height: FIT_OUTPUT_HEIGHT_PIXELS,
       width: FIT_OUTPUT_WIDTH_PIXELS,
@@ -67,7 +82,7 @@ export async function renderProcessedImage(
       ),
     );
     image = image.extend({
-      background,
+      background: fill,
       bottom: padding,
       left: padding,
       right: padding,
@@ -75,7 +90,33 @@ export async function renderProcessedImage(
     });
   }
 
-  if (input.options.background !== "ORIGINAL") image = image.flatten({ background });
+  if (scene !== null) {
+    const layer = await image.ensureAlpha().png().toBuffer({
+      resolveWithObject: true,
+    });
+    const subject = await measureSubjectBox(layer.data);
+    if (subject === null) {
+      image = sharp(layer.data).flatten({ background });
+    } else {
+      const backdrop = createStudioSceneSvg({
+        canvasWidth: layer.info.width,
+        canvasHeight: layer.info.height,
+        floor: input.options.floor,
+        palette: STUDIO_SCENE_PALETTES[scene],
+        shadowOpacity: STUDIO_SHADOW_OPACITY[input.options.shadow],
+        subject,
+      });
+      // Composited into a buffer first: sharp applies its operations before
+      // overlays, so enhancing afterwards must see the finished picture.
+      const composed = await sharp(Buffer.from(backdrop))
+        .composite([{ input: layer.data, left: 0, top: 0 }])
+        .png()
+        .toBuffer();
+      image = sharp(composed);
+    }
+  } else if (input.options.background !== "ORIGINAL") {
+    image = image.flatten({ background });
+  }
   if (input.options.enhancement) image = image.normalise().sharpen();
 
   if (input.options.outputFormat === "JPEG") {

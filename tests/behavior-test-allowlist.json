@@ -530,5 +530,17 @@
   {
     "source": "apps/web/src/server/admin/audit-log-runtime.ts",
     "reason": "Composition root wiring the audit log repository to the database client."
+  },
+  {
+    "source": "apps/web/src/features/vehicle-create/floor-style-choice.types.ts",
+    "reason": "Type-only floor choice presentation definition with no runtime behavior."
+  },
+  {
+    "source": "apps/web/src/features/vehicle-create/floor-style.constants.ts",
+    "reason": "Static floor labels and visual configuration only."
+  },
+  {
+    "source": "workers/image-processing/src/execution/studio-scene.constants.ts",
+    "reason": "Static studio scene palettes, shadow strengths and proportions only; exercised through the scene and renderer tests."
   }
 ]

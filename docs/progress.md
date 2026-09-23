@@ -573,6 +573,15 @@ everything the accepted plan still leaves open.
 
 - A signed-in person visiting the homepage was shown Log in and Start free. The homepage now reads the session and, when there is one, shows the same account menu as the dashboard plus a Dashboard button, so there is a way back into the workspace. Visitors see the header unchanged. The page was already rendered per request, so reading the session adds no caching concern.
 
+### SC041 — Studio backgrounds with a wall and a floor
+
+- The studio backgrounds were a single flat colour: the vehicle cutout was flattened onto one fill. Premium White, Grey Studio and Dark Studio are now drawn as a studio — a lighter wall above a grey floor, with a soft contact shadow under the tyres.
+- A new `floor` processing option chooses between a **studio floor** (a straight horizon, as on the homepage, the default) and a **turntable** (a round platform seen in perspective, as car marketplaces use). The customise step offers both beside the backgrounds; they are disabled for Original and Dealership, which have no floor, and the review step names the choice.
+- The scene is placed from the vehicle's own tyre line — the bottom of its measured bounding box — so the car stands on the floor whatever the crop mode left it. The turntable never runs wider than the canvas, and the shadow follows the existing shadow option, drawn not at all for None.
+- The cutout is kept transparent until the scene is drawn, then composited into a buffer before enhancement: sharp applies its operations before overlays, so enhancing afterwards has to see the finished picture.
+- An empty cutout is detected from its alpha channel and falls back to a plain background. `trim` does not fail on a fully transparent image; it returns the whole frame, which would have drawn a floor for a car that is not there. A test found this.
+- Existing batches keep working: `floor` defaults to the studio floor, so options stored before this change parse unchanged.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.

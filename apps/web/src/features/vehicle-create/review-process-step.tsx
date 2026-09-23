@@ -6,9 +6,12 @@ import Image from "next/image";
 import { useState } from "react";
 
 import { formatBackgroundTreatment } from "./format-background-treatment";
+import { formatFloorStyle } from "./format-floor-style";
+import { STUDIO_SCENE_BACKGROUNDS } from "./processing-option.constants";
 import { formatPhotoCount } from "./format-photo-count";
 import {
   REVIEW_BACKGROUND_LABEL,
+  REVIEW_FLOOR_LABEL,
   REVIEW_BACK_LABEL,
   REVIEW_CREDIT_LABEL,
   REVIEW_DISABLED_LABEL,
@@ -100,6 +103,12 @@ export function ReviewProcessStep({
               <dt>{REVIEW_BACKGROUND_LABEL}</dt>
               <dd>{formatBackgroundTreatment(options.background)}</dd>
             </div>
+            {STUDIO_SCENE_BACKGROUNDS.includes(options.background) ? (
+              <div>
+                <dt>{REVIEW_FLOOR_LABEL}</dt>
+                <dd>{formatFloorStyle(options.floor)}</dd>
+              </div>
+            ) : null}
             <div>
               <dt>{REVIEW_ENHANCEMENT_LABEL}</dt>
               <dd>

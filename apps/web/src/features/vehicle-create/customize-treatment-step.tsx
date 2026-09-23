@@ -1,18 +1,22 @@
 "use client";
 
-import type { BackgroundTreatment } from "@studiocar/contracts";
+import type { BackgroundTreatment, FloorStyle } from "@studiocar/contracts";
 import { Button, ToggleOption } from "@studiocar/ui";
 
 import { BackgroundTreatmentCard } from "./background-treatment-card";
 import { BACKGROUND_TREATMENT_CHOICES } from "./background-treatment.constants";
+import { FloorStyleCard } from "./floor-style-card";
+import { FLOOR_STYLE_CHOICES } from "./floor-style.constants";
 import {
   DEFAULT_BACKGROUND_TREATMENT,
   FIT_VEHICLE_CROP,
   MAINTAIN_COMPOSITION_CROP,
   ORIGINAL_BACKGROUND_TREATMENT,
+  STUDIO_SCENE_BACKGROUNDS,
 } from "./processing-option.constants";
 import {
   CUSTOMIZE_BACKGROUND_HEADING,
+  CUSTOMIZE_FLOOR_HEADING,
   CUSTOMIZE_BACK_LABEL,
   CUSTOMIZE_CONTINUE_LABEL,
   CUSTOMIZE_PRESERVATION_NOTE,
@@ -42,8 +46,17 @@ export function CustomizeTreatmentStep({
     options.background !== ORIGINAL_BACKGROUND_TREATMENT;
   const maintainComposition = options.crop === MAINTAIN_COMPOSITION_CROP;
 
+  // Only a studio background is drawn with a wall and a floor to choose.
+  const floorEnabled =
+    studioBackgroundEnabled &&
+    STUDIO_SCENE_BACKGROUNDS.includes(options.background);
+
   function selectBackground(background: BackgroundTreatment) {
     setOptions({ ...options, background });
+  }
+
+  function selectFloor(floor: FloorStyle) {
+    setOptions({ ...options, floor });
   }
 
   return (
@@ -101,6 +114,20 @@ export function CustomizeTreatmentStep({
               key={choice.value}
               onSelect={selectBackground}
               selected={options.background === choice.value}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="customize-treatment-step__backgrounds">
+        <h3>{CUSTOMIZE_FLOOR_HEADING}</h3>
+        <div className="background-treatment-grid">
+          {FLOOR_STYLE_CHOICES.map((choice) => (
+            <FloorStyleCard
+              choice={choice}
+              disabled={!floorEnabled}
+              key={choice.value}
+              onSelect={selectFloor}
+              selected={options.floor === choice.value}
             />
           ))}
         </div>

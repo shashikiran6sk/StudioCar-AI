@@ -6,6 +6,7 @@ describe("processing contracts", () => {
   it("uses normalized domain defaults instead of UI labels", () => {
     expect(ProcessingOptionsSchema.parse({})).toEqual({
       background: "PREMIUM_WHITE",
+      floor: "HORIZON",
       crop: "MAINTAIN_COMPOSITION",
       enhancement: true,
       outputFormat: "JPEG",
@@ -26,5 +27,13 @@ describe("processing contracts", () => {
         customBackgroundAssetId: "4f9d4891-157f-49ed-aa5a-c026abc0a768",
       }).success,
     ).toBe(false);
+  });
+  it("accepts either floor and refuses one the worker cannot draw", () => {
+    expect(ProcessingOptionsSchema.parse({ floor: "TURNTABLE" }).floor).toBe(
+      "TURNTABLE",
+    );
+    expect(ProcessingOptionsSchema.safeParse({ floor: "MIRROR" }).success).toBe(
+      false,
+    );
   });
 });

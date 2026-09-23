@@ -8,6 +8,7 @@ const ASSET_ID = "5cc8fb90-d018-4569-a897-9bbfd3346839";
 const JOB_ID = "6dd90ca1-e129-467a-b9a8-acc0e445794a";
 const OPTIONS: ProcessingOptions = {
   background: "PREMIUM_WHITE",
+  floor: "HORIZON",
   crop: "MAINTAIN_COMPOSITION",
   enhancement: true,
   outputFormat: "JPEG",
