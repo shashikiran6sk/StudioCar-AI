@@ -54,6 +54,40 @@ Phone sign-in defaults to `PHONE_OTP_DRIVER=fake`, which sends no message and
 accepts `PHONE_OTP_DEV_CODE`. Email defaults to the Mailpit driver. Both are
 refused in production by environment validation.
 
+### One settings file for the application and the containers
+
+Every compose command runs through `scripts/local-compose.sh`, which reads
+`apps/web/.env` — the same file the application reads. The dispatcher and the
+application therefore always agree on the dispatch tokens, and the image
+worker receives your background-removal key without a second copy of it.
+
+The image worker also uses the application's **storage** settings, so it reads
+originals from whichever bucket the browser uploaded them to: local MinIO or a
+real AWS bucket. A `localhost` endpoint is rewritten to `host.docker.internal`,
+because inside a container `localhost` is the container itself. With no
+`apps/web/.env` at all, everything falls back to local MinIO.
+
+Only the placeholders in the compose file are filled from `apps/web/.env`. The
+containers' database and queue addresses stay on the compose network.
+
+### A job stuck on "Processing"
+
+A queue message that fails five times is moved to a dead-letter queue and is
+not retried automatically, so its job stays `QUEUED`. Once the cause is fixed,
+move the message back:
+
+```bash
+export AWS_ACCESS_KEY_ID=studiocarlocal AWS_SECRET_ACCESS_KEY=studiocarlocal123 AWS_REGION=ap-south-1
+Q=http://localhost:9324/000000000000
+aws sqs receive-message --endpoint-url http://localhost:9324 \
+  --queue-url $Q/studiocar-images-dlq --visibility-timeout 120 > dlq.json
+# Re-send its Body to $Q/studiocar-images, then delete it from the
+# dead-letter queue using its ReceiptHandle.
+```
+
+Redelivering a job's message is safe: the worker treats a duplicate `jobId` as
+harmless, and usage is charged only once.
+
 ## Database
 
 The Prisma schema, migrations, and configuration belong to `apps/web`. The

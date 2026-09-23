@@ -6,6 +6,8 @@ import { AppShell } from "../../features/shell/app-shell";
 import { getCurrentSession } from "../../server/auth/get-current-session";
 import { getPlanUsageSummary } from "../../server/plan-usage/get-plan-usage-summary";
 import { isCurrentUserAdministrator } from "../../server/admin/is-current-user-administrator";
+import { findLargestBatch } from "../../server/plans/find-largest-batch";
+import { getPlanCatalog } from "../../server/plans/get-plan-catalog";
 
 export default async function AuthenticatedLayout({
   children,
@@ -15,6 +17,7 @@ export default async function AuthenticatedLayout({
 
   return (
     <AppShell
+      largestAvailableBatch={findLargestBatch(await getPlanCatalog())}
       planUsage={await getPlanUsageSummary(session.userId)}
       showAdmin={await isCurrentUserAdministrator()}
       user={session.user}

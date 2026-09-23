@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { emptyAsUnset } from "./empty-as-unset";
+
 import {
   refineS3Connection,
   refineSqsConnection,
@@ -219,12 +221,11 @@ export const PhoneAuthEnvironmentSchema = z
  */
 export const AdminBootstrapEnvironmentSchema = z
   .object({
-    BOOTSTRAP_ADMIN_EMAIL: z
-      .email()
-      .trim()
-      .toLowerCase()
-      .optional()
-      .or(z.literal("").transform(() => undefined)),
+    // Normalised before validation: `z.email()` checks the format first, so
+    // trimming afterwards would reject an address with a stray space.
+    BOOTSTRAP_ADMIN_EMAIL: emptyAsUnset(
+      z.string().trim().toLowerCase().pipe(z.email()),
+    ),
   })
   .strip();
 
@@ -553,9 +554,9 @@ export const ImageWorkerEnvironmentSchema = z
     ...S3ConnectionSchema.shape,
     S3_BUCKET: z.string().trim().min(3).max(63),
     BACKGROUND_REMOVAL_PROVIDER: BackgroundRemovalProviderSchema,
-    REMOVEBG_API_KEY: z.string().trim().min(1).optional(),
-    FAL_KEY: z.string().trim().min(1).optional(),
-    SELF_HOSTED_BIREFNET_ENDPOINT: z.url().optional(),
+    REMOVEBG_API_KEY: emptyAsUnset(z.string().trim().min(1)),
+    FAL_KEY: emptyAsUnset(z.string().trim().min(1)),
+    SELF_HOSTED_BIREFNET_ENDPOINT: emptyAsUnset(z.url()),
     IMAGE_WORKER_CLAIM_TTL_MS: z.coerce
       .number()
       .int()

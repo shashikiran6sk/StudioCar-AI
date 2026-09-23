@@ -122,10 +122,22 @@ services:
     command: ["node", "workers/image-processing/dist/local.mjs"]
     environment:
       <<: *worker-environment
+      # Storage follows apps/web/.env, so the worker reads the same bucket the
+      # browser uploaded to. `scripts/local-compose.sh` sets these; with no
+      # settings file they fall back to local MinIO. `-` rather than `:-`, so
+      # a setting the application leaves empty stays empty here too.
+      AWS_REGION: ${LOCAL_WORKER_AWS_REGION-ap-south-1}
+      S3_BUCKET: ${LOCAL_WORKER_S3_BUCKET-studiocar-local}
+      S3_ENDPOINT: ${LOCAL_WORKER_S3_ENDPOINT-http://minio:9000}
+      S3_FORCE_PATH_STYLE: ${LOCAL_WORKER_S3_FORCE_PATH_STYLE-true}
+      S3_ACCESS_KEY_ID: ${LOCAL_WORKER_S3_ACCESS_KEY_ID-studiocarlocal}
+      S3_SECRET_ACCESS_KEY: ${LOCAL_WORKER_S3_SECRET_ACCESS_KEY-studiocarlocal123}
       BACKGROUND_REMOVAL_PROVIDER: ${BACKGROUND_REMOVAL_PROVIDER:-removebg}
       REMOVEBG_API_KEY: ${REMOVEBG_API_KEY:-}
       FAL_KEY: ${FAL_KEY:-}
       SELF_HOSTED_BIREFNET_ENDPOINT: ${SELF_HOSTED_BIREFNET_ENDPOINT:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       postgres:
         condition: service_healthy

@@ -9,7 +9,7 @@ cd "$(dirname "$0")/.."
 # client is generated here and copied in with the source.
 pnpm db:generate
 
-docker compose -f infrastructure/local/docker-compose.yml --profile infra up -d "$@"
+sh scripts/local-compose.sh --profile infra up -d "$@"
 
 cat <<'MESSAGE'
 

@@ -12,6 +12,7 @@ describe("AppShell", () => {
 
     render(
       <AppShell
+        largestAvailableBatch={20}
         planUsage={null}
         showAdmin={false}
         user={{
@@ -36,6 +37,7 @@ describe("AppShell", () => {
     render(
       <AppShell
         showAdmin={false}
+        largestAvailableBatch={20}
         planUsage={{
           planKey: "FREE",
           planName: "Free",

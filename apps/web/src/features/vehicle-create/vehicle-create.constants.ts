@@ -26,8 +26,18 @@ export const PHOTO_UPLOAD_MOVE_UP_LABEL = "Move up";
 export const PHOTO_UPLOAD_MOVE_DOWN_LABEL = "Move down";
 export const PHOTO_UPLOAD_REORDER_LABEL = "Reorder";
 export const PHOTO_UPLOAD_FORMATS_LABEL = "or select JPG, JPEG, PNG, or WEBP";
-export const PHOTO_UPLOAD_LIMIT_LABEL =
-  "Free plan · Up to 3 images per batch. Upgrade for 20-image batches.";
+/**
+ * Pieces of `Free plan · Up to 5 images per batch. Upgrade for 20-image
+ * batches.`, which is built from the account's plan rather than stored.
+ */
+export const PHOTO_UPLOAD_LIMIT_PLAN_SUFFIX = "plan";
+export const PHOTO_UPLOAD_LIMIT_SEPARATOR = " · ";
+export const PHOTO_UPLOAD_LIMIT_PREFIX = "Up to";
+export const PHOTO_UPLOAD_LIMIT_IMAGE_SINGULAR = "image";
+export const PHOTO_UPLOAD_LIMIT_IMAGE_PLURAL = "images";
+export const PHOTO_UPLOAD_LIMIT_PER_BATCH = "per batch.";
+export const PHOTO_UPLOAD_LIMIT_UPGRADE_PREFIX = "Upgrade for";
+export const PHOTO_UPLOAD_LIMIT_UPGRADE_SUFFIX = "-image batches.";
 export const PHOTO_UPLOAD_BACK_LABEL = "← Back";
 export const PHOTO_UPLOAD_CONTINUE_LABEL = "Continue to customize →";
 export const PHOTO_UPLOAD_EMPTY_ERROR = "Add at least one vehicle photo.";

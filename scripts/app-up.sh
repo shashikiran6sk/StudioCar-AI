@@ -11,7 +11,7 @@ cd "$(dirname "$0")/.."
 pnpm db:generate
 
 DISPATCH_TARGET_URL="${DISPATCH_TARGET_URL:-http://web:3000}" \
-  docker compose -f infrastructure/local/docker-compose.yml --profile app up -d "$@"
+  sh scripts/local-compose.sh --profile app up -d "$@"
 
 cat <<'MESSAGE'
 

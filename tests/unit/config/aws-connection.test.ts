@@ -50,6 +50,33 @@ describe("S3 connection configuration", () => {
     });
   });
 
+  it("reads empty settings as not set rather than invalid", () => {
+    // The example file tells a deployment to leave these empty.
+    const connection = S3ConnectionSchema.parse({
+      AWS_REGION: "ap-south-1",
+      S3_ENDPOINT: "",
+      S3_FORCE_PATH_STYLE: "",
+      S3_ACCESS_KEY_ID: "",
+      S3_SECRET_ACCESS_KEY: "",
+    });
+
+    expect(createS3ClientOptions(connection)).toStrictEqual({
+      region: "ap-south-1",
+      forcePathStyle: false,
+    });
+  });
+
+  it("still fails closed when a key id arrives without its secret", () => {
+    // An empty secret must not quietly fall back to the default credentials.
+    expect(() =>
+      parseUploadEnvironment({
+        ...baseUploadEnvironment,
+        S3_ACCESS_KEY_ID: accessKeyId,
+        S3_SECRET_ACCESS_KEY: "",
+      }),
+    ).toThrow(/must be configured together/);
+  });
+
   it("treats an absent path-style flag as disabled", () => {
     expect(
       S3ConnectionSchema.parse({ AWS_REGION: "ap-south-1" })
@@ -188,6 +215,38 @@ describe("storage cleanup and image worker environments", () => {
     });
   });
 
+  it("starts when only the selected provider is configured", () => {
+    // docker-compose sends every provider's setting, so the two not in use
+    // arrive as empty strings. They used to stop the worker from starting.
+    const environment = parseImageWorkerEnvironment({
+      DATABASE_URL: databaseUrl,
+      AWS_REGION: "ap-south-1",
+      S3_BUCKET: "studiocar-private",
+      S3_ENDPOINT: "https://s3.ap-south-1.amazonaws.com",
+      S3_FORCE_PATH_STYLE: "",
+      BACKGROUND_REMOVAL_PROVIDER: "removebg",
+      REMOVEBG_API_KEY: "provider-key",
+      FAL_KEY: "",
+      SELF_HOSTED_BIREFNET_ENDPOINT: "",
+    });
+
+    expect(environment.REMOVEBG_API_KEY).toBe("provider-key");
+    expect(environment.FAL_KEY).toBeUndefined();
+    expect(environment.SELF_HOSTED_BIREFNET_ENDPOINT).toBeUndefined();
+  });
+
+  it("still refuses an empty key for the selected provider", () => {
+    expect(() =>
+      parseImageWorkerEnvironment({
+        DATABASE_URL: databaseUrl,
+        AWS_REGION: "ap-south-1",
+        S3_BUCKET: "studiocar-private",
+        BACKGROUND_REMOVAL_PROVIDER: "removebg",
+        REMOVEBG_API_KEY: "",
+      }),
+    ).toThrow(/REMOVEBG_API_KEY is required/);
+  });
+
   it("still requires the selected provider credential", () => {
     expect(() =>
       parseImageWorkerEnvironment({
@@ -203,6 +262,19 @@ describe("storage cleanup and image worker environments", () => {
 describe("SQS connection configuration", () => {
   it("keeps the AWS default credential chain when no keys are configured", () => {
     const connection = SqsConnectionSchema.parse({ AWS_REGION: "ap-south-1" });
+
+    expect(createSqsClientOptions(connection)).toStrictEqual({
+      region: "ap-south-1",
+    });
+  });
+
+  it("reads empty settings as not set rather than invalid", () => {
+    const connection = SqsConnectionSchema.parse({
+      AWS_REGION: "ap-south-1",
+      SQS_ENDPOINT: "",
+      SQS_ACCESS_KEY_ID: "",
+      SQS_SECRET_ACCESS_KEY: "",
+    });
 
     expect(createSqsClientOptions(connection)).toStrictEqual({
       region: "ap-south-1",

@@ -25,6 +25,8 @@ import { useVehicleCreateStore } from "./vehicle-create-store";
 import { VehicleDetailsForm } from "./vehicle-details-form";
 
 export interface VehicleCreateDialogProps {
+  /** What the plan allows, in a sentence built from the account's plan. */
+  batchLimitLabel: string;
   createDraft?: typeof requestCreateVehicleDraft;
   /** The plan's own limit, so the wizard stops where the server would. */
   maxImagesPerBatch: number;
@@ -40,6 +42,7 @@ export interface VehicleCreateDialogProps {
 }
 
 export function VehicleCreateDialog({
+  batchLimitLabel,
   createDraft = requestCreateVehicleDraft,
   maxImagesPerBatch,
   onProcess,
@@ -120,6 +123,7 @@ export function VehicleCreateDialog({
         ) : null}
         {step === VehicleCreateStep.Photos ? (
           <PhotoUploadStep
+            limitLabel={batchLimitLabel}
             maximumPhotos={maxImagesPerBatch}
             onBack={() => setStep(VehicleCreateStep.Details)}
             onContinue={() => setStep(VehicleCreateStep.Customize)}

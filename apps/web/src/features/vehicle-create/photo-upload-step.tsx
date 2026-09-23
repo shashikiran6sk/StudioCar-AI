@@ -24,13 +24,14 @@ import {
   PHOTO_UPLOAD_FORMATS_LABEL,
   PHOTO_UPLOAD_GENERIC_ERROR,
   PHOTO_UPLOAD_INCOMPLETE_ERROR,
-  PHOTO_UPLOAD_LIMIT_LABEL,
   PHOTO_UPLOAD_MAX_PROGRESS,
   PHOTO_UPLOAD_SELECT_LABEL,
 } from "./vehicle-create.constants";
 import { useVehicleCreateStore } from "./vehicle-create-store";
 
 export interface PhotoUploadStepProps {
+  /** What the plan allows, so the sentence and the limit always agree. */
+  limitLabel: string;
   maximumPhotos: number;
   onBack: () => void;
   onContinue: () => void;
@@ -38,6 +39,7 @@ export interface PhotoUploadStepProps {
 }
 
 export function PhotoUploadStep({
+  limitLabel,
   maximumPhotos,
   onBack,
   onContinue,
@@ -165,7 +167,7 @@ export function PhotoUploadStep({
           type="file"
         />
       </div>
-      <p className="photo-upload-step__limit">{PHOTO_UPLOAD_LIMIT_LABEL}</p>
+      <p className="photo-upload-step__limit">{limitLabel}</p>
       {rejected.length > 0 ? (
         <ul className="photo-upload-step__rejections" role="alert">
           {rejected.map((photo) => (

@@ -536,6 +536,25 @@ everything the accepted plan still leaves open.
 - Confirmed the end-to-end suite restores what it changes: Studio Pro's price was back to ₹3,999 after the pricing walk edited it.
 - Every gate green on a clean `main`: lint, strict typecheck, source mapping, 749 unit tests, 127 integration tests against real PostgreSQL, `prisma validate`, production builds, and 10 Playwright tests.
 
+### SC035 — Batch-limit sentence built from the account's plan
+
+- The upload step told every account "Free plan · Up to 3 images per batch. Upgrade for 20-image batches." That was a stored constant predating SC030, which missed it: the server enforced 5 while the page said 3. SC030's claim that the application carried no second copy of a plan was therefore wrong until now.
+- The sentence is now built from the signed-in account's plan name and limit, plus the largest batch any plan **on offer** allows. It offers an upgrade only when one genuinely allows more, so an account already on the largest batch is never told to upgrade to what it has, and a deactivated plan is never advertised.
+- The shell's fallback when a plan cannot be resolved was a second hardcoded `5`. It now comes from the canonical free-plan definition.
+- Added sentence, largest-batch, context-fallback and upload-step coverage.
+
+### SC036 — Local processing pipeline shares one settings file
+
+- Local processing never worked from a copied `.env.example`, for three independent reasons, all traced on a real stuck upload:
+  - **The dispatcher could never authenticate.** Compose never read any `.env`, so the dispatcher always used its built-in token while the application used the one in its settings file. Every dispatch returned `403`, and a job created while the queue was unconfigured stayed `CREATED` forever.
+  - **The worker never received the provider key.** It sat in the application's file, which compose did not read.
+  - **The worker could not start with one provider configured.** Compose sends every provider's setting, so the two not in use arrived as empty strings, which validation treated as present-but-invalid.
+- Every compose command now runs through `scripts/local-compose.sh`, which reads `apps/web/.env`, the file the application reads. Tokens and provider keys therefore come from one place.
+- The image worker now uses the application's storage settings, so it reads originals from the bucket the browser uploaded to — MinIO or AWS — instead of being hard-wired to MinIO. The wrapper passes them verbatim, including settings left empty: a compose default of `true` for the path-style flag would have sent MinIO-style requests to AWS. A `localhost` endpoint is rewritten to `host.docker.internal`. The `web` container is unchanged.
+- An empty optional setting now means "not set" across the storage, queue and provider settings, through one `emptyAsUnset` helper that replaces the single inline copy of that rule. It never weakens a requirement: an empty key for the **selected** provider, or an access key whose secret is empty, is still refused, and tests pin both.
+- Fixed a validation-order bug in `BOOTSTRAP_ADMIN_EMAIL` found along the way: `z.email()` checked the format before trimming, so an address with a stray space was rejected. The same pattern was fixed elsewhere in SC031 but missed here.
+- Verified on the real stuck uploads: the job stuck at `CREATED` processed as soon as the dispatcher authenticated, and the one parked in the dead-letter queue processed once moved back. Both outputs are in the configured bucket and usage was charged once each.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -560,6 +579,7 @@ Tracked explicitly so the gap between the plan and the repository stays visible.
 - **New plans cannot be created from the interface.** `/admin/pricing` edits the four plans the deployment ships; adding a fifth still needs a code change, because `planKey` is the closed set that subscriptions and the usage contract are keyed by.
 - **A plan-catalog read failure is not observable.** The web application has no logger yet, so a failed `PlanConfig` query surfaces as an error page rather than as a recorded event. This belongs with the control-plane telemetry slice.
 - **The activity trail is not searchable or paged.** The overview shows the most recent 25 administrative changes and nothing older. Filtering by actor, action or date needs a dedicated page.
+- **There is no command to redrive a dead-lettered job.** A message that fails five times is parked and its job shows "Processing" with no failure state; recovery is the manual `aws sqs` sequence in the README. This belongs with the recovery-operations slice.
 - **Nothing prunes the audit trail.** It grows without bound; retention belongs with the scheduled lifecycle jobs that already cover other tables.
 
 ## Deployment state

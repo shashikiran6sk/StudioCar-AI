@@ -45,6 +45,7 @@ describe("VehicleCreateDialog", () => {
     const updateDraft = vi.fn<typeof requestUpdateVehicleDraft>();
     render(
       <VehicleCreateDialog
+        batchLimitLabel="Free plan · Up to 5 images per batch."
         maxImagesPerBatch={5}
       createDraft={createDraft}
         onProcess={onProcess}
