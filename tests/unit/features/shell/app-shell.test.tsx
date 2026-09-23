@@ -28,6 +28,10 @@ describe("AppShell", () => {
 
     expect(screen.getByRole("navigation", { name: "Workspace" })).toBeInTheDocument();
     expect(screen.getByRole("main")).toHaveTextContent("Dashboard content");
+    // The sidebar logo leads back to the homepage.
+    expect(
+      screen.getByRole("link", { name: "StudioCar AI home" }),
+    ).toHaveAttribute("href", "/");
     expect(screen.getByLabelText("Account menu for Priya Sharma")).toBeInTheDocument();
   });
 

@@ -1,8 +1,8 @@
 import type { AuthUser } from "@studiocar/contracts";
-import { BrandMark } from "@studiocar/ui";
 import type { ReactNode } from "react";
 
 import { AccountMenu } from "./account-menu";
+import { BrandHomeLink } from "./brand-home-link";
 import { AppNavigation } from "./app-navigation";
 import { WORKSPACE_LABEL } from "./app-shell.constants";
 import { FALLBACK_PLAN_LIMITS, PlanLimitsProvider } from "./plan-limits-context";
@@ -29,7 +29,7 @@ export function AppShell({
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
-        <BrandMark className="app-sidebar__brand" withName />
+        <BrandHomeLink className="app-sidebar__brand" />
         <AppNavigation showAdmin={showAdmin} />
         <SidebarPlanSummary summary={planUsage} />
       </aside>
