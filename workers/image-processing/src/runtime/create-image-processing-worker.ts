@@ -12,7 +12,6 @@ import { ProcessingWorker } from "@studiocar/processing";
 
 import { ProcessingJobExecutor } from "../execution/processing-job-executor";
 import { S3ProcessingObjectStorage } from "../storage/s3-processing-object-storage";
-import { CachedStudioSceneAssetSource } from "../studio-scene/cached-studio-scene-asset-source";
 import { createBackgroundRemovalProvider } from "./create-background-removal-provider";
 
 export function createImageProcessingWorker(
@@ -31,17 +30,11 @@ export function createImageProcessingWorker(
     environment.MAX_PROVIDER_OUTPUT_BYTES,
   );
   const provider = createBackgroundRemovalProvider(environment);
-  const executor = new ProcessingJobExecutor(
-    storage,
-    provider,
-    {
-      maximumInputBytes: environment.MAX_PROVIDER_INPUT_BYTES,
-      maximumPixels: environment.MAX_WORKER_IMAGE_PIXELS,
-      previewMaximumWidth: environment.PREVIEW_MAX_WIDTH,
-    },
-    // Studio layers come from the same configured bucket as every image.
-    new CachedStudioSceneAssetSource(storage),
-  );
+  const executor = new ProcessingJobExecutor(storage, provider, {
+    maximumInputBytes: environment.MAX_PROVIDER_INPUT_BYTES,
+    maximumPixels: environment.MAX_WORKER_IMAGE_PIXELS,
+    previewMaximumWidth: environment.PREVIEW_MAX_WIDTH,
+  });
 
   return new ProcessingWorker(jobs, executor, {
     claimTtlMilliseconds: environment.IMAGE_WORKER_CLAIM_TTL_MS,

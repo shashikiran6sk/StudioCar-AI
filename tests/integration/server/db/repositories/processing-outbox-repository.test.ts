@@ -60,10 +60,7 @@ databaseDescribe("PrismaProcessingOutboxRepository", () => {
       },
     });
     const batchIdempotencyKey = "outbox-integration-batch-1";
-    const options = ProcessingOptionsSchema.parse({
-      backgroundId: "PREMIUM_WHITE",
-      floorId: "WHITE_STUDIO",
-    });
+    const options = ProcessingOptionsSchema.parse({});
     const request = { vehicleId: vehicle.id, assetIds: [assetId], options };
     const reserved = await jobs.reserveBatchOwned({
       allowance: {

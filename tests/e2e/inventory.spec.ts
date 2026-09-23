@@ -114,8 +114,7 @@ inventoryTest(
           "QUEUED",
           "REMOVEBG",
           JSON.stringify({
-            backgroundId: "PREMIUM_WHITE",
-            floorId: "WHITE_STUDIO",
+            background: "PREMIUM_WHITE",
             crop: "FIT",
             enhancement: false,
             outputFormat: "WEBP",
@@ -198,8 +197,7 @@ inventoryTest(
           new Date("2026-09-20T09:00:00.000Z"),
           "b".repeat(64),
           JSON.stringify({
-            backgroundId: "PREMIUM_WHITE",
-            floorId: "WHITE_TURNTABLE",
+            background: "PREMIUM_WHITE",
             crop: "MAINTAIN_COMPOSITION",
             enhancement: true,
             outputFormat: "WEBP",

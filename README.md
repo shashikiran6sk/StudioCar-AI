@@ -70,19 +70,6 @@ because inside a container `localhost` is the container itself. With no
 Only the placeholders in the compose file are filled from `apps/web/.env`. The
 containers' database and queue addresses stay on the compose network.
 
-### Studio backgrounds and floors
-
-The worker composes studio backgrounds from processing assets stored in the
-configured bucket. Upload them once per bucket, including a new development
-bucket, before processing:
-
-```bash
-pnpm studio-assets:sync       # upload missing assets; unchanged ones are skipped
-pnpm studio-assets:generate   # only after changing the asset generator
-```
-
-See `docs/studio-backgrounds.md` for how the six treatments are composed.
-
 ### A job stuck on "Processing"
 
 A queue message that fails five times is moved to a dead-letter queue and is

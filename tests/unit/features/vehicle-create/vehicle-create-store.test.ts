@@ -29,44 +29,18 @@ describe("useVehicleCreateStore", () => {
 
   it("clears wizard state explicitly", () => {
     useVehicleCreateStore.getState().setDetailsField("brand", "Porsche");
-    useVehicleCreateStore.getState().selectBackground("DARK_STUDIO");
-    useVehicleCreateStore.getState().setStudioBackgroundEnabled(false);
     useVehicleCreateStore.getState().reset();
 
     expect(useVehicleCreateStore.getState()).toMatchObject({
       details: { brand: "", name: "" },
-      settings: { enhancement: true, platePrivacy: true },
-      studio: null,
-      studioBackgroundEnabled: true,
+      options: {
+        background: "PREMIUM_WHITE",
+        enhancement: true,
+        platePrivacy: true,
+      },
       step: VehicleCreateStep.Details,
       vehicleId: null,
     });
-  });
-
-  it("holds the background and floor as a matching pair", () => {
-    const state = useVehicleCreateStore.getState();
-    state.selectBackground("DARK_STUDIO");
-    state.selectFloor("DARK_TURNTABLE");
-
-    expect(useVehicleCreateStore.getState().studio).toEqual({
-      backgroundId: "DARK_STUDIO",
-      floorId: "DARK_TURNTABLE",
-    });
-
-    state.selectFloor("WHITE_TURNTABLE");
-    expect(useVehicleCreateStore.getState().studio?.floorId).toBe("DARK_TURNTABLE");
-
-    state.selectBackground("PREMIUM_WHITE");
-    expect(useVehicleCreateStore.getState().studio).toEqual({
-      backgroundId: "PREMIUM_WHITE",
-      floorId: "WHITE_STUDIO",
-    });
-  });
-
-  it("offers no floor before a background is chosen", () => {
-    useVehicleCreateStore.getState().selectFloor("GREY_TURNTABLE");
-
-    expect(useVehicleCreateStore.getState().studio).toBeNull();
   });
 
   it("reorders and removes only the selected transient photo", () => {

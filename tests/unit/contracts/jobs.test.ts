@@ -70,12 +70,11 @@ describe("job contracts", () => {
       CreateProcessingBatchSchema.parse({
         vehicleId,
         assetIds: [assetId],
-        options: { backgroundId: "PREMIUM_WHITE", floorId: "WHITE_STUDIO" },
+        options: {},
       }),
     ).toMatchObject({
       options: {
-        backgroundId: "PREMIUM_WHITE",
-        floorId: "WHITE_STUDIO",
+        background: "PREMIUM_WHITE",
         enhancement: true,
         platePrivacy: true,
       },
@@ -84,7 +83,7 @@ describe("job contracts", () => {
       CreateProcessingBatchSchema.safeParse({
         vehicleId,
         assetIds: [assetId, assetId],
-        options: { backgroundId: "PREMIUM_WHITE", floorId: "WHITE_STUDIO" },
+        options: {},
       }).success,
     ).toBe(false);
   });

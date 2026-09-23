@@ -1,7 +1,11 @@
-import type { ProcessingSettings } from "@studiocar/contracts";
+import type { ProcessingOptions } from "@studiocar/contracts";
 
 import type { VehicleDetailsValues } from "./vehicle-details.types";
-import { MAINTAIN_COMPOSITION_CROP } from "./processing-option.constants";
+import {
+  DEFAULT_BACKGROUND_TREATMENT,
+  DEFAULT_FLOOR_STYLE,
+  MAINTAIN_COMPOSITION_CROP,
+} from "./processing-option.constants";
 
 export const VEHICLE_DETAILS_CONTINUE_LABEL = "Continue to photos";
 export const VEHICLE_DETAILS_PENDING_LABEL = "Saving…";
@@ -64,13 +68,8 @@ export const PHOTO_UPLOAD_MAX_PROGRESS = 100;
 export const CUSTOMIZE_TREATMENT_TITLE = "Customize treatment";
 export const CUSTOMIZE_BACK_LABEL = "← Back";
 export const CUSTOMIZE_CONTINUE_LABEL = "Review batch →";
-export const CUSTOMIZE_CHOOSE_FLOOR_LABEL = "Next: Choose floor →";
 export const CUSTOMIZE_BACKGROUND_HEADING = "Choose a studio background";
 export const CUSTOMIZE_FLOOR_HEADING = "Choose a floor";
-export const STUDIO_CHOICE_PREVIEW_WIDTH = 320;
-export const STUDIO_CHOICE_PREVIEW_HEIGHT = 180;
-export const CUSTOMIZE_FLOOR_PENDING_NOTE =
-  "Floor options will be shown after selecting a background.";
 export const CUSTOMIZE_PRESERVATION_NOTE =
   "Preview updates preserve the original photo. You can compare and re-process later.";
 export const PLATE_PRIVACY_LABEL = "Hide Number Plate";
@@ -146,7 +145,9 @@ export const EMPTY_VEHICLE_DETAILS: VehicleDetailsValues = {
   variant: "",
   year: "",
 };
-export const DEFAULT_PROCESSING_SETTINGS: ProcessingSettings = {
+export const DEFAULT_PROCESSING_OPTIONS: ProcessingOptions = {
+  background: DEFAULT_BACKGROUND_TREATMENT,
+  floor: DEFAULT_FLOOR_STYLE,
   crop: MAINTAIN_COMPOSITION_CROP,
   enhancement: true,
   outputFormat: "JPEG",

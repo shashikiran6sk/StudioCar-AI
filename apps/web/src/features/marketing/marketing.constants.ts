@@ -68,7 +68,7 @@ export const MARKETING_HERO_PROOF = [
 export const MARKETING_STUDIO_BENEFITS = [
   "Premium White for clean marketplace listings",
   "Dark and Grey Studio for premium stock",
-  "A studio floor or a turntable in every studio",
+  "A plain background or a standard studio floor",
 ];
 
 export const MARKETING_COMPANY_LINKS = [
@@ -88,7 +88,7 @@ export const MARKETING_NAVIGATION = [
 
 export const MARKETING_FEATURES = [
   {
-    description: "Replace inconsistent surroundings with a premium white, dark, or grey studio, on a floor or a turntable.",
+    description: "Replace inconsistent surroundings with a premium white, dark, or grey studio.",
     label: "Studio backgrounds",
   },
   {

@@ -24,9 +24,7 @@
     "build:local": "esbuild src/local.ts --bundle --external:@aws-sdk/client-sqs --platform=node --target=node24 --format=esm --external:sharp --external:@aws-sdk/client-s3 --external:@prisma/adapter-pg --external:@prisma/client --external:pg --outfile=dist/local.mjs",
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
-    "studio-assets:generate": "esbuild scripts/generate-studio-assets.ts --bundle --platform=node --target=node24 --format=esm --external:sharp --external:@aws-sdk/client-s3 --outfile=dist/generate-studio-assets.mjs --log-level=warning && node dist/generate-studio-assets.mjs",
-    "studio-assets:sync": "esbuild scripts/sync-studio-assets.ts --bundle --platform=node --target=node24 --format=esm --external:sharp --external:@aws-sdk/client-s3 --outfile=dist/sync-studio-assets.mjs --log-level=warning && node --env-file-if-exists=../../apps/web/.env dist/sync-studio-assets.mjs"
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@studiocar/local-queue": "workspace:*",

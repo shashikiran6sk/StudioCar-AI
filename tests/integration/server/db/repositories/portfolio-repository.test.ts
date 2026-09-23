@@ -60,7 +60,7 @@ databaseDescribe("PrismaPortfolioRepository", () => {
         completedAt: new Date("2026-09-19T09:00:00.000Z"),
         idempotencyKey: "portfolio-old-job",
         imageAssetId: image.id,
-        options: { backgroundId: "PREMIUM_WHITE", floorId: "WHITE_STUDIO" },
+        options: {},
         provider: "REMOVEBG",
         status: "COMPLETED",
         userId: owner.id,

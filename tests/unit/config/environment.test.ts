@@ -12,7 +12,6 @@ import {
   parseProcessingEnvironment,
   parseSessionEnvironment,
   parseStorageCleanupEnvironment,
-  parseStudioAssetSyncEnvironment,
   parseUploadEnvironment,
 } from "../../../packages/config/src/environment";
 
@@ -167,24 +166,6 @@ describe("environment validation", () => {
       parseUploadEnvironment({
         ...validEnvironment,
         MAX_IMAGE_DIMENSION: "70000",
-      }),
-    ).toThrow();
-  });
-
-  it("reads only the storage connection to sync studio assets", () => {
-    expect(parseStudioAssetSyncEnvironment(validEnvironment)).toEqual({
-      AWS_REGION: validEnvironment.AWS_REGION,
-      S3_BUCKET: validEnvironment.S3_BUCKET,
-      S3_FORCE_PATH_STYLE: false,
-    });
-    expect(() =>
-      parseStudioAssetSyncEnvironment({ AWS_REGION: validEnvironment.AWS_REGION }),
-    ).toThrow();
-    expect(() =>
-      parseStudioAssetSyncEnvironment({
-        AWS_REGION: validEnvironment.AWS_REGION,
-        S3_ACCESS_KEY_ID: "only-half-of-a-key-pair",
-        S3_BUCKET: validEnvironment.S3_BUCKET,
       }),
     ).toThrow();
   });

@@ -16,8 +16,6 @@ describe("ReviewProcessStep", () => {
       state.setDetailsField("brand", "BMW");
       state.setDetailsField("model", "3 Series");
       state.setDraft("0e879f46-1193-4d77-b785-057fe026d998");
-      state.selectBackground("GREY_STUDIO");
-      state.selectFloor("GREY_TURNTABLE");
       state.addPhotos([
         {
           assetId: "331a1e25-b9d8-4b1a-a398-8351a58f8c24",
@@ -37,8 +35,6 @@ describe("ReviewProcessStep", () => {
 
     expect(screen.getByRole("heading", { name: "2022 BMW 3 Series" })).toBeVisible();
     expect(screen.getByText("1 photo")).toBeVisible();
-    expect(screen.getByText("Grey Studio")).toBeVisible();
-    expect(screen.getByText("Silver Turntable")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Process Photos" }));
 
     await waitFor(() => expect(onProcess).toHaveBeenCalledOnce());
@@ -46,8 +42,7 @@ describe("ReviewProcessStep", () => {
       "0e879f46-1193-4d77-b785-057fe026d998",
       ["331a1e25-b9d8-4b1a-a398-8351a58f8c24"],
       expect.objectContaining({
-        backgroundId: "GREY_STUDIO",
-        floorId: "GREY_TURNTABLE",
+        background: "PREMIUM_WHITE",
         enhancement: true,
         platePrivacy: true,
       }),

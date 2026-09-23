@@ -5,18 +5,11 @@ import { toProcessingOptionsJson } from "../../../../../apps/web/src/server/db/r
 
 describe("toProcessingOptionsJson", () => {
   it("persists normalized processing values without UI labels", () => {
-    expect(
-      toProcessingOptionsJson(
-        ProcessingOptionsSchema.parse({
-          backgroundId: "PREMIUM_WHITE",
-          floorId: "WHITE_STUDIO",
-        }),
-      ),
-    ).toEqual({
-      backgroundId: "PREMIUM_WHITE",
+    expect(toProcessingOptionsJson(ProcessingOptionsSchema.parse({}))).toEqual({
+      background: "PREMIUM_WHITE",
       crop: "MAINTAIN_COMPOSITION",
       enhancement: true,
-      floorId: "WHITE_STUDIO",
+      floor: "HORIZON",
       outputFormat: "JPEG",
       paddingPercent: 8,
       platePrivacy: true,
@@ -25,19 +18,13 @@ describe("toProcessingOptionsJson", () => {
     });
   });
 
-  // Regression: the floor was once dropped here, so the worker re-read every
-  // stored job as a standard floor and no turntable was ever drawn.
-  it.each([
-    ["DARK_STUDIO", "DARK_TURNTABLE"],
-    ["PREMIUM_WHITE", "WHITE_TURNTABLE"],
-    ["GREY_STUDIO", "GREY_TURNTABLE"],
-    ["DARK_STUDIO", "DARK_STUDIO_FLOOR"],
-  ])("stores %s with %s so the worker reads the same floor back", (backgroundId, floorId) => {
-    const options = ProcessingOptionsSchema.parse({ backgroundId, floorId });
+  // Regression: the floor was once left out here, so the worker read every
+  // stored job back as the standard floor.
+  it("stores the chosen floor so the worker reads it back", () => {
+    const options = ProcessingOptionsSchema.parse({ floor: "PLAIN" });
 
-    const stored = ProcessingOptionsSchema.parse(toProcessingOptionsJson(options));
-
-    expect(stored).toEqual(options);
-    expect(stored).toMatchObject({ backgroundId, floorId });
+    expect(ProcessingOptionsSchema.parse(toProcessingOptionsJson(options))).toEqual(
+      options,
+    );
   });
 });
