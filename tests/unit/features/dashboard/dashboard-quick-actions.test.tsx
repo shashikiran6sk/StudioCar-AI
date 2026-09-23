@@ -8,8 +8,11 @@ vi.mock(
   () => ({ VehicleCreateLauncher: () => <button type="button">Upload</button> }),
 );
 
+const VEHICLE_ID = "4bb7fa89-c907-4458-9786-8aafc2235728";
+
 const summary = {
   activeImageCount: 2,
+  attention: { vehicleCount: 0, vehicleId: null },
   imagesProcessed: 4,
   imagesProcessedThisPeriod: 2,
   imagesRemaining: 7,
@@ -24,22 +27,72 @@ const summary = {
 };
 
 describe("DashboardQuickActions", () => {
-  it("links inventory and completed results to real application views", () => {
+  it("offers upload, inventory, and studio creation when nothing needs attention", () => {
     render(<DashboardQuickActions summary={summary} />);
 
     expect(screen.getByRole("button", { name: "Upload" })).toBeInTheDocument();
-    const links = screen.getAllByRole("link", { name: "Open →" });
-    expect(links[0]).toHaveAttribute("href", "/inventory");
-    expect(links[1]).toHaveAttribute("href", "/inventory?filter=COMPLETED");
+    expect(screen.getByRole("link", { name: "Open →" })).toHaveAttribute(
+      "href",
+      "/inventory",
+    );
+    expect(
+      screen.getByRole("heading", { name: "Create studio images" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Create another studio version from an existing vehicle."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Create images →" })).toHaveAttribute(
+      "href",
+      "/inventory?mode=CREATE_STUDIO",
+    );
+    expect(screen.getByText("3 ready")).toBeInTheDocument();
   });
 
-  it("names the third action for the results it reveals", () => {
+  it("no longer duplicates Inventory with a Recent results action", () => {
     render(<DashboardQuickActions summary={summary} />);
 
-    expect(
-      screen.getByRole("heading", { name: "Recent results" }),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Recent results" })).toBeNull();
     expect(screen.queryByRole("heading", { name: "View portfolio" })).toBeNull();
+  });
+
+  it("opens the only affected vehicle's portfolio directly", () => {
+    render(
+      <DashboardQuickActions
+        summary={{
+          ...summary,
+          attention: { vehicleCount: 1, vehicleId: VEHICLE_ID },
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Attention needed" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("1 vehicle needs your attention.")).toBeInTheDocument();
+    expect(screen.getByText("1 need attention")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Review issues →" })).toHaveAttribute(
+      "href",
+      `/inventory/${VEHICLE_ID}#attention`,
+    );
+    expect(
+      screen.queryByRole("heading", { name: "Create studio images" }),
+    ).toBeNull();
+  });
+
+  it("opens Inventory filtered to affected vehicles when several need attention", () => {
+    render(
+      <DashboardQuickActions
+        summary={{ ...summary, attention: { vehicleCount: 2, vehicleId: null } }}
+      />,
+    );
+
+    expect(
+      screen.getByText("2 vehicles need your attention."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Review issues →" })).toHaveAttribute(
+      "href",
+      "/inventory?filter=NEEDS_ATTENTION",
+    );
   });
 
   it("gives every action its own imagery", () => {

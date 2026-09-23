@@ -10,6 +10,7 @@ import {
   VehicleStatus,
 } from "@studiocar/database-runtime";
 import { toProcessingOptionsJson } from "./to-processing-options-json";
+import { PROCESSABLE_VEHICLE_STATUSES } from "../../vehicles/vehicle-status-groups.constants";
 
 const MISSING_USAGE_JOB_ERROR =
   "A processing batch must contain a usage-accounting job.";
@@ -72,7 +73,7 @@ export type ReserveProcessingBatchResult =
       kind:
         | "ASSETS_NOT_READY"
         | "IDEMPOTENCY_CONFLICT"
-        | "VEHICLE_NOT_DRAFT"
+        | "VEHICLE_UNAVAILABLE"
         | "VEHICLE_NOT_FOUND";
     }
   | { kind: "BATCH_LIMIT_EXCEEDED"; maxImagesPerBatch: number }
@@ -81,7 +82,7 @@ export type ReserveProcessingBatchResult =
 type TransactionResult =
   | { kind: "CREATED"; jobs: ProcessingJobRecord[] }
   | { kind: "ASSETS_NOT_READY" }
-  | { kind: "VEHICLE_NOT_DRAFT" }
+  | { kind: "VEHICLE_UNAVAILABLE" }
   | { kind: "VEHICLE_NOT_FOUND" }
   | { kind: "BATCH_LIMIT_EXCEEDED"; maxImagesPerBatch: number }
   | { kind: "ALLOWANCE_EXHAUSTED"; imageCapacity: number; imagesRemaining: number }
@@ -106,7 +107,7 @@ export class PrismaProcessingJobRepository {
 
       if (
         result.kind !== "WRITE_RACE" &&
-        result.kind !== "VEHICLE_NOT_DRAFT"
+        result.kind !== "VEHICLE_UNAVAILABLE"
       ) {
         return result;
       }
@@ -127,7 +128,7 @@ export class PrismaProcessingJobRepository {
     );
     return raced.length > 0
       ? this.resolveReplay(raced, command)
-      : { kind: "VEHICLE_NOT_DRAFT" };
+      : { kind: "VEHICLE_UNAVAILABLE" };
   }
 
   private async reserveInTransaction(
@@ -139,8 +140,8 @@ export class PrismaProcessingJobRepository {
       select: { status: true },
     });
     if (!vehicle) return { kind: "VEHICLE_NOT_FOUND" };
-    if (vehicle.status !== VehicleStatus.DRAFT) {
-      return { kind: "VEHICLE_NOT_DRAFT" };
+    if (!PROCESSABLE_VEHICLE_STATUSES.includes(vehicle.status)) {
+      return { kind: "VEHICLE_UNAVAILABLE" };
     }
 
     const uniqueAssetIds = new Set(command.jobs.map((job) => job.assetId));
@@ -186,11 +187,17 @@ export class PrismaProcessingJobRepository {
       return { kind: "ASSETS_NOT_READY" };
     }
 
+    /**
+     * A new batch never touches an earlier one: it creates its own jobs, so a
+     * completed studio version and a failed batch's history both survive. The
+     * conditional claim also makes a second, differently keyed submission for
+     * the same vehicle lose the race instead of queuing duplicate work.
+     */
     const claimedVehicle = await transaction.vehicle.updateMany({
       where: {
         id: command.vehicleId,
         userId: command.userId,
-        status: VehicleStatus.DRAFT,
+        status: { in: PROCESSABLE_VEHICLE_STATUSES },
       },
       data: { status: VehicleStatus.PROCESSING },
     });

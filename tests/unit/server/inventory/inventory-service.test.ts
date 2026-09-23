@@ -12,6 +12,7 @@ function createRecord(): InventoryVehicleRecord {
     completedImageCount: 1,
     createdAt: new Date("2026-09-19T10:00:00.000Z"),
     failedImageCount: 1,
+    hasCompletedOutput: true,
     id: VEHICLE_ID,
     imageCount: 3,
     model: "3 Series",
@@ -31,7 +32,7 @@ describe("InventoryService", () => {
           all: 1,
           archived: 0,
           completed: 0,
-          failed: 1,
+          needsAttention: 1,
           processing: 0,
         },
         items: [createRecord()],
@@ -48,6 +49,7 @@ describe("InventoryService", () => {
     const result = await service.list("user-1", {
       filter: "ALL",
       limit: 24,
+      mode: "BROWSE",
       sort: "CREATED_DESC",
       view: "GRID",
     });
@@ -55,6 +57,7 @@ describe("InventoryService", () => {
     expect(repository.listOwned).toHaveBeenCalledWith("user-1", {
       filter: "ALL",
       limit: 24,
+      mode: "BROWSE",
       sort: "CREATED_DESC",
       view: "GRID",
     });
@@ -68,6 +71,7 @@ describe("InventoryService", () => {
         completedImageCount: 1,
         createdAt: "2026-09-19T10:00:00.000Z",
         failedImageCount: 1,
+        hasCompletedOutput: true,
         id: VEHICLE_ID,
         imageCount: 3,
         model: "3 Series",
@@ -91,7 +95,7 @@ describe("InventoryService", () => {
             all: 1,
             archived: 0,
             completed: 0,
-            failed: 1,
+            needsAttention: 1,
             processing: 0,
           },
           items: [record],
@@ -103,8 +107,9 @@ describe("InventoryService", () => {
     );
 
     const result = await service.list("user-1", {
-      filter: "FAILED",
+      filter: "NEEDS_ATTENTION",
       limit: 24,
+      mode: "BROWSE",
       sort: "CREATED_DESC",
       view: "GRID",
     });

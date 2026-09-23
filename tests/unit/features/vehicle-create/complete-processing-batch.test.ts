@@ -19,7 +19,7 @@ const OPTIONS: ProcessingOptions = {
 };
 
 describe("completeProcessingBatch", () => {
-  it("registers accepted jobs before navigating to refreshed inventory", async () => {
+  it("registers accepted jobs before navigating and refreshing", async () => {
     const calls: string[] = [];
     const request = vi.fn().mockResolvedValue({
       jobs: [{ assetId: ASSET_ID, jobId: JOB_ID, state: "QUEUED" }],
@@ -32,7 +32,7 @@ describe("completeProcessingBatch", () => {
       OPTIONS,
       "processing-idempotency-key",
       {
-        navigateToInventory: () => calls.push("navigate"),
+        navigate: () => calls.push("navigate"),
         refresh: () => calls.push("refresh"),
         register: () => calls.push("register"),
         request,
@@ -47,7 +47,7 @@ describe("completeProcessingBatch", () => {
   });
 
   it("keeps the wizard in place when the processing command fails", async () => {
-    const navigateToInventory = vi.fn();
+    const navigate = vi.fn();
     const refresh = vi.fn();
     const register = vi.fn();
 
@@ -58,7 +58,7 @@ describe("completeProcessingBatch", () => {
         OPTIONS,
         "processing-idempotency-key",
         {
-          navigateToInventory,
+          navigate,
           refresh,
           register,
           request: vi.fn().mockRejectedValue(new Error("queue unavailable")),
@@ -66,7 +66,7 @@ describe("completeProcessingBatch", () => {
       ),
     ).rejects.toThrow("queue unavailable");
     expect(register).not.toHaveBeenCalled();
-    expect(navigateToInventory).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
     expect(refresh).not.toHaveBeenCalled();
   });
 });

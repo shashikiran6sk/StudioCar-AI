@@ -123,7 +123,7 @@ databaseDescribe("PrismaInventoryRepository", () => {
       all: 1,
       archived: 0,
       completed: 1,
-      failed: 0,
+      needsAttention: 0,
       processing: 0,
     });
     expect(page.items).toHaveLength(1);
@@ -131,6 +131,7 @@ databaseDescribe("PrismaInventoryRepository", () => {
     expect(page.items[0]).toMatchObject({
       completedImageCount: 1,
       failedImageCount: 0,
+      hasCompletedOutput: true,
       imageCount: 1,
       previewObjectKey: `users/${owner.id}/vehicles/${ready.id}/preview.webp`,
     });
@@ -164,7 +165,7 @@ databaseDescribe("PrismaInventoryRepository", () => {
 
     const failedPage = await repository.listOwned(
       owner.id,
-      InventoryQuerySchema.parse({ filter: "FAILED" }),
+      InventoryQuerySchema.parse({ filter: "NEEDS_ATTENTION" }),
     );
     expect(failedPage.items.map(({ id }) => id)).toEqual([failed.id]);
 
@@ -181,5 +182,40 @@ databaseDescribe("PrismaInventoryRepository", () => {
       ),
     ).resolves.toMatchObject({ items: [], nextCursor: null });
     expect(ready.id).not.toBe(foreign.id);
+  });
+
+  it("lists only vehicles a new studio version can be made from", async () => {
+    const owner = await database.user.create({ data: { primaryEmail: ownerEmail } });
+    const [ready, attention] = await Promise.all([
+      database.vehicle.create({
+        data: { name: "Ready", status: "READY", userId: owner.id },
+      }),
+      database.vehicle.create({
+        data: { name: "Needs attention", status: "PARTIALLY_FAILED", userId: owner.id },
+      }),
+      database.vehicle.create({
+        data: { name: "Processing", status: "PROCESSING", userId: owner.id },
+      }),
+      database.vehicle.create({
+        data: { name: "Archived", status: "ARCHIVED", userId: owner.id },
+      }),
+      database.vehicle.create({
+        data: { name: "Draft", status: "DRAFT", userId: owner.id },
+      }),
+    ]);
+
+    const page = await repository.listOwned(
+      owner.id,
+      InventoryQuerySchema.parse({ mode: "CREATE_STUDIO", sort: "NAME_ASC" }),
+    );
+
+    expect(page.items.map(({ id }) => id)).toEqual([attention.id, ready.id]);
+    expect(page.counts).toMatchObject({ all: 2, archived: 0, processing: 0 });
+    await expect(
+      repository.listOwned(
+        owner.id,
+        InventoryQuerySchema.parse({ filter: "PROCESSING", mode: "CREATE_STUDIO" }),
+      ),
+    ).resolves.toMatchObject({ items: [] });
   });
 });

@@ -2,9 +2,11 @@ import type { InventoryQuery } from "@studiocar/contracts";
 import { Button } from "@studiocar/ui";
 import Link from "next/link";
 
+import { INVENTORY_PATH } from "../../app/app-routes";
 import { createInventoryHref } from "./create-inventory-href";
 import {
   INVENTORY_APPLY_LABEL,
+  INVENTORY_MODE_QUERY_KEY,
   INVENTORY_SEARCH_LABEL,
   INVENTORY_SEARCH_PLACEHOLDER,
   INVENTORY_SORT_OPTIONS,
@@ -18,7 +20,7 @@ export interface InventoryToolbarProps {
 export function InventoryToolbar({ query }: InventoryToolbarProps) {
   return (
     <div className="inventory-toolbar">
-      <form action="/inventory" className="inventory-toolbar__form" method="get">
+      <form action={INVENTORY_PATH} className="inventory-toolbar__form" method="get">
         <label className="sc-visually-hidden" htmlFor="inventory-search">
           {INVENTORY_SEARCH_LABEL}
         </label>
@@ -47,6 +49,9 @@ export function InventoryToolbar({ query }: InventoryToolbarProps) {
         </select>
         {query.filter !== "ALL" ? (
           <input name="filter" type="hidden" value={query.filter} />
+        ) : null}
+        {query.mode !== "BROWSE" ? (
+          <input name={INVENTORY_MODE_QUERY_KEY} type="hidden" value={query.mode} />
         ) : null}
         {query.view !== "GRID" ? (
           <input name="view" type="hidden" value={query.view} />

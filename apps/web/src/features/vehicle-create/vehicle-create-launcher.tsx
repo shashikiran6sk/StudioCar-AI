@@ -28,7 +28,7 @@ export function VehicleCreateLauncher() {
       options,
       idempotencyKey,
       {
-        navigateToInventory: () => router.push(INVENTORY_PATH),
+        navigate: () => router.push(INVENTORY_PATH),
         refresh: () => router.refresh(),
         register: (jobs) => useProcessingStatusStore.getState().register(jobs),
       },

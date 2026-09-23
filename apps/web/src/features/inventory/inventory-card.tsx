@@ -1,5 +1,5 @@
 import type { InventoryItem } from "@studiocar/contracts";
-import { ButtonLink, Progress, StatusBadge } from "@studiocar/ui";
+import { Progress, StatusBadge } from "@studiocar/ui";
 import Image from "next/image";
 
 import { calculateInventoryCompletion } from "./calculate-inventory-completion";
@@ -9,17 +9,21 @@ import {
   INVENTORY_ATTENTION_COUNT_LABEL,
   INVENTORY_COMPLETE_COUNT_LABEL,
   INVENTORY_IMAGE_FALLBACK_LABEL,
-  INVENTORY_OPEN_PORTFOLIO_LABEL,
   INVENTORY_STATUS_PRESENTATION,
 } from "./inventory.constants";
+import { InventoryCardAction } from "./inventory-card-action";
 import { inventoryVehicleMetadata } from "./inventory-vehicle-metadata";
-import { createVehiclePortfolioPath } from "../portfolio/create-vehicle-portfolio-path";
 
 export interface InventoryCardProps {
   item: InventoryItem;
+  /**
+   * Present while choosing a vehicle for a new studio version: the card's
+   * action opens the Selection Dialog on this vehicle instead.
+   */
+  selectHref?: string | undefined;
 }
 
-export function InventoryCard({ item }: InventoryCardProps) {
+export function InventoryCard({ item, selectHref }: InventoryCardProps) {
   const presentation = INVENTORY_STATUS_PRESENTATION[item.status];
   const completion = calculateInventoryCompletion(
     item.completedImageCount,
@@ -74,16 +78,7 @@ export function InventoryCard({ item }: InventoryCardProps) {
             {formatInventoryImageCount(item.failedImageCount)} {INVENTORY_ATTENTION_COUNT_LABEL}
           </p>
         ) : null}
-        {item.completedImageCount > 0 ? (
-          <ButtonLink
-            className="inventory-card__portfolio"
-            href={createVehiclePortfolioPath(item.id)}
-            size="small"
-            variant="ghost"
-          >
-            {INVENTORY_OPEN_PORTFOLIO_LABEL} →
-          </ButtonLink>
-        ) : null}
+        <InventoryCardAction item={item} selectHref={selectHref} />
       </div>
     </article>
   );

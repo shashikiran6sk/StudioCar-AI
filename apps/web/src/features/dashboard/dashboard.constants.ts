@@ -1,4 +1,5 @@
 import { INVENTORY_PATH } from "../../app/app-routes";
+import { INVENTORY_CREATE_STUDIO_HREF } from "../inventory/inventory.constants";
 
 export const DASHBOARD_DESCRIPTION =
   "Here’s how your vehicle imagery is moving today.";
@@ -24,12 +25,30 @@ export const DASHBOARD_ERROR_DESCRIPTION =
   "Your vehicles and processing jobs are safe. Try loading the workspace again.";
 export const DASHBOARD_RETRY_LABEL = "Try again";
 
+export const DASHBOARD_OPEN_LABEL = "Open";
+
 /**
- * Each action carries its own imagery so the card shows what it does. The third
- * action opens completed vehicles in inventory, which is why it is named for
- * the results it reveals rather than for a destination that no longer exists.
+ * Each action carries its own imagery so the card shows what it does. The
+ * third action changes with the account: it creates another studio version,
+ * or, when processing needs the user, leads to what needs fixing.
  */
 export const DASHBOARD_QUICK_ACTIONS = {
+  attention: {
+    cta: "Review issues",
+    imageAlt: "A finished studio image of a vehicle on a white sweep.",
+    imageLabel: "Attention",
+    imagePath: "/images/dashboard/studio-results.webp",
+    title: "Attention needed",
+  },
+  createStudio: {
+    cta: "Create images",
+    description: "Create another studio version from an existing vehicle.",
+    href: INVENTORY_CREATE_STUDIO_HREF,
+    imageAlt: "A finished studio image of a vehicle on a white sweep.",
+    imageLabel: "Studio",
+    imagePath: "/images/dashboard/studio-results.webp",
+    title: "Create studio images",
+  },
   inventory: {
     description: "Manage processing and completed vehicle image batches.",
     href: INVENTORY_PATH,
@@ -37,14 +56,6 @@ export const DASHBOARD_QUICK_ACTIONS = {
     imagePath: "/images/dashboard/vehicle-inventory.webp",
     imageLabel: "Live",
     title: "View inventory",
-  },
-  results: {
-    description: "Review, compare, and download showroom-ready images.",
-    href: `${INVENTORY_PATH}?filter=COMPLETED`,
-    imageAlt: "A finished studio image of a vehicle on a white sweep.",
-    imagePath: "/images/dashboard/studio-results.webp",
-    imageLabel: "Ready",
-    title: "Recent results",
   },
   upload: {
     description: "Add details, photos, and a consistent studio treatment.",

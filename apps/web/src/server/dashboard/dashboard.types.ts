@@ -1,4 +1,4 @@
-import type { DashboardSummary } from "@studiocar/contracts";
+import type { DashboardAttention, DashboardSummary } from "@studiocar/contracts";
 import type { DashboardRepositoryMetrics } from "../db/repositories/dashboard-repository";
 import type { PlanUsageSummary } from "../plan-usage/plan-usage.types";
 
@@ -8,6 +8,7 @@ export interface DashboardRepositoryPort {
     billingPeriodKey: string,
     periodStart: Date,
   ): Promise<DashboardRepositoryMetrics>;
+  getOwnedAttention(userId: string): Promise<DashboardAttention>;
 }
 
 /**

@@ -144,6 +144,28 @@ describe("handleCreateProcessingBatch", () => {
     ).toBe(503);
   });
 
+  it("explains that a vehicle already processing cannot start another batch", async () => {
+    const jobs: ProcessingJobApplication = {
+      createBatch: vi.fn().mockResolvedValue({ ok: false, reason: "VEHICLE_UNAVAILABLE" }),
+    };
+
+    const response = await handleCreateProcessingBatch(
+      createRequest({ vehicleId: VEHICLE_ID, assetIds: [ASSET_ID], options: {} }),
+      session,
+      jobs,
+      allowingRateLimiter(),
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      error: {
+        code: "CONFLICT",
+        message:
+          "This vehicle is still processing another batch. Wait for it to finish, then try again.",
+      },
+    });
+  });
+
   it("returns a retry window without reserving a processing batch", async () => {
     const jobs: ProcessingJobApplication = { createBatch: vi.fn() };
     const rateLimiter: CommandRateLimiterPort = {

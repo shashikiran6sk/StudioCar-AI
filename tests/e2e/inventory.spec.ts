@@ -260,6 +260,120 @@ inventoryTest(
       await close.click();
       await expect(close).toHaveCount(0);
 
+      // Nothing needs attention, so the third quick action creates another
+      // studio version by choosing a vehicle in Inventory.
+      await page.goto("/dashboard");
+      await expect(
+        page.getByRole("heading", { name: "Create studio images" }),
+      ).toBeVisible();
+      await page.getByRole("link", { name: "Create images →" }).click();
+      await expect(page).toHaveURL(/\/inventory\?mode=CREATE_STUDIO$/);
+      await expect(
+        page.getByRole("heading", { name: "Choose a vehicle", level: 1 }),
+      ).toBeVisible();
+      await page.screenshot({
+        path: testInfo.outputPath("desktop-create-studio-inventory.png"),
+      });
+      await page.getByRole("link", { name: /Create images/ }).click();
+      const variantDialog = page.getByRole("dialog", { name: "Choose photos" });
+      await expect(variantDialog).toBeVisible();
+      await expect(variantDialog).toContainText("New studio version");
+      await expect(
+        variantDialog.getByRole("checkbox", { name: "Include source.jpg" }),
+      ).toBeChecked();
+      await page.screenshot({
+        animations: "disabled",
+        path: testInfo.outputPath("desktop-create-studio-dialog.png"),
+      });
+      await variantDialog.getByRole("button", { name: "Cancel" }).click();
+      await expect(page).toHaveURL(/\/inventory\?mode=CREATE_STUDIO$/);
+      await expect(variantDialog).toHaveCount(0);
+
+      // A newer batch then fails terminally: one vehicle needs attention, so
+      // the dashboard leads straight to its portfolio.
+      const failedJobId = randomUUID();
+      await database.query(
+        'INSERT INTO "ProcessingJob" ("id", "userId", "vehicleId", "imageAssetId", "status", "provider", "options", "idempotencyKey", "batchIdempotencyKey", "errorCode", "failedAt", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+        [
+          failedJobId,
+          userId,
+          vehicleId,
+          imageAssetId,
+          "FAILED",
+          "REMOVEBG",
+          JSON.stringify({ background: "DARK_STUDIO", floor: "PLAIN" }),
+          "inventory-e2e-failed-job",
+          "inventory-e2e-failed-batch",
+          "PROVIDER_TIMEOUT",
+        ],
+      );
+      await database.query(
+        'UPDATE "Vehicle" SET "status" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $2',
+        ["PARTIALLY_FAILED", vehicleId],
+      );
+      await page.goto("/dashboard");
+      await expect(page.getByRole("heading", { name: "Attention needed" }))
+        .toBeVisible();
+      await expect(page.getByText("1 vehicle needs your attention.")).toBeVisible();
+      // The recent-vehicle card offers the same review; use the quick action.
+      await page
+        .locator(".dashboard-actions")
+        .getByRole("link", { name: "Review issues →" })
+        .click();
+      await expect(page).toHaveURL(new RegExp(`/inventory/${vehicleId}#attention$`));
+      const attention = page.getByRole("region", { name: "Needs your attention" });
+      await expect(attention).toBeFocused();
+      await expect(attention).toContainText("1 of 1 image needs attention");
+      await expect(attention).toContainText("Dark Studio · Plain background");
+      await expect(attention).not.toContainText("PROVIDER_TIMEOUT");
+      // The completed version stays visible beside the failure.
+      await expect(
+        page.getByRole("slider", { name: "Compare original and processed image" }),
+      ).toBeVisible();
+      await page.screenshot({
+        fullPage: true,
+        path: testInfo.outputPath("desktop-portfolio-attention.png"),
+      });
+
+      await attention.getByRole("link", { name: "Re-process" }).click();
+      const reprocessDialog = page.getByRole("dialog", { name: "Choose photos" });
+      await expect(reprocessDialog).toContainText("Re-process failed images");
+      await expect(
+        reprocessDialog.getByRole("checkbox", { name: "Include source.jpg" }),
+      ).toBeChecked();
+      await expect(reprocessDialog).toContainText("Processing failed");
+      await reprocessDialog
+        .getByRole("button", { name: "Continue to customize →" })
+        .click();
+      const customizeDialog = page.getByRole("dialog", {
+        name: "Customize treatment",
+      });
+      await expect(
+        customizeDialog.getByRole("button", { name: "Dark Studio" }),
+      ).toHaveAttribute("aria-pressed", "true");
+      await expect(
+        customizeDialog.getByRole("button", { name: "Plain background" }),
+      ).toHaveAttribute("aria-pressed", "true");
+      await page.screenshot({
+        animations: "disabled",
+        path: testInfo.outputPath("desktop-reprocess-dialog.png"),
+      });
+      await customizeDialog.getByRole("button", { name: "Close dialog" }).click();
+      await expect(page).toHaveURL(new RegExp(`/inventory/${vehicleId}$`));
+
+      await page.goto("/inventory?filter=NEEDS_ATTENTION");
+      await expect(page.getByRole("link", { name: /Review issues/ })).toHaveAttribute(
+        "href",
+        `/inventory/${vehicleId}#attention`,
+      );
+      await database.query(
+        'UPDATE "Vehicle" SET "status" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $2',
+        ["READY", vehicleId],
+      );
+      await database.query('DELETE FROM "ProcessingJob" WHERE "id" = $1', [
+        failedJobId,
+      ]);
+
       await page.setViewportSize({ height: 844, width: 390 });
       await page.goto(`/inventory/${vehicleId}`);
       await expect(page.getByRole("button", { name: "Enter full screen" }))

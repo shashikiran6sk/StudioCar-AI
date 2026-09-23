@@ -9,6 +9,7 @@ describe("DashboardStats", () => {
       <DashboardStats
         summary={{
           activeImageCount: 4,
+          attention: { vehicleCount: 0, vehicleId: null },
           imagesProcessed: 2_460,
           imagesProcessedThisPeriod: 6,
           imagesRemaining: 3,

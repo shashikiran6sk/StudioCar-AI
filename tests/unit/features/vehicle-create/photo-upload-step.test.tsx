@@ -5,6 +5,13 @@ import { PhotoUploadStep } from "../../../../apps/web/src/features/vehicle-creat
 import type { uploadPhoto } from "../../../../apps/web/src/features/vehicle-create/upload-photo";
 import { PhotoUploadStatus } from "../../../../apps/web/src/features/vehicle-create/photo-upload-status";
 import { useVehicleCreateStore } from "../../../../apps/web/src/features/vehicle-create/vehicle-create-store";
+import {
+  FIRST_ASSET_ID,
+  SECOND_ASSET_ID,
+  THIRD_ASSET_ID,
+  failedSelectionContext,
+  selectionContext,
+} from "./studio-selection-test-data";
 
 describe("PhotoUploadStep", () => {
   beforeEach(() => {
@@ -27,7 +34,7 @@ describe("PhotoUploadStep", () => {
       async (_vehicleId, photo, callbacks) => {
         callbacks.onStatus(PhotoUploadStatus.Uploading);
         callbacks.onProgress(60);
-        if (photo.file.name === "rear.jpg") {
+        if (photo.filename === "rear.jpg") {
           throw new Error("Network interrupted.");
         }
         callbacks.onStatus(PhotoUploadStatus.Finalizing);
@@ -66,7 +73,7 @@ describe("PhotoUploadStep", () => {
       screen.getByRole("button", { name: "Continue to customize →" }),
     );
     expect(onContinue).toHaveBeenCalledOnce();
-    expect(useVehicleCreateStore.getState().photos[0]?.file.name).toBe(
+    expect(useVehicleCreateStore.getState().photos[0]?.filename).toBe(
       "front.jpg",
     );
   });
@@ -147,5 +154,155 @@ describe("PhotoUploadStep", () => {
       screen.getByText("Studio Plus plan · Up to 20 images per batch."),
     ).toBeInTheDocument();
     expect(screen.queryByText(/Up to 3 images/)).not.toBeInTheDocument();
+  });
+
+  it("lets an existing vehicle's photos be kept or left out", () => {
+    act(() => useVehicleCreateStore.getState().initialize(selectionContext()));
+    const onContinue = vi.fn();
+    const onBack = vi.fn();
+    render(
+      <PhotoUploadStep
+        limitLabel="Free plan · Up to 5 images per batch."
+        maximumPhotos={5}
+        note="These are the photos of the version you started from."
+        onBack={onBack}
+        onContinue={onContinue}
+        upload={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText("These are the photos of the version you started from."),
+    ).toBeVisible();
+    expect(screen.getByText("Image 1 · front.jpg")).toBeVisible();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Include front.jpg" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Include side.jpg" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue to customize →" }),
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Select at least one photo to process.",
+    );
+    expect(onContinue).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Include side.jpg" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue to customize →" }),
+    );
+    expect(onContinue).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(onBack).toHaveBeenCalledOnce();
+  });
+
+  it("stops at the plan's batch limit counting only selected photos", () => {
+    act(() => useVehicleCreateStore.getState().initialize(selectionContext()));
+    const onContinue = vi.fn();
+    render(
+      <PhotoUploadStep
+        limitLabel="Free plan · Up to 1 image per batch."
+        maximumPhotos={1}
+        onBack={vi.fn()}
+        onContinue={onContinue}
+        upload={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue to customize →" }),
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Select up to 1 photos for one batch.",
+    );
+    fireEvent.click(screen.getByRole("checkbox", { name: "Include front.jpg" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue to customize →" }),
+    );
+    expect(onContinue).toHaveBeenCalledOnce();
+  });
+
+  it("marks failed photos and uploads a replacement in the failed photo's place", async () => {
+    act(() =>
+      useVehicleCreateStore
+        .getState()
+        .initialize(failedSelectionContext("REPLACE_FAILED")),
+    );
+    const upload = vi.fn<typeof uploadPhoto>(async () => ({
+      assetId: "664d4158-ec0b-4e4d-96cb-b684d8b1bf57",
+      height: 1080,
+      width: 1920,
+    }));
+    const onContinue = vi.fn();
+    render(
+      <PhotoUploadStep
+        limitLabel="Free plan · Up to 5 images per batch."
+        maximumPhotos={5}
+        onBack={vi.fn()}
+        onContinue={onContinue}
+        upload={upload}
+      />,
+    );
+
+    expect(screen.getByText(/couldn't be read/)).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: "Include rear.jpg" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Replace image front.jpg" }))
+      .not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Replace image rear.jpg" }));
+    fireEvent.change(screen.getByLabelText("Choose a replacement photo"), {
+      target: {
+        files: [new File(["new"], "rear-retake.jpg", { type: "image/jpeg" })],
+      },
+    });
+
+    await waitFor(() =>
+      expect(upload).toHaveBeenCalledWith(
+        "0e879f46-1193-4d77-b785-057fe026d998",
+        expect.objectContaining({ filename: "rear-retake.jpg" }),
+        expect.any(Object),
+      ),
+    );
+    await screen.findByText("Image 3 · rear-retake.jpg");
+    const photos = useVehicleCreateStore.getState().photos;
+    expect(photos.map((photo) => photo.assetId)).toEqual([
+      FIRST_ASSET_ID,
+      SECOND_ASSET_ID,
+      "664d4158-ec0b-4e4d-96cb-b684d8b1bf57",
+    ]);
+    expect(photos.some((photo) => photo.assetId === THIRD_ASSET_ID)).toBe(false);
+    expect(photos[2]).toMatchObject({ failureReason: null, selected: true });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue to customize →" }),
+    );
+    expect(onContinue).toHaveBeenCalledOnce();
+  });
+
+  it("rejects an unsupported replacement and keeps the failed photo", () => {
+    act(() =>
+      useVehicleCreateStore
+        .getState()
+        .initialize(failedSelectionContext("REPLACE_FAILED")),
+    );
+    const upload = vi.fn<typeof uploadPhoto>();
+    render(
+      <PhotoUploadStep
+        limitLabel="Free plan · Up to 5 images per batch."
+        maximumPhotos={5}
+        onBack={vi.fn()}
+        onContinue={vi.fn()}
+        upload={upload}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Replace image rear.jpg" }));
+    fireEvent.change(screen.getByLabelText("Choose a replacement photo"), {
+      target: { files: [new File(["x"], "notes.txt", { type: "text/plain" })] },
+    });
+
+    expect(screen.getByText(/notes\.txt:/)).toBeVisible();
+    expect(upload).not.toHaveBeenCalled();
+    expect(
+      useVehicleCreateStore.getState().photos.map((photo) => photo.assetId),
+    ).toContain(THIRD_ASSET_ID);
   });
 });

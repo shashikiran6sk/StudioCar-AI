@@ -7,11 +7,20 @@ import {
 export interface InventoryBatchSummary {
   completedImageCount: number;
   failedImageCount: number;
+  hasCompletedOutput: boolean;
   imageCount: number;
   previewObjectKey: string | null;
   vehicleId: string;
 }
 
+/**
+ * Summarises each vehicle's newest batch, plus whether any of its batches
+ * produced a studio image.
+ *
+ * A batch is identified by its idempotency key, not its request hash: an
+ * unchanged re-process has the same hash as the batch it retries, and must
+ * still count as a batch of its own.
+ */
 export async function findInventoryBatchSummaries(
   database: PrismaClient,
   userId: string,
@@ -23,7 +32,7 @@ export async function findInventoryBatchSummaries(
     WITH latest_batch AS (
       SELECT DISTINCT ON (job."vehicleId")
         job."vehicleId",
-        job."batchRequestHash",
+        job."batchIdempotencyKey",
         job."id"
       FROM "ProcessingJob" job
       WHERE job."userId" = ${userId}
@@ -40,15 +49,23 @@ export async function findInventoryBatchSummaries(
         ON latest."vehicleId" = job."vehicleId"
        AND (
          (
-           latest."batchRequestHash" IS NOT NULL
-           AND job."batchRequestHash" = latest."batchRequestHash"
+           latest."batchIdempotencyKey" IS NOT NULL
+           AND job."batchIdempotencyKey" = latest."batchIdempotencyKey"
          )
          OR (
-           latest."batchRequestHash" IS NULL
+           latest."batchIdempotencyKey" IS NULL
            AND job."id" = latest."id"
          )
        )
       WHERE job."userId" = ${userId}
+    ), latest_output AS (
+      SELECT DISTINCT ON (processed."vehicleId")
+        processed."vehicleId",
+        processed."previewObjectKey"
+      FROM "ProcessedAsset" processed
+      WHERE processed."userId" = ${userId}
+        AND processed."vehicleId" IN (${Prisma.join(vehicleIds)})
+      ORDER BY processed."vehicleId", processed."createdAt" DESC, processed."id" DESC
     )
     SELECT
       current_job."vehicleId",
@@ -60,15 +77,21 @@ export async function findInventoryBatchSummaries(
         WHERE current_job."status" = ${ProcessingJobStatus.FAILED}::"ProcessingJobStatus"
            OR current_job."status" = ${ProcessingJobStatus.CANCELLED}::"ProcessingJobStatus"
       )::integer AS "failedImageCount",
-      (
-        ARRAY_AGG(
-          processed."previewObjectKey"
-          ORDER BY current_job."displayOrder", current_job."id"
-        ) FILTER (WHERE processed."previewObjectKey" IS NOT NULL)
-      )[1] AS "previewObjectKey"
+      BOOL_OR(latest_output."vehicleId" IS NOT NULL) AS "hasCompletedOutput",
+      COALESCE(
+        (
+          ARRAY_AGG(
+            processed."previewObjectKey"
+            ORDER BY current_job."displayOrder", current_job."id"
+          ) FILTER (WHERE processed."previewObjectKey" IS NOT NULL)
+        )[1],
+        MAX(latest_output."previewObjectKey")
+      ) AS "previewObjectKey"
     FROM current_job
     LEFT JOIN "ProcessedAsset" processed
       ON processed."jobId" = current_job."id"
+    LEFT JOIN latest_output
+      ON latest_output."vehicleId" = current_job."vehicleId"
     GROUP BY current_job."vehicleId"
   `;
 

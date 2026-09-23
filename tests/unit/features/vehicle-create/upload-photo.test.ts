@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { createPhotoUploadItem } from "../../../../apps/web/src/features/vehicle-create/create-photo-upload-item";
 import { commitPhotoUpload } from "../../../../apps/web/src/features/vehicle-create/commit-photo-upload";
 import { hashFileSha256 } from "../../../../apps/web/src/features/vehicle-create/hash-file-sha256";
 import { putFileWithProgress } from "../../../../apps/web/src/features/vehicle-create/put-file-with-progress";
@@ -45,17 +46,11 @@ describe("uploadPhoto", () => {
     await expect(
       uploadPhoto(
         "0e879f46-1193-4d77-b785-057fe026d998",
-        {
-          assetId: null,
-          clientId: "0a10d8a2-0c9d-45e4-a503-37ca31a74018",
-          error: null,
+        createPhotoUploadItem(
           file,
-          height: null,
-          previewUrl: "blob:preview",
-          progress: 0,
-          status: PhotoUploadStatus.Selected,
-          width: null,
-        },
+          () => "0a10d8a2-0c9d-45e4-a503-37ca31a74018",
+          () => "blob:preview",
+        ),
         { onProgress: vi.fn(), onStatus },
       ),
     ).resolves.toEqual({
@@ -68,5 +63,25 @@ describe("uploadPhoto", () => {
       PhotoUploadStatus.Uploading,
       PhotoUploadStatus.Finalizing,
     ]);
+  });
+
+  it("refuses to upload a stored original that has no local file", async () => {
+    vi.mocked(requestUploadIntent).mockClear();
+
+    await expect(
+      uploadPhoto(
+        "0e879f46-1193-4d77-b785-057fe026d998",
+        {
+          ...createPhotoUploadItem(
+            new File(["image"], "vehicle.jpg", { type: "image/jpeg" }),
+            () => "0a10d8a2-0c9d-45e4-a503-37ca31a74018",
+            () => "blob:preview",
+          ),
+          file: null,
+        },
+        { onProgress: vi.fn(), onStatus: vi.fn() },
+      ),
+    ).rejects.toThrow("Upload failed");
+    expect(requestUploadIntent).not.toHaveBeenCalled();
   });
 });

@@ -40,6 +40,10 @@ describe("DashboardService", () => {
         vehiclesProcessedThisPeriod: 2,
         vehiclesProcessing: 1,
       }),
+      getOwnedAttention: vi.fn().mockResolvedValue({
+        vehicleCount: 1,
+        vehicleId: "4bb7fa89-c907-4458-9786-8aafc2235728",
+      }),
     };
     const inventory = {
       list: vi.fn().mockResolvedValue({
@@ -47,7 +51,7 @@ describe("DashboardService", () => {
           all: 0,
           archived: 0,
           completed: 0,
-          failed: 0,
+          needsAttention: 0,
           processing: 0,
         },
         items: [],
@@ -70,13 +74,19 @@ describe("DashboardService", () => {
       "2026-09",
       new Date("2026-09-01T00:00:00.000Z"),
     );
+    expect(repository.getOwnedAttention).toHaveBeenCalledWith("user-1");
     expect(inventory.list).toHaveBeenCalledWith("user-1", {
       filter: "ALL",
       limit: 3,
+      mode: "BROWSE",
       sort: "CREATED_DESC",
       view: "GRID",
     });
     expect(result).toMatchObject({
+      attention: {
+        vehicleCount: 1,
+        vehicleId: "4bb7fa89-c907-4458-9786-8aafc2235728",
+      },
       imagesProcessed: 24,
       imagesRemaining: 9,
       processingSuccessRate: 95,
@@ -99,6 +109,10 @@ describe("DashboardService", () => {
           vehiclesProcessedThisPeriod: 0,
           vehiclesProcessing: 0,
         }),
+        getOwnedAttention: vi.fn().mockResolvedValue({
+          vehicleCount: 0,
+          vehicleId: null,
+        }),
       },
       {
         list: vi.fn().mockResolvedValue({
@@ -106,7 +120,7 @@ describe("DashboardService", () => {
             all: 0,
             archived: 0,
             completed: 0,
-            failed: 0,
+            needsAttention: 0,
             processing: 0,
           },
           items: [],

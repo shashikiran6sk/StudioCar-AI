@@ -3,16 +3,17 @@ import { ButtonLink, StatusBadge } from "@studiocar/ui";
 
 import { DashboardQuickActionCard } from "./dashboard-quick-action-card";
 import {
+  DASHBOARD_OPEN_LABEL,
   DASHBOARD_QUICK_ACTIONS,
   DASHBOARD_QUICK_ACTIONS_TITLE,
 } from "./dashboard.constants";
+import { describeAttentionQuickAction } from "./describe-attention-quick-action";
 import { formatDashboardCount } from "./format-dashboard-count";
 import { VehicleCreateLauncher } from "../vehicle-create/vehicle-create-launcher";
 
 const NEW_BATCH_LABEL = "New batch";
 const READY_LABEL = "ready";
 const PROCESSING_LABEL = "processing";
-const OPEN_LABEL = "Open";
 
 export interface DashboardQuickActionsProps {
   summary: DashboardSummary;
@@ -21,6 +22,8 @@ export interface DashboardQuickActionsProps {
 export function DashboardQuickActions({
   summary,
 }: DashboardQuickActionsProps) {
+  const third = describeAttentionQuickAction(summary.attention);
+
   return (
     <section className="dashboard-section">
       <h2>{DASHBOARD_QUICK_ACTIONS_TITLE}</h2>
@@ -41,7 +44,7 @@ export function DashboardQuickActions({
               size="small"
               variant="ghost"
             >
-              {OPEN_LABEL} →
+              {DASHBOARD_OPEN_LABEL} →
             </ButtonLink>
           }
           description={DASHBOARD_QUICK_ACTIONS.inventory.description}
@@ -57,24 +60,24 @@ export function DashboardQuickActions({
         />
         <DashboardQuickActionCard
           action={
-            <ButtonLink
-              href={DASHBOARD_QUICK_ACTIONS.results.href}
-              size="small"
-              variant="ghost"
-            >
-              {OPEN_LABEL} →
+            <ButtonLink href={third.href} size="small" variant="ghost">
+              {third.cta} →
             </ButtonLink>
           }
-          description={DASHBOARD_QUICK_ACTIONS.results.description}
-          imageAlt={DASHBOARD_QUICK_ACTIONS.results.imageAlt}
-          imageLabel={DASHBOARD_QUICK_ACTIONS.results.imageLabel}
-          imagePath={DASHBOARD_QUICK_ACTIONS.results.imagePath}
+          description={third.description}
+          imageAlt={third.imageAlt}
+          imageLabel={third.imageLabel}
+          imagePath={third.imagePath}
           status={
-            <StatusBadge status="completed">
-              {formatDashboardCount(summary.vehiclesProcessed)} {READY_LABEL}
-            </StatusBadge>
+            third.statusLabel ? (
+              <StatusBadge status="failed">{third.statusLabel}</StatusBadge>
+            ) : (
+              <StatusBadge status="completed">
+                {formatDashboardCount(summary.vehiclesProcessed)} {READY_LABEL}
+              </StatusBadge>
+            )
           }
-          title={DASHBOARD_QUICK_ACTIONS.results.title}
+          title={third.title}
         />
       </div>
     </section>

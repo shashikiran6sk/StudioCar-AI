@@ -6,6 +6,12 @@ import type { requestCreateVehicleDraft } from "../../../../apps/web/src/feature
 import type { requestUpdateVehicleDraft } from "../../../../apps/web/src/features/vehicle-create/request-update-vehicle-draft";
 import type { uploadPhoto } from "../../../../apps/web/src/features/vehicle-create/upload-photo";
 import { useVehicleCreateStore } from "../../../../apps/web/src/features/vehicle-create/vehicle-create-store";
+import {
+  SECOND_ASSET_ID,
+  VEHICLE_ID,
+  failedSelectionContext,
+  selectionContext,
+} from "./studio-selection-test-data";
 
 describe("VehicleCreateDialog", () => {
   beforeEach(() => {
@@ -89,5 +95,124 @@ describe("VehicleCreateDialog", () => {
     );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(useVehicleCreateStore.getState().vehicleId).toBeNull();
+  });
+
+  it("opens a new studio version on the vehicle's photos and submits a changed treatment", async () => {
+    const onProcess = vi.fn(async () => undefined);
+    const onCancel = vi.fn();
+    const createDraft = vi.fn<typeof requestCreateVehicleDraft>();
+    render(
+      <VehicleCreateDialog
+        batchLimitLabel="Free plan · Up to 5 images per batch."
+        context={selectionContext()}
+        createDraft={createDraft}
+        maxImagesPerBatch={5}
+        onCancel={onCancel}
+        onProcess={onProcess}
+      />,
+    );
+
+    expect(
+      await screen.findByRole("dialog", { name: "Choose photos" }),
+    ).toBeVisible();
+    expect(screen.getByText("New studio version")).toBeVisible();
+    expect(screen.getByRole("img", { name: "Step 1 of 3" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Include front.jpg" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Include side.jpg" })).toBeChecked();
+
+    fireEvent.click(screen.getByRole("button", { name: "Continue to customize →" }));
+    expect(screen.getByRole("button", { name: "Premium White" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Dark Studio" }));
+    fireEvent.click(screen.getByRole("button", { name: "Plain background" }));
+    fireEvent.click(screen.getByRole("button", { name: "Review batch →" }));
+    expect(screen.getByRole("heading", { name: "2024 BMW X1" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Process Photos" }));
+
+    await waitFor(() => expect(onProcess).toHaveBeenCalledOnce());
+    expect(onProcess).toHaveBeenCalledWith(
+      VEHICLE_ID,
+      ["331a1e25-b9d8-4b1a-a398-8351a58f8c24", SECOND_ASSET_ID],
+      expect.objectContaining({ background: "DARK_STUDIO", floor: "PLAIN" }),
+      expect.any(String),
+    );
+    expect(createDraft).not.toHaveBeenCalled();
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("restores a failed batch's selection and treatment for Re-process", async () => {
+    const onProcess = vi.fn(async () => undefined);
+    render(
+      <VehicleCreateDialog
+        batchLimitLabel="Free plan · Up to 5 images per batch."
+        context={failedSelectionContext("REPROCESS_FAILED")}
+        maxImagesPerBatch={5}
+        onProcess={onProcess}
+      />,
+    );
+
+    expect(await screen.findByText("Re-process failed images")).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: "Include front.jpg" })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Include side.jpg" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Include rear.jpg" })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Continue to customize →" }));
+    fireEvent.click(screen.getByRole("button", { name: "Review batch →" }));
+    fireEvent.click(screen.getByRole("button", { name: "Process Photos" }));
+
+    await waitFor(() => expect(onProcess).toHaveBeenCalledOnce());
+    expect(onProcess).toHaveBeenCalledWith(
+      VEHICLE_ID,
+      [SECOND_ASSET_ID],
+      expect.objectContaining({ background: "DARK_STUDIO", floor: "PLAIN" }),
+      expect.any(String),
+    );
+  });
+
+  it("returns to where it was opened from when cancelled", async () => {
+    const onCancel = vi.fn();
+    render(
+      <VehicleCreateDialog
+        batchLimitLabel="Free plan · Up to 5 images per batch."
+        context={failedSelectionContext("REPLACE_FAILED")}
+        maxImagesPerBatch={5}
+        onCancel={onCancel}
+        onProcess={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText("Replace failed images")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(onCancel).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(useVehicleCreateStore.getState().mode).toBe("NEW_UPLOAD");
+  });
+
+  it("keeps the person's choices when the page hands over a fresh context", async () => {
+    const { rerender } = render(
+      <VehicleCreateDialog
+        batchLimitLabel="Free plan · Up to 5 images per batch."
+        context={selectionContext()}
+        maxImagesPerBatch={5}
+        onProcess={vi.fn()}
+      />,
+    );
+    const front = await screen.findByRole("checkbox", { name: "Include front.jpg" });
+    fireEvent.click(front);
+
+    rerender(
+      <VehicleCreateDialog
+        batchLimitLabel="Free plan · Up to 5 images per batch."
+        context={selectionContext()}
+        maxImagesPerBatch={5}
+        onProcess={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("checkbox", { name: "Include front.jpg" })).not.toBeChecked();
   });
 });

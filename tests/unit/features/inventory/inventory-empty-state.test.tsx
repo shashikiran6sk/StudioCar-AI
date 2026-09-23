@@ -25,4 +25,13 @@ describe("InventoryEmptyState", () => {
     expect(screen.queryByRole("button", { name: "+ Upload Vehicle" }))
       .not.toBeInTheDocument();
   });
+
+  it("explains an empty choice of vehicles without offering an upload", () => {
+    render(<InventoryEmptyState choosing filtered={false} />);
+
+    expect(screen.getByRole("heading", { name: "No vehicles are ready yet" }))
+      .toBeVisible();
+    expect(screen.queryByRole("button", { name: "+ Upload Vehicle" }))
+      .not.toBeInTheDocument();
+  });
 });

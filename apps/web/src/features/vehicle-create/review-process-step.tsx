@@ -3,12 +3,13 @@
 import type { ProcessingOptions } from "@studiocar/contracts";
 import { Button } from "@studiocar/ui";
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { formatBackgroundTreatment } from "./format-background-treatment";
 import { formatFloorStyle } from "./format-floor-style";
 import { STUDIO_SCENE_BACKGROUNDS } from "./processing-option.constants";
 import { formatPhotoCount } from "./format-photo-count";
+import { ProcessingBatchRequestError } from "./processing-batch-request-error";
 import {
   REVIEW_BACKGROUND_LABEL,
   REVIEW_FLOOR_LABEL,
@@ -47,23 +48,38 @@ export function ReviewProcessStep({
   const vehicleId = useVehicleCreateStore((state) => state.vehicleId);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const firstPhoto = photos[0];
-  const assetIds = photos.flatMap((photo) =>
+  // State updates land after the event, so a second click in the same frame
+  // would still see `pending` as false; the ref closes that gap.
+  const submitting = useRef(false);
+  const selectedPhotos = photos.filter((photo) => photo.selected);
+  const firstPhoto = selectedPhotos[0];
+  const assetIds = selectedPhotos.flatMap((photo) =>
     photo.assetId ? [photo.assetId] : [],
   );
 
   async function processPhotos() {
-    if (!vehicleId || assetIds.length !== photos.length) {
+    if (submitting.current) return;
+    if (
+      !vehicleId ||
+      assetIds.length === 0 ||
+      assetIds.length !== selectedPhotos.length
+    ) {
       setError(REVIEW_PROCESS_ERROR);
       return;
     }
+    submitting.current = true;
     setError(null);
     setPending(true);
     try {
       await onProcess(vehicleId, assetIds, options);
-    } catch {
-      setError(REVIEW_PROCESS_ERROR);
+    } catch (caught) {
+      setError(
+        caught instanceof ProcessingBatchRequestError
+          ? caught.message
+          : REVIEW_PROCESS_ERROR,
+      );
     } finally {
+      submitting.current = false;
       setPending(false);
     }
   }
@@ -73,7 +89,7 @@ export function ReviewProcessStep({
       <div className="review-process-step__summary">
         {firstPhoto ? (
           <Image
-            alt={firstPhoto.file.name}
+            alt={firstPhoto.filename}
             className="review-process-step__image"
             height={132}
             src={firstPhoto.previewUrl}
@@ -89,7 +105,7 @@ export function ReviewProcessStep({
           <dl className="review-process-step__facts">
             <div>
               <dt>{REVIEW_IMAGE_LABEL}</dt>
-              <dd>{formatPhotoCount(photos.length)}</dd>
+              <dd>{formatPhotoCount(selectedPhotos.length)}</dd>
             </div>
             <div>
               <dt>{REVIEW_PLATE_PRIVACY_LABEL}</dt>
@@ -121,7 +137,7 @@ export function ReviewProcessStep({
           <div className="review-process-step__usage">
             <span>{REVIEW_ESTIMATED_USAGE_LABEL}</span>
             <strong>
-              {String(photos.length)} {REVIEW_CREDIT_LABEL}
+              {String(selectedPhotos.length)} {REVIEW_CREDIT_LABEL}
             </strong>
           </div>
         </div>

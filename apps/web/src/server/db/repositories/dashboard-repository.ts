@@ -1,10 +1,15 @@
+import type { DashboardAttention } from "@studiocar/contracts";
 import type { PrismaClient } from "@studiocar/database-runtime";
+import { NEEDS_ATTENTION_VEHICLE_STATUSES } from "../../vehicles/vehicle-status-groups.constants";
 import {
   ImageAssetStatus,
   ProcessingJobStatus,
   UsageEventType,
   VehicleStatus,
 } from "@studiocar/database-runtime";
+
+/** Enough to tell one affected vehicle from several. */
+const ATTENTION_VEHICLE_SAMPLE_SIZE = 2;
 
 const PROCESSED_VEHICLE_STATUSES = [
   VehicleStatus.READY,
@@ -112,5 +117,28 @@ export class PrismaDashboardRepository {
       vehiclesProcessedThisPeriod: vehiclesProcessedThisPeriod.length,
       vehiclesProcessing,
     };
+  }
+
+  /**
+   * Counts vehicles, not images: three failed photos of one car are one thing
+   * to fix. The vehicle is named only when it is the only one.
+   */
+  public async getOwnedAttention(userId: string): Promise<DashboardAttention> {
+    const where = {
+      userId,
+      status: { in: NEEDS_ATTENTION_VEHICLE_STATUSES },
+    };
+    const [vehicleCount, sample] = await Promise.all([
+      this.database.vehicle.count({ where }),
+      this.database.vehicle.findMany({
+        where,
+        orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+        take: ATTENTION_VEHICLE_SAMPLE_SIZE,
+        select: { id: true },
+      }),
+    ]);
+    const onlyVehicle = sample.length === 1 ? sample[0] : undefined;
+
+    return { vehicleCount, vehicleId: onlyVehicle?.id ?? null };
   }
 }

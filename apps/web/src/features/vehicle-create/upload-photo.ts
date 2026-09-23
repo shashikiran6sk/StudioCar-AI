@@ -9,6 +9,7 @@ import type {
 import { PhotoUploadStatus } from "./photo-upload-status";
 import { putFileWithProgress } from "./put-file-with-progress";
 import { requestUploadIntent } from "./request-upload-intent";
+import { PHOTO_UPLOAD_GENERIC_ERROR } from "./vehicle-create.constants";
 
 export interface UploadPhotoCallbacks {
   onProgress: (progress: number) => void;
@@ -21,21 +22,23 @@ export async function uploadPhoto(
   photo: PhotoUploadItem,
   callbacks: UploadPhotoCallbacks,
 ): Promise<PhotoUploadSuccess> {
+  const file = photo.file;
+  if (!file) throw new Error(PHOTO_UPLOAD_GENERIC_ERROR);
   callbacks.onStatus(PhotoUploadStatus.Preparing);
-  const checksumSha256 = await hashFileSha256(photo.file);
+  const checksumSha256 = await hashFileSha256(file);
   const intent = await requestUploadIntent(
     {
       vehicleId,
-      filename: photo.file.name,
-      mimeType: SupportedImageMimeTypeSchema.parse(photo.file.type),
-      sizeBytes: photo.file.size,
+      filename: file.name,
+      mimeType: SupportedImageMimeTypeSchema.parse(file.type),
+      sizeBytes: file.size,
       checksumSha256,
     },
     photo.clientId,
   );
   callbacks.onStatus(PhotoUploadStatus.Uploading);
   const etag = await putFileWithProgress(
-    photo.file,
+    file,
     intent.uploadUrl,
     intent.headers,
     callbacks.onProgress,

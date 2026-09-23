@@ -5,6 +5,7 @@ import {
   JobStatusQuerySchema,
   JobStatusResponseSchema,
   JobStatusSchema,
+  ProcessingFailureReasonSchema,
 } from "../../../packages/contracts/src/jobs";
 
 const jobId = "4f9d4891-157f-49ed-aa5a-c026abc0a768";
@@ -86,5 +87,20 @@ describe("job contracts", () => {
         options: {},
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("ProcessingFailureReasonSchema", () => {
+  it("accepts only reasons written for the user, never provider codes", () => {
+    expect(ProcessingFailureReasonSchema.options).toEqual([
+      "UNUSABLE_IMAGE",
+      "BACKGROUND_REMOVAL_FAILED",
+      "SERVICE_UNAVAILABLE",
+      "PROCESSING_FAILED",
+      "CANCELLED",
+    ]);
+    expect(ProcessingFailureReasonSchema.safeParse("PROVIDER_TIMEOUT").success).toBe(
+      false,
+    );
   });
 });

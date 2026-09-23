@@ -16,6 +16,18 @@ export const JobStateSchema = z.enum([
   "CANCELLED",
 ]);
 
+/**
+ * Why a job ended without a processed image, in terms a person can act on.
+ * Provider error codes and worker messages never cross this boundary.
+ */
+export const ProcessingFailureReasonSchema = z.enum([
+  "UNUSABLE_IMAGE",
+  "BACKGROUND_REMOVAL_FAILED",
+  "SERVICE_UNAVAILABLE",
+  "PROCESSING_FAILED",
+  "CANCELLED",
+]);
+
 export const ProcessingStageSchema = z.enum([
   "UPLOADING",
   "QUEUED",
@@ -113,6 +125,9 @@ export const CreateProcessingBatchResponseSchema = z
   .strict();
 
 export type JobState = z.infer<typeof JobStateSchema>;
+export type ProcessingFailureReason = z.infer<
+  typeof ProcessingFailureReasonSchema
+>;
 export type ProcessingStage = z.infer<typeof ProcessingStageSchema>;
 export type JobStatus = z.infer<typeof JobStatusSchema>;
 export type JobStatusQuery = z.infer<typeof JobStatusQuerySchema>;

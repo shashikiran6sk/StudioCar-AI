@@ -11,14 +11,21 @@ export const InventoryFilterSchema = z.enum([
   "ALL",
   "PROCESSING",
   "COMPLETED",
-  "FAILED",
+  "NEEDS_ATTENTION",
   "ARCHIVED",
 ]);
+
+/**
+ * `BROWSE` is the everyday inventory. `CREATE_STUDIO` lists only the vehicles
+ * a new studio version can be made from, so the person can pick one.
+ */
+export const InventoryModeSchema = z.enum(["BROWSE", "CREATE_STUDIO"]);
 
 export const InventoryViewSchema = z.enum(["GRID", "LIST"]);
 
 export const InventoryQuerySchema = CursorPaginationSchema.extend({
   filter: InventoryFilterSchema.default("ALL"),
+  mode: InventoryModeSchema.default("BROWSE"),
   query: z.string().trim().max(120).optional(),
   sort: VehicleSortSchema.default("CREATED_DESC"),
   view: InventoryViewSchema.default("GRID"),
@@ -43,6 +50,8 @@ export const InventoryItemSchema = z
     imageCount: z.number().int().nonnegative(),
     completedImageCount: z.number().int().nonnegative(),
     failedImageCount: z.number().int().nonnegative(),
+    /** Whether any batch, not only the newest, produced a studio image. */
+    hasCompletedOutput: z.boolean(),
     createdAt: IsoDateTimeSchema,
     previewUrl: z.url().nullable(),
   })
@@ -53,7 +62,7 @@ export const InventoryFilterCountsSchema = z
     all: z.number().int().nonnegative(),
     processing: z.number().int().nonnegative(),
     completed: z.number().int().nonnegative(),
-    failed: z.number().int().nonnegative(),
+    needsAttention: z.number().int().nonnegative(),
     archived: z.number().int().nonnegative(),
   })
   .strict();
@@ -67,6 +76,7 @@ export const InventoryPageSchema = z
   .strict();
 
 export type InventoryFilter = z.infer<typeof InventoryFilterSchema>;
+export type InventoryMode = z.infer<typeof InventoryModeSchema>;
 export type InventoryView = z.infer<typeof InventoryViewSchema>;
 export type InventoryQuery = z.infer<typeof InventoryQuerySchema>;
 export type InventoryItemStatus = z.infer<typeof InventoryItemStatusSchema>;

@@ -9,13 +9,12 @@ import {
   findInventoryBatchSummaries,
   type InventoryBatchSummary,
 } from "./find-inventory-batch-summaries";
+import {
+  NEEDS_ATTENTION_VEHICLE_STATUSES,
+  OPERATIONAL_VEHICLE_STATUSES,
+  STUDIO_VERSION_VEHICLE_STATUSES,
+} from "../../vehicles/vehicle-status-groups.constants";
 
-const OPERATIONAL_VEHICLE_STATUSES = [
-  VehicleStatus.PROCESSING,
-  VehicleStatus.READY,
-  VehicleStatus.PARTIALLY_FAILED,
-  VehicleStatus.ARCHIVED,
-];
 
 const inventoryVehicleSelect = {
   id: true,
@@ -49,13 +48,26 @@ function statusesForFilter(
       return [VehicleStatus.PROCESSING];
     case "COMPLETED":
       return [VehicleStatus.READY];
-    case "FAILED":
-      return [VehicleStatus.PARTIALLY_FAILED];
+    case "NEEDS_ATTENTION":
+      return NEEDS_ATTENTION_VEHICLE_STATUSES;
     case "ARCHIVED":
       return [VehicleStatus.ARCHIVED];
     case "ALL":
       return OPERATIONAL_VEHICLE_STATUSES;
   }
+}
+
+/**
+ * Choosing a vehicle for a new studio version lists only vehicles a version
+ * can be started for, within whatever status filter is active.
+ */
+function statusesForQuery(
+  query: Pick<InventoryQuery, "filter" | "mode">,
+): VehicleStatus[] {
+  const statuses = statusesForFilter(query.filter);
+  return query.mode === "CREATE_STUDIO"
+    ? statuses.filter((status) => STUDIO_VERSION_VEHICLE_STATUSES.includes(status))
+    : statuses;
 }
 
 function inventoryOrderBy(
@@ -75,11 +87,11 @@ function inventoryOrderBy(
 
 function inventoryWhere(
   userId: string,
-  query: Pick<InventoryQuery, "filter" | "query">,
+  query: Pick<InventoryQuery, "filter" | "mode" | "query">,
 ): Prisma.VehicleWhereInput {
   return {
     userId,
-    status: { in: statusesForFilter(query.filter) },
+    status: { in: statusesForQuery(query) },
     ...(query.query
       ? {
           OR: [
@@ -99,7 +111,7 @@ function emptyCounts(): InventoryFilterCounts {
     all: 0,
     processing: 0,
     completed: 0,
-    failed: 0,
+    needsAttention: 0,
     archived: 0,
   };
 }
@@ -118,7 +130,11 @@ export class PrismaInventoryRepository {
         select: { id: true },
       });
       if (!cursor) {
-        return { counts: await this.countOwned(userId, query.query), items: [], nextCursor: null };
+        return {
+          counts: await this.countOwned(userId, query),
+          items: [],
+          nextCursor: null,
+        };
       }
     }
 
@@ -130,7 +146,7 @@ export class PrismaInventoryRepository {
         ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
         select: inventoryVehicleSelect,
       }),
-      this.countOwned(userId, query.query),
+      this.countOwned(userId, query),
     ]);
     const hasNextPage = records.length > query.limit;
     if (hasNextPage) records.pop();
@@ -148,6 +164,7 @@ export class PrismaInventoryRepository {
           ...record,
           completedImageCount: summary?.completedImageCount ?? 0,
           failedImageCount: summary?.failedImageCount ?? 0,
+          hasCompletedOutput: summary?.hasCompletedOutput ?? false,
           imageCount: summary?.imageCount ?? 0,
           previewObjectKey: summary?.previewObjectKey ?? null,
         };
@@ -158,11 +175,15 @@ export class PrismaInventoryRepository {
 
   private async countOwned(
     userId: string,
-    search: string | undefined,
+    query: Pick<InventoryQuery, "mode" | "query">,
   ): Promise<InventoryFilterCounts> {
     const groups = await this.database.vehicle.groupBy({
       by: ["status"],
-      where: inventoryWhere(userId, { filter: "ALL", query: search }),
+      where: inventoryWhere(userId, {
+        filter: "ALL",
+        mode: query.mode,
+        query: query.query,
+      }),
       _count: { _all: true },
     });
     const counts = emptyCounts();
@@ -177,7 +198,7 @@ export class PrismaInventoryRepository {
           counts.completed += count;
           break;
         case VehicleStatus.PARTIALLY_FAILED:
-          counts.failed += count;
+          counts.needsAttention += count;
           break;
         case VehicleStatus.ARCHIVED:
           counts.archived += count;

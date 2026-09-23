@@ -6,7 +6,8 @@ import type {
 import { requestProcessingBatch } from "./request-processing-batch";
 
 export interface CompleteProcessingBatchDependencies {
-  navigateToInventory: () => void;
+  /** Where the person continues once the batch is accepted. */
+  navigate: () => void;
   refresh: () => void;
   register: (jobs: ProcessingJobReservation[]) => void;
   request?: typeof requestProcessingBatch;
@@ -25,6 +26,6 @@ export async function completeProcessingBatch(
     idempotencyKey,
   );
   dependencies.register(result.jobs);
-  dependencies.navigateToInventory();
+  dependencies.navigate();
   dependencies.refresh();
 }

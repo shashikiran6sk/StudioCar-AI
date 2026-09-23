@@ -542,5 +542,25 @@
   {
     "source": "workers/image-processing/src/execution/studio-scene.constants.ts",
     "reason": "Static studio scene palettes, shadow strengths and proportions only; exercised through the scene and renderer tests."
+  },
+  {
+    "source": "apps/web/src/features/processing/processing-failure-messages.constants.ts",
+    "reason": "Static user-facing failure copy keyed by the canonical failure reason only."
+  },
+  {
+    "source": "apps/web/src/features/vehicle-create/photo-source.ts",
+    "reason": "Enum of Selection Dialog photo origins only."
+  },
+  {
+    "source": "apps/web/src/features/vehicle-create/studio-selection.constants.ts",
+    "reason": "Static Selection Dialog mode copy and labels only."
+  },
+  {
+    "source": "apps/web/src/server/vehicles/vehicle-status-groups.constants.ts",
+    "reason": "Static canonical vehicle status groupings only; exercised through repository integration tests."
+  },
+  {
+    "source": "packages/processing/src/processing-attention.constants.ts",
+    "reason": "Static list of job states that wait for the user; exercised by jobRequiresUserAttention tests."
   }
 ]

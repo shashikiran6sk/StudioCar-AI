@@ -2796,6 +2796,13 @@ body {
   padding-inline: 0;
 }
 
+/* Filled actions (choose a vehicle, review issues) need their own padding. */
+.inventory-card__portfolio.sc-button--primary,
+.inventory-card__portfolio.sc-button--danger {
+  height: 34px;
+  padding-inline: 12px;
+}
+
 .inventory-grid--list .inventory-card {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
@@ -2998,23 +3005,11 @@ body {
   line-height: 1.08;
 }
 
-.portfolio-header__metadata,
-.portfolio-header__notice {
+.portfolio-header__metadata {
   margin: 8px 0 0;
   color: var(--sc-neutral-600);
   font-size: 12px;
   line-height: 1.55;
-}
-
-.portfolio-header__notice {
-  width: fit-content;
-  margin: 0;
-  padding: 9px 12px;
-  border: 1px solid rgb(217 45 32 / 18%);
-  border-radius: var(--sc-radius-control);
-  background: var(--sc-error-bg);
-  color: var(--sc-error);
-  font-weight: 700;
 }
 
 .portfolio-gallery {
@@ -3085,7 +3080,7 @@ body {
 
 .portfolio-facts {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   margin: 0;
   overflow: hidden;
   border: 1px solid var(--sc-neutral-300);
@@ -3537,5 +3532,252 @@ body {
   .usage-current-plan {
     min-height: 260px;
     padding: 20px;
+  }
+}
+
+/* Selection Dialog: choosing among a vehicle's existing photos. */
+
+.photo-upload-item--failed {
+  border-color: rgb(217 45 32 / 32%);
+  background: var(--sc-error-bg);
+}
+
+.photo-upload-item__select {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  margin: 0;
+  accent-color: var(--sc-neutral-950);
+}
+
+.photo-upload-item__select:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.photo-upload-item__select:focus-visible {
+  outline: 3px solid var(--sc-focus);
+  outline-offset: 2px;
+}
+
+.photo-upload-item__copy .photo-upload-item__error {
+  white-space: normal;
+}
+
+/* Portfolio: processing, attention, and studio versions. */
+
+.portfolio-notice {
+  display: grid;
+  width: fit-content;
+  max-width: 100%;
+  gap: 3px;
+  margin: 0;
+  padding: 10px 13px;
+  border: 1px solid rgb(49 92 245 / 18%);
+  border-radius: var(--sc-radius-control);
+  background: var(--sc-processing-bg);
+  color: var(--sc-blue-600);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.portfolio-notice--error {
+  border-color: rgb(217 45 32 / 18%);
+  background: var(--sc-error-bg);
+  color: var(--sc-error);
+  font-weight: 700;
+}
+
+.portfolio-attention {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+  padding: 18px 20px;
+  border: 1px solid rgb(217 45 32 / 24%);
+  border-radius: var(--sc-radius-panel);
+  background: var(--sc-neutral-0);
+  scroll-margin-top: 90px;
+}
+
+.portfolio-attention:focus-visible {
+  outline: 3px solid var(--sc-focus);
+  outline-offset: 2px;
+}
+
+.portfolio-attention__heading {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.portfolio-attention__heading > div:first-child {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.portfolio-attention h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.portfolio-attention__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.portfolio-attention__treatment {
+  margin: 0;
+  color: var(--sc-neutral-600);
+  font-size: 12px;
+}
+
+.portfolio-attention__images {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.portfolio-failed-image {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border: 1px solid var(--sc-neutral-300);
+  border-radius: var(--sc-radius-control);
+}
+
+.portfolio-failed-image__media {
+  position: relative;
+  width: 96px;
+  height: 64px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--sc-neutral-200);
+}
+
+.portfolio-failed-image__media img {
+  object-fit: cover;
+}
+
+.portfolio-failed-image__copy {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.portfolio-failed-image__copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.portfolio-failed-image__copy strong span {
+  color: var(--sc-neutral-600);
+  font-weight: 600;
+}
+
+.portfolio-failed-image__copy > span {
+  color: var(--sc-error);
+}
+
+.portfolio-versions {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+}
+
+.portfolio-versions h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.portfolio-versions ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.portfolio-version {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--sc-neutral-300);
+  border-radius: var(--sc-radius-card);
+  background: var(--sc-neutral-0);
+  color: var(--sc-neutral-900);
+  font-size: 12px;
+  text-decoration: none;
+  transition: background 120ms ease-out;
+}
+
+.portfolio-version:hover {
+  background: var(--sc-neutral-100);
+}
+
+.portfolio-version[aria-current="page"] {
+  border-color: var(--sc-neutral-950);
+  box-shadow: inset 0 0 0 1px var(--sc-neutral-950);
+}
+
+.portfolio-version:focus-visible {
+  outline: 3px solid var(--sc-focus);
+  outline-offset: 2px;
+}
+
+.portfolio-version span {
+  color: var(--sc-neutral-600);
+  font-size: 11px;
+}
+
+@media (max-width: 899px) {
+  .portfolio-attention__images {
+    grid-template-columns: 1fr;
+  }
+
+  .portfolio-header__content {
+    align-items: start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 639px) {
+  .portfolio-attention {
+    padding: 16px;
+  }
+
+  .portfolio-attention__actions {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .portfolio-attention__actions .sc-button {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-version {
+    transition: none;
   }
 }

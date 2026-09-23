@@ -184,4 +184,40 @@ databaseDescribe("PrismaDashboardRepository", () => {
     });
     expect(queuedJob.id).not.toBe(foreignJob.id);
   });
+
+  it("counts the vehicles that need attention and names the only one", async () => {
+    const [owner, other] = await Promise.all([
+      database.user.create({ data: { primaryEmail: ownerEmail } }),
+      database.user.create({ data: { primaryEmail: otherEmail } }),
+    ]);
+    await expect(repository.getOwnedAttention(owner.id)).resolves.toEqual({
+      vehicleCount: 0,
+      vehicleId: null,
+    });
+    const [first] = await Promise.all([
+      database.vehicle.create({
+        data: { name: "Needs attention", status: "PARTIALLY_FAILED", userId: owner.id },
+      }),
+      // Still retrying automatically: the vehicle is processing, not failed.
+      database.vehicle.create({
+        data: { name: "Retrying", status: "PROCESSING", userId: owner.id },
+      }),
+      database.vehicle.create({
+        data: { name: "Foreign", status: "PARTIALLY_FAILED", userId: other.id },
+      }),
+    ]);
+
+    await expect(repository.getOwnedAttention(owner.id)).resolves.toEqual({
+      vehicleCount: 1,
+      vehicleId: first.id,
+    });
+
+    await database.vehicle.create({
+      data: { name: "Also needs attention", status: "PARTIALLY_FAILED", userId: owner.id },
+    });
+    await expect(repository.getOwnedAttention(owner.id)).resolves.toEqual({
+      vehicleCount: 2,
+      vehicleId: null,
+    });
+  });
 });

@@ -28,7 +28,7 @@ databaseDescribe("PrismaPortfolioRepository", () => {
     await database.$disconnect();
   });
 
-  it("returns only the latest completed owned batch and its private keys", async () => {
+  it("keeps every owned batch, newest first, with its private keys", async () => {
     const [owner, other] = await Promise.all([
       database.user.create({ data: { primaryEmail: ownerEmail } }),
       database.user.create({ data: { primaryEmail: otherEmail } }),
@@ -113,20 +113,38 @@ databaseDescribe("PrismaPortfolioRepository", () => {
 
     const portfolio = await repository.findOwned(owner.id, vehicle.id);
 
-    expect(portfolio?.processingJobs).toHaveLength(1);
-    expect(portfolio?.processingJobs[0]?.id).toBe(latestJob.id);
+    expect(portfolio?.processingJobs.map((job) => job.id)).toEqual([
+      latestJob.id,
+      oldJob.id,
+    ]);
     expect(portfolio?.processingJobs[0]?.processedAsset?.objectKey).toContain(
       "/latest.webp",
     );
+    expect(portfolio?.processingJobs[1]?.processedAsset?.objectKey).toContain(
+      "/old.webp",
+    );
+    expect(portfolio?.processingJobs[0]?.imageAsset).toMatchObject({
+      originalFilename: "front.jpg",
+      status: "UPLOADED",
+    });
     await expect(repository.findOwned(other.id, vehicle.id)).resolves.toBeNull();
   });
 
-  it("does not expose unfinished vehicles or portfolios without output", async () => {
+  it("shows a processing vehicle but never one still in the creation workflow", async () => {
     const owner = await database.user.create({ data: { primaryEmail: ownerEmail } });
-    const vehicle = await database.vehicle.create({
-      data: { name: "Still processing", status: "PROCESSING", userId: owner.id },
-    });
+    const [processing, draft] = await Promise.all([
+      database.vehicle.create({
+        data: { name: "Still processing", status: "PROCESSING", userId: owner.id },
+      }),
+      database.vehicle.create({
+        data: { name: "Draft", status: "DRAFT", userId: owner.id },
+      }),
+    ]);
 
-    await expect(repository.findOwned(owner.id, vehicle.id)).resolves.toBeNull();
+    await expect(repository.findOwned(owner.id, processing.id)).resolves.toMatchObject({
+      processingJobs: [],
+      status: "PROCESSING",
+    });
+    await expect(repository.findOwned(owner.id, draft.id)).resolves.toBeNull();
   });
 });

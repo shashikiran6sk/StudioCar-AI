@@ -5,6 +5,7 @@ import { toPortfolioStatus } from "../../../../apps/web/src/server/portfolio/to-
 
 describe("toPortfolioStatus", () => {
   it.each([
+    [VehicleStatus.PROCESSING, "PROCESSING"],
     [VehicleStatus.READY, "COMPLETED"],
     [VehicleStatus.PARTIALLY_FAILED, "NEEDS_ATTENTION"],
     [VehicleStatus.ARCHIVED, "ARCHIVED"],
@@ -12,8 +13,8 @@ describe("toPortfolioStatus", () => {
     expect(toPortfolioStatus(status)).toBe(expected);
   });
 
-  it("rejects unfinished vehicles", () => {
-    expect(() => toPortfolioStatus(VehicleStatus.PROCESSING)).toThrow(
+  it("rejects vehicles still in the creation workflow", () => {
+    expect(() => toPortfolioStatus(VehicleStatus.DRAFT)).toThrow(
       "Vehicle is not available as a portfolio.",
     );
   });
