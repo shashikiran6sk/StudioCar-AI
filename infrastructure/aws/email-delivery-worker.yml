@@ -84,6 +84,9 @@ Resources:
       Description: Delivers StudioCar transactional email messages
       Environment:
         Variables:
+          # The deployed workers are production's; environment validation
+          # refuses every local adapter under this profile.
+          APP_ENV: production
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           APPLICATION_BASE_URL: !Ref ApplicationBaseUrl
           DATABASE_URL: !Sub '{{resolve:secretsmanager:${DatabaseSecretArn}:SecretString:DATABASE_URL}}'

@@ -9,3 +9,8 @@
 .git
 docs/screens
 docs/*.docx
+# Settings files hold real credentials. Containers receive their settings
+# from compose, never from a file baked into an image.
+**/.env
+**/.env.*
+!.env.example.*

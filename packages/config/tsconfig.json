@@ -1,7 +1,7 @@
 {
   "extends": "./typescript/node.json",
   "compilerOptions": {
-    "types": ["vitest/globals"]
+    "types": ["node", "vitest/globals"]
   },
   "include": ["src/**/*.ts", "../../tests/unit/config/**/*.ts"]
 }

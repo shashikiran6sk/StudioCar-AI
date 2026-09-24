@@ -566,5 +566,17 @@
   {
     "source": "apps/web/src/features/vehicle-create/crop-mode.constants.ts",
     "reason": "Static composition label configuration only."
+  },
+  {
+    "source": "apps/web/src/server/environment/repository-environment.constants.ts",
+    "reason": "Static settings-file names and locations only."
+  },
+  {
+    "source": "packages/config/src/environment-isolation.constants.ts",
+    "reason": "Static environment-ownership name segments and AWS host constants only; applied and tested through the isolation refinements."
+  },
+  {
+    "source": "packages/config/src/environment-isolation.types.ts",
+    "reason": "Type-only description of the settings environment isolation inspects."
   }
 ]

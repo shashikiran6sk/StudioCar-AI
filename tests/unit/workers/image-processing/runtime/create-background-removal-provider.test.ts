@@ -4,6 +4,7 @@ import { parseImageWorkerEnvironment } from "../../../../../packages/config/src/
 import { createBackgroundRemovalProvider } from "../../../../../workers/image-processing/src/runtime/create-background-removal-provider";
 
 const baseEnvironment = {
+  APP_ENV: "development",
   DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/studiocar_test",
   AWS_REGION: "ap-south-1",
   S3_BUCKET: "studiocar-assets-test",

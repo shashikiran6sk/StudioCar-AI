@@ -20,11 +20,12 @@ import type { SecurityHeader } from "./security-header.types";
 
 export function createSecurityHeaders(
   nodeEnvironment: string,
+  localStorageOrigin?: string,
 ): SecurityHeader[] {
   return [
     {
       key: CONTENT_SECURITY_POLICY_HEADER,
-      value: createContentSecurityPolicy(nodeEnvironment),
+      value: createContentSecurityPolicy(nodeEnvironment, localStorageOrigin),
     },
     {
       key: CROSS_ORIGIN_OPENER_POLICY_HEADER,

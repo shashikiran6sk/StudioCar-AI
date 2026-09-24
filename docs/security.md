@@ -1,16 +1,21 @@
 # Security and secret ownership
 
 Production secrets are scoped to the smallest runtime that needs them. Do not
-copy the local `.env.example` union into every deployment, share credentials
-between runtimes, expose secrets through `NEXT_PUBLIC_*`, or inject worker-only
-provider keys into the Next.js application.
+copy `.env.example.production` (a reference list, not a file to deploy) into
+every runtime, share credentials between runtimes, expose secrets through
+`NEXT_PUBLIC_*`, or inject worker-only provider keys into the Next.js
+application.
+
+Every runtime also receives `APP_ENV`, which selects its environment profile;
+see [`docs/environments.md`](./environments.md). `NODE_ENV` never selects
+infrastructure or a provider.
 
 ## Runtime ownership matrix
 
 | Runtime | Secret/config access | Explicitly excluded |
 | --- | --- | --- |
 | Next.js session and read models | `DATABASE_URL` | Provider, email-delivery, and scheduler secrets |
-| Google OAuth routes | `DATABASE_URL`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, optional `BOOTSTRAP_ADMIN_EMAIL` | MSG91, Resend, remove.bg, fal.ai |
+| Google OAuth routes | `DATABASE_URL`, `SESSION_SECRET`, `GOOGLE_AUTH_DRIVER` (profile default), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, optional `BOOTSTRAP_ADMIN_EMAIL` | MSG91, Resend, remove.bg, fal.ai |
 | Administration pages and mutations | `DATABASE_URL` | Every provider and scheduler secret; authorization is read from the database |
 | Phone OTP start and verify routes | `DATABASE_URL`, `SESSION_SECRET`, `PHONE_OTP_DRIVER`, `MSG91_AUTH_KEY`, `MSG91_WIDGET_ID`, `MSG91_WIDGET_TOKEN` | Google, Resend, image-provider keys |
 | Phone OTP widget route | `PHONE_OTP_DRIVER`, `PHONE_OTP_DEV_CODE`, `MSG91_WIDGET_ID`, `MSG91_WIDGET_TOKEN` | `SESSION_SECRET`, `DATABASE_URL`, `MSG91_AUTH_KEY`, every other secret |
@@ -164,10 +169,24 @@ audit trail matters most.
 
 ## Local development drivers
 
-The local environment selects development drivers that cannot reach a customer:
-`PHONE_OTP_DRIVER=fake` sends no message, and `EMAIL_DRIVER=mailpit` delivers
-only to an inbox on the developer's own machine. Environment validation refuses
-both when `NODE_ENV` is `production`.
+The Local profile selects drivers that cannot reach a customer: fake Google
+sign-in (`GOOGLE_AUTH_DRIVER=fake`) completes the ordinary OAuth challenge and
+session flow for one fixed local identity, `PHONE_OTP_DRIVER=fake` sends no
+message, and `EMAIL_DRIVER=mailpit` delivers only to an inbox on the
+developer's own machine.
+
+Only the Local profile allows the fake sign-in drivers, and production does
+not allow Mailpit, MinIO, ElasticMQ, localhost endpoints, the local queue
+consumers, non-production buckets or queues, or any committed local value.
+Development refuses the fake sign-in drivers too, and a missing Google or MSG91
+setting is an error in both, never a fallback. The committed Local values
+(`packages/config/src/local-infrastructure.ts`) are emulator settings and
+throwaway tokens; Development refuses the committed session secret and
+production refuses all of them. The rules live in `packages/config` and are
+applied by every runtime parser.
+
+Settings files are read from one place, the repository-root `.env.local`, and
+never baked into container images; `.dockerignore` excludes every `.env` file.
 
 Locally running workers consume their queue and nothing more. They parse only an
 SQS connection and their own queue URL, so a worker never holds a dispatch
@@ -187,7 +206,9 @@ credential that makes access-token verification a server-to-server call, and it
 is the only thing that distinguishes a proven handset from a claimed one.
 
 `PHONE_OTP_DRIVER=fake` sends no message and accepts `PHONE_OTP_DEV_CODE`.
-Environment validation refuses it when `NODE_ENV` is `production`.
+Only the Local profile allows it. Under Development and production, missing
+widget credentials are a configuration error rather than a silently hidden
+phone sign-in form.
 
 ## Signed webhook admission
 

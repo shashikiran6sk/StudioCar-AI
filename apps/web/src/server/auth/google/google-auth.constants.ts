@@ -36,3 +36,18 @@ export enum GoogleAuthRedirectErrorCode {
   LinkSessionMismatch = "link_session_mismatch",
   LinkIdentityTaken = "link_identity_taken",
 }
+
+/**
+ * The one identity the Local `fake` Google driver signs in. It still travels
+ * the ordinary OAuth challenge, identity resolution, and session issuance, so
+ * the rest of the application cannot tell Google itself was not contacted.
+ * Setting `BOOTSTRAP_ADMIN_EMAIL` to this address makes it the first local
+ * administrator.
+ */
+export const LOCAL_GOOGLE_IDENTITY = {
+  providerSubject: "studiocar-local-developer",
+  email: "developer@studiocar.local",
+  displayName: "StudioCar Developer",
+} as const;
+export const FAKE_GOOGLE_CALLBACK_REJECTED_MESSAGE =
+  "The local Google sign-in callback does not match its challenge.";

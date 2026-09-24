@@ -14,7 +14,7 @@
     "db:generate": "pnpm --filter @studiocar/web db:generate",
     "db:migrate:deploy": "pnpm --filter @studiocar/web db:migrate:deploy",
     "db:migrate:status": "pnpm --filter @studiocar/web db:migrate:status",
-    "db:reset": "node --env-file-if-exists=apps/web/.env scripts/db-reset.mjs",
+    "db:reset": "node --env-file-if-exists=.env.local scripts/db-reset.mjs",
     "db:seed": "pnpm --filter @studiocar/web db:seed",
     "db:validate": "pnpm --filter @studiocar/web db:validate",
     "dev": "turbo run dev",

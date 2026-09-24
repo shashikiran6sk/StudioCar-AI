@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { describePhoneOtpWidget } from "../../../../../apps/web/src/server/auth/phone/describe-phone-otp-widget";
-import { parsePhoneOtpWidgetEnvironment } from "../../../../../packages/config/src/environment";
+import {
+  parsePhoneOtpWidgetEnvironment,
+  type PhoneOtpWidgetEnvironment,
+} from "../../../../../packages/config/src/environment";
 
-const base = {};
+const base = { APP_ENV: "development" };
 
 describe("describePhoneOtpWidget", () => {
   it("publishes the widget id and public token for the msg91 driver", () => {
@@ -43,7 +46,7 @@ describe("describePhoneOtpWidget", () => {
 
   it("describes the development driver with its accepted code", () => {
     const widget = describePhoneOtpWidget(
-      parsePhoneOtpWidgetEnvironment({ ...base, PHONE_OTP_DRIVER: "fake" }),
+      parsePhoneOtpWidgetEnvironment({ APP_ENV: "local" }),
     );
 
     expect(widget).toEqual({
@@ -60,15 +63,44 @@ describe("describePhoneOtpWidget", () => {
 describe("describePhoneOtpWidget configuration isolation", () => {
   it("needs no session secret or database url to describe the widget", () => {
     expect(() =>
-      describePhoneOtpWidget(parsePhoneOtpWidgetEnvironment({})),
+      describePhoneOtpWidget(
+        parsePhoneOtpWidgetEnvironment({
+          APP_ENV: "development",
+          MSG91_WIDGET_ID: "widget-id",
+          MSG91_WIDGET_TOKEN: "widget-token",
+        }),
+      ),
     ).not.toThrow();
   });
 
-  it("reports the msg91 driver as unavailable when credentials are absent", () => {
-    expect(
-      describePhoneOtpWidget(
-        parsePhoneOtpWidgetEnvironment({ PHONE_OTP_DRIVER: "msg91" }),
-      ),
-    ).toMatchObject({ enabled: false, driver: "msg91", widgetId: null });
+  it("refuses msg91 without widget credentials rather than hiding phone sign-in", () => {
+    for (const appEnvironment of ["development", "production"]) {
+      expect(() =>
+        parsePhoneOtpWidgetEnvironment({ APP_ENV: appEnvironment }),
+      ).toThrow(/MSG91_WIDGET_ID is required/);
+    }
+  });
+
+  it("refuses the fake driver outside the local environment", () => {
+    expect(() =>
+      parsePhoneOtpWidgetEnvironment({
+        APP_ENV: "development",
+        PHONE_OTP_DRIVER: "fake",
+      }),
+    ).toThrow(/PHONE_OTP_DRIVER=fake is not allowed/);
+  });
+
+  it("still reports the widget unavailable if handed incomplete configuration", () => {
+    const incomplete: PhoneOtpWidgetEnvironment = {
+      APP_ENV: "local",
+      PHONE_OTP_DRIVER: "msg91",
+      PHONE_OTP_DEV_CODE: "1234",
+    };
+
+    expect(describePhoneOtpWidget(incomplete)).toMatchObject({
+      enabled: false,
+      driver: "msg91",
+      widgetId: null,
+    });
   });
 });

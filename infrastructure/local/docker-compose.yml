@@ -1,16 +1,29 @@
 name: studiocar
 
-# Local StudioCar AI environment.
+# The local support plane, for APP_ENV=local and APP_ENV=development. Always
+# run it through `scripts/local-compose.sh`, which reads APP_ENV and the rest of
+# the repository-root .env.local.
 #
-#   pnpm infra:up   starts everything except the Next.js application, so
-#                   `pnpm dev` can run it natively with fast reloads.
-#   pnpm app:up     additionally runs the application in a container.
+#   pnpm infra:up   APP_ENV=local        (profile infra) everything except the
+#                                        Next.js application, so `pnpm dev` can
+#                                        run it natively with fast reloads.
+#                   APP_ENV=development  (profile development) only ElasticMQ,
+#                                        Mailpit, both workers, and the
+#                                        dispatcher. The database and storage
+#                                        are the real Development ones.
+#   pnpm app:up     APP_ENV=local only   (profile app) the application too.
 #
 # Every dependency declares a health check and every dependant waits on it, so
 # startup ordering is observed rather than slept through.
+#
+# The literal local values here must match packages/config/src/
+# local-infrastructure.ts; a unit test keeps the two in step.
 
 x-worker-environment: &worker-environment
-  DATABASE_URL: postgresql://studiocar:studiocar@postgres:5432/studiocar
+  APP_ENV: ${APP_ENV:?Run the local stack through scripts/local-compose.sh}
+  # The application's database, or the compose PostgreSQL when the settings
+  # file names none (the Local default).
+  DATABASE_URL: ${LOCAL_WORKER_DATABASE_URL:-postgresql://studiocar:studiocar@postgres:5432/studiocar}
   AWS_REGION: ap-south-1
   S3_BUCKET: studiocar-local
   S3_ENDPOINT: http://minio:9000
@@ -84,7 +97,7 @@ services:
 
   elasticmq:
     image: softwaremill/elasticmq-native:latest
-    profiles: [infra, app]
+    profiles: [infra, app, development]
     ports:
       - "9324:9324"
     volumes:
@@ -99,7 +112,7 @@ services:
 
   mailpit:
     image: axllent/mailpit:latest
-    profiles: [infra, app]
+    profiles: [infra, app, development]
     environment:
       MP_MAX_MESSAGES: "500"
       MP_SMTP_AUTH_ACCEPT_ANY: "1"
@@ -114,7 +127,7 @@ services:
       retries: 20
 
   image-worker:
-    profiles: [infra, app]
+    profiles: [infra, app, development]
     image: studiocar-local-worker
     build:
       context: ../..
@@ -122,32 +135,44 @@ services:
     command: ["node", "workers/image-processing/dist/local.mjs"]
     environment:
       <<: *worker-environment
-      # Storage follows apps/web/.env, so the worker reads the same bucket the
-      # browser uploaded to. `scripts/local-compose.sh` sets these; with no
-      # settings file they fall back to local MinIO. `-` rather than `:-`, so
-      # a setting the application leaves empty stays empty here too.
+      # Storage follows .env.local, so the worker reads the same bucket the
+      # browser uploaded to: MinIO under APP_ENV=local, the AWS Development
+      # bucket under APP_ENV=development. `scripts/local-compose.sh` sets
+      # these. `-` rather than `:-`, so a Development setting left empty (an
+      # AWS endpoint) stays empty instead of becoming MinIO.
       AWS_REGION: ${LOCAL_WORKER_AWS_REGION-ap-south-1}
       S3_BUCKET: ${LOCAL_WORKER_S3_BUCKET-studiocar-local}
       S3_ENDPOINT: ${LOCAL_WORKER_S3_ENDPOINT-http://minio:9000}
       S3_FORCE_PATH_STYLE: ${LOCAL_WORKER_S3_FORCE_PATH_STYLE-true}
       S3_ACCESS_KEY_ID: ${LOCAL_WORKER_S3_ACCESS_KEY_ID-studiocarlocal}
       S3_SECRET_ACCESS_KEY: ${LOCAL_WORKER_S3_SECRET_ACCESS_KEY-studiocarlocal123}
-      BACKGROUND_REMOVAL_PROVIDER: ${BACKGROUND_REMOVAL_PROVIDER:-removebg}
+      # Empty means "use the profile default", which is remove.bg.
+      BACKGROUND_REMOVAL_PROVIDER: ${BACKGROUND_REMOVAL_PROVIDER:-}
       REMOVEBG_API_KEY: ${REMOVEBG_API_KEY:-}
       FAL_KEY: ${FAL_KEY:-}
       SELF_HOSTED_BIREFNET_ENDPOINT: ${SELF_HOSTED_BIREFNET_ENDPOINT:-}
+      # Development may resolve AWS credentials from the standard environment
+      # variables instead of an explicit S3 key pair. A shared ~/.aws profile
+      # is not visible inside the container.
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
+      # Local PostgreSQL and MinIO exist only under APP_ENV=local; Development
+      # uses its own database and AWS S3, so these are waited on when present.
       postgres:
         condition: service_healthy
+        required: false
       elasticmq:
         condition: service_healthy
       minio-init:
         condition: service_completed_successfully
+        required: false
 
   email-worker:
-    profiles: [infra, app]
+    profiles: [infra, app, development]
     image: studiocar-local-worker
     build:
       context: ../..
@@ -156,13 +181,15 @@ services:
     environment:
       <<: *worker-environment
       EMAIL_FROM: ${EMAIL_FROM:-no-reply@studiocar.local}
-      # Mailpit delivers to a local inbox and never forwards mail off this
-      # machine. Environment validation refuses this driver in production.
-      EMAIL_DRIVER: mailpit
+      # Local and Development deliver to Mailpit by profile. It never forwards
+      # mail off this machine, which is why production refuses it.
       MAILPIT_BASE_URL: http://mailpit:8025
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       postgres:
         condition: service_healthy
+        required: false
       elasticmq:
         condition: service_healthy
       mailpit:
@@ -172,7 +199,7 @@ services:
   # endpoints, not by the queue, so something has to call them on a cadence.
   dispatcher:
     image: curlimages/curl:latest
-    profiles: [infra, app]
+    profiles: [infra, app, development]
     environment:
       DISPATCH_TARGET_URL: ${DISPATCH_TARGET_URL:-http://host.docker.internal:3000}
       PROCESSING_DISPATCH_TOKEN: ${PROCESSING_DISPATCH_TOKEN:-local-processing-dispatch-token-000000}
@@ -193,22 +220,22 @@ services:
     environment:
       <<: *worker-environment
       NODE_ENV: development
-      NEXT_PUBLIC_APP_URL: http://localhost:3000
-      SESSION_SECRET: ${SESSION_SECRET:-local-development-session-secret-000000}
-      PHONE_OTP_DRIVER: ${PHONE_OTP_DRIVER:-fake}
-      PHONE_OTP_DEV_CODE: ${PHONE_OTP_DEV_CODE:-1234}
+      # Everything not named here comes from the Local profile: fake Google
+      # and phone sign-in, Mailpit, the local session secret and tokens. An
+      # empty value means "use the profile default".
+      GOOGLE_AUTH_DRIVER: ${GOOGLE_AUTH_DRIVER:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      PHONE_OTP_DRIVER: ${PHONE_OTP_DRIVER:-}
+      PHONE_OTP_DEV_CODE: ${PHONE_OTP_DEV_CODE:-}
       MSG91_AUTH_KEY: ${MSG91_AUTH_KEY:-}
       MSG91_WIDGET_ID: ${MSG91_WIDGET_ID:-}
       MSG91_WIDGET_TOKEN: ${MSG91_WIDGET_TOKEN:-}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:3000/api/auth/google/callback}
-      BACKGROUND_REMOVAL_PROVIDER: ${BACKGROUND_REMOVAL_PROVIDER:-removebg}
-      PROCESSING_DISPATCH_TOKEN: ${PROCESSING_DISPATCH_TOKEN:-local-processing-dispatch-token-000000}
-      EMAIL_DISPATCH_TOKEN: ${EMAIL_DISPATCH_TOKEN:-local-email-dispatch-token-0000000000}
-      LIFECYCLE_CLEANUP_TOKEN: ${LIFECYCLE_CLEANUP_TOKEN:-local-lifecycle-cleanup-token-00000000}
-      STORAGE_CLEANUP_TOKEN: ${STORAGE_CLEANUP_TOKEN:-local-storage-cleanup-token-0000000000}
-      EMAIL_FROM: ${EMAIL_FROM:-no-reply@studiocar.local}
+      BACKGROUND_REMOVAL_PROVIDER: ${BACKGROUND_REMOVAL_PROVIDER:-}
+      PROCESSING_DISPATCH_TOKEN: ${PROCESSING_DISPATCH_TOKEN:-}
+      EMAIL_DISPATCH_TOKEN: ${EMAIL_DISPATCH_TOKEN:-}
+      LIFECYCLE_CLEANUP_TOKEN: ${LIFECYCLE_CLEANUP_TOKEN:-}
+      STORAGE_CLEANUP_TOKEN: ${STORAGE_CLEANUP_TOKEN:-}
     ports:
       - "3000:3000"
     depends_on:

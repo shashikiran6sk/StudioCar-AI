@@ -93,11 +93,12 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      AWS_ACCESS_KEY_ID: studiocar-ci-test-access-key
-      AWS_REGION: ap-south-1
-      AWS_SECRET_ACCESS_KEY: studiocar-ci-test-secret-key
+      # The browser suite runs the Local profile: repository-owned defaults
+      # for storage, queues, and fake sign-in, against this job's database.
+      # Signed storage links are intercepted in the browser; nothing external
+      # is contacted and no credential is needed.
+      APP_ENV: local
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/studiocar_e2e
-      S3_BUCKET: studiocar-ci-private
     steps:
       - name: Check out repository
         uses: actions/checkout@v5

@@ -4,6 +4,7 @@ const summarise = vi.fn();
 
 // The runtime resolves its own connection string, so supply one rather than
 // replacing the configuration package.
+vi.stubEnv("APP_ENV", "local");
 vi.stubEnv("DATABASE_URL", "postgresql://studiocar:secret@localhost:5432/studiocar");
 
 vi.mock("@studiocar/database-runtime", () => ({

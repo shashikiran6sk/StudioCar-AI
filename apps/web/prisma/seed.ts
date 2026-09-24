@@ -1,3 +1,4 @@
+import { applyEnvironmentProfile } from "@studiocar/config";
 import { createDatabaseClient } from "@studiocar/database-runtime";
 
 import { PrismaPlanConfigRepository } from "../src/server/db/repositories/plan-config-repository";
@@ -15,7 +16,9 @@ import { DEFAULT_PLAN_CONFIGURATIONS } from "../src/server/plans/default-plan-co
  * address is supplied; until then the footer renders nothing.
  */
 async function seed(): Promise<void> {
-  const databaseUrl = process.env["DATABASE_URL"];
+  // The Local profile supplies the Docker database address; every other
+  // environment must name its database explicitly.
+  const databaseUrl = applyEnvironmentProfile(process.env)["DATABASE_URL"];
   if (!databaseUrl) {
     throw new Error("DATABASE_URL is required to seed configuration.");
   }

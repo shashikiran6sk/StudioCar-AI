@@ -5,6 +5,11 @@ The runtime credential and IAM ownership matrix is documented in
 constraint: worker-only provider and delivery credentials must not be injected
 into the Next.js runtime.
 
+Every deployed runtime runs with `APP_ENV=production`; the worker templates set
+it. Under that profile environment validation refuses every local adapter and
+committed local value, so a deployment misconfiguration fails at startup rather
+than quietly using a local driver. See [`docs/environments.md`](../../docs/environments.md).
+
 `upload-storage.yml` provisions the private, encrypted, versioned S3 bucket used
 for browser-to-S3 image uploads and a least-privilege managed policy for the
 Next.js application role. The policy also permits deletion under the same
@@ -13,7 +18,12 @@ command. Supply the exact deployed web origin for browser CORS. The rule allows
 `PUT` for direct uploads and `GET` so the portfolio can assemble a ZIP in the
 browser from its short-lived signed links. A non-production stack
 may additionally supply `AdditionalBrowserOrigin` so a local development host
-can upload directly; leave it empty in production.
+can upload directly; leave it empty in production. `AppEnvironment` records the
+owning environment as the `studiocar:environment` tag. A production bucket name
+must carry a `prod` or `production` segment (for example
+`studiocar-prod-images`), because that is how the application tells it apart:
+production refuses a bucket without one, and Development refuses a bucket with
+one.
 
 `image-processing-queue.yml` provisions the encrypted standard processing queue,
 its retained dead-letter queue, separate publisher and consumer policies, and

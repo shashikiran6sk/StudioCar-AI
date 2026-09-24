@@ -16,21 +16,31 @@ import {
   DEVELOPMENT_ENVIRONMENT,
 } from "./security-headers.constants";
 
-export function createContentSecurityPolicy(nodeEnvironment: string): string {
+/**
+ * `localStorageOrigin` is the Local environment's MinIO origin, which browsers
+ * upload to and read previews from directly. Deployed storage is AWS S3, which
+ * the fixed sources already allow, so it is absent everywhere else.
+ */
+export function createContentSecurityPolicy(
+  nodeEnvironment: string,
+  localStorageOrigin?: string,
+): string {
   const isDevelopment = nodeEnvironment === DEVELOPMENT_ENVIRONMENT;
+  const storageSource =
+    localStorageOrigin === undefined ? "" : ` ${localStorageOrigin}`;
   const scriptSource =
     isDevelopment
       ? `${CSP_SCRIPT_SOURCE} ${CSP_DEVELOPMENT_SCRIPT_SOURCE}`
       : CSP_SCRIPT_SOURCE;
   const connectSource = isDevelopment
-    ? `${CSP_CONNECT_SOURCE} ${CSP_DEVELOPMENT_CONNECT_SOURCE}`
-    : CSP_CONNECT_SOURCE;
+    ? `${CSP_CONNECT_SOURCE}${storageSource} ${CSP_DEVELOPMENT_CONNECT_SOURCE}`
+    : `${CSP_CONNECT_SOURCE}${storageSource}`;
 
   return [
     CSP_DEFAULT_SOURCE,
     scriptSource,
     CSP_STYLE_SOURCE,
-    CSP_IMAGE_SOURCE,
+    `${CSP_IMAGE_SOURCE}${storageSource}`,
     CSP_FONT_SOURCE,
     connectSource,
     CSP_WORKER_SOURCE,

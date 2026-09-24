@@ -17,7 +17,9 @@ const databaseUrl = "postgresql://studiocar:secret@localhost:5432/studiocar";
 const accessKeyId = "AKIAEXAMPLEEXAMPLE00";
 const secretAccessKey = "example-secret-access-key-value-0000";
 
+// Development: AWS S3 by default, and a database the developer names.
 const baseUploadEnvironment = {
+  APP_ENV: "development",
   DATABASE_URL: databaseUrl,
   AWS_REGION: "ap-south-1",
   S3_BUCKET: "studiocar-private",
@@ -109,7 +111,7 @@ describe("S3 connection configuration", () => {
 });
 
 describe("upload environment", () => {
-  it("parses a production configuration that relies on workload identity", () => {
+  it("parses a deployed configuration that relies on workload identity", () => {
     const environment = parseUploadEnvironment(baseUploadEnvironment);
 
     expect(createS3ClientOptions(environment)).toStrictEqual({
@@ -121,6 +123,7 @@ describe("upload environment", () => {
   it("parses a local emulator configuration", () => {
     const environment = parseUploadEnvironment({
       ...baseUploadEnvironment,
+      APP_ENV: "local",
       S3_ENDPOINT: "http://localhost:9000",
       S3_FORCE_PATH_STYLE: "true",
       S3_ACCESS_KEY_ID: accessKeyId,
@@ -166,6 +169,7 @@ describe("upload environment", () => {
 describe("storage cleanup and image worker environments", () => {
   it("accepts the same S3 connection fields for storage cleanup", () => {
     const environment = parseStorageCleanupEnvironment({
+      APP_ENV: "local",
       DATABASE_URL: databaseUrl,
       AWS_REGION: "ap-south-1",
       S3_BUCKET: "studiocar-private",
@@ -184,6 +188,7 @@ describe("storage cleanup and image worker environments", () => {
   it("still enforces the storage deletion retry bound alongside credentials", () => {
     expect(() =>
       parseStorageCleanupEnvironment({
+        APP_ENV: "development",
         DATABASE_URL: databaseUrl,
         AWS_REGION: "ap-south-1",
         S3_BUCKET: "studiocar-private",
@@ -196,6 +201,7 @@ describe("storage cleanup and image worker environments", () => {
 
   it("accepts the same S3 connection fields for the image worker", () => {
     const environment = parseImageWorkerEnvironment({
+      APP_ENV: "local",
       DATABASE_URL: databaseUrl,
       AWS_REGION: "ap-south-1",
       S3_BUCKET: "studiocar-private",
@@ -219,6 +225,7 @@ describe("storage cleanup and image worker environments", () => {
     // docker-compose sends every provider's setting, so the two not in use
     // arrive as empty strings. They used to stop the worker from starting.
     const environment = parseImageWorkerEnvironment({
+      APP_ENV: "development",
       DATABASE_URL: databaseUrl,
       AWS_REGION: "ap-south-1",
       S3_BUCKET: "studiocar-private",
@@ -238,6 +245,7 @@ describe("storage cleanup and image worker environments", () => {
   it("still refuses an empty key for the selected provider", () => {
     expect(() =>
       parseImageWorkerEnvironment({
+        APP_ENV: "development",
         DATABASE_URL: databaseUrl,
         AWS_REGION: "ap-south-1",
         S3_BUCKET: "studiocar-private",
@@ -250,6 +258,7 @@ describe("storage cleanup and image worker environments", () => {
   it("still requires the selected provider credential", () => {
     expect(() =>
       parseImageWorkerEnvironment({
+        APP_ENV: "development",
         DATABASE_URL: databaseUrl,
         AWS_REGION: "ap-south-1",
         S3_BUCKET: "studiocar-private",
@@ -283,6 +292,7 @@ describe("SQS connection configuration", () => {
 
   it("supplies an emulator endpoint and explicit credentials", () => {
     const environment = parseProcessingEnvironment({
+      APP_ENV: "local",
       DATABASE_URL: databaseUrl,
       AWS_REGION: "ap-south-1",
       SQS_IMAGE_QUEUE_URL: "http://localhost:9324/queue/studiocar-images",
@@ -303,6 +313,7 @@ describe("SQS connection configuration", () => {
   it("fails closed on half-configured queue credentials", () => {
     expect(() =>
       parseProcessingEnvironment({
+        APP_ENV: "local",
         DATABASE_URL: databaseUrl,
         AWS_REGION: "ap-south-1",
         SQS_IMAGE_QUEUE_URL: "http://localhost:9324/queue/studiocar-images",
@@ -316,6 +327,7 @@ describe("SQS connection configuration", () => {
   it("still enforces the processing retry bound alongside credentials", () => {
     expect(() =>
       parseProcessingEnvironment({
+        APP_ENV: "local",
         DATABASE_URL: databaseUrl,
         AWS_REGION: "ap-south-1",
         SQS_IMAGE_QUEUE_URL: "http://localhost:9324/queue/studiocar-images",

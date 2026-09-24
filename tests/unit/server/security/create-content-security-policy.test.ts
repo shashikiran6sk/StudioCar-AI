@@ -19,4 +19,16 @@ describe("createContentSecurityPolicy", () => {
     expect(policy).toContain("'unsafe-eval'");
     expect(policy).toContain("ws: wss:");
   });
+
+  it("allows the local storage origin for uploads and previews when given one", () => {
+    const policy = createContentSecurityPolicy("production", "http://localhost:9000");
+
+    expect(policy).toMatch(/img-src [^;]*http:\/\/localhost:9000/);
+    expect(policy).toMatch(/connect-src [^;]*http:\/\/localhost:9000/);
+    expect(policy).not.toMatch(/script-src [^;]*localhost:9000/);
+  });
+
+  it("adds no storage origin beyond AWS when none is given", () => {
+    expect(createContentSecurityPolicy("production")).not.toContain("localhost");
+  });
 });

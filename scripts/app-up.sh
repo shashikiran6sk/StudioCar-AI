@@ -1,10 +1,16 @@
 #!/bin/sh
-# Starts the complete local StudioCar AI environment, including the Next.js
-# application. The dispatcher must reach the application inside the compose
-# network rather than on the host.
+# Starts the complete Local StudioCar AI environment, including the Next.js
+# application in a container. The dispatcher must reach the application inside
+# the compose network rather than on the host.
 set -eu
 
 cd "$(dirname "$0")/.."
+. scripts/local-environment.sh
+
+if [ "$APP_ENV" != local ]; then
+  refuse "pnpm app:up runs the Local environment only. For Development, run
+\`pnpm infra:up\` and then \`pnpm dev\`."
+fi
 
 # The worker image installs only the worker dependency trees, so the Prisma
 # client is generated here and copied in with the source.
@@ -15,7 +21,7 @@ DISPATCH_TARGET_URL="${DISPATCH_TARGET_URL:-http://web:3000}" \
 
 cat <<'MESSAGE'
 
-StudioCar AI is starting.
+StudioCar AI is starting (APP_ENV=local).
 
   Application   http://localhost:3000
   Mail inbox    http://localhost:8025
@@ -24,7 +30,7 @@ StudioCar AI is starting.
 
 Run `pnpm infra:build` after changing application or worker code.
 
-Apply migrations once the database is healthy:
+Once the database is healthy:
 
-  DATABASE_URL=postgresql://studiocar:studiocar@localhost:5432/studiocar pnpm db:migrate:deploy
+  pnpm db:reset && pnpm db:seed
 MESSAGE

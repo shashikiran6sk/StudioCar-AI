@@ -15,8 +15,10 @@ import {
   parseUploadEnvironment,
 } from "../../../packages/config/src/environment";
 
+// A Development configuration that has moved its queues to AWS SQS, so every
+// explicit value below is also what the parsers return.
 const validEnvironment = {
-  NODE_ENV: "test",
+  APP_ENV: "development",
   DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/studiocar_test",
   SESSION_SECRET: "a-secure-session-secret-at-least-32-characters",
   GOOGLE_CLIENT_ID: "google-client",
@@ -78,9 +80,10 @@ describe("environment validation", () => {
 
   it("validates the focused Google authentication runtime environment", () => {
     expect(parseGoogleAuthEnvironment(validEnvironment)).toEqual({
-      NODE_ENV: "test",
+      APP_ENV: "development",
       DATABASE_URL: validEnvironment.DATABASE_URL,
       SESSION_SECRET: validEnvironment.SESSION_SECRET,
+      GOOGLE_AUTH_DRIVER: "google",
       GOOGLE_CLIENT_ID: validEnvironment.GOOGLE_CLIENT_ID,
       GOOGLE_CLIENT_SECRET: validEnvironment.GOOGLE_CLIENT_SECRET,
       GOOGLE_REDIRECT_URI: validEnvironment.GOOGLE_REDIRECT_URI,
@@ -90,7 +93,7 @@ describe("environment validation", () => {
 
   it("validates bounded phone authentication defaults", () => {
     expect(parsePhoneAuthEnvironment(validEnvironment)).toEqual({
-      NODE_ENV: "test",
+      APP_ENV: "development",
       DATABASE_URL: validEnvironment.DATABASE_URL,
       SESSION_SECRET: validEnvironment.SESSION_SECRET,
       PHONE_OTP_DRIVER: "msg91",
@@ -125,32 +128,44 @@ describe("environment validation", () => {
     }
   });
 
-  it("defaults to the development driver and refuses it in production", () => {
-    const development = parsePhoneAuthEnvironment({
-      NODE_ENV: "development",
-      DATABASE_URL: validEnvironment.DATABASE_URL,
-      SESSION_SECRET: validEnvironment.SESSION_SECRET,
-    });
-    expect(development.PHONE_OTP_DRIVER).toBe("fake");
+  it("selects the fake driver only in the local environment", () => {
+    expect(parsePhoneAuthEnvironment({ APP_ENV: "local" }).PHONE_OTP_DRIVER).toBe(
+      "fake",
+    );
 
+    // Development never falls back to the fake driver: missing MSG91
+    // credentials are an error, and so is asking for the fake driver.
     expect(() =>
       parsePhoneAuthEnvironment({
-        NODE_ENV: "production",
+        APP_ENV: "development",
         DATABASE_URL: validEnvironment.DATABASE_URL,
         SESSION_SECRET: validEnvironment.SESSION_SECRET,
+      }),
+    ).toThrow(/MSG91_AUTH_KEY is required/);
+    expect(() =>
+      parsePhoneAuthEnvironment({
+        ...validEnvironment,
         PHONE_OTP_DRIVER: "fake",
       }),
-    ).toThrow(/must be msg91 in production/);
+    ).toThrow(/PHONE_OTP_DRIVER=fake is not allowed in the development environment/);
   });
 
   it("validates the focused session runtime without unrelated credentials", () => {
     expect(
-      parseSessionEnvironment({ DATABASE_URL: validEnvironment.DATABASE_URL }),
-    ).toEqual({ DATABASE_URL: validEnvironment.DATABASE_URL });
+      parseSessionEnvironment({
+        APP_ENV: "development",
+        DATABASE_URL: validEnvironment.DATABASE_URL,
+        SESSION_SECRET: validEnvironment.SESSION_SECRET,
+      }),
+    ).toEqual({
+      APP_ENV: "development",
+      DATABASE_URL: validEnvironment.DATABASE_URL,
+    });
   });
 
   it("validates the focused upload runtime and bounded image limits", () => {
     expect(parseUploadEnvironment(validEnvironment)).toEqual({
+      APP_ENV: "development",
       DATABASE_URL: validEnvironment.DATABASE_URL,
       AWS_REGION: validEnvironment.AWS_REGION,
       S3_BUCKET: validEnvironment.S3_BUCKET,
@@ -172,6 +187,7 @@ describe("environment validation", () => {
 
   it("validates bounded processing dispatch settings", () => {
     expect(parseProcessingEnvironment(validEnvironment)).toEqual({
+      APP_ENV: "development",
       DATABASE_URL: validEnvironment.DATABASE_URL,
       AWS_REGION: validEnvironment.AWS_REGION,
       SQS_IMAGE_QUEUE_URL: validEnvironment.SQS_IMAGE_QUEUE_URL,
@@ -200,6 +216,7 @@ describe("environment validation", () => {
 
   it("validates bounded image worker settings and provider credentials", () => {
     expect(parseImageWorkerEnvironment(validEnvironment)).toEqual({
+      APP_ENV: "development",
       DATABASE_URL: validEnvironment.DATABASE_URL,
       AWS_REGION: validEnvironment.AWS_REGION,
       S3_BUCKET: validEnvironment.S3_BUCKET,
@@ -228,18 +245,22 @@ describe("environment validation", () => {
   it("validates the isolated email worker secrets and timeout", () => {
     expect(
       parseEmailWorkerEnvironment({
+        APP_ENV: "development",
         APPLICATION_BASE_URL: validEnvironment.APPLICATION_BASE_URL,
         DATABASE_URL: validEnvironment.DATABASE_URL,
+        EMAIL_DRIVER: "resend",
         EMAIL_FROM: "mail@studiocar.example",
         RESEND_API_KEY: "resend-secret",
       }),
     ).toEqual({
-      NODE_ENV: "development",
+      APP_ENV: "development",
       APPLICATION_BASE_URL: validEnvironment.APPLICATION_BASE_URL,
       DATABASE_URL: validEnvironment.DATABASE_URL,
       EMAIL_DELIVERY_CLAIM_TTL_MS: 45_000,
       EMAIL_DRIVER: "resend",
       EMAIL_FROM: "mail@studiocar.example",
+      // The Development profile's inbox address; unused by the resend driver.
+      MAILPIT_BASE_URL: "http://localhost:8025",
       RESEND_API_KEY: "resend-secret",
       RESEND_TIMEOUT_MS: 8_000,
     });
@@ -249,7 +270,7 @@ describe("environment validation", () => {
 
   it("validates bounded email outbox dispatch settings", () => {
     expect(parseEmailDispatchEnvironment(validEnvironment)).toEqual({
-      NODE_ENV: "test",
+      APP_ENV: "development",
       APPLICATION_BASE_URL: validEnvironment.APPLICATION_BASE_URL,
       AWS_REGION: validEnvironment.AWS_REGION,
       DATABASE_URL: validEnvironment.DATABASE_URL,
@@ -264,6 +285,7 @@ describe("environment validation", () => {
 
   it("validates focused lifecycle cleanup retention bounds", () => {
     expect(parseLifecycleCleanupEnvironment(validEnvironment)).toEqual({
+      APP_ENV: "development",
       DATABASE_URL: validEnvironment.DATABASE_URL,
       LIFECYCLE_CLEANUP_TOKEN: validEnvironment.LIFECYCLE_CLEANUP_TOKEN,
       LIFECYCLE_CLEANUP_BATCH_SIZE: 100,
@@ -281,6 +303,7 @@ describe("environment validation", () => {
 
   it("validates isolated storage cleanup and retry bounds", () => {
     expect(parseStorageCleanupEnvironment(validEnvironment)).toEqual({
+      APP_ENV: "development",
       DATABASE_URL: validEnvironment.DATABASE_URL,
       AWS_REGION: validEnvironment.AWS_REGION,
       S3_BUCKET: validEnvironment.S3_BUCKET,
@@ -305,9 +328,15 @@ describe("environment validation", () => {
 
 describe("application base url", () => {
   const emailWorker = {
+    APP_ENV: "development",
     DATABASE_URL: validEnvironment.DATABASE_URL,
     EMAIL_FROM: "mail@studiocar.example",
     RESEND_API_KEY: "resend-secret",
+  };
+  const productionEmailWorker = {
+    ...emailWorker,
+    APP_ENV: "production",
+    DATABASE_URL: "postgresql://studiocar:secret@db.studiocar.example:5432/studiocar",
   };
 
   it("accepts a local base url outside production", () => {
@@ -322,24 +351,21 @@ describe("application base url", () => {
   it("requires https and a public hostname in production", () => {
     expect(() =>
       parseEmailWorkerEnvironment({
-        ...emailWorker,
-        NODE_ENV: "production",
+        ...productionEmailWorker,
         APPLICATION_BASE_URL: "http://localhost:3000",
       }),
     ).toThrow(/public hostname in production/);
 
     expect(() =>
       parseEmailWorkerEnvironment({
-        ...emailWorker,
-        NODE_ENV: "production",
+        ...productionEmailWorker,
         APPLICATION_BASE_URL: "http://app.studiocar.example",
       }),
     ).toThrow(/public hostname in production/);
 
     expect(
       parseEmailWorkerEnvironment({
-        ...emailWorker,
-        NODE_ENV: "production",
+        ...productionEmailWorker,
         APPLICATION_BASE_URL: "https://app.studiocar.example",
       }).APPLICATION_BASE_URL,
     ).toBe("https://app.studiocar.example");
