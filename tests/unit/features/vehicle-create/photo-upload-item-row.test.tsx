@@ -117,4 +117,23 @@ describe("PhotoUploadItemRow", () => {
       screen.getByRole("button", { name: "Replace image document.jpg" }),
     ).toBeEnabled();
   });
+
+  it("disables removal controls while backend deletion is pending", () => {
+    render(
+      <PhotoUploadItemRow
+        {...handlers}
+        canMoveDown
+        canMoveUp
+        photo={uploadedPhoto({ status: PhotoUploadStatus.Removing })}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Removing vehicle.jpg" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Move up vehicle.jpg" }),
+    ).toBeDisabled();
+    expect(screen.getByText("Removing")).toBeVisible();
+  });
 });

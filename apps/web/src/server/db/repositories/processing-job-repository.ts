@@ -11,6 +11,7 @@ import {
 } from "@studiocar/database-runtime";
 import { toProcessingOptionsJson } from "./to-processing-options-json";
 import { PROCESSABLE_VEHICLE_STATUSES } from "../../vehicles/vehicle-status-groups.constants";
+import { createImageAssetLockKey } from "./create-image-asset-lock-key";
 
 const MISSING_USAGE_JOB_ERROR =
   "A processing batch must contain a usage-accounting job.";
@@ -175,6 +176,10 @@ export class PrismaProcessingJobRepository {
     }
     if (uniqueAssetIds.size !== command.jobs.length) {
       return { kind: "ASSETS_NOT_READY" };
+    }
+    for (const assetId of [...uniqueAssetIds].sort()) {
+      const lockKey = createImageAssetLockKey(assetId);
+      await transaction.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`;
     }
     const assets = await transaction.imageAsset.findMany({
       where: {

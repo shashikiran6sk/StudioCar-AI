@@ -2005,7 +2005,8 @@ body {
 
 .photo-upload-item__status--uploading,
 .photo-upload-item__status--preparing,
-.photo-upload-item__status--finalizing {
+.photo-upload-item__status--finalizing,
+.photo-upload-item__status--removing {
   background: var(--sc-blue-50);
   color: var(--sc-blue-600);
 }

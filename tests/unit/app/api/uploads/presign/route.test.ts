@@ -5,6 +5,7 @@ import { getCurrentSession } from "../../../../../../apps/web/src/server/auth/ge
 import { handleCreateUploadIntent } from "../../../../../../apps/web/src/server/uploads/create-upload-intent-handler";
 import { getUploadRuntime } from "../../../../../../apps/web/src/server/uploads/upload-runtime";
 import { UploadService } from "../../../../../../apps/web/src/server/uploads/upload-service";
+import { RemoveUploadService } from "../../../../../../apps/web/src/server/uploads/remove-upload-service";
 import { CommandRateLimiter } from "../../../../../../apps/web/src/server/security/command-rate-limiter";
 import { CommandRateLimitScope } from "../../../../../../packages/database-runtime/generated/prisma/client";
 
@@ -51,6 +52,13 @@ describe("POST /api/uploads/presign", () => {
     vi.mocked(getCurrentSession).mockResolvedValue(session);
     vi.mocked(getUploadRuntime).mockReturnValue({
       rateLimiter,
+      removals: new RemoveUploadService(
+        {
+          reserveUserUploadRemoval: vi.fn(),
+          completeUserUploadRemoval: vi.fn(),
+        },
+        { deleteObject: vi.fn() },
+      ),
       service: uploads,
     });
     const request = new Request(

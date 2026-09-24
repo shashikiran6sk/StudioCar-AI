@@ -184,6 +184,99 @@ describe("PhotoUploadStep", () => {
     expect(signal?.aborted).toBe(true);
     expect(useVehicleCreateStore.getState().photos).toHaveLength(0);
   });
+
+  it("keeps an uploaded photo visible until backend deletion succeeds", async () => {
+    const upload = vi.fn<typeof uploadPhoto>(async () => ({
+      assetId: FIRST_ASSET_ID,
+      width: 1920,
+      height: 1080,
+    }));
+    let finishRemoval: (() => void) | undefined;
+    const removeUpload = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishRemoval = resolve;
+        }),
+    );
+    render(
+      <PhotoUploadStep
+        limitLabel="Free plan · Up to 5 images per batch."
+        maximumPhotos={5}
+        onBack={vi.fn()}
+        onContinue={vi.fn()}
+        removeUpload={removeUpload}
+        upload={upload}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Select photos"), {
+      target: {
+        files: [new File(["front"], "front.jpg", { type: "image/jpeg" })],
+      },
+    });
+    await screen.findByText("Uploaded");
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove front.jpg" }));
+
+    expect(removeUpload).toHaveBeenCalledWith(FIRST_ASSET_ID);
+    expect(
+      screen.getByRole("button", { name: "Removing front.jpg" }),
+    ).toBeDisabled();
+    expect(useVehicleCreateStore.getState().photos).toHaveLength(1);
+    if (!finishRemoval) throw new Error("Expected a pending removal.");
+    finishRemoval();
+    await waitFor(() =>
+      expect(useVehicleCreateStore.getState().photos).toHaveLength(0),
+    );
+  });
+
+  it("keeps a photo visible with a retryable error when deletion fails", async () => {
+    const upload = vi.fn<typeof uploadPhoto>(async () => ({
+      assetId: FIRST_ASSET_ID,
+      width: 1920,
+      height: 1080,
+    }));
+    const removeUpload = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("Storage could not remove the image."))
+      .mockResolvedValueOnce(undefined);
+    const onContinue = vi.fn();
+    render(
+      <PhotoUploadStep
+        limitLabel="Free plan · Up to 5 images per batch."
+        maximumPhotos={5}
+        onBack={vi.fn()}
+        onContinue={onContinue}
+        removeUpload={removeUpload}
+        upload={upload}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Select photos"), {
+      target: {
+        files: [new File(["front"], "front.jpg", { type: "image/jpeg" })],
+      },
+    });
+    await screen.findByText("Uploaded");
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove front.jpg" }));
+
+    expect(
+      await screen.findByText("Storage could not remove the image."),
+    ).toBeVisible();
+    expect(useVehicleCreateStore.getState().photos).toHaveLength(1);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue to customize →" }),
+    );
+    expect(onContinue).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Wait for active uploads or retry failed photos before continuing.",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove front.jpg" }));
+    await waitFor(() =>
+      expect(useVehicleCreateStore.getState().photos).toHaveLength(0),
+    );
+    expect(removeUpload).toHaveBeenCalledTimes(2);
+  });
   it("shows the limit sentence it is given rather than a stored one", () => {
     render(
       <PhotoUploadStep
@@ -237,6 +330,26 @@ describe("PhotoUploadStep", () => {
     expect(onContinue).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onBack).toHaveBeenCalledOnce();
+  });
+
+  it("removes an existing photo from selection without deleting storage", () => {
+    act(() => useVehicleCreateStore.getState().initialize(selectionContext()));
+    const removeUpload = vi.fn();
+    render(
+      <PhotoUploadStep
+        limitLabel="Free plan · Up to 5 images per batch."
+        maximumPhotos={5}
+        onBack={vi.fn()}
+        onContinue={vi.fn()}
+        removeUpload={removeUpload}
+        upload={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove front.jpg" }));
+
+    expect(removeUpload).not.toHaveBeenCalled();
+    expect(screen.queryByText("Image 1 · front.jpg")).not.toBeInTheDocument();
   });
 
   it("stops at the plan's batch limit counting only selected photos", () => {

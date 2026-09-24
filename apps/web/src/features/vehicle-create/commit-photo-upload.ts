@@ -5,10 +5,10 @@ import {
 } from "@studiocar/contracts";
 
 import {
-  PHOTO_UPLOAD_COMMIT_ROUTE_PREFIX,
   PHOTO_UPLOAD_COMMIT_ROUTE_SUFFIX,
   PHOTO_UPLOAD_CONTENT_TYPE_HEADER,
   PHOTO_UPLOAD_GENERIC_ERROR,
+  PHOTO_UPLOAD_ROUTE_PREFIX,
 } from "./vehicle-create.constants";
 
 export async function commitPhotoUpload(
@@ -17,7 +17,7 @@ export async function commitPhotoUpload(
   fetcher: typeof fetch = fetch,
 ): Promise<CommitUploadResponse> {
   const response = await fetcher(
-    `${PHOTO_UPLOAD_COMMIT_ROUTE_PREFIX}/${assetId}${PHOTO_UPLOAD_COMMIT_ROUTE_SUFFIX}`,
+    `${PHOTO_UPLOAD_ROUTE_PREFIX}/${assetId}${PHOTO_UPLOAD_COMMIT_ROUTE_SUFFIX}`,
     {
       method: "POST",
       headers: { [PHOTO_UPLOAD_CONTENT_TYPE_HEADER]: "application/json" },

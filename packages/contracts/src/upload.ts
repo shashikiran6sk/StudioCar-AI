@@ -50,9 +50,11 @@ export const CommitUploadSchema = z
   })
   .strict();
 
-export const CommitUploadPathSchema = z
+export const UploadAssetPathSchema = z
   .object({ assetId: EntityIdSchema })
   .strict();
+
+export const CommitUploadPathSchema = UploadAssetPathSchema;
 
 export const UploadRequestHeadersSchema = z.record(
   z.string().trim().min(1),
