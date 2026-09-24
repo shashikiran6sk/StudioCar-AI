@@ -4,6 +4,7 @@ import {
   PHOTO_UPLOAD_FAILED_STATUS_LABEL,
   PHOTO_UPLOAD_FINALIZING_STATUS_LABEL,
   PHOTO_UPLOAD_PREPARING_STATUS_LABEL,
+  PHOTO_UPLOAD_REMOVING_LABEL,
   PHOTO_UPLOAD_UPLOADED_STATUS_LABEL,
   PHOTO_UPLOAD_UPLOADING_STATUS_LABEL,
   PHOTO_UPLOAD_WAITING_STATUS_LABEL,
@@ -15,6 +16,8 @@ export function photoUploadStatusLabel(photo: PhotoUploadItem): string {
       return PHOTO_UPLOAD_WAITING_STATUS_LABEL;
     case PhotoUploadStatus.Preparing:
       return PHOTO_UPLOAD_PREPARING_STATUS_LABEL;
+    case PhotoUploadStatus.Removing:
+      return PHOTO_UPLOAD_REMOVING_LABEL;
     case PhotoUploadStatus.Uploading:
       return `${PHOTO_UPLOAD_UPLOADING_STATUS_LABEL} ${String(photo.progress)}%`;
     case PhotoUploadStatus.Finalizing:

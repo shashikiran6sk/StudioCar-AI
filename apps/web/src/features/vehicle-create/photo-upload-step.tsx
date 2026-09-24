@@ -21,6 +21,8 @@ import {
 } from "./studio-selection.constants";
 import type { PhotoUploadItem, RejectedPhoto } from "./photo-upload.types";
 import { PhotoUploadStatus } from "./photo-upload-status";
+import { PhotoSource } from "./photo-source";
+import { removePhotoUpload } from "./remove-photo-upload";
 import { selectPhotoFiles } from "./select-photo-files";
 import { uploadPhoto } from "./upload-photo";
 import {
@@ -33,6 +35,7 @@ import {
   PHOTO_UPLOAD_GENERIC_ERROR,
   PHOTO_UPLOAD_INCOMPLETE_ERROR,
   PHOTO_UPLOAD_MAX_PROGRESS,
+  PHOTO_UPLOAD_REMOVE_GENERIC_ERROR,
   PHOTO_UPLOAD_SELECT_LABEL,
 } from "./vehicle-create.constants";
 import { useVehicleCreateStore } from "./vehicle-create-store";
@@ -46,6 +49,7 @@ export interface PhotoUploadStepProps {
   /** Explains what the photos are when the dialog opens on a vehicle. */
   note?: string | undefined;
   upload?: typeof uploadPhoto;
+  removeUpload?: typeof removePhotoUpload;
 }
 
 export function PhotoUploadStep({
@@ -54,6 +58,7 @@ export function PhotoUploadStep({
   onBack,
   onContinue,
   note,
+  removeUpload = removePhotoUpload,
   upload = uploadPhoto,
 }: PhotoUploadStepProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -123,10 +128,32 @@ export function PhotoUploadStep({
     }
   }
 
-  function removeSelectedPhoto(clientId: string) {
+  async function removeSelectedPhoto(clientId: string) {
     uploadControllers.current.get(clientId)?.abort();
     uploadControllers.current.delete(clientId);
-    removePhoto(clientId);
+    const photo = photos.find((candidate) => candidate.clientId === clientId);
+    if (
+      !photo ||
+      photo.source === PhotoSource.Existing ||
+      photo.status !== PhotoUploadStatus.Uploaded ||
+      photo.assetId === null
+    ) {
+      removePhoto(clientId);
+      return;
+    }
+    updatePhoto(clientId, { error: null, status: PhotoUploadStatus.Removing });
+    try {
+      await removeUpload(photo.assetId);
+      removePhoto(clientId);
+    } catch (error) {
+      updatePhoto(clientId, {
+        error:
+          error instanceof Error
+            ? error.message
+            : PHOTO_UPLOAD_REMOVE_GENERIC_ERROR,
+        status: PhotoUploadStatus.Uploaded,
+      });
+    }
   }
 
   function acceptFiles(files: Iterable<File>) {
@@ -196,7 +223,8 @@ export function PhotoUploadStep({
     }
     if (
       !selectedPhotos.every(
-        (photo) => photo.status === PhotoUploadStatus.Uploaded,
+        (photo) =>
+          photo.status === PhotoUploadStatus.Uploaded && photo.error === null,
       )
     ) {
       setStepError(PHOTO_UPLOAD_INCOMPLETE_ERROR);
@@ -268,7 +296,7 @@ export function PhotoUploadStep({
             key={photo.clientId}
             onMoveDown={() => movePhoto(photo.clientId, 1)}
             onMoveUp={() => movePhoto(photo.clientId, -1)}
-            onRemove={() => removeSelectedPhoto(photo.clientId)}
+            onRemove={() => void removeSelectedPhoto(photo.clientId)}
             onReplace={
               choosing ? () => chooseReplacement(photo.clientId) : undefined
             }

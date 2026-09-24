@@ -23,6 +23,7 @@ export const PHOTO_UPLOAD_DROP_LABEL = "Drop vehicle photos here";
 export const PHOTO_UPLOAD_SELECT_LABEL = "Select photos";
 export const PHOTO_UPLOAD_RETRY_LABEL = "Retry";
 export const PHOTO_UPLOAD_REMOVE_LABEL = "Remove";
+export const PHOTO_UPLOAD_REMOVING_LABEL = "Removing";
 export const PHOTO_UPLOAD_MOVE_UP_LABEL = "Move up";
 export const PHOTO_UPLOAD_MOVE_DOWN_LABEL = "Move down";
 export const PHOTO_UPLOAD_REORDER_LABEL = "Reorder";
@@ -46,6 +47,8 @@ export const PHOTO_UPLOAD_INCOMPLETE_ERROR =
   "Wait for active uploads or retry failed photos before continuing.";
 export const PHOTO_UPLOAD_GENERIC_ERROR =
   "Upload failed. Check your connection and retry this photo.";
+export const PHOTO_UPLOAD_REMOVE_GENERIC_ERROR =
+  "The image could not be removed. Please try again.";
 export const PHOTO_UPLOAD_WAITING_STATUS_LABEL = "Waiting";
 export const PHOTO_UPLOAD_PREPARING_STATUS_LABEL = "Preparing";
 export const PHOTO_UPLOAD_UPLOADING_STATUS_LABEL = "Uploading";
@@ -56,7 +59,7 @@ export const PHOTO_UPLOAD_UNSUPPORTED_ERROR =
   "Only JPG, JPEG, PNG, and WEBP images are supported.";
 export const PHOTO_UPLOAD_SIZE_ERROR = "Each image must be 25 MB or smaller.";
 export const PHOTO_UPLOAD_PRESIGN_ROUTE = "/api/uploads/presign";
-export const PHOTO_UPLOAD_COMMIT_ROUTE_PREFIX = "/api/uploads";
+export const PHOTO_UPLOAD_ROUTE_PREFIX = "/api/uploads";
 export const PHOTO_UPLOAD_COMMIT_ROUTE_SUFFIX = "/commit";
 export const PHOTO_UPLOAD_IDEMPOTENCY_HEADER = "idempotency-key";
 export const PHOTO_UPLOAD_CONTENT_TYPE_HEADER = "content-type";

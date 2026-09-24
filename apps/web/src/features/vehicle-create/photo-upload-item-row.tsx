@@ -17,6 +17,7 @@ import {
   PHOTO_UPLOAD_MOVE_DOWN_LABEL,
   PHOTO_UPLOAD_MOVE_UP_LABEL,
   PHOTO_UPLOAD_REMOVE_LABEL,
+  PHOTO_UPLOAD_REMOVING_LABEL,
   PHOTO_UPLOAD_REORDER_LABEL,
   PHOTO_UPLOAD_RETRY_LABEL,
 } from "./vehicle-create.constants";
@@ -50,6 +51,7 @@ export function PhotoUploadItemRow({
   onToggleSelected,
   photo,
 }: PhotoUploadItemRowProps) {
+  const removing = photo.status === PhotoUploadStatus.Removing;
   const dimensions = photo.width && photo.height
     ? ` · ${String(photo.width)} × ${String(photo.height)}`
     : "";
@@ -69,7 +71,9 @@ export function PhotoUploadItemRow({
           checked={photo.selected}
           className="photo-upload-item__select"
           disabled={
-            photo.replaceRequired || photo.status !== PhotoUploadStatus.Uploaded
+            removing ||
+            photo.replaceRequired ||
+            photo.status !== PhotoUploadStatus.Uploaded
           }
           onChange={onToggleSelected}
           type="checkbox"
@@ -81,7 +85,7 @@ export function PhotoUploadItemRow({
       >
         <button
           aria-label={`${PHOTO_UPLOAD_MOVE_UP_LABEL} ${photo.filename}`}
-          disabled={!canMoveUp}
+          disabled={!canMoveUp || removing}
           onClick={onMoveUp}
           type="button"
         >
@@ -89,7 +93,7 @@ export function PhotoUploadItemRow({
         </button>
         <button
           aria-label={`${PHOTO_UPLOAD_MOVE_DOWN_LABEL} ${photo.filename}`}
-          disabled={!canMoveDown}
+          disabled={!canMoveDown || removing}
           onClick={onMoveDown}
           type="button"
         >
@@ -134,6 +138,7 @@ export function PhotoUploadItemRow({
       {failed && onReplace ? (
         <Button
           aria-label={`${EXISTING_PHOTO_REPLACE_LABEL} ${photo.filename}`}
+          disabled={removing}
           onClick={onReplace}
           size="small"
           variant="danger"
@@ -142,11 +147,12 @@ export function PhotoUploadItemRow({
         </Button>
       ) : null}
       <Button
-        aria-label={`${PHOTO_UPLOAD_REMOVE_LABEL} ${photo.filename}`}
+        aria-label={`${removing ? PHOTO_UPLOAD_REMOVING_LABEL : PHOTO_UPLOAD_REMOVE_LABEL} ${photo.filename}`}
+        disabled={removing}
         onClick={onRemove}
         size="icon"
       >
-        ×
+        {removing ? "…" : "×"}
       </Button>
     </li>
   );

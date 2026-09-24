@@ -112,6 +112,17 @@ export type CommitUploadResult =
         | "STORAGE_UNAVAILABLE";
     };
 
+export type RemoveUploadResult =
+  | { ok: true }
+  | {
+      ok: false;
+      reason: "ASSET_NOT_FOUND" | "ASSET_NOT_REMOVABLE" | "STORAGE_UNAVAILABLE";
+    };
+
+export interface UploadRemovalApplication {
+  remove(userId: string, assetId: string): Promise<RemoveUploadResult>;
+}
+
 export interface UploadApplication {
   createIntent(
     userId: string,

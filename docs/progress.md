@@ -785,6 +785,34 @@ exactly as before.
   fixtures; a live remove.bg call remains a deployment smoke test because it
   consumes an external provider request and requires deployment credentials.
 
+### SC051 — Delete explicitly removed pre-processing uploads
+
+- Audited the upload dialog, authoritative `ImageAsset` states, processing
+  reservation, the existing storage-deletion outbox, and private S3 deletion
+  adapter. The X control previously only removed transient browser state, so a
+  committed `UPLOADED` original stayed in S3 with no deletion intent.
+- Added tenant-scoped `DELETE /api/uploads/[assetId]`. A transaction checks
+  ownership, uploaded state, and absence of processing jobs; it marks the
+  asset `DELETED` and records a durable S3 deletion intent before the service
+  deletes the database-derived key. Asset advisory locks serialize removal
+  with processing reservation. Repeated deletion succeeds, and an already
+  missing S3 key is treated as success. No browser-provided storage key is
+  accepted.
+- The upload row shows a pending removal state and stays visible with a
+  retryable error if deletion fails. Existing portfolio photos still leave the
+  selection locally because they have processing history and must not be
+  deleted. In-flight uploads retain their existing abort behavior; this slice
+  covers committed images explicitly removed before processing, not
+  abandoned-upload lifecycle cleanup.
+- No Prisma schema or migration changed. Added route, service, adapter,
+  contract, UI, and real-PostgreSQL coverage for ownership, processing and
+  completed conflicts, absent objects, storage failure, and replay.
+- Verified schema validity, source mapping, lint, strict typecheck, all package
+  unit suites uncached (including 1,081 web tests), all 140 real-PostgreSQL
+  integration tests, the production build, and all 10 Playwright tests.
+  Reviewed the Upload Vehicle screenshot; the row layout is unchanged except
+  for the truthful temporary Removing status and retryable error.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.

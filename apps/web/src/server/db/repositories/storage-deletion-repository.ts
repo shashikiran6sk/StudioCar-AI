@@ -5,12 +5,19 @@ import {
 } from "@studiocar/database-runtime";
 import { storageDeletionSelect } from "./storage-deletion-record";
 import type { StorageDeletionRecord } from "./storage-deletion-record";
-import { EXPIRED_UPLOAD_REASON } from "./storage-deletion-repository.constants";
+import { createImageAssetLockKey } from "./create-image-asset-lock-key";
+import {
+  EXPIRED_UPLOAD_REASON,
+  USER_REMOVED_UPLOAD_REASON,
+} from "./storage-deletion-repository.constants";
 import type {
   ClaimStorageDeletionsCommand,
   CompleteStorageDeletionCommand,
   FailStorageDeletionCommand,
   ReleaseStorageDeletionCommand,
+  ReserveUserUploadRemovalCommand,
+  ReserveUserUploadRemovalResult,
+  CompleteUserUploadRemovalCommand,
   ReserveExpiredUploadsCommand,
 } from "./storage-deletion-repository.types";
 import { validateStorageDeletionBatchSize } from "./validate-storage-deletion-batch-size";
@@ -76,6 +83,113 @@ export class PrismaStorageDeletionRepository {
       }
       return candidates.length;
     });
+  }
+
+  public async reserveUserUploadRemoval(
+    command: ReserveUserUploadRemovalCommand,
+  ): Promise<ReserveUserUploadRemovalResult> {
+    return this.database.$transaction(async (transaction) => {
+      const lockKey = createImageAssetLockKey(command.assetId);
+      await transaction.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`;
+      const asset = await transaction.imageAsset.findFirst({
+        where: { id: command.assetId, userId: command.userId },
+        select: {
+          id: true,
+          invalidReason: true,
+          originalObjectKey: true,
+          status: true,
+          storageDeletion: {
+            select: { id: true, status: true },
+          },
+          _count: { select: { processingJobs: true } },
+        },
+      });
+      if (!asset) return { kind: "NOT_FOUND" };
+      if (asset._count.processingJobs > 0) return { kind: "NOT_REMOVABLE" };
+      if (
+        asset.status !== ImageAssetStatus.UPLOADED &&
+        asset.status !== ImageAssetStatus.DELETED
+      ) {
+        return { kind: "NOT_REMOVABLE" };
+      }
+      if (
+        asset.status === ImageAssetStatus.DELETED &&
+        asset.invalidReason !== USER_REMOVED_UPLOAD_REASON
+      ) {
+        return { kind: "NOT_REMOVABLE" };
+      }
+      if (
+        asset.status === ImageAssetStatus.DELETED &&
+        asset.storageDeletion?.status === StorageDeletionStatus.COMPLETED
+      ) {
+        return { kind: "ALREADY_DELETED" };
+      }
+
+      if (asset.status === ImageAssetStatus.UPLOADED) {
+        await transaction.imageAsset.update({
+          where: { id: asset.id },
+          data: {
+            invalidReason: USER_REMOVED_UPLOAD_REASON,
+            status: ImageAssetStatus.DELETED,
+          },
+        });
+      }
+      const deletion = asset.storageDeletion
+        ? await transaction.storageDeletionOutboxMessage.update({
+            where: { id: asset.storageDeletion.id },
+            data: {
+              failedAt: null,
+              lastErrorCode: null,
+              nextAttemptAt: command.now,
+              status: StorageDeletionStatus.PENDING,
+            },
+            select: { id: true },
+          })
+        : await transaction.storageDeletionOutboxMessage.create({
+            data: {
+              imageAssetId: asset.id,
+              nextAttemptAt: command.now,
+              objectKey: asset.originalObjectKey,
+            },
+            select: { id: true },
+          });
+      return {
+        kind: "RESERVED",
+        messageId: deletion.id,
+        objectKey: asset.originalObjectKey,
+      };
+    });
+  }
+
+  public async completeUserUploadRemoval(
+    command: CompleteUserUploadRemovalCommand,
+  ): Promise<boolean> {
+    const result = await this.database.storageDeletionOutboxMessage.updateMany({
+      where: {
+        id: command.messageId,
+        status: {
+          in: [StorageDeletionStatus.PENDING, StorageDeletionStatus.FAILED],
+        },
+      },
+      data: {
+        claimExpiresAt: null,
+        claimedAt: null,
+        claimToken: null,
+        deletedAt: command.deletedAt,
+        failedAt: null,
+        lastErrorCode: null,
+        status: StorageDeletionStatus.COMPLETED,
+      },
+    });
+    if (result.count === 1) return true;
+    const completed = await this.database.storageDeletionOutboxMessage.findFirst({
+      where: {
+        id: command.messageId,
+        status: StorageDeletionStatus.COMPLETED,
+      },
+      select: { id: true },
+    });
+    return completed !== null;
   }
 
   public async claimPendingDeletions(

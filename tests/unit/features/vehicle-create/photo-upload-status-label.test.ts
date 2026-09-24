@@ -11,5 +11,10 @@ describe("photoUploadStatusLabel", () => {
         uploadedPhoto({ progress: 82, status: PhotoUploadStatus.Uploading }),
       ),
     ).toBe("Uploading 82%");
+    expect(
+      photoUploadStatusLabel(
+        uploadedPhoto({ status: PhotoUploadStatus.Removing }),
+      ),
+    ).toBe("Removing");
   });
 });

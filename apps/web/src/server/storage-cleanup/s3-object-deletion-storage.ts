@@ -1,4 +1,4 @@
-import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, NoSuchKey, S3Client } from "@aws-sdk/client-s3";
 
 import type { ObjectDeletionStoragePort } from "./storage-cleanup.types";
 
@@ -13,8 +13,13 @@ export class S3ObjectDeletionStorage implements ObjectDeletionStoragePort {
   ) {}
 
   public async deleteObject(objectKey: string): Promise<void> {
-    await this.sendDeleteObject(
-      new DeleteObjectCommand({ Bucket: this.bucket, Key: objectKey }),
-    );
+    try {
+      await this.sendDeleteObject(
+        new DeleteObjectCommand({ Bucket: this.bucket, Key: objectKey }),
+      );
+    } catch (error) {
+      if (error instanceof NoSuchKey) return;
+      throw error;
+    }
   }
 }

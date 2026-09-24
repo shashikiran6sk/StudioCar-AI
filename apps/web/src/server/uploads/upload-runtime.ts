@@ -3,16 +3,20 @@ import { createS3ClientOptions, parseUploadEnvironment } from "@studiocar/config
 import { CommandRateLimitScope, createDatabaseClient } from "@studiocar/database-runtime";
 import { PrismaCommandRateLimitRepository } from "../db/repositories/command-rate-limit-repository";
 import { PrismaImageAssetRepository } from "../db/repositories/image-asset-repository";
+import { PrismaStorageDeletionRepository } from "../db/repositories/storage-deletion-repository";
 
 import { CommandRateLimiter } from "../security/command-rate-limiter";
+import { S3ObjectDeletionStorage } from "../storage-cleanup/s3-object-deletion-storage";
 import { MILLISECONDS_PER_SECOND } from "../security/command-rate-limiter.constants";
 import { CommitUploadService } from "./commit-upload-service";
 import { CreateUploadIntentService } from "./create-upload-intent-service";
 import { S3ObjectStorage } from "./s3-object-storage";
+import { RemoveUploadService } from "./remove-upload-service";
 import { UploadService } from "./upload-service";
 
 export interface UploadRuntime {
   rateLimiter: CommandRateLimiter;
+  removals: RemoveUploadService;
   service: UploadService;
 }
 
@@ -25,9 +29,10 @@ export function getUploadRuntime(): UploadRuntime {
   const database = createDatabaseClient({
     connectionString: environment.DATABASE_URL,
   });
+  const s3 = new S3Client(createS3ClientOptions(environment));
   const assets = new PrismaImageAssetRepository(database);
   const storage = new S3ObjectStorage(
-    new S3Client(createS3ClientOptions(environment)),
+    s3,
     environment.S3_BUCKET,
   );
   const intents = new CreateUploadIntentService(assets, storage, {
@@ -49,6 +54,10 @@ export function getUploadRuntime(): UploadRuntime {
           MILLISECONDS_PER_SECOND,
       },
     ),
+    removals: new RemoveUploadService(
+      new PrismaStorageDeletionRepository(database),
+      new S3ObjectDeletionStorage(s3, environment.S3_BUCKET),
+    ),
     service: new UploadService(intents, commits),
   };
   return uploadRuntime;
@@ -56,4 +65,8 @@ export function getUploadRuntime(): UploadRuntime {
 
 export function getUploadService(): UploadService {
   return getUploadRuntime().service;
+}
+
+export function getUploadRemovalService(): RemoveUploadService {
+  return getUploadRuntime().removals;
 }

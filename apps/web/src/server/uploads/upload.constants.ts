@@ -29,6 +29,8 @@ export const UPLOAD_LIMIT_EXCEEDED_MESSAGE =
 export const UPLOAD_INVALID_IDEMPOTENCY_MESSAGE =
   "Provide a valid Idempotency-Key header.";
 export const UPLOAD_UNAUTHENTICATED_MESSAGE = "Sign in to upload images.";
+export const UPLOAD_REMOVE_UNAUTHENTICATED_MESSAGE =
+  "Sign in to remove images.";
 export const UPLOAD_FORBIDDEN_MESSAGE = "The request origin is not allowed.";
 export const UPLOAD_VEHICLE_NOT_FOUND_MESSAGE = "The vehicle could not be found.";
 export const UPLOAD_ASSET_NOT_FOUND_MESSAGE = "The image upload could not be found.";
@@ -42,6 +44,10 @@ export const UPLOAD_ASSET_INVALID_MESSAGE =
   "The image upload was previously marked invalid.";
 export const UPLOAD_UNAVAILABLE_MESSAGE =
   "Image storage is temporarily unavailable. Please try again.";
+export const UPLOAD_REMOVE_CONFLICT_MESSAGE =
+  "This image is not removable from the upload selection.";
+export const UPLOAD_REMOVE_UNAVAILABLE_MESSAGE =
+  "The image could not be removed from storage. Please try again.";
 export const UPLOAD_RATE_LIMITED_MESSAGE =
   "Too many upload requests. Wait before trying again.";
 export const INVALID_UPLOAD_INTENT_REASON =

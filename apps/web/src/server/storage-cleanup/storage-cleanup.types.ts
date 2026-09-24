@@ -1,5 +1,14 @@
 import type { StorageDeletionRecord } from "../db/repositories/storage-deletion-record";
-import type { ClaimStorageDeletionsCommand, CompleteStorageDeletionCommand, FailStorageDeletionCommand, ReleaseStorageDeletionCommand, ReserveExpiredUploadsCommand } from "../db/repositories/storage-deletion-repository.types";
+import type {
+  ClaimStorageDeletionsCommand,
+  CompleteStorageDeletionCommand,
+  CompleteUserUploadRemovalCommand,
+  FailStorageDeletionCommand,
+  ReleaseStorageDeletionCommand,
+  ReserveExpiredUploadsCommand,
+  ReserveUserUploadRemovalCommand,
+  ReserveUserUploadRemovalResult,
+} from "../db/repositories/storage-deletion-repository.types";
 
 export interface StorageCleanupRepositoryPort {
   reserveExpiredPendingUploads(
@@ -19,6 +28,15 @@ export interface StorageCleanupRepositoryPort {
 
 export interface ObjectDeletionStoragePort {
   deleteObject(objectKey: string): Promise<void>;
+}
+
+export interface UserUploadRemovalRepositoryPort {
+  reserveUserUploadRemoval(
+    command: ReserveUserUploadRemovalCommand,
+  ): Promise<ReserveUserUploadRemovalResult>;
+  completeUserUploadRemoval(
+    command: CompleteUserUploadRemovalCommand,
+  ): Promise<boolean>;
 }
 
 export interface StorageCleanupOptions {

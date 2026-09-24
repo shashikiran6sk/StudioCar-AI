@@ -30,3 +30,20 @@ export interface FailStorageDeletionCommand {
   failedAt: Date;
   messageId: string;
 }
+
+export interface ReserveUserUploadRemovalCommand {
+  assetId: string;
+  now: Date;
+  userId: string;
+}
+
+export type ReserveUserUploadRemovalResult =
+  | { kind: "RESERVED"; messageId: string; objectKey: string }
+  | { kind: "ALREADY_DELETED" }
+  | { kind: "NOT_FOUND" }
+  | { kind: "NOT_REMOVABLE" };
+
+export interface CompleteUserUploadRemovalCommand {
+  deletedAt: Date;
+  messageId: string;
+}

@@ -6,6 +6,7 @@ import {
   CreateUploadIntentSchema,
   CreateUploadIntentResponseSchema,
   MAX_UPLOAD_BYTES,
+  UploadAssetPathSchema,
 } from "../../../packages/contracts/src/upload";
 
 const vehicleId = "4f9d4891-157f-49ed-aa5a-c026abc0a768";
@@ -57,6 +58,9 @@ describe("upload contracts", () => {
     ).toBe(true);
     expect(CommitUploadPathSchema.safeParse({ assetId: "unsafe" }).success).toBe(
       false,
+    );
+    expect(UploadAssetPathSchema.safeParse({ assetId: vehicleId }).success).toBe(
+      true,
     );
   });
 });
