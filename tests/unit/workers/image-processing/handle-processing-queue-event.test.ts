@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { OperationalEvent } from "../../../../packages/observability/src/operational-telemetry.types";
+
 import type { WorkerMessage } from "../../../../packages/contracts/src/worker";
 import type { ProcessWorkerMessageResult } from "../../../../packages/processing/src/processing-worker.types";
 import { handleProcessingQueueEvent } from "../../../../workers/image-processing/src/handle-processing-queue-event";
@@ -15,6 +17,14 @@ class StubProcessor implements ProcessingMessageProcessorPort {
   public process(message: WorkerMessage): Promise<ProcessWorkerMessageResult> {
     this.messages.push(message);
     return Promise.resolve(this.result);
+  }
+}
+
+class FailingProcessor implements ProcessingMessageProcessorPort {
+  public constructor(private readonly error: unknown) {}
+
+  public process(): Promise<ProcessWorkerMessageResult> {
+    return Promise.reject(this.error);
   }
 }
 
@@ -78,5 +88,46 @@ describe("handleProcessingQueueEvent", () => {
       ],
     });
     expect(emit).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries and reports the class of an error the processor throws", async () => {
+    const databaseUnreachable = Object.assign(
+      new Error("Can't reach database server at db.example.test"),
+      { code: "P1001", name: "PrismaClientKnownRequestError" },
+    );
+    const events: OperationalEvent[] = [];
+    const response = await handleProcessingQueueEvent(
+      {
+        Records: [
+          createRecord(
+            "unreachable",
+            JSON.stringify({
+              version: 1,
+              type: "PROCESS_IMAGE",
+              jobId: JOB_ID,
+              enqueuedAt: "2026-09-20T00:00:00.000Z",
+            }),
+          ),
+        ],
+      },
+      new FailingProcessor(databaseUnreachable),
+      {
+        emit: (event) => {
+          events.push(event);
+          return true;
+        },
+      },
+    );
+
+    expect(response).toEqual({
+      batchItemFailures: [{ itemIdentifier: "unreachable" }],
+    });
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      correlation: { jobId: JOB_ID, queueMessageId: "unreachable" },
+      dimensions: { Outcome: "RECORD_RETRY" },
+      error: { code: "P1001", name: "PrismaClientKnownRequestError" },
+    });
+    expect(JSON.stringify(events)).not.toContain("db.example.test");
   });
 });

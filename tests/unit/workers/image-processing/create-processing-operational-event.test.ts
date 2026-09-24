@@ -99,4 +99,20 @@ describe("createProcessingOperationalEvent", () => {
     );
     expect(JSON.stringify(event)).not.toContain("errorMessage");
   });
+
+  it("records the class of an unexpected failure alongside the retry", () => {
+    const event = createProcessingOperationalEvent({
+      error: { code: "P1001", name: "PrismaClientKnownRequestError" },
+      finishedAtMilliseconds: Date.parse("2026-09-21T10:00:01.000Z"),
+      message,
+      queueMessageId: "sqs-message-3",
+      startedAtMilliseconds: Date.parse("2026-09-21T10:00:00.000Z"),
+    });
+
+    expect(event).toMatchObject({
+      dimensions: { Outcome: "RECORD_RETRY", Provider: "UNKNOWN" },
+      error: { code: "P1001", name: "PrismaClientKnownRequestError" },
+      level: "WARN",
+    });
+  });
 });

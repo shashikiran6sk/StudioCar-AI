@@ -176,6 +176,13 @@ and `REMOVEBG_API_KEY`. `AWS_REGION` defaults to `ap-south-1`.
 - **The processing queue and image worker** are the local ElasticMQ and the
   same worker container as Local, pointed at the Development database and
   bucket.
+- **The database must be reachable over IPv4.** Docker Desktop containers
+  have no IPv6 route, so a host that publishes only an AAAA record works for
+  `pnpm dev` on the host but fails inside the worker. Supabase's direct host
+  `db.<ref>.supabase.co` is IPv6-only: use the session pooler,
+  `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`,
+  which supports prepared statements and migrations. Run `pnpm infra:up`
+  again after changing it, because the worker reads the value at start.
 
 Development refuses the fake sign-in drivers, MinIO and localhost storage, the
 local bucket and emulator keys, the committed Local session secret, and any

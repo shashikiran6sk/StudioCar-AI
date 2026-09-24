@@ -103,6 +103,19 @@ the container itself.
 
 ### A job stuck on "Processing"
 
+First find out why. Each delivery the worker could not finish logs an
+`image_processing_message` event with `"Outcome":"RECORD_RETRY"` and an
+`error` naming the failure's class and code:
+
+```bash
+docker logs studiocar-image-worker-1 2>&1 | grep RECORD_RETRY | tail -1
+```
+
+`PrismaClientKnownRequestError` with `P1001` means the worker cannot reach the
+database; under Development that is usually an IPv6-only host (see
+`docs/environments.md`). Run `pnpm infra:build` after pulling worker changes:
+the container runs the image it was built from, not the working tree.
+
 A queue message that fails five times is moved to a dead-letter queue and is
 not retried automatically, so its job stays `QUEUED`. Once the cause is fixed,
 move the message back:

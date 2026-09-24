@@ -67,4 +67,25 @@ describe("createCloudWatchEmbeddedMetricPayload", () => {
       Service: "image-processing-worker",
     });
   });
+
+  it("carries a bounded error class without promoting it to a dimension", () => {
+    const payload = createCloudWatchEmbeddedMetricPayload({
+      dimensions: { Outcome: "RECORD_RETRY" },
+      error: { code: "P1001", name: "PrismaClientKnownRequestError" },
+      eventName: "image_processing_message",
+      level: OperationalLogLevel.WARN,
+      metrics: [],
+      service: "image-processing-worker",
+      timestampMilliseconds: 1_790_000_000_000,
+    });
+
+    expect(payload).toMatchObject({
+      _aws: {
+        CloudWatchMetrics: [
+          { Dimensions: [["Service"], ["Service", "Outcome"]] },
+        ],
+      },
+      error: { code: "P1001", name: "PrismaClientKnownRequestError" },
+    });
+  });
 });
