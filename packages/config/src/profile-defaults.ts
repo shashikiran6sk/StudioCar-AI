@@ -19,7 +19,6 @@ export interface ProfileDefaultGroup {
 }
 
 const LOCAL_APPLICATION_DEFAULTS: EnvironmentDefaults = {
-  APPLICATION_BASE_URL: LOCAL_INFRASTRUCTURE.applicationOrigin,
   GOOGLE_REDIRECT_URI: LOCAL_INFRASTRUCTURE.googleRedirectUri,
 };
 
@@ -31,14 +30,8 @@ const LOCAL_APPLICATION_DEFAULTS: EnvironmentDefaults = {
  */
 const LOCAL_COMMAND_TOKEN_DEFAULTS: EnvironmentDefaults = {
   PROCESSING_DISPATCH_TOKEN: LOCAL_INFRASTRUCTURE.processingDispatchToken,
-  EMAIL_DISPATCH_TOKEN: LOCAL_INFRASTRUCTURE.emailDispatchToken,
   LIFECYCLE_CLEANUP_TOKEN: LOCAL_INFRASTRUCTURE.lifecycleCleanupToken,
   STORAGE_CLEANUP_TOKEN: LOCAL_INFRASTRUCTURE.storageCleanupToken,
-};
-
-const LOCAL_MAIL_DEFAULTS: EnvironmentDefaults = {
-  MAILPIT_BASE_URL: LOCAL_INFRASTRUCTURE.mailpitBaseUrl,
-  EMAIL_FROM: LOCAL_INFRASTRUCTURE.emailFrom,
 };
 
 const LOCAL_DATABASE_DEFAULTS: EnvironmentDefaults = {
@@ -72,14 +65,12 @@ const LOCAL_QUEUE_DEFAULTS: EnvironmentDefaults = {
   SQS_ACCESS_KEY_ID: LOCAL_INFRASTRUCTURE.emulatorAccessKeyId,
   SQS_SECRET_ACCESS_KEY: LOCAL_INFRASTRUCTURE.emulatorSecretAccessKey,
   SQS_IMAGE_QUEUE_URL: LOCAL_INFRASTRUCTURE.imageQueueUrl,
-  SQS_EMAIL_QUEUE_URL: LOCAL_INFRASTRUCTURE.emailQueueUrl,
 };
 
 function driverDefaults(profile: EnvironmentProfile): EnvironmentDefaults {
   return {
     GOOGLE_AUTH_DRIVER: profile.googleAuthDriver.default,
     PHONE_OTP_DRIVER: profile.phoneOtpDriver.default,
-    EMAIL_DRIVER: profile.emailDriver.default,
     BACKGROUND_REMOVAL_PROVIDER: profile.backgroundRemovalProvider.default,
   };
 }
@@ -95,7 +86,6 @@ function individualDefaults(
       ? LOCAL_STORAGE_DEFAULTS
       : {}),
     ...(queuesAreLocal(profile) ? LOCAL_REGION_DEFAULTS : {}),
-    ...(profile.emailDriver.default === "mailpit" ? LOCAL_MAIL_DEFAULTS : {}),
     ...(appEnvironment === AppEnvironment.Production
       ? {}
       : { ...LOCAL_APPLICATION_DEFAULTS, ...LOCAL_COMMAND_TOKEN_DEFAULTS }),
@@ -103,17 +93,14 @@ function individualDefaults(
 }
 
 function queuesAreLocal(profile: EnvironmentProfile): boolean {
-  return (
-    profile.processingQueue.default === QueueTarget.LocalEmulator &&
-    profile.emailQueue.default === QueueTarget.LocalEmulator
-  );
+  return profile.processingQueue.default === QueueTarget.LocalEmulator;
 }
 
 /**
  * Every value an environment supplies when the settings file leaves it out.
  *
  * Only repository-owned infrastructure is ever defaulted. External credentials
- * (remove.bg, Google, MSG91, Resend, AWS), a Development session secret, and
+ * (remove.bg, Google, MSG91, AWS), a Development session secret, and
  * anything a deployment owns have no default in any environment.
  */
 export function getProfileDefaults(

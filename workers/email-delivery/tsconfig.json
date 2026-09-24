@@ -1,7 +1,0 @@
-{
-  "extends": "../../packages/config/typescript/node.json",
-  "compilerOptions": {
-    "types": ["node", "vitest/globals"]
-  },
-  "include": ["src/**/*.ts", "../../tests/unit/workers/email-delivery/**/*.ts"]
-}

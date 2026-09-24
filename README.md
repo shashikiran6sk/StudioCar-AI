@@ -18,7 +18,7 @@ for what each one runs and requires.
 ```bash
 cp .env.example.local .env.local   # then fill in REMOVEBG_API_KEY
 pnpm install --frozen-lockfile
-pnpm infra:up                      # PostgreSQL, MinIO, ElasticMQ, Mailpit, workers, dispatcher
+pnpm infra:up                      # PostgreSQL, MinIO, ElasticMQ, image worker, dispatcher
 pnpm db:reset                      # Local only: drop and reapply every migration
 pnpm db:seed                       # install the plan catalog
 pnpm dev                           # http://localhost:3000
@@ -27,14 +27,15 @@ pnpm dev                           # http://localhost:3000
 "Continue with Google" signs in as `developer@studiocar.local` without
 contacting Google, and phone sign-in accepts the code `1234` without sending a
 message. Both run the ordinary challenge, identity, and session flow. Uploads go
-to MinIO, processing goes through ElasticMQ and the real image worker to
-remove.bg, and completion email arrives in Mailpit.
+to MinIO, and processing goes through ElasticMQ and the real image worker to
+remove.bg. Results appear through the application's ordinary status polling;
+StudioCar sends no email.
 
 ### Development (real Google, MSG91, AWS S3, and database)
 
 ```bash
 cp .env.example.development .env.local   # then fill in every required value
-pnpm infra:up                            # ElasticMQ, Mailpit, both workers, dispatcher
+pnpm infra:up                            # ElasticMQ, image worker, dispatcher
 pnpm db:migrate:deploy                   # against the Development database
 pnpm dev
 ```
@@ -79,12 +80,11 @@ their code or dependencies; `up` on its own reuses them.
 | PostgreSQL | `postgresql://studiocar:studiocar@localhost:5432/studiocar` | Local only |
 | Object storage | http://localhost:9001 | MinIO console, `studiocarlocal` / `studiocarlocal123`; Local only |
 | Queues | http://localhost:9324 | ElasticMQ, SQS-compatible |
-| Mail inbox | http://localhost:8025 | Mailpit; no mail leaves the machine |
 
 The local stack reproduces the production data plane: a presigned browser
 upload, a durable outbox drained by the dispatcher, an SQS-compatible queue, the
-real image worker, and the real email worker. Both workers run the same deployed
-handler the Lambda runtime does.
+and the real image worker, which runs the same deployed handler the Lambda
+runtime does.
 
 ### One settings file
 
@@ -122,7 +122,7 @@ harmless, and usage is charged only once.
 ## Database
 
 The Prisma schema, migrations, and configuration belong to `apps/web`. The
-generated client and the repositories shared with the deployable workers live in
+generated client and the repositories shared with the deployable worker live in
 `packages/database-runtime`.
 
 ```bash

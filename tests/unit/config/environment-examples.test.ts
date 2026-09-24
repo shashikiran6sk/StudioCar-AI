@@ -5,9 +5,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   AdminBootstrapEnvironmentSchema,
-  EmailDispatchEnvironmentSchema,
-  EmailWorkerEnvironmentSchema,
-  EmailWorkerQueueEnvironmentSchema,
   GoogleAuthEnvironmentSchema,
   ImageWorkerEnvironmentSchema,
   ImageWorkerQueueEnvironmentSchema,
@@ -41,13 +38,10 @@ const KNOWN_VARIABLES = new Set(
     AdminBootstrapEnvironmentSchema,
     GoogleAuthEnvironmentSchema,
     UploadEnvironmentSchema,
-    EmailWorkerEnvironmentSchema,
-    EmailDispatchEnvironmentSchema,
     LifecycleCleanupEnvironmentSchema,
     StorageCleanupEnvironmentSchema,
     ProcessingEnvironmentSchema,
     ImageWorkerQueueEnvironmentSchema,
-    EmailWorkerQueueEnvironmentSchema,
     ImageWorkerEnvironmentSchema,
   ].flatMap((schema) => Object.keys(schema.shape)),
 );
@@ -58,17 +52,26 @@ const RETIRED_VARIABLES = [
   "MSG91_TEMPLATE_ID",
   "NEXT_PUBLIC_APP_URL",
   "REMOVE_BG_API_KEY",
-  "MAIL_FROM",
   "PROCESSING_QUEUE_URL",
-  "EMAIL_QUEUE_URL",
   "STORAGE_DRIVER",
   "QUEUE_DRIVER",
+  // Outbound email was removed; nothing reads these any more.
+  "APPLICATION_BASE_URL",
+  "EMAIL_DELIVERY_CLAIM_TTL_MS",
+  "EMAIL_DISPATCH_TOKEN",
+  "EMAIL_DLQ_URL",
+  "EMAIL_DRIVER",
+  "EMAIL_FROM",
+  "EMAIL_QUEUE_URL",
+  "MAILPIT_BASE_URL",
+  "MAIL_FROM",
+  "RESEND_API_KEY",
+  "SQS_EMAIL_QUEUE_URL",
 ];
 
 /** Settings that exist only to point at local infrastructure or fakes. */
 const LOCAL_ONLY_VARIABLES = [
   "PHONE_OTP_DEV_CODE",
-  "MAILPIT_BASE_URL",
   "S3_ENDPOINT",
   "S3_FORCE_PATH_STYLE",
   "SQS_ENDPOINT",
@@ -80,7 +83,6 @@ const LOCAL_ONLY_VARIABLES = [
 const PROFILE_SELECTIONS = [
   "GOOGLE_AUTH_DRIVER",
   "PHONE_OTP_DRIVER",
-  "EMAIL_DRIVER",
   "BACKGROUND_REMOVAL_PROVIDER",
 ];
 
@@ -221,12 +223,10 @@ describe("environment example files", () => {
     }
   });
 
-  it("keeps Resend and production queues out of Development", () => {
+  it("keeps the production queue out of Development", () => {
     const documented = Object.keys(readExample(".env.example.development"));
 
-    for (const key of ["RESEND_API_KEY", "SQS_IMAGE_QUEUE_URL", "SQS_EMAIL_QUEUE_URL"]) {
-      expect(documented).not.toContain(key);
-    }
+    expect(documented).not.toContain("SQS_IMAGE_QUEUE_URL");
   });
 
   it("ships no value for any production setting but APP_ENV", () => {

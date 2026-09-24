@@ -16,14 +16,12 @@ function committedSecretMessage(key: string, environment: string): string {
  */
 const COMMAND_TOKENS = {
   PROCESSING_DISPATCH_TOKEN: LOCAL_INFRASTRUCTURE.processingDispatchToken,
-  EMAIL_DISPATCH_TOKEN: LOCAL_INFRASTRUCTURE.emailDispatchToken,
   LIFECYCLE_CLEANUP_TOKEN: LOCAL_INFRASTRUCTURE.lifecycleCleanupToken,
   STORAGE_CLEANUP_TOKEN: LOCAL_INFRASTRUCTURE.storageCleanupToken,
 } as const satisfies Partial<Record<keyof IsolationSubject, string>>;
 
 const COMMAND_TOKEN_KEYS = [
   "PROCESSING_DISPATCH_TOKEN",
-  "EMAIL_DISPATCH_TOKEN",
   "LIFECYCLE_CLEANUP_TOKEN",
   "STORAGE_CLEANUP_TOKEN",
 ] as const satisfies readonly (keyof typeof COMMAND_TOKENS)[];

@@ -8,8 +8,8 @@ Every slice in the accepted plan is implemented and merged.
 
 The production foundation, authentication with account linking, private direct
 uploads, asynchronous provider-independent processing, truthful polling,
-screenshot-derived product surfaces, immutable-event-backed Usage & Billing, and
-durable transactional email are in place. So are browser response hardening, a
+screenshot-derived product surfaces, and immutable-event-backed Usage & Billing
+are in place. So are browser response hardening, a
 blocking production dependency audit, durable authenticated command limits,
 runtime secret isolation, signed-webhook verification, bounded retention,
 durable abandoned-upload cleanup, production read-path hardening, and the
@@ -20,6 +20,10 @@ configurable, phone OTP uses the MSG91 Widget flow, and a deterministic local
 environment reproduces the production data plane end to end. `APP_ENV` selects
 one of three explicit environment profiles — Local, Development, and
 Production — from a single source of truth in `packages/config`.
+
+StudioCar sends no email. The outbound email subsystem built in SC017 was
+removed in SC048 because no product requirement needs it; users follow
+processing through the application's own status polling.
 
 The internal administration area is complete. Authorization is a row in
 `UserRole` and is re-checked against the database on every page and every
@@ -253,7 +257,7 @@ everything the accepted plan still leaves open.
 - Added contract, idempotency-key, processing-service, component, page-state, real-PostgreSQL transaction/tenant/plan, and authenticated Playwright coverage; visually compared the completed desktop surface with the supplied Usage & Billing reference.
 - Verified source mapping, lint, strict typecheck, 192 web unit/component files with 310 tests, Prisma validation, nine migrations, 17 real-PostgreSQL integration files with 32 tests, production build, and the complete five-test Playwright suite locally.
 
-### SC017A — Independent email delivery plane
+### SC017A — Independent email delivery plane (removed in SC048)
 
 - Added a strict, versioned processing-completion email message contract that carries a stable message UUID, recipient, authorized portfolio URL, and bounded vehicle name without accepting arbitrary email HTML from producers.
 - Added an independently deployable Node.js 24 email-delivery worker behind a `MailerPort`, with a fixed escaped HTML/text template and a server-only fetch-based Resend adapter.
@@ -263,7 +267,7 @@ everything the accepted plan still leaves open.
 - Generalized behavior-source mapping discovery so every worker workspace is covered automatically, and added contract, renderer, escaping, retry-classification, adapter, handler, and composition tests.
 - Verified source mapping, lint, strict typecheck, the complete unit/component suite, the worker's six focused test files with 15 tests, Prisma validation, all nine migrations, 17 real-PostgreSQL integration files with 32 tests, production builds for all ten packages, and the five-test Playwright suite locally. Database-backed producer, delivery audit, and end-to-end dispatch remain intentionally closed until SC017B.
 
-### SC017B1 — Atomic processing-completion email reservation
+### SC017B1 — Atomic processing-completion email reservation (removed in SC048)
 
 - Added a durable `EmailOutboxMessage` lifecycle with explicit pending, queued, processing, delivered, and failed states; separate publish and delivery claims; attempt counts; provider/queue identifiers; terminal timestamps; and indexes for bounded recovery scans.
 - Snapshot the verified primary recipient and vehicle name for a versioned processing-completion notification, keyed uniquely by user, processing-batch idempotency key, and message type.
@@ -272,7 +276,7 @@ everything the accepted plan still leaves open.
 - Added a backward-compatible tenth migration and real-PostgreSQL assertions for successful outbox reservation and absence on terminal image failure. Queue publication and worker delivery claims remain closed until SC017B2.
 - Verified source mapping, lint, strict typecheck, the complete unit/component suite, Prisma validation, all ten migrations, 17 real-PostgreSQL integration files with 32 tests, production builds for all ten packages, and the five-test Playwright suite locally.
 
-### SC017B2 — Email dispatch and durable delivery
+### SC017B2 — Email dispatch and durable delivery (removed in SC048)
 
 - Added the provider-neutral `@studiocar/email` package with bounded outbox dispatch, exponential backoff with jitter, canonical message construction, delivery leasing, terminal finalization, and `MailerPort` orchestration independent of Resend semantics.
 - Added separate Prisma publisher and delivery adapters. Pending rows use expiring publish leases and durable retry scheduling; queued rows use expiring delivery leases, attempt accounting, provider identifiers, terminal failure codes, and duplicate suppression after delivery or failure.
@@ -676,6 +680,53 @@ Before this slice a vehicle could be processed exactly once: the batch reservati
 - Verified lint, strict typecheck, source mapping, every package suite uncached (config 21 files, web 348), 36 integration files against a throwaway PostgreSQL, `prisma validate`, all migrations applying with status up to date, production builds, and all 10 Playwright tests under `APP_ENV=local`.
 - Verified Local by hand on an isolated second stack: fake Google sign-in to the dashboard, a browser upload straight to MinIO, commit, the outbox, dispatcher, ElasticMQ, the image worker, a real remove.bg call, original, provider result, output, and preview objects in MinIO, one completed attempt with exactly one usage event, the vehicle shown Completed in Inventory, and the completion email delivered to Mailpit. Development's real Google, MSG91, and AWS S3 flow still needs a manual run with real credentials and a real handset.
 
+### SC048 — Outbound email removed
+
+StudioCar has no product use for outbound email, so the whole delivery
+subsystem is gone rather than disabled. Email addresses as identity and profile
+data are unchanged: the verified Google address, `User.primaryEmail`,
+`AuthIdentity.email`, `AdminInvite.email`, and `BOOTSTRAP_ADMIN_EMAIL` behave
+exactly as before.
+
+- Deleted the `workers/email-delivery` workspace (Lambda handler, local
+  consumer, Resend and Mailpit mailers, renderer, escaping, retry
+  classification) and the `packages/email` workspace (outbox dispatcher,
+  delivery processor, `MailerPort`, queue port, retry and option helpers).
+- Deleted `POST /api/internal/email/dispatch`, its handler, runtime, SQS
+  publisher, constants, and the web outbox publisher repository; deleted the
+  shared `email-delivery-repository`, the `EmailWorkerMessage` contract, and the
+  unused `RESEND` webhook provider value.
+- Processing completion no longer reads the owner's email or the vehicle name
+  and never writes an email row. The transaction still creates the processed
+  asset and the immutable usage event, marks the attempt and job, and settles
+  the vehicle. The per-vehicle advisory lock stays: without it two transactions
+  finishing a vehicle's last two jobs would each count the other's job as still
+  active under READ COMMITTED, and the vehicle would stay `PROCESSING`. A new
+  integration test completes the final jobs of several two-image batches
+  concurrently and proves every vehicle reaches `READY` with exactly one
+  processed asset and one usage event per job, and that a duplicate delivery
+  after completion changes nothing.
+- Added migration `20260924120000_remove_email_delivery_outbox`, which drops the
+  `EmailOutboxMessage` table (with its two foreign keys and five indexes) and
+  the `EmailDeliveryStatus` and `EmailMessageType` enums, all created only by
+  `20260920130000_email_delivery_outbox`. Historical migrations are unchanged.
+- Removed `EMAIL_DRIVER`, `EMAIL_FROM`, `MAILPIT_BASE_URL`, `RESEND_API_KEY`,
+  `RESEND_TIMEOUT_MS`, `EMAIL_DISPATCH_TOKEN`, `EMAIL_OUTBOX_*`,
+  `EMAIL_DELIVERY_CLAIM_TTL_MS`, `SQS_EMAIL_QUEUE_URL`, and
+  `APPLICATION_BASE_URL` (read only by the two email parsers, for portfolio
+  links), along with the email driver and email queue from every environment
+  profile. The example tests now refuse these names.
+- Removed Mailpit, the email worker, and the `studiocar-email` queue and its DLQ
+  from the local stack; the dispatch ticker calls only the processing dispatch
+  endpoint, and the worker image builds only the image worker.
+- Deleted `infrastructure/aws/email-delivery-queue.yml` (queue, DLQ, publisher
+  and consumer policies, depth, age, and DLQ alarms) and
+  `email-delivery-worker.yml` (Lambda, role, event source mapping, concurrency,
+  Secrets Manager references, logs, and alarms). The processing queue and
+  worker templates are unchanged. CI had no email-specific steps.
+- Updated `README.md`, `context.md`, `AGENTS.md`, `docs/environments.md`,
+  `docs/security.md`, the AWS README, and the environment examples.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -749,10 +800,7 @@ true when it does ship.
 - Dashboard operational values are server-authoritative: completed-image usage comes from immutable `UsageEvent` quantities, active counts from explicit database states, and storage from committed original plus processed asset sizes. The current free allowance is sourced from the shared plan catalog as nine images across three documented sessions with three images per batch.
 - Upload-session usage is now recorded as `VEHICLE_PROCESSING_BATCH_CREATED` in the processing-reservation transaction and remains separate from per-image `BACKGROUND_REMOVAL_COMPLETED` charges. Usage & Billing queries filter these event types explicitly; adding a new usage type cannot silently inflate an unrelated quota.
 - `BillingPort` is intentionally unimplemented until a payment provider is selected. UI upgrade controls disclose this state and never return fake checkout URLs, mutate subscriptions, or claim payment success.
-- The email worker consumes only the stable `EmailWorkerMessage` contract and treats delivery as an independent data plane. No user-facing request publishes to its SQS queue or waits for Resend; a trusted scheduler invokes the recovery dispatcher at least once per minute with a dedicated `EMAIL_DISPATCH_TOKEN`.
-- Resend retains idempotency keys for a bounded provider window. PostgreSQL delivery claims and terminal outcomes provide application-level duplicate suppression beyond that window; an unresolved provider-success/database-outage interval remains an externally uncertain operation and must be handled conservatively during DLQ replay.
-- Processing-completion email reservation occurs only when the vehicle atomically transitions from `PROCESSING` to `READY`, a verified primary email is present, and the job belongs to a keyed batch. The email row snapshots delivery-facing values so later profile edits cannot change an already accepted notification.
-- Queue payload recipient, vehicle name, and URL values are never used as worker authority. The worker claims by message UUID and reconstructs the delivery from the immutable database snapshot plus validated `APPLICATION_BASE_URL` before rendering email.
+- The per-vehicle advisory lock in `PrismaProcessingWorkerRepository.updateVehicleStatus` serializes terminal vehicle evaluation. It is required for the `READY`/`PARTIALLY_FAILED` transition itself, not for any side effect: do not remove it.
 - Batched status polling pauses completely for hidden tabs, refreshes immediately when visible, removes terminal IDs from future polls, and splits more than 100 active IDs into sequential contract-bounded requests. Terminal results remain in the activity panel until dismissed so failures are not silently lost.
 - Inventory is a separate optimized read model rather than an extension of draft mutation endpoints. Its bounded PostgreSQL aggregate selects only the latest processing batch for each vehicle on the current cursor page, identified by batch idempotency key, so historical reprocessing cannot grow card payloads or alter current progress; it never invents provider-level progress.
 - Inventory preview URLs are signed at render time from tenant-scoped preview object keys and expire according to the bounded presigned URL configuration. Full-resolution asset signing is isolated to the tenant-authorized portfolio service.

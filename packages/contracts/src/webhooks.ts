@@ -4,7 +4,6 @@ import { IsoDateTimeSchema } from "./common";
 
 export const WebhookProviderSchema = z.enum([
   "MSG91",
-  "RESEND",
   "REMOVEBG",
   "FAL",
   "BILLING",

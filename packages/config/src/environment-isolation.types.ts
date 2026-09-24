@@ -15,9 +15,7 @@ export interface IsolationSubject {
   SQS_ENDPOINT?: string | undefined;
   SQS_ACCESS_KEY_ID?: string | undefined;
   SQS_IMAGE_QUEUE_URL?: string;
-  SQS_EMAIL_QUEUE_URL?: string;
   PROCESSING_DISPATCH_TOKEN?: string;
-  EMAIL_DISPATCH_TOKEN?: string;
   LIFECYCLE_CLEANUP_TOKEN?: string;
   STORAGE_CLEANUP_TOKEN?: string;
 }

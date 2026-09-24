@@ -92,18 +92,6 @@ enum WebhookProcessingStatus {
   IGNORED
 }
 
-enum EmailMessageType {
-  PROCESSING_COMPLETED
-}
-
-enum EmailDeliveryStatus {
-  PENDING
-  QUEUED
-  PROCESSING
-  DELIVERED
-  FAILED
-}
-
 enum Role {
   USER
   ADMIN
@@ -181,7 +169,6 @@ model User {
   sentAdminInvites       AdminInvite[]        @relation("AdminInviteInvitedBy")
   acceptedAdminInvites   AdminInvite[]        @relation("AdminInviteAcceptedBy")
   assignedSubscriptions  PlanSubscription[]   @relation("PlanSubscriptionAssignedBy")
-  emailOutboxMessages    EmailOutboxMessage[]
   commandRateLimitEvents CommandRateLimitEvent[]
 }
 
@@ -399,7 +386,6 @@ model Vehicle {
   imageAssets            ImageAsset[]
   processingJobs         ProcessingJob[]
   processedAssets        ProcessedAsset[]
-  emailOutboxMessages    EmailOutboxMessage[]
 
   @@unique([userId, stockId])
   @@unique([userId, internalId])
@@ -626,42 +612,6 @@ model WebhookEvent {
 
   @@unique([provider, externalId])
   @@index([status, receivedAt])
-}
-
-model EmailOutboxMessage {
-  id                     String              @id @default(uuid()) @db.Uuid
-  userId                 String              @db.Uuid
-  vehicleId              String              @db.Uuid
-  batchIdempotencyKey    String              @db.VarChar(128)
-  type                   EmailMessageType
-  recipient              String              @db.VarChar(320)
-  vehicleName            String              @db.VarChar(120)
-  status                 EmailDeliveryStatus @default(PENDING)
-  publishAttemptCount    Int                 @default(0)
-  publishNextAttemptAt   DateTime            @default(now()) @db.Timestamptz(3)
-  publishClaimedAt       DateTime?           @db.Timestamptz(3)
-  publishClaimExpiresAt  DateTime?           @db.Timestamptz(3)
-  publishClaimToken      String?             @db.VarChar(64)
-  publishedAt            DateTime?           @db.Timestamptz(3)
-  queueMessageId         String?             @db.VarChar(255)
-  deliveryAttemptCount   Int                 @default(0)
-  deliveryClaimedAt      DateTime?           @db.Timestamptz(3)
-  deliveryClaimExpiresAt DateTime?           @db.Timestamptz(3)
-  deliveryClaimToken     String?             @db.VarChar(64)
-  providerMessageId      String?             @db.VarChar(255)
-  deliveredAt            DateTime?           @db.Timestamptz(3)
-  failedAt               DateTime?           @db.Timestamptz(3)
-  lastErrorCode          String?             @db.VarChar(80)
-  createdAt              DateTime            @default(now()) @db.Timestamptz(3)
-  updatedAt              DateTime            @updatedAt @db.Timestamptz(3)
-  user                   User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  vehicle                Vehicle             @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, batchIdempotencyKey, type])
-  @@index([status, publishNextAttemptAt, createdAt])
-  @@index([publishClaimExpiresAt])
-  @@index([deliveryClaimExpiresAt])
-  @@index([userId, createdAt])
 }
 
 /**

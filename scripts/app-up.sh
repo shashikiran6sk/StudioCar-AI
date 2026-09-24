@@ -12,7 +12,7 @@ if [ "$APP_ENV" != local ]; then
 \`pnpm infra:up\` and then \`pnpm dev\`."
 fi
 
-# The worker image installs only the worker dependency trees, so the Prisma
+# The worker image installs only the worker dependency tree, so the Prisma
 # client is generated here and copied in with the source.
 pnpm db:generate
 
@@ -24,7 +24,6 @@ cat <<'MESSAGE'
 StudioCar AI is starting (APP_ENV=local).
 
   Application   http://localhost:3000
-  Mail inbox    http://localhost:8025
   Object store  http://localhost:9001  (studiocarlocal / studiocarlocal123)
   Queues        http://localhost:9324  (SQS-compatible)
 

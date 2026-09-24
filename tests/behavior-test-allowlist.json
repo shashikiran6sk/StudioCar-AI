@@ -108,14 +108,6 @@
     "reason": "Static internal authorization protocol constants only."
   },
   {
-    "source": "apps/web/src/server/email/email-dispatch.constants.ts",
-    "reason": "Static email dispatch response and queue constants only."
-  },
-  {
-    "source": "apps/web/src/server/email/email-runtime.ts",
-    "reason": "Composition root that wires separately tested email services and adapters."
-  },
-  {
     "source": "apps/web/src/server/security/security-header.types.ts",
     "reason": "Type-only security response header definition."
   },
@@ -218,18 +210,6 @@
   {
     "source": "apps/web/src/server/db/repositories/storage-deletion-repository.types.ts",
     "reason": "Type-only storage deletion repository commands."
-  },
-  {
-    "source": "packages/email/src/email.constants.ts",
-    "reason": "Static email message, error, and operational bound constants only."
-  },
-  {
-    "source": "packages/email/src/email.types.ts",
-    "reason": "Type-only email outbox, delivery, queue, and mailer port definitions."
-  },
-  {
-    "source": "packages/email/src/index.ts",
-    "reason": "Barrel export with no behavior."
   },
   {
     "source": "packages/observability/src/index.ts",
@@ -420,22 +400,6 @@
     "reason": "Composition root that wires the separately tested usage service and repository."
   },
   {
-    "source": "workers/email-delivery/src/email-delivery.constants.ts",
-    "reason": "Static email template and Resend protocol constants only."
-  },
-  {
-    "source": "workers/email-delivery/src/index.ts",
-    "reason": "Stable package barrel with no behavior."
-  },
-  {
-    "source": "workers/email-delivery/src/handler.ts",
-    "reason": "Thin Lambda entry point delegating to the tested queue handler and runtime."
-  },
-  {
-    "source": "workers/email-delivery/src/runtime/get-email-delivery-worker.ts",
-    "reason": "Warm Lambda composition cache around the tested worker factory."
-  },
-  {
     "source": "apps/web/prisma.config.ts",
     "reason": "Prisma CLI configuration with no application runtime behavior."
   },
@@ -462,10 +426,6 @@
   {
     "source": "packages/local-queue/src/local-queue.types.ts",
     "reason": "Type-only local queue consumer definitions with no runtime behavior."
-  },
-  {
-    "source": "workers/email-delivery/src/local.ts",
-    "reason": "Local development entry point that wires the covered handler to the covered consumer; it performs no logic of its own."
   },
   {
     "source": "workers/image-processing/src/local.ts",

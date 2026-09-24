@@ -64,7 +64,7 @@ Before changing code:
 
 - PostgreSQL is authoritative for application state, S3 for private image bytes, and SQS for asynchronous work.
 - Large image bytes go directly from the browser to S3 with short-lived signed requests; never proxy them through Vercel.
-- Image processing and email delivery are asynchronous. Never call a processing provider or Resend from a user-facing request.
+- Image processing is asynchronous. Never call a processing provider from a user-facing request.
 - Keep provider-specific behavior behind ports. Product code must not depend on remove.bg, fal.ai, or self-hosted BiRefNet semantics.
 - Assume queues and webhooks deliver at least once. Claims, state transitions, provider operations, webhook handling, and usage charging must be idempotent.
 - Enforce tenant ownership in every repository query and server operation. Knowing a UUID never grants access.

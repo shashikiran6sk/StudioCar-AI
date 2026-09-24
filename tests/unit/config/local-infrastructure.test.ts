@@ -35,25 +35,23 @@ describe("LOCAL_INFRASTRUCTURE", () => {
     expect(compose).toContain(`AWS_REGION: ${LOCAL_INFRASTRUCTURE.awsRegion}`);
   });
 
-  it("matches the dispatcher's tokens, which the application must accept", () => {
+  it("matches the dispatcher's token, which the application must accept", () => {
     expect(compose).toContain(
       `\${PROCESSING_DISPATCH_TOKEN:-${LOCAL_INFRASTRUCTURE.processingDispatchToken}}`,
     );
-    expect(compose).toContain(
-      `\${EMAIL_DISPATCH_TOKEN:-${LOCAL_INFRASTRUCTURE.emailDispatchToken}}`,
-    );
   });
 
-  it("matches the queues ElasticMQ creates", () => {
+  it("runs no mail service, email worker, or email setting", () => {
+    expect(compose).not.toMatch(/mailpit|email|EMAIL_|RESEND/i);
+  });
+
+  it("matches the only queue ElasticMQ creates", () => {
     const queues = read("infrastructure/local/elasticmq.conf");
 
     expect(queues).toContain(`${LOCAL_INFRASTRUCTURE.imageQueueName} {`);
-    expect(queues).toContain(`${LOCAL_INFRASTRUCTURE.emailQueueName} {`);
+    expect(queues).not.toContain("email");
     expect(LOCAL_INFRASTRUCTURE.imageQueueUrl).toBe(
       `${LOCAL_INFRASTRUCTURE.queueEndpoint}/000000000000/${LOCAL_INFRASTRUCTURE.imageQueueName}`,
-    );
-    expect(LOCAL_INFRASTRUCTURE.emailQueueUrl).toBe(
-      `${LOCAL_INFRASTRUCTURE.queueEndpoint}/000000000000/${LOCAL_INFRASTRUCTURE.emailQueueName}`,
     );
   });
 
@@ -69,7 +67,6 @@ describe("LOCAL_INFRASTRUCTURE", () => {
     for (const token of [
       LOCAL_INFRASTRUCTURE.sessionSecret,
       LOCAL_INFRASTRUCTURE.processingDispatchToken,
-      LOCAL_INFRASTRUCTURE.emailDispatchToken,
       LOCAL_INFRASTRUCTURE.lifecycleCleanupToken,
       LOCAL_INFRASTRUCTURE.storageCleanupToken,
     ]) {
@@ -78,7 +75,7 @@ describe("LOCAL_INFRASTRUCTURE", () => {
   });
 
   it("knows the compose service hosts as local", () => {
-    for (const host of ["postgres", "minio", "elasticmq", "mailpit", "localhost"]) {
+    for (const host of ["postgres", "minio", "elasticmq", "localhost"]) {
       expect(LOCAL_SERVICE_HOSTNAMES.has(host)).toBe(true);
     }
   });

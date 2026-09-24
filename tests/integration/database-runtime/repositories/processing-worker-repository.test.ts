@@ -10,6 +10,7 @@ import { ProcessingProvider } from "../../../../packages/database-runtime/genera
 import { createProcessingBatchRequestHash } from "../../../../packages/processing/src/create-processing-batch-request-hash";
 import { createProcessingJobIdempotencyKey } from "../../../../packages/processing/src/create-processing-job-idempotency-key";
 import { createProcessingUsageIdempotencyKey } from "../../../../packages/processing/src/create-processing-usage-idempotency-key";
+import type { CompleteProcessingJobInput } from "../../../../packages/processing/src/processing-worker.types";
 
 const databaseUrl = process.env["DATABASE_URL"];
 const databaseDescribe = databaseUrl ? describe : describe.skip;
@@ -42,37 +43,48 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
     await database.$disconnect();
   });
 
-  async function createQueuedJob(batchKey: string) {
+  async function createOwner(): Promise<string> {
     const owner = await database.user.create({
       data: { primaryEmail: OWNER_EMAIL },
     });
+    return owner.id;
+  }
+
+  async function createQueuedBatch(
+    batchKey: string,
+    imageCount: number,
+    existingOwnerId?: string,
+  ) {
+    const ownerId = existingOwnerId ?? (await createOwner());
     const vehicle = await database.vehicle.create({
-      data: { userId: owner.id, name: "Worker lifecycle vehicle" },
+      data: { userId: ownerId, name: "Worker lifecycle vehicle" },
     });
-    const assetId = randomUUID();
-    await database.imageAsset.create({
-      data: {
-        id: assetId,
-        userId: owner.id,
-        vehicleId: vehicle.id,
-        status: "UPLOADED",
-        originalObjectKey: `users/${owner.id}/vehicles/${vehicle.id}/assets/${assetId}/original/source.jpg`,
-        originalFilename: "source.jpg",
-        mimeType: "image/jpeg",
-        sizeBytes: 1_024,
-        uploadExpiresAt: new Date("2099-09-19T23:55:00.000Z"),
-        uploadedAt: new Date("2099-09-19T23:50:00.000Z"),
-      },
-    });
+    const assetIds = Array.from({ length: imageCount }, () => randomUUID());
+    for (const assetId of assetIds) {
+      await database.imageAsset.create({
+        data: {
+          id: assetId,
+          userId: ownerId,
+          vehicleId: vehicle.id,
+          status: "UPLOADED",
+          originalObjectKey: `users/${ownerId}/vehicles/${vehicle.id}/assets/${assetId}/original/source.jpg`,
+          originalFilename: "source.jpg",
+          mimeType: "image/jpeg",
+          sizeBytes: 1_024,
+          uploadExpiresAt: new Date("2099-09-19T23:55:00.000Z"),
+          uploadedAt: new Date("2099-09-19T23:50:00.000Z"),
+        },
+      });
+    }
     const options = ProcessingOptionsSchema.parse({});
-    const request = { vehicleId: vehicle.id, assetIds: [assetId], options };
+    const request = { vehicleId: vehicle.id, assetIds, options };
     const reserved = await reservations.reserveBatchOwned({
       allowance: {
         imageCapacity: 100,
         maxImagesPerBatch: 20,
         allowanceBillingPeriodKey: null,
       },
-      userId: owner.id,
+      userId: ownerId,
       vehicleId: vehicle.id,
       batchIdempotencyKey: batchKey,
       batchLabel: null,
@@ -81,31 +93,68 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       usageBillingPeriodKey: "2099-09",
       usageIdempotencyKey: `usage:upload-session:${batchKey}`,
       options,
-      jobs: [
-        {
-          assetId,
-          displayOrder: 0,
-          idempotencyKey: createProcessingJobIdempotencyKey(batchKey, assetId),
-        },
-      ],
+      jobs: assetIds.map((assetId, displayOrder) => ({
+        assetId,
+        displayOrder,
+        idempotencyKey: createProcessingJobIdempotencyKey(batchKey, assetId),
+      })),
     });
     if (reserved.kind !== "CREATED") {
       throw new Error("Expected a processing job reservation.");
     }
-    const job = reserved.jobs[0];
+    for (const job of reserved.jobs) {
+      await database.processingJob.update({
+        where: { id: job.id },
+        data: { queuedAt: NOW, status: "QUEUED" },
+      });
+      await database.processingOutboxMessage.update({
+        where: { jobId: job.id },
+        data: {
+          publishedAt: NOW,
+          queueMessageId: `queue-${job.id}`,
+        },
+      });
+    }
+    return {
+      jobs: reserved.jobs.map((job) => ({ assetId: job.imageAssetId, jobId: job.id })),
+      ownerId,
+      vehicleId: vehicle.id,
+    };
+  }
+
+  async function createQueuedJob(batchKey: string) {
+    const batch = await createQueuedBatch(batchKey, 1);
+    const job = batch.jobs[0];
     if (!job) throw new Error("Expected one processing job.");
-    await database.processingJob.update({
-      where: { id: job.id },
-      data: { queuedAt: NOW, status: "QUEUED" },
-    });
-    await database.processingOutboxMessage.update({
-      where: { jobId: job.id },
-      data: {
-        publishedAt: NOW,
-        queueMessageId: `queue-${job.id}`,
+    return { ...job, ownerId: batch.ownerId, vehicleId: batch.vehicleId };
+  }
+
+  function completionInput(
+    record: { assetId: string; jobId: string; ownerId: string; vehicleId: string },
+    attemptNumber: number,
+    workerId: string,
+  ): CompleteProcessingJobInput {
+    const prefix = `users/${record.ownerId}/vehicles/${record.vehicleId}/assets/${record.assetId}/jobs/${record.jobId}`;
+    return {
+      attemptNumber,
+      completedAt: new Date("2099-09-20T00:00:10.000Z"),
+      jobId: record.jobId,
+      output: {
+        checksumSha256: "b".repeat(64),
+        height: 900,
+        mimeType: "image/png",
+        objectKey: `${prefix}/processed.png`,
+        outputFormat: "PNG",
+        previewObjectKey: `${prefix}/preview.webp`,
+        sizeBytes: 2_048n,
+        width: 1_600,
       },
-    });
-    return { assetId, jobId: job.id, ownerId: owner.id, vehicleId: vehicle.id };
+      providerLatencyMilliseconds: 900,
+      providerRequestId: `removebg-request-${record.jobId}`,
+      usageBillingPeriodKey: "2099-09",
+      usageIdempotencyKey: createProcessingUsageIdempotencyKey(record.jobId),
+      workerId,
+    };
   }
 
   it("reports a job whose message arrived before it was queued, then claims it once queued", async () => {
@@ -217,26 +266,6 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
         select: { status: true },
       }),
     ).resolves.toEqual({ status: "READY" });
-    await expect(
-      database.emailOutboxMessage.findMany({
-        where: { vehicleId: record.vehicleId },
-        select: {
-          batchIdempotencyKey: true,
-          recipient: true,
-          status: true,
-          type: true,
-          vehicleName: true,
-        },
-      }),
-    ).resolves.toEqual([
-      {
-        batchIdempotencyKey: "worker-completion-batch",
-        recipient: OWNER_EMAIL,
-        status: "PENDING",
-        type: "PROCESSING_COMPLETED",
-        vehicleName: "Worker lifecycle vehicle",
-      },
-    ]);
   });
 
   it("republishes retryable work and terminally rejects an invalid image", async () => {
@@ -332,11 +361,6 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
         },
       }),
     ).resolves.toBe(0);
-    await expect(
-      database.emailOutboxMessage.count({
-        where: { vehicleId: record.vehicleId },
-      }),
-    ).resolves.toBe(0);
   });
 
   it("clears attention once a re-process of the failed batch completes", async () => {
@@ -428,5 +452,72 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
         where: { vehicleId: record.vehicleId, status: "FAILED" },
       }),
     ).resolves.toBe(1);
+  });
+
+  it("marks a vehicle READY once when its final jobs complete concurrently", async () => {
+    const ownerId = await createOwner();
+    // Several vehicles widen the window in which two final-job transactions
+    // overlap; each must still reach READY exactly once.
+    const batches = await Promise.all(
+      Array.from({ length: 4 }, (_, index) =>
+        createQueuedBatch(`worker-concurrent-batch-${index}`, 2, ownerId),
+      ),
+    );
+    const records = batches.flatMap((batch) =>
+      batch.jobs.map((job) => ({ ...job, ownerId, vehicleId: batch.vehicleId })),
+    );
+    const claims = await Promise.all(
+      records.map(async (record) => {
+        const workerId = `worker-concurrent-${record.jobId}`;
+        const claim = await workers.claimJob({
+          claimExpiresAt: CLAIM_EXPIRES_AT,
+          jobId: record.jobId,
+          now: NOW,
+          workerId,
+        });
+        if (claim.kind !== "CLAIMED") throw new Error("Expected a processing claim.");
+        return { attemptNumber: claim.job.attemptNumber, record, workerId };
+      }),
+    );
+
+    const completions = await Promise.all(
+      claims.map(({ attemptNumber, record, workerId }) =>
+        workers.completeJob(completionInput(record, attemptNumber, workerId)),
+      ),
+    );
+    expect(completions.map((completion) => completion.kind)).toEqual(
+      records.map(() => "COMPLETED"),
+    );
+
+    // A duplicate delivery of an already completed job changes nothing.
+    const firstClaim = claims[0];
+    if (!firstClaim) throw new Error("Expected a claim.");
+    await expect(
+      workers.completeJob(
+        completionInput(firstClaim.record, firstClaim.attemptNumber, firstClaim.workerId),
+      ),
+    ).resolves.toMatchObject({ kind: "ALREADY_COMPLETED" });
+
+    const vehicleIds = batches.map((batch) => batch.vehicleId);
+    const jobIds = records.map((record) => record.jobId);
+    await expect(
+      database.vehicle.findMany({
+        where: { id: { in: vehicleIds } },
+        select: { status: true },
+      }),
+    ).resolves.toEqual(vehicleIds.map(() => ({ status: "READY" })));
+    await expect(
+      database.processedAsset.count({ where: { jobId: { in: jobIds } } }),
+    ).resolves.toBe(records.length);
+    await expect(
+      database.usageEvent.count({
+        where: { jobId: { in: jobIds }, type: "BACKGROUND_REMOVAL_COMPLETED" },
+      }),
+    ).resolves.toBe(records.length);
+    await expect(
+      database.processingJob.count({
+        where: { id: { in: jobIds }, status: "COMPLETED" },
+      }),
+    ).resolves.toBe(records.length);
   });
 });

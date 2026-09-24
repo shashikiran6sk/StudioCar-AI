@@ -8,9 +8,9 @@ name: studiocar
 #                                        Next.js application, so `pnpm dev` can
 #                                        run it natively with fast reloads.
 #                   APP_ENV=development  (profile development) only ElasticMQ,
-#                                        Mailpit, both workers, and the
-#                                        dispatcher. The database and storage
-#                                        are the real Development ones.
+#                                        the image worker, and the dispatcher.
+#                                        The database and storage are the real
+#                                        Development ones.
 #   pnpm app:up     APP_ENV=local only   (profile app) the application too.
 #
 # Every dependency declares a health check and every dependant waits on it, so
@@ -34,8 +34,6 @@ x-worker-environment: &worker-environment
   SQS_ACCESS_KEY_ID: studiocarlocal
   SQS_SECRET_ACCESS_KEY: studiocarlocal123
   SQS_IMAGE_QUEUE_URL: http://elasticmq:9324/000000000000/studiocar-images
-  SQS_EMAIL_QUEUE_URL: http://elasticmq:9324/000000000000/studiocar-email
-  APPLICATION_BASE_URL: http://localhost:3000
 
 services:
   postgres:
@@ -110,22 +108,6 @@ services:
       timeout: 5s
       retries: 20
 
-  mailpit:
-    image: axllent/mailpit:latest
-    profiles: [infra, app, development]
-    environment:
-      MP_MAX_MESSAGES: "500"
-      MP_SMTP_AUTH_ACCEPT_ANY: "1"
-      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
-    ports:
-      - "1025:1025"
-      - "8025:8025"
-    healthcheck:
-      test: ["CMD", "/mailpit", "readyz"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-
   image-worker:
     profiles: [infra, app, development]
     image: studiocar-local-worker
@@ -171,39 +153,15 @@ services:
         condition: service_completed_successfully
         required: false
 
-  email-worker:
-    profiles: [infra, app, development]
-    image: studiocar-local-worker
-    build:
-      context: ../..
-      dockerfile: infrastructure/local/Dockerfile.worker
-    command: ["node", "workers/email-delivery/dist/local.mjs"]
-    environment:
-      <<: *worker-environment
-      EMAIL_FROM: ${EMAIL_FROM:-no-reply@studiocar.local}
-      # Local and Development deliver to Mailpit by profile. It never forwards
-      # mail off this machine, which is why production refuses it.
-      MAILPIT_BASE_URL: http://mailpit:8025
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    depends_on:
-      postgres:
-        condition: service_healthy
-        required: false
-      elasticmq:
-        condition: service_healthy
-      mailpit:
-        condition: service_healthy
-
-  # Stands in for the production scheduler: the outbox is drained by HTTP
-  # endpoints, not by the queue, so something has to call them on a cadence.
+  # Stands in for the production scheduler: the processing outbox is drained
+  # by an HTTP endpoint, not by the queue, so something has to call it on a
+  # cadence.
   dispatcher:
     image: curlimages/curl:latest
     profiles: [infra, app, development]
     environment:
       DISPATCH_TARGET_URL: ${DISPATCH_TARGET_URL:-http://host.docker.internal:3000}
       PROCESSING_DISPATCH_TOKEN: ${PROCESSING_DISPATCH_TOKEN:-local-processing-dispatch-token-000000}
-      EMAIL_DISPATCH_TOKEN: ${EMAIL_DISPATCH_TOKEN:-local-email-dispatch-token-0000000000}
       DISPATCH_INTERVAL_SECONDS: ${DISPATCH_INTERVAL_SECONDS:-10}
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -221,7 +179,7 @@ services:
       <<: *worker-environment
       NODE_ENV: development
       # Everything not named here comes from the Local profile: fake Google
-      # and phone sign-in, Mailpit, the local session secret and tokens. An
+      # and phone sign-in, the local session secret and tokens. An
       # empty value means "use the profile default".
       GOOGLE_AUTH_DRIVER: ${GOOGLE_AUTH_DRIVER:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
@@ -233,7 +191,6 @@ services:
       MSG91_WIDGET_TOKEN: ${MSG91_WIDGET_TOKEN:-}
       BACKGROUND_REMOVAL_PROVIDER: ${BACKGROUND_REMOVAL_PROVIDER:-}
       PROCESSING_DISPATCH_TOKEN: ${PROCESSING_DISPATCH_TOKEN:-}
-      EMAIL_DISPATCH_TOKEN: ${EMAIL_DISPATCH_TOKEN:-}
       LIFECYCLE_CLEANUP_TOKEN: ${LIFECYCLE_CLEANUP_TOKEN:-}
       STORAGE_CLEANUP_TOKEN: ${STORAGE_CLEANUP_TOKEN:-}
     ports:

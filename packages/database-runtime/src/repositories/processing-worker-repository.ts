@@ -16,7 +16,6 @@ import type {
   PrismaClient,
 } from "../../generated/prisma/client";
 import {
-  EmailMessageType,
   ImageAssetStatus,
   ProcessingAttemptStatus,
   ProcessingJobStatus,
@@ -26,13 +25,6 @@ import {
 import { toOutputFormat } from "./to-output-format";
 
 const VEHICLE_COMPLETION_LOCK_PREFIX = "vehicle-processing-completion:";
-
-interface ProcessingCompletionEmailCandidate {
-  batchIdempotencyKey: string | null;
-  recipient: string | null;
-  userId: string;
-  vehicleName: string;
-}
 
 const claimableJobSelect = {
   id: true,
@@ -225,14 +217,11 @@ export class PrismaProcessingWorkerRepository
         where: { id: input.jobId },
         select: {
           id: true,
-          batchIdempotencyKey: true,
           userId: true,
           vehicleId: true,
           status: true,
           workerId: true,
           processedAsset: { select: { id: true } },
-          user: { select: { primaryEmail: true } },
-          vehicle: { select: { name: true } },
         },
       });
       if (!job) return { kind: "NOT_FOUND" };
@@ -307,12 +296,7 @@ export class PrismaProcessingWorkerRepository
           workerId: null,
         },
       });
-      await this.updateVehicleStatus(transaction, job.vehicleId, {
-        batchIdempotencyKey: job.batchIdempotencyKey,
-        recipient: job.user.primaryEmail,
-        userId: job.userId,
-        vehicleName: job.vehicle.name,
-      });
+      await this.updateVehicleStatus(transaction, job.vehicleId);
       return { kind: "COMPLETED", processedAssetId: processedAsset.id };
     });
   }
@@ -423,8 +407,13 @@ export class PrismaProcessingWorkerRepository
   private async updateVehicleStatus(
     transaction: Prisma.TransactionClient,
     vehicleId: string,
-    emailCandidate?: ProcessingCompletionEmailCandidate,
   ): Promise<void> {
+    /**
+     * Under READ COMMITTED, two transactions finishing a vehicle's last two
+     * jobs would each still count the other's job as active and both skip the
+     * terminal transition, leaving the vehicle PROCESSING forever. The lock
+     * makes the later one wait and then see the earlier one's committed job.
+     */
     await transaction.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`${VEHICLE_COMPLETION_LOCK_PREFIX}${vehicleId}`}, 0))`;
     const activeCount = await transaction.processingJob.count({
       where: { vehicleId, status: { in: activeJobStatuses } },
@@ -453,31 +442,13 @@ export class PrismaProcessingWorkerRepository
           },
         })
       : 0;
-    const transition = await transaction.vehicle.updateMany({
+    await transaction.vehicle.updateMany({
       where: { id: vehicleId, status: VehicleStatus.PROCESSING },
       data: {
         status:
           failedCount > 0
             ? VehicleStatus.PARTIALLY_FAILED
             : VehicleStatus.READY,
-      },
-    });
-    if (
-      transition.count !== 1 ||
-      failedCount > 0 ||
-      !emailCandidate?.batchIdempotencyKey ||
-      !emailCandidate.recipient
-    ) {
-      return;
-    }
-    await transaction.emailOutboxMessage.create({
-      data: {
-        batchIdempotencyKey: emailCandidate.batchIdempotencyKey,
-        recipient: emailCandidate.recipient,
-        type: EmailMessageType.PROCESSING_COMPLETED,
-        userId: emailCandidate.userId,
-        vehicleId,
-        vehicleName: emailCandidate.vehicleName,
       },
     });
   }

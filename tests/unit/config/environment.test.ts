@@ -3,8 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   parseAdminBootstrapEnvironment,
   parseClientEnvironment,
-  parseEmailDispatchEnvironment,
-  parseEmailWorkerEnvironment,
   parseGoogleAuthEnvironment,
   parseImageWorkerEnvironment,
   parseLifecycleCleanupEnvironment,
@@ -28,16 +26,11 @@ const validEnvironment = {
   MSG91_AUTH_KEY: "msg91-key",
   MSG91_WIDGET_ID: "msg91-widget",
   MSG91_WIDGET_TOKEN: "msg91-widget-token",
-  RESEND_API_KEY: "resend-key",
-  EMAIL_FROM: "StudioCar <hello@studiocar.example>",
-  APPLICATION_BASE_URL: "https://app.studiocar.example",
   AWS_REGION: "ap-south-1",
   S3_BUCKET: "studiocar-assets-test",
   SQS_IMAGE_QUEUE_URL: "https://sqs.ap-south-1.amazonaws.com/123/images",
-  SQS_EMAIL_QUEUE_URL: "https://sqs.ap-south-1.amazonaws.com/123/email",
   BACKGROUND_REMOVAL_PROVIDER: "removebg",
   PROCESSING_DISPATCH_TOKEN: "processing-dispatch-token-at-least-32-characters",
-  EMAIL_DISPATCH_TOKEN: "email-dispatch-token-at-least-32-characters",
   LIFECYCLE_CLEANUP_TOKEN: "lifecycle-cleanup-token-at-least-32-characters",
   STORAGE_CLEANUP_TOKEN: "storage-cleanup-token-at-least-32-characters",
   REMOVEBG_API_KEY: "remove-bg-key",
@@ -202,12 +195,9 @@ describe("environment validation", () => {
     });
   });
 
-  it("keeps provider and delivery secrets out of web control-plane parsers", () => {
+  it("keeps provider secrets out of web control-plane parsers", () => {
     expect(parseProcessingEnvironment(validEnvironment)).not.toHaveProperty(
       "REMOVEBG_API_KEY",
-    );
-    expect(parseEmailDispatchEnvironment(validEnvironment)).not.toHaveProperty(
-      "RESEND_API_KEY",
     );
     expect(parseUploadEnvironment(validEnvironment)).not.toHaveProperty(
       "SESSION_SECRET",
@@ -240,47 +230,6 @@ describe("environment validation", () => {
         PROCESSING_RETRY_MAX_MS: "1000",
       }),
     ).toThrow();
-  });
-
-  it("validates the isolated email worker secrets and timeout", () => {
-    expect(
-      parseEmailWorkerEnvironment({
-        APP_ENV: "development",
-        APPLICATION_BASE_URL: validEnvironment.APPLICATION_BASE_URL,
-        DATABASE_URL: validEnvironment.DATABASE_URL,
-        EMAIL_DRIVER: "resend",
-        EMAIL_FROM: "mail@studiocar.example",
-        RESEND_API_KEY: "resend-secret",
-      }),
-    ).toEqual({
-      APP_ENV: "development",
-      APPLICATION_BASE_URL: validEnvironment.APPLICATION_BASE_URL,
-      DATABASE_URL: validEnvironment.DATABASE_URL,
-      EMAIL_DELIVERY_CLAIM_TTL_MS: 45_000,
-      EMAIL_DRIVER: "resend",
-      EMAIL_FROM: "mail@studiocar.example",
-      // The Development profile's inbox address; unused by the resend driver.
-      MAILPIT_BASE_URL: "http://localhost:8025",
-      RESEND_API_KEY: "resend-secret",
-      RESEND_TIMEOUT_MS: 8_000,
-    });
-
-    expect(() => parseEmailWorkerEnvironment({})).toThrow();
-  });
-
-  it("validates bounded email outbox dispatch settings", () => {
-    expect(parseEmailDispatchEnvironment(validEnvironment)).toEqual({
-      APP_ENV: "development",
-      APPLICATION_BASE_URL: validEnvironment.APPLICATION_BASE_URL,
-      AWS_REGION: validEnvironment.AWS_REGION,
-      DATABASE_URL: validEnvironment.DATABASE_URL,
-      EMAIL_DISPATCH_TOKEN: validEnvironment.EMAIL_DISPATCH_TOKEN,
-      EMAIL_OUTBOX_BATCH_SIZE: 20,
-      EMAIL_OUTBOX_CLAIM_TTL_MS: 30_000,
-      EMAIL_OUTBOX_RETRY_BASE_MS: 1_000,
-      EMAIL_OUTBOX_RETRY_MAX_MS: 60_000,
-      SQS_EMAIL_QUEUE_URL: validEnvironment.SQS_EMAIL_QUEUE_URL,
-    });
   });
 
   it("validates focused lifecycle cleanup retention bounds", () => {
@@ -326,58 +275,45 @@ describe("environment validation", () => {
   });
 });
 
-describe("application base url", () => {
-  const emailWorker = {
-    APP_ENV: "development",
-    DATABASE_URL: validEnvironment.DATABASE_URL,
-    EMAIL_FROM: "mail@studiocar.example",
-    RESEND_API_KEY: "resend-secret",
-  };
-  const productionEmailWorker = {
-    ...emailWorker,
+describe("production redirect URI", () => {
+  const productionGoogleAuth = {
     APP_ENV: "production",
     DATABASE_URL: "postgresql://studiocar:secret@db.studiocar.example:5432/studiocar",
+    SESSION_SECRET: "production-session-secret-of-at-least-32-characters",
+    GOOGLE_CLIENT_ID: "google-client",
+    GOOGLE_CLIENT_SECRET: "google-secret",
   };
 
-  it("accepts a local base url outside production", () => {
+  it("accepts a local redirect URI outside production", () => {
     expect(
-      parseEmailWorkerEnvironment({
-        ...emailWorker,
-        APPLICATION_BASE_URL: "http://localhost:3000",
-      }).APPLICATION_BASE_URL,
-    ).toBe("http://localhost:3000");
+      parseGoogleAuthEnvironment({
+        ...validEnvironment,
+        GOOGLE_REDIRECT_URI: "http://localhost:3000/api/auth/google/callback",
+      }).GOOGLE_REDIRECT_URI,
+    ).toBe("http://localhost:3000/api/auth/google/callback");
   });
 
   it("requires https and a public hostname in production", () => {
     expect(() =>
-      parseEmailWorkerEnvironment({
-        ...productionEmailWorker,
-        APPLICATION_BASE_URL: "http://localhost:3000",
+      parseGoogleAuthEnvironment({
+        ...productionGoogleAuth,
+        GOOGLE_REDIRECT_URI: "http://app.studiocar.example/api/auth/google/callback",
       }),
     ).toThrow(/public hostname in production/);
 
     expect(() =>
-      parseEmailWorkerEnvironment({
-        ...productionEmailWorker,
-        APPLICATION_BASE_URL: "http://app.studiocar.example",
+      parseGoogleAuthEnvironment({
+        ...productionGoogleAuth,
+        GOOGLE_REDIRECT_URI: "https://localhost/api/auth/google/callback",
       }),
     ).toThrow(/public hostname in production/);
 
     expect(
-      parseEmailWorkerEnvironment({
-        ...productionEmailWorker,
-        APPLICATION_BASE_URL: "https://app.studiocar.example",
-      }).APPLICATION_BASE_URL,
-    ).toBe("https://app.studiocar.example");
-  });
-
-  it("rejects a value that is not an absolute http url", () => {
-    expect(() =>
-      parseEmailWorkerEnvironment({
-        ...emailWorker,
-        APPLICATION_BASE_URL: "ftp://app.studiocar.example",
-      }),
-    ).toThrow();
+      parseGoogleAuthEnvironment({
+        ...productionGoogleAuth,
+        GOOGLE_REDIRECT_URI: "https://app.studiocar.example/api/auth/google/callback",
+      }).GOOGLE_REDIRECT_URI,
+    ).toBe("https://app.studiocar.example/api/auth/google/callback");
   });
 });
 

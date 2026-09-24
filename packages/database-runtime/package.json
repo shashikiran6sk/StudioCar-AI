@@ -17,7 +17,6 @@
     "@prisma/adapter-pg": "catalog:",
     "@prisma/client": "catalog:",
     "@studiocar/contracts": "workspace:*",
-    "@studiocar/email": "workspace:*",
     "@studiocar/processing": "workspace:*",
     "pg": "catalog:"
   },

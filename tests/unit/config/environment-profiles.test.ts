@@ -10,11 +10,9 @@ describe("environment profiles", () => {
     expect(getEnvironmentProfile("local")).toMatchObject({
       googleAuthDriver: { default: "fake" },
       phoneOtpDriver: { default: "fake" },
-      emailDriver: { default: "mailpit" },
       backgroundRemovalProvider: { default: "removebg" },
       storage: "local-emulator",
       processingQueue: { default: "local-emulator", allowed: ["local-emulator"] },
-      emailQueue: { default: "local-emulator", allowed: ["local-emulator"] },
       workerRuntime: "local",
     });
   });
@@ -23,11 +21,9 @@ describe("environment profiles", () => {
     expect(getEnvironmentProfile("development")).toMatchObject({
       googleAuthDriver: { default: "google", allowed: ["google"] },
       phoneOtpDriver: { default: "msg91", allowed: ["msg91"] },
-      emailDriver: { default: "mailpit" },
       backgroundRemovalProvider: { default: "removebg" },
       storage: "aws-s3",
       processingQueue: { default: "local-emulator" },
-      emailQueue: { default: "local-emulator" },
       workerRuntime: "local",
     });
   });
@@ -36,21 +32,18 @@ describe("environment profiles", () => {
     const development = getEnvironmentProfile("development");
 
     expect(development.processingQueue.allowed).toContain("aws-sqs");
-    expect(development.emailQueue.allowed).toContain("aws-sqs");
   });
 
   it("deploys production and allows no local adapter", () => {
     expect(getEnvironmentProfile("production")).toEqual({
       googleAuthDriver: { default: "google", allowed: ["google"] },
       phoneOtpDriver: { default: "msg91", allowed: ["msg91"] },
-      emailDriver: { default: "resend", allowed: ["resend"] },
       backgroundRemovalProvider: {
         default: "removebg",
         allowed: ["removebg", "fal", "birefnet"],
       },
       storage: "aws-s3",
       processingQueue: { default: "aws-sqs", allowed: ["aws-sqs"] },
-      emailQueue: { default: "aws-sqs", allowed: ["aws-sqs"] },
       workerRuntime: "deployed",
     });
   });
@@ -69,10 +62,8 @@ describe("environment profiles", () => {
       for (const selection of [
         profile.googleAuthDriver,
         profile.phoneOtpDriver,
-        profile.emailDriver,
         profile.backgroundRemovalProvider,
         profile.processingQueue,
-        profile.emailQueue,
       ]) {
         expect(selection.allowed).toContain(selection.default);
       }
