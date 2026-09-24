@@ -2,9 +2,17 @@ import { GoogleOAuthCallbackSchema } from "@studiocar/contracts";
 import { NextResponse } from "next/server";
 
 import { readRequestCookie } from "../read-request-cookie";
+import { clearPhoneOtpCookie, phoneOtpCookieName } from "../phone/phone-otp-cookie";
+import {
+  clearVerifiedPhoneCookie,
+  readVerifiedPhoneChallengeId,
+  verifiedPhoneCookieName,
+} from "../phone/verified-phone-cookie";
 import { createSessionCookie } from "../session-cookie";
 import {
   GoogleAuthRedirectErrorCode,
+  GOOGLE_PHONE_SETUP_CANCELLED_VALUE,
+  GOOGLE_PHONE_SETUP_QUERY_KEY,
   GOOGLE_AUTH_LINKED_QUERY_KEY,
   GOOGLE_AUTH_LINKED_VALUE,
   GOOGLE_OAUTH_CODE_QUERY_KEY,
@@ -56,23 +64,38 @@ export async function handleGoogleAuthCallback(
     );
   }
 
-  if ("error" in parsed.data) {
-    return createGoogleAuthErrorRedirect(
-      requestUrl,
-      GoogleAuthRedirectErrorCode.AccessDenied,
-      isProduction,
-    );
-  }
-
   const browserState = readRequestCookie(
     request,
     googleOAuthCookieName(isProduction),
   );
-
-  if (browserState !== parsed.data.state) {
+  if (!browserState || browserState !== parsed.data.state) {
     return createGoogleAuthErrorRedirect(
       requestUrl,
       GoogleAuthRedirectErrorCode.InvalidCallback,
+      isProduction,
+    );
+  }
+
+  if ("error" in parsed.data) {
+    if (
+      readVerifiedPhoneChallengeId(
+        readRequestCookie(request, verifiedPhoneCookieName(isProduction)),
+      ) &&
+      readRequestCookie(request, phoneOtpCookieName(isProduction))
+    ) {
+      const destination = new URL("/login", requestUrl.origin);
+      destination.searchParams.set(
+        GOOGLE_PHONE_SETUP_QUERY_KEY,
+        GOOGLE_PHONE_SETUP_CANCELLED_VALUE,
+      );
+      const response = NextResponse.redirect(destination, OAUTH_REDIRECT_STATUS);
+      const oauthCookie = clearGoogleOAuthCookie(isProduction);
+      response.cookies.set(oauthCookie.name, oauthCookie.value, oauthCookie.options);
+      return response;
+    }
+    return createGoogleAuthErrorRedirect(
+      requestUrl,
+      GoogleAuthRedirectErrorCode.AccessDenied,
       isProduction,
     );
   }
@@ -82,6 +105,10 @@ export async function handleGoogleAuthCallback(
       callbackUrl: requestUrl,
       state: parsed.data.state,
       sessionUserId,
+      phoneBrowserBinding: readRequestCookie(
+        request,
+        phoneOtpCookieName(isProduction),
+      ) ?? null,
     });
     const destination = new URL(completed.returnTo, requestUrl.origin);
     const oauthCookie = clearGoogleOAuthCookie(isProduction);
@@ -108,6 +135,16 @@ export async function handleGoogleAuthCallback(
     );
     response.cookies.set(cookie.name, cookie.value, cookie.options);
     response.cookies.set(oauthCookie.name, oauthCookie.value, oauthCookie.options);
+    if (completed.kind === "PHONE_LINKED_SIGNED_IN") {
+      const otpCookie = clearPhoneOtpCookie(isProduction);
+      const verifiedCookie = clearVerifiedPhoneCookie(isProduction);
+      response.cookies.set(otpCookie.name, otpCookie.value, otpCookie.options);
+      response.cookies.set(
+        verifiedCookie.name,
+        verifiedCookie.value,
+        verifiedCookie.options,
+      );
+    }
     return response;
   } catch (error) {
     if (error instanceof GoogleOAuthCompletionError) {
@@ -138,6 +175,12 @@ function toRedirectErrorCode(
       return GoogleAuthRedirectErrorCode.LinkSessionMismatch;
     case GoogleOAuthCompletionErrorCode.LinkIdentityTaken:
       return GoogleAuthRedirectErrorCode.LinkIdentityTaken;
+    case GoogleOAuthCompletionErrorCode.VerifiedPhoneExpired:
+      return GoogleAuthRedirectErrorCode.VerifiedPhoneExpired;
+    case GoogleOAuthCompletionErrorCode.PhoneIdentityTaken:
+      return GoogleAuthRedirectErrorCode.PhoneIdentityTaken;
+    case GoogleOAuthCompletionErrorCode.GoogleIdentityConflict:
+      return GoogleAuthRedirectErrorCode.GoogleIdentityConflict;
     default:
       return GoogleAuthRedirectErrorCode.ProviderFailed;
   }

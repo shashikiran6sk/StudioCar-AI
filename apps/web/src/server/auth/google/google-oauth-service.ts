@@ -7,6 +7,7 @@ import {
 } from "@studiocar/contracts";
 
 import { hashAuthSecret } from "../hash-auth-secret";
+import type { PhoneAccountRepositoryPort } from "../phone/phone-account.types";
 import type {
   AdminBootstrapEvaluator,
   GoogleIdentityLinkStore,
@@ -17,6 +18,7 @@ import type {
   GoogleOAuthCompletion,
   GoogleOAuthPayloadProtector,
   SessionIssuer,
+  VerifiedPhoneGoogleStore,
 } from "./google-auth.types";
 
 const MILLISECONDS_PER_SECOND = 1_000;
@@ -31,6 +33,9 @@ export enum GoogleOAuthCompletionErrorCode {
   LinkSessionMismatch = "link_session_mismatch",
   /** The Google account already belongs to somebody else. */
   LinkIdentityTaken = "link_identity_taken",
+  VerifiedPhoneExpired = "verified_phone_expired",
+  PhoneIdentityTaken = "phone_identity_taken",
+  GoogleIdentityConflict = "google_identity_conflict",
 }
 
 export class GoogleOAuthCompletionError extends Error {
@@ -60,6 +65,8 @@ export class GoogleOAuthService implements GoogleOAuthApplication {
     private readonly protector: GoogleOAuthPayloadProtector,
     private readonly sessions: SessionIssuer,
     private readonly adminBootstrap: AdminBootstrapEvaluator,
+    private readonly phoneAccounts: Pick<PhoneAccountRepositoryPort, "findVerified">,
+    private readonly phoneGoogle: VerifiedPhoneGoogleStore,
     options: GoogleOAuthServiceOptions,
   ) {
     this.challengeTtlMs = options.challengeTtlSeconds * MILLISECONDS_PER_SECOND;
@@ -73,6 +80,7 @@ export class GoogleOAuthService implements GoogleOAuthApplication {
   public async start(input: {
     returnTo: string;
     linkUserId?: string;
+    verifiedPhone?: { challengeId: string; browserBinding: string };
   }): Promise<{
     authorizationUrl: URL;
     state: string;
@@ -83,6 +91,18 @@ export class GoogleOAuthService implements GoogleOAuthApplication {
     });
     const authorizationRequest = await this.provider.createAuthorizationRequest();
     const expiresAt = new Date(this.now().getTime() + this.challengeTtlMs);
+    if (input.verifiedPhone) {
+      const verified = await this.phoneAccounts.findVerified({
+        challengeId: input.verifiedPhone.challengeId,
+        browserBindingHash: hashAuthSecret(input.verifiedPhone.browserBinding),
+        now: this.now(),
+      });
+      if (!verified) {
+        throw new GoogleOAuthCompletionError(
+          GoogleOAuthCompletionErrorCode.VerifiedPhoneExpired,
+        );
+      }
+    }
     /**
      * The link intent lives inside the encrypted, one-time challenge rather
      * than the URL, so it cannot be forged or pointed at another account.
@@ -93,6 +113,9 @@ export class GoogleOAuthService implements GoogleOAuthApplication {
       ...(input.linkUserId === undefined
         ? {}
         : { linkUserId: input.linkUserId }),
+      ...(input.verifiedPhone === undefined
+        ? {}
+        : { phoneChallengeId: input.verifiedPhone.challengeId }),
     });
 
     await this.challengeStore.create({
@@ -113,6 +136,7 @@ export class GoogleOAuthService implements GoogleOAuthApplication {
     callbackUrl: URL;
     state: string;
     sessionUserId: string | null;
+    phoneBrowserBinding?: string | null;
   }): Promise<GoogleOAuthCompletion> {
     const authenticatedAt = this.now();
     const challenge = await this.challengeStore.consume(
@@ -162,6 +186,41 @@ export class GoogleOAuthService implements GoogleOAuthApplication {
         authenticatedAt,
         returnTo,
       );
+    }
+
+    if (payload.phoneChallengeId !== undefined) {
+      const browserBinding = input.phoneBrowserBinding;
+      if (!browserBinding) {
+        throw new GoogleOAuthCompletionError(
+          GoogleOAuthCompletionErrorCode.VerifiedPhoneExpired,
+        );
+      }
+      const prepared = this.sessions.prepareIssue();
+      const resolution = await this.phoneGoogle.resolve({
+        challengeId: payload.phoneChallengeId,
+        browserBindingHash: hashAuthSecret(browserBinding),
+        identity,
+        authenticatedAt,
+        session: prepared,
+      });
+      if (resolution.kind !== "RESOLVED") {
+        const code =
+          resolution.kind === "INVALID_VERIFICATION"
+            ? GoogleOAuthCompletionErrorCode.VerifiedPhoneExpired
+            : resolution.kind === "PHONE_TAKEN"
+              ? GoogleOAuthCompletionErrorCode.PhoneIdentityTaken
+              : GoogleOAuthCompletionErrorCode.GoogleIdentityConflict;
+        throw new GoogleOAuthCompletionError(code);
+      }
+      return {
+        kind: "PHONE_LINKED_SIGNED_IN",
+        issuedSession: {
+          token: prepared.token,
+          expiresAt: prepared.expiresAt,
+          session: resolution.session,
+        },
+        returnTo,
+      };
     }
 
     const resolution = await this.identityStore.resolve(identity, authenticatedAt);

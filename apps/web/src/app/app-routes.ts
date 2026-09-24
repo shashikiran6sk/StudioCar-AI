@@ -9,6 +9,7 @@ export const GOOGLE_AUTH_START_PATH = "/api/auth/google/start";
 export const PHONE_AUTH_START_PATH = "/api/auth/phone/start";
 export const PHONE_AUTH_WIDGET_PATH = "/api/auth/phone/widget";
 export const PHONE_AUTH_VERIFY_PATH = "/api/auth/phone/verify";
+export const PHONE_AUTH_CREATE_ACCOUNT_PATH = "/api/auth/phone/create-account";
 export const LOGOUT_PATH = "/api/auth/logout";
 export const LOGOUT_ALL_PATH = "/api/auth/logout-all";
 export const PROFILE_API_PATH = "/api/profile";

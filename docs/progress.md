@@ -813,6 +813,40 @@ exactly as before.
   Reviewed the Upload Vehicle screenshot; the row layout is unchanged except
   for the truthful temporary Removing status and retryable error.
 
+### SC052 — Resolve verified-phone sign-in to an existing or new account
+
+- Audited the existing MSG91 OTP challenge/session flow and the profile-page
+  Google linking path. Previously OTP completion automatically created a User
+  for an unknown phone, leaving no opportunity to link it to an existing
+  Google account. Google OAuth already had one-time state, PKCE, nonce, and a
+  shared identity model; this slice extends that flow instead of adding a
+  second OAuth implementation.
+- OTP verification now signs in an existing phone identity, but for an unknown
+  phone creates only a short-lived browser-bound, HttpOnly account-setup proof.
+  The sign-in form presents exactly two next actions: link with Google or
+  create an account with the existing validated display-name field. The server
+  derives the phone from the verified challenge, never from the account form.
+- Google OAuth carries the verified-phone intent in its protected one-time
+  challenge. Its callback transaction attaches the proven phone to the
+  existing Google user or creates one User with both identities; it never
+  transfers a Google identity. The profile linking and phone-onboarding paths
+  reuse the same transactional phone-linking rules. Account creation rechecks
+  phone ownership under a transaction lock and uniqueness constraints, so
+  concurrent/replayed submissions cannot create duplicate users.
+- Added `POST /api/auth/phone/create-account` and extended OTP/OAuth response
+  contracts. No Prisma schema or migration changed; existing unique phone,
+  provider-subject, OTP challenge, and session records are reused.
+- Added unit and real-PostgreSQL tests for existing/new phone, create-account
+  races and replay, existing/new Google resolution, conflicts, expired/forged
+  proof, invalid name, OAuth cancellation/state mismatch, and the unchanged
+  profile link path. The browser test verifies new-account creation followed
+  by existing-phone sign-in and records a screenshot of the account choices.
+  Verified source mapping, lint, strict typecheck, all package unit suites
+  uncached, all 150 PostgreSQL integration tests, schema/migration status,
+  production build, and all 11 Playwright tests. A live MSG91/Google smoke
+  test remains a deployment verification step because local tests use the
+  boundary-controlled fake providers.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.

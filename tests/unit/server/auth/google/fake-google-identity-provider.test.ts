@@ -127,8 +127,17 @@ describe("FakeGoogleIdentityProvider", () => {
       { linkGoogle: vi.fn() },
       new FakeGoogleIdentityProvider({ redirectUri: REDIRECT_URI }),
       new OAuthChallengeProtector(SESSION_SECRET),
-      { issue },
+      {
+        issue,
+        prepareIssue: vi.fn(() => ({
+          token: "t".repeat(43),
+          tokenHash: "h".repeat(64),
+          expiresAt,
+        })),
+      },
       { evaluate: vi.fn(() => Promise.resolve(undefined)) },
+      { findVerified: vi.fn(async () => null) },
+      { resolve: vi.fn() },
       { challengeTtlSeconds: 600 },
     );
 

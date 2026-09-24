@@ -1048,6 +1048,26 @@ body {
   line-height: 1.55;
 }
 
+.auth-account-step > h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.auth-account-step > p:not(.auth-form__notice, .auth-form__error) {
+  margin: 0;
+  color: var(--sc-neutral-600);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.auth-form__error {
+  margin: 0;
+  color: var(--sc-error);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 .auth-card__footer {
   padding-top: 18px;
   border-top: 1px solid var(--sc-neutral-300);

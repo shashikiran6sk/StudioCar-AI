@@ -10,6 +10,8 @@ import { AdminBootstrapService } from "../../admin/admin-bootstrap-service";
 import { PrismaGoogleIdentityRepository } from "../../db/repositories/google-identity-repository";
 import { PrismaGoogleOAuthChallengeRepository } from "../../db/repositories/google-oauth-challenge-repository";
 import { PrismaSessionRepository } from "../../db/repositories/session-repository";
+import { PrismaPhoneAccountRepository } from "../../db/repositories/phone-account-repository";
+import { PrismaVerifiedPhoneGoogleRepository } from "../../db/repositories/verified-phone-google-repository";
 
 import { OAuthChallengeProtector } from "../oauth-challenge-protector";
 import { SessionService } from "../session-service";
@@ -47,6 +49,8 @@ export function getGoogleOAuthApplication(): GoogleOAuthApplication {
           .BOOTSTRAP_ADMIN_EMAIL,
       },
     ),
+    new PrismaPhoneAccountRepository(database),
+    new PrismaVerifiedPhoneGoogleRepository(database),
     { challengeTtlSeconds: environment.OAUTH_CHALLENGE_TTL_SECONDS },
   );
 

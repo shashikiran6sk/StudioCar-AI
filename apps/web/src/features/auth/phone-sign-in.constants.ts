@@ -20,6 +20,31 @@ export const PHONE_WIDGET_UNAVAILABLE_MESSAGE =
 export const PHONE_DEVELOPMENT_NOTICE =
   "Development mode: no message is sent. Enter the configured code.";
 export const PHONE_CAPTCHA_CONTAINER_CLASS = "auth-form__captcha";
+export const PHONE_ACCOUNT_VERIFIED_TITLE = "Phone verified";
+export const PHONE_ACCOUNT_CHOICES_DESCRIPTION =
+  "We couldn't find an account using this phone number. Choose how you'd like to continue.";
+export const PHONE_ACCOUNT_GOOGLE_LABEL = "Link with Google";
+export const PHONE_ACCOUNT_CREATE_LABEL = "Create new account";
+export const PHONE_ACCOUNT_CREATE_TITLE = "Create your account";
+export const PHONE_ACCOUNT_NAME_LABEL = "Name";
+export const PHONE_ACCOUNT_CREATING_LABEL = "Creating account…";
+export const PHONE_ACCOUNT_CREATE_SUBMIT_LABEL = "Create account";
+export const PHONE_ACCOUNT_BACK_LABEL = "Back to choices";
+export const PHONE_GOOGLE_BUTTON_LABEL = "Continue with Google";
+export const PHONE_GOOGLE_MARK = "G";
+export const PHONE_AUTH_DIVIDER_LABEL = "or";
+export const PHONE_OAUTH_CANCELLED_MESSAGE =
+  "Google linking was cancelled. You can choose another option.";
+export const PHONE_SIGNING_IN_MESSAGE = "Signing you in…";
+export const PHONE_ACCOUNT_REVERIFY_HTTP_STATUSES = new Set([400, 409]);
+
+export enum PhoneSignInStage {
+  EnterPhone = "ENTER_PHONE",
+  VerifyOtp = "VERIFY_OTP",
+  AccountChoices = "ACCOUNT_CHOICES",
+  CreateAccount = "CREATE_ACCOUNT",
+  Authenticated = "AUTHENTICATED",
+}
 
 export const GOOGLE_LINK_INTENT_QUERY_KEY = "intent";
 export const GOOGLE_LINK_INTENT_VALUE = "link";

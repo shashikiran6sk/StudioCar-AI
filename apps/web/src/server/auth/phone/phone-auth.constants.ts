@@ -32,6 +32,12 @@ export const IDENTITY_LINK_REQUIRED_MESSAGE =
   "This phone number is already associated with an account.";
 export const PROVIDER_UNAVAILABLE_MESSAGE =
   "Phone verification is temporarily unavailable.";
+export const PHONE_VERIFICATION_REQUIRED_MESSAGE =
+  "Verify your phone number again before creating an account.";
+export const PHONE_ACCOUNT_TAKEN_MESSAGE =
+  "This phone number was linked to an account. Sign in with the phone number instead.";
+export const PHONE_ACCOUNT_UNAVAILABLE_MESSAGE =
+  "Account creation is temporarily unavailable. Please try again.";
 
 export const MSG91_BASE_URL = "https://control.msg91.com";
 export const MSG91_VERIFY_ACCESS_TOKEN_PATH = "/api/v5/widget/verifyAccessToken";

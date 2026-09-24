@@ -71,8 +71,15 @@ export const GoogleOAuthChallengePayloadSchema = z
      * swapped for another account's.
      */
     linkUserId: z.uuid().optional(),
+    phoneChallengeId: z.uuid().optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (payload) =>
+      payload.linkUserId === undefined ||
+      payload.phoneChallengeId === undefined,
+    "OAuth challenge cannot link two identities at once.",
+  );
 
 export const GoogleIdTokenClaimsSchema = z
   .object({
@@ -179,6 +186,7 @@ export const IdentityLinkResponseSchema = z
 export enum PhoneAuthenticationStatus {
   ChallengeSent = "challenge_sent",
   Authenticated = "authenticated",
+  AccountSetupRequired = "account_setup_required",
 }
 
 export enum PhoneOtpChallengeCreationStatus {
@@ -196,6 +204,7 @@ export enum PhoneOtpVerificationClaimStatus {
 
 export enum PhoneOtpCompletionStatus {
   Resolved = "resolved",
+  AccountSetupRequired = "account_setup_required",
   LinkRequired = "link_required",
   InvalidChallenge = "invalid_challenge",
 }
@@ -257,6 +266,7 @@ export interface CompletePhoneOtpCommand {
   browserBindingHash: string;
   tokenHash: string;
   sessionExpiresAt: Date;
+  accountSetupExpiresAt: Date;
   authenticatedAt: Date;
 }
 
@@ -271,6 +281,10 @@ export type PhoneOtpCompletionResult =
       };
     }
   | { status: PhoneOtpCompletionStatus.LinkRequired }
+  | {
+      status: PhoneOtpCompletionStatus.AccountSetupRequired;
+      expiresAt: Date;
+    }
   | { status: PhoneOtpCompletionStatus.InvalidChallenge };
 
 export const PhoneStartResponseSchema = z
@@ -281,12 +295,15 @@ export const PhoneStartResponseSchema = z
   })
   .strict();
 
-export const PhoneVerifyResponseSchema = z
-  .object({
+export const PhoneVerifyResponseSchema = z.discriminatedUnion("status", [
+  z.object({
     status: z.literal(PhoneAuthenticationStatus.Authenticated),
     user: AuthUserSchema,
-  })
-  .strict();
+  }).strict(),
+  z.object({
+    status: z.literal(PhoneAuthenticationStatus.AccountSetupRequired),
+  }).strict(),
+]);
 
 export const Msg91WidgetVerificationSchema = z
   .object({

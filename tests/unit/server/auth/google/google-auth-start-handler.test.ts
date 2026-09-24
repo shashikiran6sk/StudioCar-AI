@@ -57,6 +57,41 @@ describe("handleGoogleAuthStart", () => {
 });
 
 describe("handleGoogleAuthStart linking", () => {
+  it("requires server-held verified-phone cookies for onboarding", async () => {
+    const auth = application();
+    const response = await handleGoogleAuthStart(
+      new Request(
+        "https://app.studiocar.test/api/auth/google/start?intent=link_verified_phone",
+      ),
+      auth,
+      false,
+    );
+    expect(response.status).toBe(401);
+    expect(auth.start).not.toHaveBeenCalled();
+  });
+
+  it("places verified-phone intent in the protected challenge request", async () => {
+    const auth = application();
+    const challengeId = "4f9d4891-157f-49ed-aa5a-c026abc0a768";
+    const response = await handleGoogleAuthStart(
+      new Request(
+        "https://app.studiocar.test/api/auth/google/start?intent=link_verified_phone&returnTo=%2Fdashboard",
+        {
+          headers: {
+            cookie: `studiocar_verified_phone=account_setup_${challengeId}; studiocar_phone_otp=binding`,
+          },
+        },
+      ),
+      auth,
+      false,
+    );
+    expect(response.status).toBe(302);
+    expect(auth.start).toHaveBeenCalledWith({
+      returnTo: "/dashboard",
+      verifiedPhone: { challengeId, browserBinding: "binding" },
+    });
+  });
+
   it("refuses to start a link without a session", async () => {
     const auth = application();
     const response = await handleGoogleAuthStart(

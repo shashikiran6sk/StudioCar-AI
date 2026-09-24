@@ -9,6 +9,7 @@ import { createDatabaseClient } from "@studiocar/database-runtime";
 import { PrismaAuthIdentityLinkRepository } from "../../db/repositories/auth-identity-link-repository";
 import { PrismaPhoneOtpChallengeRepository } from "../../db/repositories/phone-otp-challenge-repository";
 import { PrismaPhoneOtpCompletionRepository } from "../../db/repositories/phone-otp-completion-repository";
+import { PrismaPhoneAccountRepository } from "../../db/repositories/phone-account-repository";
 import { PrismaSessionRepository } from "../../db/repositories/session-repository";
 import { SensitiveIdentifierHasher } from "../hash-sensitive-identifier";
 import { SessionService } from "../session-service";
@@ -18,11 +19,13 @@ import { DevelopmentOtpProvider } from "./development-otp-provider";
 import { Msg91WidgetOtpProvider } from "./msg91-widget-otp-provider";
 import type { PhoneOtpApplication, PhoneOtpProvider } from "./phone-auth.types";
 import { PhoneOtpService } from "./phone-otp-service";
+import { PhoneAccountService } from "./phone-account-service";
 
 const MISSING_MSG91_AUTH_KEY_ERROR =
   "MSG91_AUTH_KEY is required when PHONE_OTP_DRIVER is msg91.";
 
 let phoneOtpApplication: PhoneOtpApplication | undefined;
+let phoneAccountService: PhoneAccountService | undefined;
 let phoneOtpWidget: PhoneOtpWidget | undefined;
 
 function createProvider(
@@ -50,6 +53,11 @@ export function getPhoneOtpApplication(): PhoneOtpApplication {
   });
   const sessions = new SessionService(new PrismaSessionRepository(database));
 
+  phoneAccountService = new PhoneAccountService(
+    new PrismaPhoneAccountRepository(database),
+    sessions,
+  );
+
   phoneOtpApplication = new PhoneOtpService(
     new PrismaPhoneOtpChallengeRepository(database),
     new PrismaPhoneOtpCompletionRepository(database),
@@ -69,6 +77,14 @@ export function getPhoneOtpApplication(): PhoneOtpApplication {
   );
 
   return phoneOtpApplication;
+}
+
+export function getPhoneAccountService(): PhoneAccountService {
+  if (!phoneOtpApplication) getPhoneOtpApplication();
+  if (!phoneAccountService) {
+    throw new Error("Phone account service is unavailable.");
+  }
+  return phoneAccountService;
 }
 
 export function getPhoneOtpWidget(): PhoneOtpWidget {

@@ -1,18 +1,19 @@
-import type {
-  AuthUser,
-  PhoneOtpDriver,
-  ClaimPhoneOtpVerificationCommand,
-  ClaimPhoneOtpVerificationResult,
-  CompletePhoneOtpCommand,
-  CreatePhoneOtpChallengeCommand,
-  CreatePhoneOtpChallengeResult,
-  IdentityLinkResult,
-  LinkPhoneIdentity,
-  LinkPhoneIdentityCommand,
-  PhoneOtpWidget,
-  PhoneStart,
-  PhoneOtpCompletionResult,
-  PhoneVerify,
+import {
+  PhoneAuthenticationStatus,
+  type AuthUser,
+  type PhoneOtpDriver,
+  type ClaimPhoneOtpVerificationCommand,
+  type ClaimPhoneOtpVerificationResult,
+  type CompletePhoneOtpCommand,
+  type CreatePhoneOtpChallengeCommand,
+  type CreatePhoneOtpChallengeResult,
+  type IdentityLinkResult,
+  type LinkPhoneIdentity,
+  type LinkPhoneIdentityCommand,
+  type PhoneOtpWidget,
+  type PhoneStart,
+  type PhoneOtpCompletionResult,
+  type PhoneVerify,
 } from "@studiocar/contracts";
 
 import type {
@@ -111,11 +112,22 @@ export interface PhoneOtpWidgetConfiguration {
 }
 
 export interface CompletedPhoneOtp {
+  status: PhoneAuthenticationStatus.Authenticated;
   token: string;
   expiresAt: Date;
   session: ActiveSession;
   user: AuthUser;
 }
+
+export interface PendingPhoneAccountSetup {
+  status: PhoneAuthenticationStatus.AccountSetupRequired;
+  challengeId: string;
+  expiresAt: Date;
+}
+
+export type PhoneOtpVerificationResult =
+  | CompletedPhoneOtp
+  | PendingPhoneAccountSetup;
 
 export interface PhoneOtpApplication {
   start(input: PhoneStart, clientAddress: string): Promise<StartedPhoneOtp>;
@@ -123,7 +135,7 @@ export interface PhoneOtpApplication {
     input: PhoneVerify,
     browserBinding: string,
     clientAddress: string,
-  ): Promise<CompletedPhoneOtp>;
+  ): Promise<PhoneOtpVerificationResult>;
   /**
    * Proves a phone number for an account that is already signed in. It runs the
    * same challenge, rate-limit, identifier-assertion and single-use-token path

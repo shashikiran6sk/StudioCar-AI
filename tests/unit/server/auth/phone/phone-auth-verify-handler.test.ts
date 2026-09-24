@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { PhoneAuthenticationStatus } from "../../../../../packages/contracts/src/auth";
 
 import { handlePhoneAuthVerify } from "../../../../../apps/web/src/server/auth/phone/phone-auth-verify-handler";
 import type { PhoneOtpApplication } from "../../../../../apps/web/src/server/auth/phone/phone-auth.types";
@@ -11,7 +12,8 @@ function application(): PhoneOtpApplication {
   return {
     start: vi.fn(),
     link: vi.fn(),
-    verify: vi.fn(async () => ({
+    verify: vi.fn<PhoneOtpApplication["verify"]>(async () => ({
+      status: PhoneAuthenticationStatus.Authenticated,
       token: "t".repeat(43),
       expiresAt: new Date("2026-10-18T12:00:00.000Z"),
       session: {
@@ -54,6 +56,23 @@ function request(includeBinding = true): Request {
 }
 
 describe("handlePhoneAuthVerify", () => {
+  it("sets temporary verified-phone state without creating a session for a new phone", async () => {
+    const auth = application();
+    vi.mocked(auth.verify).mockResolvedValue({
+      status: PhoneAuthenticationStatus.AccountSetupRequired,
+      challengeId,
+      expiresAt: new Date("2026-09-18T12:10:00.000Z"),
+    });
+    const response = await handlePhoneAuthVerify(request(), auth, false);
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      status: "account_setup_required",
+    });
+    const cookies = response.headers.get("set-cookie") ?? "";
+    expect(cookies).toContain(`studiocar_verified_phone=account_setup_${challengeId}`);
+    expect(cookies).not.toContain("studiocar_session=");
+  });
+
   it("sets the opaque session and clears the browser-binding cookie", async () => {
     const auth = application();
     const response = await handlePhoneAuthVerify(request(), auth, false);

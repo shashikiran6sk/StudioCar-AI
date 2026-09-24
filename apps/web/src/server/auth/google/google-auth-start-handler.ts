@@ -9,7 +9,9 @@ import {
   API_UNAUTHENTICATED_CODE,
   GOOGLE_AUTH_INTENT_QUERY_KEY,
   GOOGLE_AUTH_LINK_INTENT,
+  GOOGLE_AUTH_VERIFIED_PHONE_INTENT,
   LINK_REQUIRES_SESSION_MESSAGE,
+  VERIFIED_PHONE_REQUIRED_MESSAGE,
   UNAUTHENTICATED_STATUS,
   API_SERVICE_UNAVAILABLE_CODE,
   BAD_REQUEST_MESSAGE,
@@ -22,6 +24,16 @@ import {
 import type { GoogleOAuthApplication } from "./google-auth.types";
 import { createGoogleOAuthCookie } from "./google-oauth-cookie";
 import { NextResponse } from "next/server";
+import { readRequestCookie } from "../read-request-cookie";
+import { phoneOtpCookieName } from "../phone/phone-otp-cookie";
+import {
+  readVerifiedPhoneChallengeId,
+  verifiedPhoneCookieName,
+} from "../phone/verified-phone-cookie";
+import {
+  GoogleOAuthCompletionError,
+  GoogleOAuthCompletionErrorCode,
+} from "./google-oauth-service";
 
 export async function handleGoogleAuthStart(
   request: Request,
@@ -34,6 +46,9 @@ export async function handleGoogleAuthStart(
   const linking =
     requestUrl.searchParams.get(GOOGLE_AUTH_INTENT_QUERY_KEY) ===
     GOOGLE_AUTH_LINK_INTENT;
+  const linkingVerifiedPhone =
+    requestUrl.searchParams.get(GOOGLE_AUTH_INTENT_QUERY_KEY) ===
+    GOOGLE_AUTH_VERIFIED_PHONE_INTENT;
 
   /**
    * Connecting Google to an account requires being signed in as that account.
@@ -44,6 +59,29 @@ export async function handleGoogleAuthStart(
       error: {
         code: API_UNAUTHENTICATED_CODE,
         message: LINK_REQUIRES_SESSION_MESSAGE,
+        requestId: createRequestId(),
+      },
+    };
+    return Response.json(body, { status: UNAUTHENTICATED_STATUS });
+  }
+  const challengeId = linkingVerifiedPhone
+    ? readVerifiedPhoneChallengeId(
+        readRequestCookie(request, verifiedPhoneCookieName(isProduction)),
+      )
+    : null;
+  const browserBinding = linkingVerifiedPhone
+    ? readRequestCookie(request, phoneOtpCookieName(isProduction))
+    : null;
+  if (
+    linkingVerifiedPhone &&
+    (!challengeId ||
+      !browserBinding ||
+      sessionUserId)
+  ) {
+    const body: ApiError = {
+      error: {
+        code: API_UNAUTHENTICATED_CODE,
+        message: VERIFIED_PHONE_REQUIRED_MESSAGE,
         requestId: createRequestId(),
       },
     };
@@ -72,6 +110,9 @@ export async function handleGoogleAuthStart(
       ...(linking && sessionUserId !== null
         ? { linkUserId: sessionUserId }
         : {}),
+      ...(linkingVerifiedPhone && challengeId && browserBinding
+        ? { verifiedPhone: { challengeId, browserBinding } }
+        : {}),
     });
     const response = NextResponse.redirect(
       started.authorizationUrl,
@@ -84,7 +125,20 @@ export async function handleGoogleAuthStart(
     );
     response.cookies.set(cookie.name, cookie.value, cookie.options);
     return response;
-  } catch {
+  } catch (error) {
+    if (
+      error instanceof GoogleOAuthCompletionError &&
+      error.code === GoogleOAuthCompletionErrorCode.VerifiedPhoneExpired
+    ) {
+      const body: ApiError = {
+        error: {
+          code: API_UNAUTHENTICATED_CODE,
+          message: VERIFIED_PHONE_REQUIRED_MESSAGE,
+          requestId: createRequestId(),
+        },
+      };
+      return Response.json(body, { status: UNAUTHENTICATED_STATUS });
+    }
     const body: ApiError = {
       error: {
         code: API_SERVICE_UNAVAILABLE_CODE,
