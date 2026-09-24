@@ -112,6 +112,7 @@ describe("ProcessingFailureReasonSchema", () => {
   it("accepts only reasons written for the user, never provider codes", () => {
     expect(ProcessingFailureReasonSchema.options).toEqual([
       "UNUSABLE_IMAGE",
+      "NON_CAR_IMAGE",
       "BACKGROUND_REMOVAL_FAILED",
       "SERVICE_UNAVAILABLE",
       "PROCESSING_FAILED",

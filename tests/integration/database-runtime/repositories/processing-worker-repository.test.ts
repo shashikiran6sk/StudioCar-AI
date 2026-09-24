@@ -363,6 +363,59 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
     ).resolves.toBe(0);
   });
 
+  it("terminally rejects a non-car image and invalidates its original", async () => {
+    const record = await createQueuedJob("worker-non-car-batch");
+    const claim = await workers.claimJob({
+      claimExpiresAt: CLAIM_EXPIRES_AT,
+      jobId: record.jobId,
+      now: NOW,
+      workerId: "worker-non-car",
+    });
+    if (claim.kind !== "CLAIMED") {
+      throw new Error("Expected the non-car processing claim.");
+    }
+
+    await expect(
+      workers.failJob({
+        attemptNumber: claim.job.attemptNumber,
+        errorCode: "NON_CAR_IMAGE",
+        errorMessage:
+          "The background-removal provider could not detect a car in the image.",
+        failedAt: NOW,
+        jobId: record.jobId,
+        nextAttemptAt: NEXT_ATTEMPT_AT,
+        providerLatencyMilliseconds: 45,
+        providerRequestId: "remove-bg-non-car",
+        retryable: false,
+        workerId: "worker-non-car",
+      }),
+    ).resolves.toEqual({ kind: "FAILED" });
+    await expect(
+      database.processingJob.findUnique({
+        where: { id: record.jobId },
+        select: { errorCode: true, nextAttemptAt: true, status: true },
+      }),
+    ).resolves.toEqual({
+      errorCode: "NON_CAR_IMAGE",
+      nextAttemptAt: null,
+      status: "FAILED",
+    });
+    await expect(
+      database.imageAsset.findUnique({
+        where: { id: record.assetId },
+        select: { status: true },
+      }),
+    ).resolves.toEqual({ status: "INVALID" });
+    await expect(
+      workers.claimJob({
+        claimExpiresAt: CLAIM_EXPIRES_AT,
+        jobId: record.jobId,
+        now: NEXT_ATTEMPT_AT,
+        workerId: "worker-non-car-redelivery",
+      }),
+    ).resolves.toEqual({ kind: "TERMINAL" });
+  });
+
   it("clears attention once a re-process of the failed batch completes", async () => {
     const record = await createQueuedJob("worker-reprocess-batch");
     // An earlier batch of this vehicle failed; the user then re-processed it.

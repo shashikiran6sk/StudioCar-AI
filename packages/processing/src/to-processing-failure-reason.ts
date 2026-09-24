@@ -25,6 +25,9 @@ export function toProcessingFailureReason(
   if (state === "CANCELLED") return "CANCELLED";
   if (errorCode === null) return "PROCESSING_FAILED";
   if (UNUSABLE_IMAGE_CODES.includes(errorCode)) return "UNUSABLE_IMAGE";
+  if (errorCode === PROCESSING_FAILURE_CODES.NON_CAR_IMAGE) {
+    return "NON_CAR_IMAGE";
+  }
   if (SERVICE_UNAVAILABLE_CODES.includes(errorCode)) {
     return "SERVICE_UNAVAILABLE";
   }

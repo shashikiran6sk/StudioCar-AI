@@ -11,8 +11,20 @@ describe("toRemoveBgFailure", () => {
     { status: 403, kind: "AUTHORIZATION" },
     { status: 400, kind: "INVALID_REQUEST" },
   ])("maps HTTP $status to $kind", ({ status, kind }) => {
-    expect(toRemoveBgFailure(status, 120, "request-1")).toMatchObject({
+    expect(toRemoveBgFailure(status, 120, "request-1", null)).toMatchObject({
       kind,
+      providerLatencyMilliseconds: 120,
+      providerRequestId: "request-1",
+    });
+  });
+
+  it("maps remove.bg's unknown foreground code to a non-car failure", () => {
+    expect(
+      toRemoveBgFailure(400, 120, "request-1", "unknown_foreground"),
+    ).toEqual({
+      errorMessage:
+        "The background-removal provider could not detect a car in the image.",
+      kind: "NON_CAR_IMAGE",
       providerLatencyMilliseconds: 120,
       providerRequestId: "request-1",
     });

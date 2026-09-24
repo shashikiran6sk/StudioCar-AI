@@ -89,4 +89,32 @@ describe("PhotoUploadItemRow", () => {
     expect(screen.getByRole("checkbox", { name: "Include rear.jpg" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Replace image rear.jpg" })).toBeEnabled();
   });
+
+  it("explains when processing could not detect a car", () => {
+    render(
+      <PhotoUploadItemRow
+        {...handlers}
+        canMoveDown
+        canMoveUp
+        onReplace={vi.fn()}
+        onToggleSelected={vi.fn()}
+        photo={uploadedPhoto({
+          failureReason: "NON_CAR_IMAGE",
+          filename: "document.jpg",
+          replaceRequired: true,
+          selected: false,
+        })}
+        position={2}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        /A vehicle could not be detected in this image\. Please upload a clear image of a car\./,
+      ),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Replace image document.jpg" }),
+    ).toBeEnabled();
+  });
 });

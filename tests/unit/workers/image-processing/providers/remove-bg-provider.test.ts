@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { RemoveBgProvider } from "../../../../../workers/image-processing/src/providers/remove-bg-provider";
 
@@ -18,6 +18,10 @@ function createClock(...values: number[]): () => number {
 }
 
 describe("RemoveBgProvider", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("sends a private multipart request and normalizes a WebP response", async () => {
     let capturedApiKey: string | null = null;
     let capturedSize: unknown;
@@ -97,6 +101,101 @@ describe("RemoveBgProvider", () => {
     });
   });
 
+  it("returns a permanent non-car failure for an unknown foreground", async () => {
+    const provider = new RemoveBgProvider(
+      {
+        apiKey: "secret-provider-key",
+        maximumOutputBytes: 1_024,
+        timeoutMilliseconds: 5_000,
+      },
+      () =>
+        Promise.resolve(
+          Response.json(
+            {
+              errors: [
+                {
+                  code: "unknown_foreground",
+                  title: "Could not identify foreground in image.",
+                },
+              ],
+            },
+            {
+              status: 400,
+              headers: { "x-request-id": "remove-bg-non-car" },
+            },
+          ),
+        ),
+      createClock(2_100, 2_140),
+    );
+
+    await expect(provider.process(INPUT)).resolves.toEqual({
+      ok: false,
+      failure: {
+        errorMessage:
+          "The background-removal provider could not detect a car in the image.",
+        kind: "NON_CAR_IMAGE",
+        providerLatencyMilliseconds: 40,
+        providerRequestId: "remove-bg-non-car",
+      },
+    });
+  });
+
+  it("keeps other remove.bg validation rejections generic", async () => {
+    const provider = new RemoveBgProvider(
+      {
+        apiKey: "secret-provider-key",
+        maximumOutputBytes: 1_024,
+        timeoutMilliseconds: 5_000,
+      },
+      () =>
+        Promise.resolve(
+          Response.json(
+            {
+              errors: [
+                {
+                  code: "invalid_format",
+                  title: "provider-internal-detail",
+                },
+              ],
+            },
+            { status: 400 },
+          ),
+        ),
+      createClock(2_200, 2_230),
+    );
+
+    await expect(provider.process(INPUT)).resolves.toEqual({
+      ok: false,
+      failure: {
+        errorMessage:
+          "The background-removal provider rejected the image request.",
+        kind: "INVALID_REQUEST",
+        providerLatencyMilliseconds: 30,
+        providerRequestId: null,
+      },
+    });
+  });
+
+  it("normalizes provider 5xx responses as retryable failures", async () => {
+    const provider = new RemoveBgProvider(
+      {
+        apiKey: "secret-provider-key",
+        maximumOutputBytes: 1_024,
+        timeoutMilliseconds: 5_000,
+      },
+      () => Promise.resolve(new Response(null, { status: 500 })),
+      createClock(2_300, 2_350),
+    );
+
+    await expect(provider.process(INPUT)).resolves.toMatchObject({
+      ok: false,
+      failure: {
+        kind: "PROVIDER_5XX",
+        providerLatencyMilliseconds: 50,
+      },
+    });
+  });
+
   it("normalizes network failures", async () => {
     const provider = new RemoveBgProvider(
       {
@@ -113,6 +212,39 @@ describe("RemoveBgProvider", () => {
       failure: {
         errorMessage: "The background-removal provider could not be reached.",
         kind: "NETWORK",
+      },
+    });
+  });
+
+  it("normalizes provider timeouts", async () => {
+    vi.useFakeTimers();
+    const provider = new RemoveBgProvider(
+      {
+        apiKey: "secret-provider-key",
+        maximumOutputBytes: 1_024,
+        timeoutMilliseconds: 500,
+      },
+      (_input, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener(
+            "abort",
+            () => {
+              reject(new Error("provider timeout detail"));
+            },
+            { once: true },
+          );
+        }),
+      createClock(3_100, 3_600),
+    );
+
+    const processing = provider.process(INPUT);
+    await vi.advanceTimersByTimeAsync(500);
+
+    await expect(processing).resolves.toMatchObject({
+      ok: false,
+      failure: {
+        errorMessage: "The background-removal provider timed out.",
+        kind: "TIMEOUT",
       },
     });
   });

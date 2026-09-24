@@ -17,6 +17,7 @@ export function classifyProcessingFailure(
     case "INTERNAL":
     case "INVALID_IMAGE":
     case "INVALID_REQUEST":
+    case "NON_CAR_IMAGE":
     case "UNSUPPORTED_FORMAT":
       return { errorCode: PROCESSING_FAILURE_CODES[kind], retryable: false };
   }

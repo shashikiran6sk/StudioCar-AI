@@ -3,7 +3,9 @@ import type { ProcessingExecutionFailure } from "@studiocar/processing";
 import {
   REMOVE_BG_AUTHORIZATION_MESSAGE,
   REMOVE_BG_INVALID_REQUEST_MESSAGE,
+  REMOVE_BG_NON_CAR_IMAGE_MESSAGE,
   REMOVE_BG_RATE_LIMIT_MESSAGE,
+  REMOVE_BG_UNKNOWN_FOREGROUND_CODE,
   REMOVE_BG_UNAVAILABLE_MESSAGE,
 } from "./remove-bg-provider.constants";
 
@@ -11,6 +13,7 @@ export function toRemoveBgFailure(
   status: number,
   providerLatencyMilliseconds: number,
   providerRequestId: string | null,
+  providerErrorCode: string | null,
 ): ProcessingExecutionFailure {
   if (status === 429) {
     return {
@@ -32,6 +35,17 @@ export function toRemoveBgFailure(
     return {
       errorMessage: REMOVE_BG_AUTHORIZATION_MESSAGE,
       kind: "AUTHORIZATION",
+      providerLatencyMilliseconds,
+      providerRequestId,
+    };
+  }
+  if (
+    status === 400 &&
+    providerErrorCode === REMOVE_BG_UNKNOWN_FOREGROUND_CODE
+  ) {
+    return {
+      errorMessage: REMOVE_BG_NON_CAR_IMAGE_MESSAGE,
+      kind: "NON_CAR_IMAGE",
       providerLatencyMilliseconds,
       providerRequestId,
     };
