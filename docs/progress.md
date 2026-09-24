@@ -847,6 +847,57 @@ exactly as before.
   test remains a deployment verification step because local tests use the
   boundary-controlled fake providers.
 
+### SC053 — Diagnosable worker failures and an IPv4-reachable Development database
+
+- Uploads in Development stayed "Processing" indefinitely. Traced on the real
+  stuck jobs: every job was `QUEUED` with no attempt, and the worker logged
+  only `"Outcome":"RECORD_RETRY"` on each redelivery until the message was
+  dead-lettered. The handler's `catch` discarded the exception, so the log gave
+  no cause.
+- The cause was the Development `DATABASE_URL`: Supabase's direct host
+  `db.<ref>.supabase.co` publishes only an IPv6 address. `pnpm dev` on the
+  host reached it; the Docker Desktop worker container, which has no IPv6
+  route, failed name resolution before it could claim the job. The Supabase
+  session pooler is reachable over IPv4 and supports prepared statements and
+  migrations. `.env.example.development`, `docs/environments.md` and the
+  README now say so.
+- Every unexpected worker failure now carries a bounded `error` class — the
+  error's name and the first machine code in its cause chain, such as
+  `PrismaClientKnownRequestError` / `P1001` — through the new
+  `classifyOperationalError`. Values that do not match the bounded identifier
+  patterns are dropped, so no message, stack, host, credential or payload can
+  reach a log. The class is a log field, not a CloudWatch dimension, so metric
+  cardinality is unchanged.
+- No schema, migration, contract or UI change.
+- Verified on the real stuck jobs: after switching the worker to the pooler
+  and redriving the two dead-lettered messages with the README procedure, all
+  three completed through remove.bg.
+
+### SC054 — The worker's own database address, the application's own connection
+
+- SC053's advice to point `DATABASE_URL` at the Supabase session pooler broke
+  the application: session mode admits 15 clients in total, and `pnpm dev`
+  holds more (about twenty runtime modules each build their own Prisma pool,
+  and pages query in parallel). Every request then failed with
+  `EMAXCONNSESSION`, including the dispatcher's.
+- Only the containerised worker needs IPv4. The new optional Development
+  setting `WORKER_DATABASE_URL` is read by `scripts/local-compose.sh` and
+  given to the worker as its `DATABASE_URL`; the application keeps the direct
+  host. An empty value means "use `DATABASE_URL`", `localhost` is rewritten to
+  the Docker host like every other container address, and the setting is
+  refused outside Development. The worker's parser validates the value it
+  receives exactly as before.
+- `.env.example.development`, `docs/environments.md` and the README describe
+  the split. The example alignment test recognises this one compose-layer
+  setting explicitly rather than weakening its "only variables a runtime
+  reads" rule.
+- Added a behaviour test that runs the real compose wrapper from a scratch
+  copy against its own settings file, with a stand-in `docker`, covering the
+  default, override, empty, `localhost` rewrite, and Local refusal cases.
+- Follow-up: the web application should share one Prisma client instead of
+  one pool per runtime module. That would lower connection use in every
+  environment and deserves its own slice.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -942,7 +993,7 @@ true when it does ship.
 - Turborepo does not hash the root `tests/` directory into package test tasks, so a local `pnpm test` can replay a stale cached result after only tests change. Use `turbo run test --force` when verifying locally; CI always runs cold.
 - No webhook route may trust parsed JSON before verifying the provider's signature over the exact raw bytes. The generic HMAC-SHA256 adapter may be selected only for a provider whose official protocol matches it; other protocols require their own verifier adapter.
 - Lifecycle cleanup deletes only records strictly older than configured cutoffs in bounded, skip-locked batches. Image bytes use the separate storage-deletion outbox: the asset status change and deletion intent are atomic, S3 deletion is idempotent, and exhausted failures remain queryable for explicit replay rather than being silently discarded.
-- Image-worker telemetry uses CloudWatch EMF service-only aggregates for alarms and a second bounded service/outcome/provider dimension set for diagnosis. IDs remain nested correlation fields, and event construction exposes no free-form error or payload field. Estimated cost metrics are intentionally deferred until a deployment supplies a reviewed provider rate; the system must not hardcode or fabricate remove.bg pricing.
+- Image-worker telemetry uses CloudWatch EMF service-only aggregates for alarms and a second bounded service/outcome/provider dimension set for diagnosis. IDs remain nested correlation fields, and event construction exposes no free-form error or payload field; an unexpected failure carries only the pattern-bounded `error` class from `classifyOperationalError`. Estimated cost metrics are intentionally deferred until a deployment supplies a reviewed provider rate; the system must not hardcode or fabricate remove.bg pricing.
 
 ## Per-slice update checklist
 

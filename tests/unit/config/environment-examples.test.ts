@@ -29,9 +29,17 @@ import {
 
 const repositoryRoot = path.resolve(import.meta.dirname, "../../..");
 
-/** Every variable some runtime actually reads. */
-const KNOWN_VARIABLES = new Set(
-  [
+/**
+ * Read by `scripts/local-compose.sh` rather than by a runtime: it chooses what
+ * the local worker container receives as its own `DATABASE_URL`, which the
+ * worker's parser then validates like any other.
+ */
+const LOCAL_COMPOSE_VARIABLES = ["WORKER_DATABASE_URL"];
+
+/** Every variable some runtime, or the local compose layer, actually reads. */
+const KNOWN_VARIABLES = new Set([
+  ...LOCAL_COMPOSE_VARIABLES,
+  ...[
     SessionEnvironmentSchema,
     PhoneOtpWidgetEnvironmentSchema,
     PhoneAuthEnvironmentSchema,
@@ -44,7 +52,7 @@ const KNOWN_VARIABLES = new Set(
     ImageWorkerQueueEnvironmentSchema,
     ImageWorkerEnvironmentSchema,
   ].flatMap((schema) => Object.keys(schema.shape)),
-);
+]);
 
 /** Names that no longer exist, or never did, and must not be documented. */
 const RETIRED_VARIABLES = [
@@ -111,6 +119,7 @@ const EXAMPLES: Record<string, ExampleCase> = {
       "S3_ACCESS_KEY_ID",
       "S3_SECRET_ACCESS_KEY",
       "BOOTSTRAP_ADMIN_EMAIL",
+      "WORKER_DATABASE_URL",
     ],
   },
   ".env.example.production": {
@@ -221,6 +230,15 @@ describe("environment example files", () => {
     ]) {
       expect(documented).toContain(key);
     }
+  });
+
+  it("offers the worker's own database address in Development only", () => {
+    expect(Object.keys(readExample(".env.example.development"))).toContain(
+      "WORKER_DATABASE_URL",
+    );
+    expect(Object.keys(readExample(".env.example.production"))).not.toContain(
+      "WORKER_DATABASE_URL",
+    );
   });
 
   it("keeps the production queue out of Development", () => {

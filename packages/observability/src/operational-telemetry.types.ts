@@ -19,9 +19,20 @@ export interface OperationalMetric {
   value: number;
 }
 
+/**
+ * A bounded description of an unexpected failure: the error's class name and,
+ * when one exists, its machine code (`P1001`, `ENOTFOUND`). Never a message,
+ * stack, or payload, which can carry hosts, credentials, or customer data.
+ */
+export interface OperationalErrorClass {
+  code?: string;
+  name: string;
+}
+
 export interface OperationalEvent {
   correlation?: OperationalCorrelation;
   dimensions?: Readonly<Record<string, string>>;
+  error?: OperationalErrorClass;
   eventName: string;
   level: OperationalLogLevel;
   metrics: readonly OperationalMetric[];

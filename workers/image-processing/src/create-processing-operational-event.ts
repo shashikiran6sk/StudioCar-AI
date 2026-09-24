@@ -2,6 +2,7 @@ import type { WorkerMessage } from "@studiocar/contracts";
 import {
   OperationalLogLevel,
   OperationalMetricUnit,
+  type OperationalErrorClass,
   type OperationalEvent,
   type OperationalMetric,
 } from "@studiocar/observability";
@@ -26,6 +27,7 @@ import {
 } from "./processing-telemetry.constants";
 
 export interface CreateProcessingOperationalEventInput {
+  error?: OperationalErrorClass;
   finishedAtMilliseconds: number;
   message?: WorkerMessage;
   queueMessageId: string;
@@ -132,6 +134,7 @@ export function createProcessingOperationalEvent(
       [PROCESSING_OUTCOME_DIMENSION]: outcome,
       [PROCESSING_PROVIDER_DIMENSION]: provider,
     },
+    ...(input.error ? { error: input.error } : {}),
     eventName: PROCESSING_EVENT_NAME,
     level:
       outcome === "COMPLETED" || outcome === "IGNORED"

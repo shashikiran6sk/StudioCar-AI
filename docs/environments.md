@@ -152,7 +152,9 @@ pnpm dev                                 # http://localhost:3000
 Required: `DATABASE_URL` (the Development database), `SESSION_SECRET`,
 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MSG91_WIDGET_ID`,
 `MSG91_WIDGET_TOKEN`, `MSG91_AUTH_KEY`, `S3_BUCKET` (the Development bucket),
-and `REMOVEBG_API_KEY`. `AWS_REGION` defaults to `ap-south-1`.
+and `REMOVEBG_API_KEY`. `AWS_REGION` defaults to `ap-south-1`. Optional:
+`WORKER_DATABASE_URL`, for a database the worker container cannot reach at
+`DATABASE_URL` (see below).
 
 - **Google OAuth** is real. Register
   `http://localhost:3000/api/auth/google/callback` (or your Development
@@ -176,6 +178,19 @@ and `REMOVEBG_API_KEY`. `AWS_REGION` defaults to `ap-south-1`.
 - **The processing queue and image worker** are the local ElasticMQ and the
   same worker container as Local, pointed at the Development database and
   bucket.
+- **The worker may need its own database address.** Docker Desktop
+  containers have no IPv6 route, so a host that publishes only an AAAA record
+  works for `pnpm dev` on the host but fails inside the worker. Supabase's
+  direct host `db.<ref>.supabase.co` is IPv6-only. Keep it as `DATABASE_URL`
+  and set `WORKER_DATABASE_URL` to the session pooler,
+  `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`.
+  `scripts/local-compose.sh` passes it to the worker as that container's
+  `DATABASE_URL`, where the worker's parser validates it like any other. Do
+  not point the application at the pooler: session mode admits only a handful
+  of clients (15 on the free tier), fewer than `pnpm dev` holds open, and
+  every request then fails with `EMAXCONNSESSION`. Run `pnpm infra:up` after
+  changing either value, because the worker reads it at start.
+  `WORKER_DATABASE_URL` is refused outside Development.
 
 Development refuses the fake sign-in drivers, MinIO and localhost storage, the
 local bucket and emulator keys, the committed Local session secret, and any

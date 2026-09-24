@@ -6,6 +6,7 @@ import {
   type WorkerMessage,
 } from "@studiocar/contracts";
 import {
+  classifyOperationalError,
   OperationalTelemetry,
   type OperationalTelemetryPort,
 } from "@studiocar/observability";
@@ -43,9 +44,10 @@ export async function handleProcessingQueueEvent(
       if (result.kind === "RETRY_DELIVERY") {
         batchItemFailures.push({ itemIdentifier: record.messageId });
       }
-    } catch {
+    } catch (error) {
       telemetry.emit(
         createProcessingOperationalEvent({
+          error: classifyOperationalError(error),
           finishedAtMilliseconds: now(),
           ...(message ? { message } : {}),
           queueMessageId: record.messageId,

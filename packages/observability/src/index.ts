@@ -1,3 +1,4 @@
+export * from "./classify-operational-error";
 export * from "./create-cloudwatch-embedded-metric-payload";
 export * from "./operational-telemetry";
 export * from "./operational-telemetry.constants";
