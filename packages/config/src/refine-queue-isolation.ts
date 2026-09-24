@@ -14,7 +14,7 @@ import { isLocalServiceUrl } from "./is-local-service-url";
 import { LOCAL_INFRASTRUCTURE } from "./local-infrastructure";
 import { QueueTarget } from "./provider-drivers";
 
-const QUEUE_URL_KEYS = ["SQS_IMAGE_QUEUE_URL", "SQS_EMAIL_QUEUE_URL"] as const;
+const QUEUE_URL_KEYS = ["SQS_IMAGE_QUEUE_URL"] as const;
 
 type QueueUrlKey = (typeof QUEUE_URL_KEYS)[number];
 
@@ -45,16 +45,6 @@ function queueName(queueUrl: string): string {
   }
 }
 
-function allowedTargets(
-  value: IsolationSubject,
-  key: QueueUrlKey,
-): readonly string[] {
-  const profile = getEnvironmentProfile(value.APP_ENV);
-  return key === "SQS_IMAGE_QUEUE_URL"
-    ? profile.processingQueue.allowed
-    : profile.emailQueue.allowed;
-}
-
 function refineQueueUrl(
   value: IsolationSubject,
   key: QueueUrlKey,
@@ -63,7 +53,8 @@ function refineQueueUrl(
   const queueUrl = value[key];
   if (queueUrl === undefined) return;
 
-  const allowed = allowedTargets(value, key);
+  const allowed: readonly string[] =
+    getEnvironmentProfile(value.APP_ENV).processingQueue.allowed;
   const isLocal = isLocalServiceUrl(queueUrl);
 
   if (isLocal) {

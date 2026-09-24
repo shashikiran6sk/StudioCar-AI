@@ -7,7 +7,6 @@ import { z } from "zod";
  */
 export const GoogleAuthDriverSchema = z.enum(["google", "fake"]);
 export const PhoneOtpDriverSchema = z.enum(["msg91", "fake"]);
-export const EmailDriverSchema = z.enum(["resend", "mailpit"]);
 export const BackgroundRemovalProviderSchema = z.enum([
   "removebg",
   "fal",
@@ -34,7 +33,6 @@ export const WorkerRuntime = {
 
 export type GoogleAuthDriver = z.infer<typeof GoogleAuthDriverSchema>;
 export type PhoneOtpDriver = z.infer<typeof PhoneOtpDriverSchema>;
-export type EmailDriver = z.infer<typeof EmailDriverSchema>;
 export type BackgroundRemovalProvider = z.infer<
   typeof BackgroundRemovalProviderSchema
 >;

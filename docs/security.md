@@ -14,18 +14,15 @@ infrastructure or a provider.
 
 | Runtime | Secret/config access | Explicitly excluded |
 | --- | --- | --- |
-| Next.js session and read models | `DATABASE_URL` | Provider, email-delivery, and scheduler secrets |
-| Google OAuth routes | `DATABASE_URL`, `SESSION_SECRET`, `GOOGLE_AUTH_DRIVER` (profile default), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, optional `BOOTSTRAP_ADMIN_EMAIL` | MSG91, Resend, remove.bg, fal.ai |
+| Next.js session and read models | `DATABASE_URL` | Provider and scheduler secrets |
+| Google OAuth routes | `DATABASE_URL`, `SESSION_SECRET`, `GOOGLE_AUTH_DRIVER` (profile default), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, optional `BOOTSTRAP_ADMIN_EMAIL` | MSG91, remove.bg, fal.ai |
 | Administration pages and mutations | `DATABASE_URL` | Every provider and scheduler secret; authorization is read from the database |
-| Phone OTP start and verify routes | `DATABASE_URL`, `SESSION_SECRET`, `PHONE_OTP_DRIVER`, `MSG91_AUTH_KEY`, `MSG91_WIDGET_ID`, `MSG91_WIDGET_TOKEN` | Google, Resend, image-provider keys |
+| Phone OTP start and verify routes | `DATABASE_URL`, `SESSION_SECRET`, `PHONE_OTP_DRIVER`, `MSG91_AUTH_KEY`, `MSG91_WIDGET_ID`, `MSG91_WIDGET_TOKEN` | Google, image-provider keys |
 | Phone OTP widget route | `PHONE_OTP_DRIVER`, `PHONE_OTP_DEV_CODE`, `MSG91_WIDGET_ID`, `MSG91_WIDGET_TOKEN` | `SESSION_SECRET`, `DATABASE_URL`, `MSG91_AUTH_KEY`, every other secret |
 | Upload, inventory, portfolio, and storage-cleanup control plane | `DATABASE_URL`, `AWS_REGION`, `S3_BUCKET`, optional `S3_ENDPOINT`/`S3_FORCE_PATH_STYLE`/`S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`, workload-role S3 read/write/delete permissions | Image bytes, worker queue-consumer permissions, provider keys |
 | Processing outbox dispatcher | `DATABASE_URL`, `AWS_REGION`, `SQS_IMAGE_QUEUE_URL`, optional `SQS_ENDPOINT`/`SQS_ACCESS_KEY_ID`/`SQS_SECRET_ACCESS_KEY`, `PROCESSING_DISPATCH_TOKEN`, queue-publisher permission | Queue-consumer permission, provider keys, image-object write permission |
-| Email outbox dispatcher | `DATABASE_URL`, `AWS_REGION`, `SQS_EMAIL_QUEUE_URL`, optional `SQS_ENDPOINT`/`SQS_ACCESS_KEY_ID`/`SQS_SECRET_ACCESS_KEY`, `EMAIL_DISPATCH_TOKEN`, `APPLICATION_BASE_URL`, queue-publisher permission | `RESEND_API_KEY`, queue-consumer permission |
-| Image-processing worker | `DATABASE_URL`, private-image S3 read/write, image-queue consume, only the selected provider credential | Session, OAuth, OTP, email, scheduler secrets, dispatch tokens |
-| Email-delivery worker | `DATABASE_URL`, `EMAIL_DRIVER`, `RESEND_API_KEY`, `EMAIL_FROM`, `APPLICATION_BASE_URL`, email-queue consume | S3, image queue, image-provider, auth secrets, dispatch tokens |
+| Image-processing worker | `DATABASE_URL`, private-image S3 read/write, image-queue consume, only the selected provider credential | Session, OAuth, OTP, scheduler secrets, dispatch tokens |
 | Trusted processing scheduler | Processing dispatch URL and `PROCESSING_DISPATCH_TOKEN` only | Database, AWS, provider, session secrets |
-| Trusted email scheduler | Email dispatch URL and `EMAIL_DISPATCH_TOKEN` only | Database, AWS, Resend, session secrets |
 | Trusted lifecycle scheduler | Lifecycle cleanup URL and `LIFECYCLE_CLEANUP_TOKEN` only | Database, AWS, provider, auth, and dispatch secrets |
 | Trusted storage-cleanup scheduler | Storage cleanup URL and `STORAGE_CLEANUP_TOKEN` only | Database, AWS, provider, auth, and dispatch secrets |
 
@@ -33,8 +30,8 @@ Use workload identities and the checked-in least-privilege IAM policies instead
 of long-lived AWS access keys in production. Explicit `S3_*` and `SQS_*` key
 pairs exist for local emulators and for deployments with no attachable role;
 configuring only half of a pair is rejected at startup rather than failing
-opaquely at the first signed request. Processing and email dispatch tokens
-and both cleanup tokens must be independently generated. Rotate a credential inside its owning runtime,
+opaquely at the first signed request. The processing dispatch token and both
+cleanup tokens must be independently generated. Rotate a credential inside its owning runtime,
 then revoke the old value; never log either value during rollout.
 
 The configuration package deliberately exposes focused runtime parsers. There is
@@ -171,12 +168,11 @@ audit trail matters most.
 
 The Local profile selects drivers that cannot reach a customer: fake Google
 sign-in (`GOOGLE_AUTH_DRIVER=fake`) completes the ordinary OAuth challenge and
-session flow for one fixed local identity, `PHONE_OTP_DRIVER=fake` sends no
-message, and `EMAIL_DRIVER=mailpit` delivers only to an inbox on the
-developer's own machine.
+session flow for one fixed local identity, and `PHONE_OTP_DRIVER=fake` sends
+no message. StudioCar sends no email in any environment.
 
 Only the Local profile allows the fake sign-in drivers, and production does
-not allow Mailpit, MinIO, ElasticMQ, localhost endpoints, the local queue
+not allow MinIO, ElasticMQ, localhost endpoints, the local queue
 consumers, non-production buckets or queues, or any committed local value.
 Development refuses the fake sign-in drivers too, and a missing Google or MSG91
 setting is an error in both, never a fallback. The committed Local values

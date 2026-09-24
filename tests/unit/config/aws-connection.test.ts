@@ -159,10 +159,10 @@ describe("upload environment", () => {
   it("ignores unrelated secrets that share the process environment", () => {
     const environment = parseUploadEnvironment({
       ...baseUploadEnvironment,
-      RESEND_API_KEY: "must-not-cross-this-boundary",
+      REMOVEBG_API_KEY: "must-not-cross-this-boundary",
     });
 
-    expect(Object.keys(environment)).not.toContain("RESEND_API_KEY");
+    expect(Object.keys(environment)).not.toContain("REMOVEBG_API_KEY");
   });
 });
 

@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   BackgroundRemovalProviderSchema,
-  EmailDriverSchema,
   GoogleAuthDriverSchema,
   PhoneOtpDriverSchema,
   QueueTarget,
@@ -16,8 +15,7 @@ describe("provider drivers", () => {
     expect(PhoneOtpDriverSchema.options).toEqual(["msg91", "fake"]);
   });
 
-  it("keeps the existing email and background-removal choices", () => {
-    expect(EmailDriverSchema.options).toEqual(["resend", "mailpit"]);
+  it("keeps the existing background-removal choices", () => {
     expect(BackgroundRemovalProviderSchema.options).toEqual([
       "removebg",
       "fal",

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  parseEmailWorkerEnvironment,
   parseGoogleAuthEnvironment,
   parseImageWorkerEnvironment,
   parsePhoneAuthEnvironment,
@@ -32,7 +31,7 @@ describe("Local environment", () => {
     },
   );
 
-  it("selects fake Google, fake OTP, MinIO, ElasticMQ, Mailpit, and remove.bg", () => {
+  it("selects fake Google, fake OTP, MinIO, ElasticMQ, and remove.bg", () => {
     expect(parseGoogleAuthEnvironment(LOCAL_ENVIRONMENT).GOOGLE_AUTH_DRIVER).toBe("fake");
     expect(parsePhoneAuthEnvironment(LOCAL_ENVIRONMENT).PHONE_OTP_DRIVER).toBe("fake");
     expect(parseUploadEnvironment(LOCAL_ENVIRONMENT)).toMatchObject({
@@ -44,7 +43,6 @@ describe("Local environment", () => {
       SQS_ENDPOINT: "http://localhost:9324",
       SQS_IMAGE_QUEUE_URL: "http://localhost:9324/000000000000/studiocar-images",
     });
-    expect(parseEmailWorkerEnvironment(LOCAL_ENVIRONMENT).EMAIL_DRIVER).toBe("mailpit");
     expect(
       parseImageWorkerEnvironment(LOCAL_ENVIRONMENT).BACKGROUND_REMOVAL_PROVIDER,
     ).toBe("removebg");
@@ -62,7 +60,7 @@ describe("Development environment", () => {
     expect(parseError(parser, DEVELOPMENT_ENVIRONMENT)).toBeUndefined();
   });
 
-  it("selects real Google, real MSG91, AWS S3, ElasticMQ, and Mailpit", () => {
+  it("selects real Google, real MSG91, AWS S3, and ElasticMQ", () => {
     expect(parseGoogleAuthEnvironment(DEVELOPMENT_ENVIRONMENT).GOOGLE_AUTH_DRIVER).toBe(
       "google",
     );
@@ -74,9 +72,6 @@ describe("Development environment", () => {
     expect(upload.S3_BUCKET).toBe("studiocar-dev-images");
     expect(parseProcessingEnvironment(DEVELOPMENT_ENVIRONMENT).SQS_ENDPOINT).toBe(
       "http://localhost:9324",
-    );
-    expect(parseEmailWorkerEnvironment(DEVELOPMENT_ENVIRONMENT).EMAIL_DRIVER).toBe(
-      "mailpit",
     );
   });
 
@@ -135,15 +130,6 @@ describe("Development environment", () => {
       }),
     ).toContain("S3_BUCKET");
   });
-
-  it("does not require Resend", () => {
-    expect(
-      parseError(parseEmailWorkerEnvironment, {
-        ...DEVELOPMENT_ENVIRONMENT,
-        RESEND_API_KEY: undefined,
-      }),
-    ).toBeUndefined();
-  });
 });
 
 describe("Production environment", () => {
@@ -160,15 +146,12 @@ describe("Production environment", () => {
     );
   });
 
-  it("selects real Google, MSG91, Resend, and remove.bg with nothing local", () => {
+  it("selects real Google, MSG91, and remove.bg with nothing local", () => {
     expect(parseGoogleAuthEnvironment(PRODUCTION_ENVIRONMENT).GOOGLE_AUTH_DRIVER).toBe(
       "google",
     );
     expect(parsePhoneAuthEnvironment(PRODUCTION_ENVIRONMENT).PHONE_OTP_DRIVER).toBe(
       "msg91",
-    );
-    expect(parseEmailWorkerEnvironment(PRODUCTION_ENVIRONMENT).EMAIL_DRIVER).toBe(
-      "resend",
     );
     expect(parseUploadEnvironment(PRODUCTION_ENVIRONMENT).S3_ENDPOINT).toBeUndefined();
     expect(
@@ -183,7 +166,6 @@ describe("Production environment", () => {
     ["a localhost S3 endpoint", parseImageWorkerEnvironment, { S3_ENDPOINT: "http://localhost:9000" }, /local MinIO is refused/],
     ["ElasticMQ", parseProcessingEnvironment, { SQS_IMAGE_QUEUE_URL: "http://elasticmq:9324/000000000000/studiocar-images" }, /local ElasticMQ is refused/],
     ["a localhost queue", parseProcessingEnvironment, { SQS_IMAGE_QUEUE_URL: "http://localhost:9324/000000000000/studiocar-images" }, /local ElasticMQ is refused/],
-    ["Mailpit", parseEmailWorkerEnvironment, { EMAIL_DRIVER: "mailpit", MAILPIT_BASE_URL: "http://localhost:8025" }, /EMAIL_DRIVER=mailpit/],
     ["a Development bucket", parseUploadEnvironment, { S3_BUCKET: "studiocar-dev-images" }, /non-production environment/],
     ["the local bucket", parseImageWorkerEnvironment, { S3_BUCKET: "studiocar-local" }, /must not be the local bucket/],
     ["the local emulator key", parseUploadEnvironment, { S3_ACCESS_KEY_ID: "studiocarlocal", S3_SECRET_ACCESS_KEY: "studiocarlocal123" }, /local emulator key/],
@@ -200,7 +182,6 @@ describe("Production environment", () => {
   it.each([
     ["MSG91 credentials", parsePhoneAuthEnvironment, "MSG91_AUTH_KEY"],
     ["Google credentials", parseGoogleAuthEnvironment, "GOOGLE_CLIENT_SECRET"],
-    ["a Resend key", parseEmailWorkerEnvironment, "RESEND_API_KEY"],
     ["a bucket", parseUploadEnvironment, "S3_BUCKET"],
     ["a processing queue", parseProcessingEnvironment, "SQS_IMAGE_QUEUE_URL"],
     ["a dispatch token", parseProcessingEnvironment, "PROCESSING_DISPATCH_TOKEN"],

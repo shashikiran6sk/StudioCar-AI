@@ -6,7 +6,7 @@ import { refineDriverSelection } from "../../../packages/config/src/refine-drive
 function select(driver: string, allowed: readonly string[]): EnvironmentIssue[] {
   const issues: EnvironmentIssue[] = [];
   refineDriverSelection(
-    { appEnvironment: "production", variable: "EMAIL_DRIVER", driver, allowed },
+    { appEnvironment: "production", variable: "PHONE_OTP_DRIVER", driver, allowed },
     {
       addIssue: (issue) => {
         issues.push(issue);
@@ -18,16 +18,16 @@ function select(driver: string, allowed: readonly string[]): EnvironmentIssue[] 
 
 describe("refineDriverSelection", () => {
   it("accepts an allowed driver", () => {
-    expect(select("resend", ["resend"])).toEqual([]);
+    expect(select("msg91", ["msg91"])).toEqual([]);
   });
 
   it("names the variable, the environment, and what is allowed", () => {
-    expect(select("mailpit", ["resend"])).toEqual([
+    expect(select("fake", ["msg91"])).toEqual([
       {
         code: "custom",
         message:
-          "EMAIL_DRIVER=mailpit is not allowed in the production environment; allowed: resend.",
-        path: ["EMAIL_DRIVER"],
+          "PHONE_OTP_DRIVER=fake is not allowed in the production environment; allowed: msg91.",
+        path: ["PHONE_OTP_DRIVER"],
       },
     ]);
   });

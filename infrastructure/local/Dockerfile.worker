@@ -1,5 +1,5 @@
-# Local development worker image, shared by both workers. It bundles the same
-# deployed handlers the Lambda runtime uses and drives them from long-polling
+# Local development image for the image-processing worker. It bundles the same
+# deployed handler the Lambda runtime uses and drives them from long-polling
 # local entry points, so local behaviour matches production retry and
 # acknowledgement decisions rather than a parallel implementation.
 FROM node:24-bookworm-slim
@@ -15,14 +15,12 @@ WORKDIR /repo
 
 COPY . .
 
-# Only the two worker dependency trees are installed. Pulling the application's
+# Only the worker's dependency tree is installed. Pulling the application's
 # build toolchain in as well would download far more than these processes run.
 # The Prisma client is generated on the host and copied in with the source.
 RUN pnpm install --frozen-lockfile \
-  --filter "@studiocar/image-processing-worker..." \
-  --filter "@studiocar/email-delivery-worker..."
+  --filter "@studiocar/image-processing-worker..."
 
-RUN pnpm --filter @studiocar/image-processing-worker build:local \
-  && pnpm --filter @studiocar/email-delivery-worker build:local
+RUN pnpm --filter @studiocar/image-processing-worker build:local
 
 CMD ["node", "--version"]

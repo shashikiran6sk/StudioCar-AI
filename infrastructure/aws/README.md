@@ -2,7 +2,7 @@
 
 The runtime credential and IAM ownership matrix is documented in
 [`docs/security.md`](../../docs/security.md). Treat that matrix as a deployment
-constraint: worker-only provider and delivery credentials must not be injected
+constraint: worker-only provider credentials must not be injected
 into the Next.js runtime.
 
 Every deployed runtime runs with `APP_ENV=production`; the worker templates set
@@ -60,42 +60,19 @@ IDs kept out of metric dimensions. The stack applies configurable log retention
 and alarms on Lambda errors/duration, terminal failures, retry spikes, provider
 rate limits, and end-to-end latency.
 
-`email-delivery-queue.yml` provisions a separate encrypted standard queue,
-retained dead-letter queue, least-privilege publisher and consumer policies,
-and queue-depth, oldest-message-age, and non-empty-DLQ alarms for transactional
-email. Attach only its publisher policy to the application email outbox dispatcher;
-the image-processing worker must never publish or deliver email directly.
-
-`email-delivery-worker.yml` deploys the Node.js 24 email worker from an
-immutable reviewed archive whose root contains `handler.mjs` plus the external
-Prisma PostgreSQL runtime dependencies. It resolves the database and Resend API
-keys from Secrets Manager, requires a verified sender address, claims durable
-delivery state before contacting Resend, uses partial batch failure reporting,
-and caps reserved plus event-source concurrency independently from image
-processing. Keep the queue visibility timeout longer than both the Lambda
-timeout and delivery claim lease, and connect every alarm to the environment's
-incident-notification topic.
-
-Configure a trusted scheduler to invoke `POST /api/internal/email/dispatch` at
-least once per minute with `Authorization: Bearer <EMAIL_DISPATCH_TOKEN>`. The
-email token must be separately generated from the processing dispatch token and
-stored only in scheduler and application server environments. This recovery
-dispatcher is the only application publisher; user-facing requests never wait
-for SQS or Resend.
-
-Configure a third trusted scheduler to invoke
+Configure a second trusted scheduler to invoke
 `POST /api/internal/lifecycle/cleanup` with
 `Authorization: Bearer <LIFECYCLE_CLEANUP_TOKEN>`. Run it repeatedly until its
 bounded aggregate count reaches zero, then continue on the selected maintenance
-cadence. Keep this token distinct from both dispatch tokens. The cleanup command
+cadence. Keep this token distinct from the processing dispatch token. The cleanup command
 deletes only sessions, OAuth/OTP challenges, and command-limit events older than
 their configured retention cutoffs; it does not delete vehicles, image assets,
 processing jobs, usage, audit logs, or private S3 objects.
 
-Configure a fourth trusted scheduler to invoke
+Configure a third trusted scheduler to invoke
 `POST /api/internal/storage/cleanup` with
 `Authorization: Bearer <STORAGE_CLEANUP_TOKEN>`. Keep this token distinct from
-the lifecycle and dispatch tokens. Each invocation atomically marks only
+the lifecycle and processing dispatch tokens. Each invocation atomically marks only
 long-expired `PENDING_UPLOAD` assets as deleted and reserves their immutable
 object keys before attempting a bounded number of S3 deletes. Repeat while
 `reserved`, `claimed`, or `retrying` work remains. Alert on non-zero `failed`

@@ -51,7 +51,7 @@ describe("applyEnvironmentProfile", () => {
 
     expect(resolved["SQS_ENDPOINT"]).toBeUndefined();
     expect(resolved["SQS_ACCESS_KEY_ID"]).toBeUndefined();
-    expect(resolved["SQS_EMAIL_QUEUE_URL"]).toBeUndefined();
+    expect(resolved["SQS_SECRET_ACCESS_KEY"]).toBeUndefined();
   });
 
   it("does not mutate the values it was given", () => {

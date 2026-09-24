@@ -12,7 +12,6 @@ const EXTERNAL_CREDENTIALS = [
   "MSG91_AUTH_KEY",
   "MSG91_WIDGET_ID",
   "MSG91_WIDGET_TOKEN",
-  "RESEND_API_KEY",
   "AWS_ACCESS_KEY_ID",
   "AWS_SECRET_ACCESS_KEY",
 ];
@@ -26,6 +25,17 @@ function flatten(environment: AppEnvironment): Record<string, string> {
 
 describe("getProfileDefaults", () => {
   it.each(Object.values(AppEnvironment))(
+    "supplies no email-delivery setting in %s",
+    (environment) => {
+      expect(
+        Object.keys(flatten(environment)).filter((key) =>
+          /^(EMAIL_|MAIL|RESEND_|SQS_EMAIL_|APPLICATION_BASE_URL)/.test(key),
+        ),
+      ).toEqual([]);
+    },
+  );
+
+  it.each(Object.values(AppEnvironment))(
     "never supplies an external credential in %s",
     (environment) => {
       for (const key of EXTERNAL_CREDENTIALS) {
@@ -38,7 +48,6 @@ describe("getProfileDefaults", () => {
     expect(flatten("local")).toMatchObject({
       GOOGLE_AUTH_DRIVER: "fake",
       PHONE_OTP_DRIVER: "fake",
-      EMAIL_DRIVER: "mailpit",
       BACKGROUND_REMOVAL_PROVIDER: "removebg",
       DATABASE_URL: "postgresql://studiocar:studiocar@localhost:5432/studiocar",
       S3_ENDPOINT: "http://localhost:9000",
@@ -46,9 +55,6 @@ describe("getProfileDefaults", () => {
       S3_FORCE_PATH_STYLE: "true",
       SQS_ENDPOINT: "http://localhost:9324",
       SQS_IMAGE_QUEUE_URL: "http://localhost:9324/000000000000/studiocar-images",
-      SQS_EMAIL_QUEUE_URL: "http://localhost:9324/000000000000/studiocar-email",
-      MAILPIT_BASE_URL: "http://localhost:8025",
-      APPLICATION_BASE_URL: "http://localhost:3000",
     });
   });
 
@@ -61,9 +67,7 @@ describe("getProfileDefaults", () => {
     expect(development).toMatchObject({
       GOOGLE_AUTH_DRIVER: "google",
       PHONE_OTP_DRIVER: "msg91",
-      EMAIL_DRIVER: "mailpit",
       SQS_ENDPOINT: "http://localhost:9324",
-      MAILPIT_BASE_URL: "http://localhost:8025",
     });
   });
 
@@ -71,7 +75,6 @@ describe("getProfileDefaults", () => {
     expect(flatten("production")).toEqual({
       GOOGLE_AUTH_DRIVER: "google",
       PHONE_OTP_DRIVER: "msg91",
-      EMAIL_DRIVER: "resend",
       BACKGROUND_REMOVAL_PROVIDER: "removebg",
     });
   });

@@ -38,8 +38,8 @@ describe("refineQueueIsolation", () => {
     expect(
       refinementIssues(refineQueueIsolation, {
         APP_ENV: "development",
-        SQS_EMAIL_QUEUE_URL:
-          "https://sqs.ap-south-1.amazonaws.com/123456789012/studiocar-prod-email",
+        SQS_IMAGE_QUEUE_URL:
+          "https://sqs.ap-south-1.amazonaws.com/123456789012/studiocar-prod-images",
       }),
     ).toEqual([expect.stringMatching(/names a production queue/)]);
   });
@@ -78,11 +78,13 @@ describe("refineQueueIsolation", () => {
         APP_ENV: "production",
         SQS_IMAGE_QUEUE_URL:
           "https://sqs.ap-south-1.amazonaws.com/123456789012/studiocar-dev-images",
-        SQS_EMAIL_QUEUE_URL: "http://queue.studiocar.example/email",
       }),
-    ).toEqual([
-      expect.stringMatching(/declares a non-production environment/),
-      expect.stringMatching(/SQS_EMAIL_QUEUE_URL must be an AWS SQS queue/),
-    ]);
+    ).toEqual([expect.stringMatching(/declares a non-production environment/)]);
+    expect(
+      refinementIssues(refineQueueIsolation, {
+        APP_ENV: "production",
+        SQS_IMAGE_QUEUE_URL: "http://queue.studiocar.example/images",
+      }),
+    ).toEqual([expect.stringMatching(/SQS_IMAGE_QUEUE_URL must be an AWS SQS queue/)]);
   });
 });

@@ -6,14 +6,13 @@
  * not secrets, which is why they are committed. Every Local default, the
  * database reset guard, and the compose-consistency test read them from here.
  *
- * External credentials (remove.bg, Google, MSG91, Resend, AWS) never appear in
+ * External credentials (remove.bg, Google, MSG91, AWS) never appear in
  * this file, and a deployed environment refuses every value in it.
  *
  * This module has no imports on purpose: repository scripts load it directly
  * with Node's type stripping, without a build step.
  */
 export const LOCAL_INFRASTRUCTURE = {
-  applicationOrigin: "http://localhost:3000",
   googleRedirectUri: "http://localhost:3000/api/auth/google/callback",
 
   databaseUser: "studiocar",
@@ -30,16 +29,10 @@ export const LOCAL_INFRASTRUCTURE = {
 
   queueEndpoint: "http://localhost:9324",
   imageQueueName: "studiocar-images",
-  emailQueueName: "studiocar-email",
   imageQueueUrl: "http://localhost:9324/000000000000/studiocar-images",
-  emailQueueUrl: "http://localhost:9324/000000000000/studiocar-email",
-
-  mailpitBaseUrl: "http://localhost:8025",
-  emailFrom: "no-reply@studiocar.local",
 
   sessionSecret: "local-development-session-secret-000000",
   processingDispatchToken: "local-processing-dispatch-token-000000",
-  emailDispatchToken: "local-email-dispatch-token-0000000000",
   lifecycleCleanupToken: "local-lifecycle-cleanup-token-00000000",
   storageCleanupToken: "local-storage-cleanup-token-0000000000",
 } as const;
@@ -59,5 +52,4 @@ export const LOCAL_SERVICE_HOSTNAMES: ReadonlySet<string> = new Set([
   "db",
   "minio",
   "elasticmq",
-  "mailpit",
 ]);

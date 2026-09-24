@@ -27,7 +27,6 @@ For conflicts, apply product behavior and architecture first, then design rules,
 - PostgreSQL with Prisma
 - AWS S3, SQS, Lambda, and DLQs
 - Google OAuth/OIDC and MSG91 phone OTP
-- Resend behind an asynchronous mail boundary
 - Vitest, React Testing Library, real PostgreSQL integration tests, and Playwright
 - GitHub Actions for CI; Vercel for the web application; AWS for queues, storage, and workers
 
@@ -35,11 +34,9 @@ Workspace layout:
 
 - `apps/web`: Next.js application, application-server code, and the Prisma schema, migrations, and tenant repositories
 - `workers/image-processing`: asynchronous image-processing worker
-- `workers/email-delivery`: asynchronous email-delivery worker
 - `packages/ui`: reusable design-system components
 - `packages/contracts`: canonical Zod schemas and inferred DTO types
-- `packages/database-runtime`: generated Prisma client, pooled client factory, and the repositories shared with the deployable workers
-- `packages/email`: provider-neutral email outbox, delivery claims, and mailer ports
+- `packages/database-runtime`: generated Prisma client, pooled client factory, and the repositories shared with the deployable worker
 - `packages/processing`: processing domain and provider ports/adapters
 - `packages/observability`: structured logging and metrics
 - `packages/config`: validated environment and shared tool configuration

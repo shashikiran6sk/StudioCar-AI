@@ -27,7 +27,6 @@
     "@studiocar/config": "workspace:*",
     "@studiocar/contracts": "workspace:*",
     "@studiocar/database-runtime": "workspace:*",
-    "@studiocar/email": "workspace:*",
     "@studiocar/processing": "workspace:*",
     "@studiocar/ui": "workspace:*",
     "fflate": "0.8.3",

@@ -4,7 +4,6 @@ import {
   StorageTarget,
   WorkerRuntime,
   type BackgroundRemovalProvider,
-  type EmailDriver,
   type GoogleAuthDriver,
   type PhoneOtpDriver,
 } from "./provider-drivers";
@@ -22,11 +21,9 @@ export interface ProfileSelection<T extends string> {
 export interface EnvironmentProfile {
   readonly googleAuthDriver: ProfileSelection<GoogleAuthDriver>;
   readonly phoneOtpDriver: ProfileSelection<PhoneOtpDriver>;
-  readonly emailDriver: ProfileSelection<EmailDriver>;
   readonly backgroundRemovalProvider: ProfileSelection<BackgroundRemovalProvider>;
   readonly storage: StorageTarget;
   readonly processingQueue: ProfileSelection<QueueTarget>;
-  readonly emailQueue: ProfileSelection<QueueTarget>;
   readonly workerRuntime: WorkerRuntime;
 }
 
@@ -40,16 +37,16 @@ const EVERY_BACKGROUND_REMOVAL_PROVIDER: readonly BackgroundRemovalProvider[] = 
  * The single source of truth for what each environment runs.
  *
  * - Local needs nothing but a remove.bg key: fake sign-in, MinIO, ElasticMQ,
- *   Mailpit, and locally running workers.
+ *   and a locally running image worker.
  * - Development exercises the real external boundaries (Google, MSG91, AWS S3,
- *   remove.bg) while queues, workers, and mail stay local and easy to debug.
+ *   remove.bg) while the queue and the image worker stay local and easy to
+ *   debug.
  * - Production is fully deployed and tolerates no local adapter at all.
  */
 export const ENVIRONMENT_PROFILES = {
   [AppEnvironment.Local]: {
     googleAuthDriver: { default: "fake", allowed: ["fake", "google"] },
     phoneOtpDriver: { default: "fake", allowed: ["fake", "msg91"] },
-    emailDriver: { default: "mailpit", allowed: ["mailpit"] },
     backgroundRemovalProvider: {
       default: "removebg",
       allowed: EVERY_BACKGROUND_REMOVAL_PROVIDER,
@@ -59,18 +56,11 @@ export const ENVIRONMENT_PROFILES = {
       default: QueueTarget.LocalEmulator,
       allowed: [QueueTarget.LocalEmulator],
     },
-    emailQueue: {
-      default: QueueTarget.LocalEmulator,
-      allowed: [QueueTarget.LocalEmulator],
-    },
     workerRuntime: WorkerRuntime.Local,
   },
   [AppEnvironment.Development]: {
     googleAuthDriver: { default: "google", allowed: ["google"] },
     phoneOtpDriver: { default: "msg91", allowed: ["msg91"] },
-    // Resend stays selectable for a deliberate, separately configured
-    // Development mode; it is never the default.
-    emailDriver: { default: "mailpit", allowed: ["mailpit", "resend"] },
     backgroundRemovalProvider: {
       default: "removebg",
       allowed: EVERY_BACKGROUND_REMOVAL_PROVIDER,
@@ -82,16 +72,11 @@ export const ENVIRONMENT_PROFILES = {
       default: QueueTarget.LocalEmulator,
       allowed: [QueueTarget.LocalEmulator, QueueTarget.AwsSqs],
     },
-    emailQueue: {
-      default: QueueTarget.LocalEmulator,
-      allowed: [QueueTarget.LocalEmulator, QueueTarget.AwsSqs],
-    },
     workerRuntime: WorkerRuntime.Local,
   },
   [AppEnvironment.Production]: {
     googleAuthDriver: { default: "google", allowed: ["google"] },
     phoneOtpDriver: { default: "msg91", allowed: ["msg91"] },
-    emailDriver: { default: "resend", allowed: ["resend"] },
     backgroundRemovalProvider: {
       default: "removebg",
       allowed: EVERY_BACKGROUND_REMOVAL_PROVIDER,
@@ -101,7 +86,6 @@ export const ENVIRONMENT_PROFILES = {
       default: QueueTarget.AwsSqs,
       allowed: [QueueTarget.AwsSqs],
     },
-    emailQueue: { default: QueueTarget.AwsSqs, allowed: [QueueTarget.AwsSqs] },
     workerRuntime: WorkerRuntime.Deployed,
   },
 } as const satisfies Record<AppEnvironment, EnvironmentProfile>;

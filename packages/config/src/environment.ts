@@ -14,7 +14,6 @@ import {
 import { getEnvironmentProfile } from "./environment-profiles";
 import {
   BackgroundRemovalProviderSchema,
-  EmailDriverSchema,
   GoogleAuthDriverSchema,
   PhoneOtpDriverSchema,
   WorkerRuntime,
@@ -24,11 +23,9 @@ import { refineEnvironmentIsolation } from "./refine-environment-isolation";
 
 export {
   BackgroundRemovalProviderSchema,
-  EmailDriverSchema,
   GoogleAuthDriverSchema,
   PhoneOtpDriverSchema,
   type BackgroundRemovalProvider,
-  type EmailDriver,
   type GoogleAuthDriver,
   type PhoneOtpDriver,
 } from "./provider-drivers";
@@ -47,11 +44,6 @@ const DEFAULT_PROCESSING_OUTBOX_BATCH_SIZE = 20;
 const DEFAULT_PROCESSING_OUTBOX_CLAIM_TTL_MS = 30_000;
 const DEFAULT_PROCESSING_OUTBOX_RETRY_BASE_MS = 1_000;
 const DEFAULT_PROCESSING_OUTBOX_RETRY_MAX_MS = 60_000;
-const DEFAULT_EMAIL_OUTBOX_BATCH_SIZE = 20;
-const DEFAULT_EMAIL_OUTBOX_CLAIM_TTL_MS = 30_000;
-const DEFAULT_EMAIL_OUTBOX_RETRY_BASE_MS = 1_000;
-const DEFAULT_EMAIL_OUTBOX_RETRY_MAX_MS = 60_000;
-const DEFAULT_EMAIL_DELIVERY_CLAIM_TTL_MS = 45_000;
 const DEFAULT_IMAGE_WORKER_CLAIM_TTL_MS = 120_000;
 const DEFAULT_IMAGE_WORKER_RETRY_BASE_MS = 5_000;
 const DEFAULT_IMAGE_WORKER_RETRY_MAX_MS = 300_000;
@@ -74,51 +66,27 @@ const DEFAULT_STORAGE_DELETION_MAX_ATTEMPTS = 8;
 const DEFAULT_STORAGE_DELETION_RETRY_BASE_MS = 30_000;
 const DEFAULT_STORAGE_DELETION_RETRY_MAX_MS = 3_600_000;
 
-/**
- * Any absolute HTTP(S) URL. A deployment-grade hostname is enforced separately,
- * where the environment says it is production; requiring one everywhere would
- * reject `http://localhost:3000` and make the application unrunnable locally.
- */
-const ApplicationBaseUrlSchema = z
-  .url()
-  .refine(
-    (value) => /^https?:\/\//.test(value),
-    "APPLICATION_BASE_URL must use the http or https protocol.",
-  );
-
-const ProductionApplicationBaseUrlSchema = z.url({
+const ProductionPublicUrlSchema = z.url({
   protocol: /^https$/,
   hostname: /^(?=.{1,253}$)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/,
 });
 
 function refineProductionPublicUrl(
   appEnvironment: AppEnvironment,
-  key: "APPLICATION_BASE_URL" | "GOOGLE_REDIRECT_URI",
+  key: "GOOGLE_REDIRECT_URI",
   value: string | undefined,
   context: z.RefinementCtx,
 ): void {
   if (appEnvironment !== AppEnvironment.Production || value === undefined) {
     return;
   }
-  if (ProductionApplicationBaseUrlSchema.safeParse(value).success) return;
+  if (ProductionPublicUrlSchema.safeParse(value).success) return;
 
   context.addIssue({
     code: "custom",
     message: `${key} must be an https URL with a public hostname in production.`,
     path: [key],
   });
-}
-
-function refineProductionApplicationBaseUrl(
-  value: { APP_ENV: AppEnvironment; APPLICATION_BASE_URL: string },
-  context: z.RefinementCtx,
-): void {
-  refineProductionPublicUrl(
-    value.APP_ENV,
-    "APPLICATION_BASE_URL",
-    value.APPLICATION_BASE_URL,
-    context,
-  );
 }
 
 /**
@@ -408,107 +376,6 @@ export const UploadEnvironmentSchema = z
     refineEnvironmentIsolation(value, context);
   });
 
-export const EmailWorkerEnvironmentSchema = z
-  .object({
-    APP_ENV: AppEnvironmentSchema,
-    APPLICATION_BASE_URL: ApplicationBaseUrlSchema,
-    DATABASE_URL: PostgresUrlSchema,
-    EMAIL_DELIVERY_CLAIM_TTL_MS: z.coerce
-      .number()
-      .int()
-      .min(1_000)
-      .max(300_000)
-      .default(DEFAULT_EMAIL_DELIVERY_CLAIM_TTL_MS),
-    EMAIL_DRIVER: EmailDriverSchema,
-    EMAIL_FROM: z.email(),
-    MAILPIT_BASE_URL: ApplicationBaseUrlSchema.optional(),
-    RESEND_API_KEY: z.string().trim().min(1).optional(),
-    RESEND_TIMEOUT_MS: z.coerce.number().int().min(500).max(30_000).default(8_000),
-  })
-  .strip()
-  .superRefine((value, context) => {
-    refineEnvironmentIsolation(value, context);
-    refineProductionApplicationBaseUrl(value, context);
-    /**
-     * The local inbox never forwards mail off this machine, which is exactly
-     * why the production profile does not allow it.
-     */
-    refineDriverSelection(
-      {
-        appEnvironment: value.APP_ENV,
-        variable: "EMAIL_DRIVER",
-        driver: value.EMAIL_DRIVER,
-        allowed: getEnvironmentProfile(value.APP_ENV).emailDriver.allowed,
-      },
-      context,
-    );
-    if (value.EMAIL_DRIVER === "mailpit") {
-      if (!value.MAILPIT_BASE_URL) {
-        context.addIssue({
-          code: "custom",
-          message: "MAILPIT_BASE_URL is required when EMAIL_DRIVER is mailpit.",
-          path: ["MAILPIT_BASE_URL"],
-        });
-      }
-      return;
-    }
-
-    if (!value.RESEND_API_KEY) {
-      context.addIssue({
-        code: "custom",
-        message: "RESEND_API_KEY is required when EMAIL_DRIVER is resend.",
-        path: ["RESEND_API_KEY"],
-      });
-    }
-  });
-
-export const EmailDispatchEnvironmentSchema = z
-  .object({
-    APP_ENV: AppEnvironmentSchema,
-    APPLICATION_BASE_URL: ApplicationBaseUrlSchema,
-    ...SqsConnectionSchema.shape,
-    DATABASE_URL: PostgresUrlSchema,
-    EMAIL_DISPATCH_TOKEN: z.string().min(32),
-    EMAIL_OUTBOX_BATCH_SIZE: z.coerce
-      .number()
-      .int()
-      .min(1)
-      .max(100)
-      .default(DEFAULT_EMAIL_OUTBOX_BATCH_SIZE),
-    EMAIL_OUTBOX_CLAIM_TTL_MS: z.coerce
-      .number()
-      .int()
-      .min(1_000)
-      .max(300_000)
-      .default(DEFAULT_EMAIL_OUTBOX_CLAIM_TTL_MS),
-    EMAIL_OUTBOX_RETRY_BASE_MS: z.coerce
-      .number()
-      .int()
-      .min(100)
-      .max(3_600_000)
-      .default(DEFAULT_EMAIL_OUTBOX_RETRY_BASE_MS),
-    EMAIL_OUTBOX_RETRY_MAX_MS: z.coerce
-      .number()
-      .int()
-      .min(100)
-      .max(3_600_000)
-      .default(DEFAULT_EMAIL_OUTBOX_RETRY_MAX_MS),
-    SQS_EMAIL_QUEUE_URL: z.url(),
-  })
-  .strip()
-  .superRefine((value, context) => {
-    refineSqsConnection(value, context);
-    refineEnvironmentIsolation(value, context);
-    refineProductionApplicationBaseUrl(value, context);
-    if (value.EMAIL_OUTBOX_RETRY_MAX_MS < value.EMAIL_OUTBOX_RETRY_BASE_MS) {
-      context.addIssue({
-        code: "custom",
-        message: "Email retry maximum must be at least the retry base.",
-        path: ["EMAIL_OUTBOX_RETRY_MAX_MS"],
-      });
-    }
-  });
-
 export const LifecycleCleanupEnvironmentSchema = z
   .object({
     APP_ENV: AppEnvironmentSchema,
@@ -692,19 +559,6 @@ export const ImageWorkerQueueEnvironmentSchema = z
     refineEnvironmentIsolation(value, context);
   });
 
-export const EmailWorkerQueueEnvironmentSchema = z
-  .object({
-    APP_ENV: AppEnvironmentSchema,
-    ...SqsConnectionSchema.shape,
-    SQS_EMAIL_QUEUE_URL: z.url(),
-  })
-  .strip()
-  .superRefine((value, context) => {
-    refineLocalWorkerRuntime(value, context);
-    refineSqsConnection(value, context);
-    refineEnvironmentIsolation(value, context);
-  });
-
 export const ImageWorkerEnvironmentSchema = z
   .object({
     APP_ENV: AppEnvironmentSchema,
@@ -822,15 +676,6 @@ export type ImageWorkerEnvironment = z.infer<
 export type ImageWorkerQueueEnvironment = z.infer<
   typeof ImageWorkerQueueEnvironmentSchema
 >;
-export type EmailWorkerQueueEnvironment = z.infer<
-  typeof EmailWorkerQueueEnvironmentSchema
->;
-export type EmailWorkerEnvironment = z.infer<
-  typeof EmailWorkerEnvironmentSchema
->;
-export type EmailDispatchEnvironment = z.infer<
-  typeof EmailDispatchEnvironmentSchema
->;
 export type LifecycleCleanupEnvironment = z.infer<
   typeof LifecycleCleanupEnvironmentSchema
 >;
@@ -892,28 +737,10 @@ export function parseImageWorkerQueueEnvironment(
   return ImageWorkerQueueEnvironmentSchema.parse(applyEnvironmentProfile(environment));
 }
 
-export function parseEmailWorkerQueueEnvironment(
-  environment: Record<string, string | undefined>,
-): EmailWorkerQueueEnvironment {
-  return EmailWorkerQueueEnvironmentSchema.parse(applyEnvironmentProfile(environment));
-}
-
 export function parseImageWorkerEnvironment(
   environment: Record<string, string | undefined>,
 ): ImageWorkerEnvironment {
   return ImageWorkerEnvironmentSchema.parse(applyEnvironmentProfile(environment));
-}
-
-export function parseEmailWorkerEnvironment(
-  environment: Record<string, string | undefined>,
-): EmailWorkerEnvironment {
-  return EmailWorkerEnvironmentSchema.parse(applyEnvironmentProfile(environment));
-}
-
-export function parseEmailDispatchEnvironment(
-  environment: Record<string, string | undefined>,
-): EmailDispatchEnvironment {
-  return EmailDispatchEnvironmentSchema.parse(applyEnvironmentProfile(environment));
 }
 
 export function parseLifecycleCleanupEnvironment(

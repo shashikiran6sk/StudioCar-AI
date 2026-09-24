@@ -4,9 +4,6 @@ import type {
 } from "../../../packages/config/src/environment-isolation.types";
 import {
   parseAdminBootstrapEnvironment,
-  parseEmailDispatchEnvironment,
-  parseEmailWorkerEnvironment,
-  parseEmailWorkerQueueEnvironment,
   parseGoogleAuthEnvironment,
   parseImageWorkerEnvironment,
   parseImageWorkerQueueEnvironment,
@@ -31,21 +28,18 @@ export const APPLICATION_PARSERS: readonly [string, Parser][] = [
   ["admin bootstrap", parseAdminBootstrapEnvironment],
   ["upload", parseUploadEnvironment],
   ["processing", parseProcessingEnvironment],
-  ["email dispatch", parseEmailDispatchEnvironment],
   ["lifecycle cleanup", parseLifecycleCleanupEnvironment],
   ["storage cleanup", parseStorageCleanupEnvironment],
 ];
 
-/** The worker cores, deployed in production and run locally elsewhere. */
+/** The worker core, deployed in production and run locally elsewhere. */
 export const WORKER_PARSERS: readonly [string, Parser][] = [
   ["image worker", parseImageWorkerEnvironment],
-  ["email worker", parseEmailWorkerEnvironment],
 ];
 
-/** The long-polling consumers that stand in for deployed event sources. */
+/** The long-polling consumer that stands in for the deployed event source. */
 export const LOCAL_CONSUMER_PARSERS: readonly [string, Parser][] = [
   ["image queue consumer", parseImageWorkerQueueEnvironment],
-  ["email queue consumer", parseEmailWorkerQueueEnvironment],
 ];
 
 /** Everything a Local developer writes down: the environment and one key. */
@@ -77,7 +71,6 @@ export const PRODUCTION_ENVIRONMENT = {
   DATABASE_URL:
     "postgresql://studiocar:secret@db.studiocar.example:5432/studiocar",
   SESSION_SECRET: "production-session-secret-of-at-least-32-characters",
-  APPLICATION_BASE_URL: "https://app.studiocar.example",
   GOOGLE_CLIENT_ID: "google-client-id",
   GOOGLE_CLIENT_SECRET: "google-client-secret",
   GOOGLE_REDIRECT_URI: "https://app.studiocar.example/api/auth/google/callback",
@@ -88,13 +81,8 @@ export const PRODUCTION_ENVIRONMENT = {
   S3_BUCKET: "studiocar-prod-images",
   SQS_IMAGE_QUEUE_URL:
     "https://sqs.ap-south-1.amazonaws.com/123456789012/studiocar-image-processing",
-  SQS_EMAIL_QUEUE_URL:
-    "https://sqs.ap-south-1.amazonaws.com/123456789012/studiocar-email-delivery",
-  RESEND_API_KEY: "resend-api-key",
-  EMAIL_FROM: "no-reply@studiocar.example",
   REMOVEBG_API_KEY: "remove-bg-key",
   PROCESSING_DISPATCH_TOKEN: "production-processing-dispatch-token-000000",
-  EMAIL_DISPATCH_TOKEN: "production-email-dispatch-token-00000000000",
   LIFECYCLE_CLEANUP_TOKEN: "production-lifecycle-cleanup-token-000000",
   STORAGE_CLEANUP_TOKEN: "production-storage-cleanup-token-00000000",
 } satisfies EnvironmentValues;

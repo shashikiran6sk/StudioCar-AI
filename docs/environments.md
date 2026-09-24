@@ -5,7 +5,7 @@ StudioCar AI runs in exactly three environments, selected by `APP_ENV`:
 | `APP_ENV` | Purpose |
 | --- | --- |
 | `local` | Everything on the developer's machine. Needs nothing but a remove.bg key. |
-| `development` | Real Google, MSG91, AWS S3, remove.bg, and database; queues, workers, and mail stay local. |
+| `development` | Real Google, MSG91, AWS S3, remove.bg, and database; the processing queue and image worker stay local. |
 | `production` | Fully deployed. No local adapter can be selected. |
 
 `NODE_ENV` keeps its ordinary Node.js and Next.js meaning (how the code was
@@ -28,14 +28,16 @@ every runtime; no environment is ever assumed.
 | Processing queue | ElasticMQ | ElasticMQ (AWS SQS allowed later) | AWS SQS |
 | Image worker | local container | local container | deployed Lambda |
 | Background removal | remove.bg | remove.bg | configured provider (remove.bg) |
-| Email queue | ElasticMQ | ElasticMQ | AWS SQS |
-| Email worker | local container | local container | deployed Lambda |
-| Email delivery | Mailpit | Mailpit (Resend allowed deliberately) | Resend |
+| Email delivery | none | none | none |
 | Dispatch scheduler | local ticker | local ticker | trusted scheduler |
 | AWS credentials | none | explicit S3 pair or AWS default chain | workload identity |
 | Google credentials | none | required | required |
 | MSG91 credentials | none | required | required |
-| Resend credentials | none | none | required |
+
+StudioCar sends no email. Users follow processing through the application's
+own status polling. Email addresses remain identity and profile data only: the
+verified Google address, the profile's primary email, administrator invitations,
+and `BOOTSTRAP_ADMIN_EMAIL`.
 
 The matrix is code, not only documentation:
 [`packages/config/src/environment-profiles.ts`](../packages/config/src/environment-profiles.ts)
@@ -55,7 +57,7 @@ explicit overrides it tolerates.
    refused. A violation names the setting and fails startup.
 
 Only repository-owned infrastructure is ever defaulted. External credentials
-(remove.bg, Google, MSG91, Resend, AWS), a Development session secret, and
+(remove.bg, Google, MSG91, AWS), a Development session secret, and
 anything a deployment owns have no default anywhere.
 
 The Local defaults live in one module,
@@ -64,10 +66,9 @@ A unit test keeps the compose file, which cannot import TypeScript, in step
 with it.
 
 Provider selection happens only at composition roots
-(`create-google-identity-provider.ts`, the phone runtime, `create-mailer.ts`,
+(`create-google-identity-provider.ts`, the phone runtime,
 `create-background-removal-provider.ts`, and the S3/SQS client options).
-Domain code, the worker core, and the email outbox behave identically in every
-environment.
+Domain code and the worker core behave identically in every environment.
 
 ## One settings file
 
@@ -98,7 +99,7 @@ The whole application runs without any external account except remove.bg.
 ```bash
 cp .env.example.local .env.local   # then fill in REMOVEBG_API_KEY
 pnpm install
-pnpm infra:up                      # PostgreSQL, MinIO, ElasticMQ, Mailpit, workers, dispatcher
+pnpm infra:up                      # PostgreSQL, MinIO, ElasticMQ, image worker, dispatcher
 pnpm db:reset                      # Local only: drop and reapply every migration
 pnpm db:seed                       # install the plan catalog
 pnpm dev                           # http://localhost:3000
@@ -121,8 +122,6 @@ pnpm dev                           # http://localhost:3000
 - **Processing** follows the real path: reservation and outbox in PostgreSQL,
   the dispatcher, ElasticMQ, the image worker (the deployed handler driven by a
   local consumer), MinIO, remove.bg, and completion with its usage event.
-- **Email** follows the real path too: outbox, dispatcher, ElasticMQ, the email
-  worker, and Mailpit at http://localhost:8025.
 
 | Service | Address |
 | --- | --- |
@@ -130,23 +129,22 @@ pnpm dev                           # http://localhost:3000
 | PostgreSQL | `postgresql://studiocar:studiocar@localhost:5432/studiocar` |
 | MinIO console | http://localhost:9001 (`studiocarlocal` / `studiocarlocal123`) |
 | ElasticMQ | http://localhost:9324 |
-| Mailpit | http://localhost:8025 |
 
 `pnpm app:up` runs the application in a container as well (Local only).
 `pnpm infra:build` rebuilds the worker and application images after their code
 or dependencies change.
 
-Automated tests never call remove.bg, Google, MSG91, or Resend; they replace
+Automated tests never call remove.bg, Google, or MSG91; they replace
 providers at their ports.
 
 ## Development
 
-Development tests the external boundaries that matter while keeping queues,
-workers, and mail easy to debug locally.
+Development tests the external boundaries that matter while keeping the
+processing queue and the image worker easy to debug locally.
 
 ```bash
 cp .env.example.development .env.local   # then fill in every required value
-pnpm infra:up                            # ElasticMQ, Mailpit, both workers, dispatcher
+pnpm infra:up                            # ElasticMQ, image worker, dispatcher
 pnpm db:migrate:deploy                   # against the Development database
 pnpm dev                                 # http://localhost:3000
 ```
@@ -175,9 +173,9 @@ and `REMOVEBG_API_KEY`. `AWS_REGION` defaults to `ap-south-1`.
   (CLI profile, SSO, or `AWS_*` variables). The containerised image worker
   cannot see `~/.aws`: give it the explicit pair, or export
   `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` before `pnpm infra:up`.
-- **Queues, workers, and mail** are the local ElasticMQ, the same worker
-  containers as Local (pointed at the Development database and bucket), and
-  Mailpit. Resend is not required.
+- **The processing queue and image worker** are the local ElasticMQ and the
+  same worker container as Local, pointed at the Development database and
+  bucket.
 
 Development refuses the fake sign-in drivers, MinIO and localhost storage, the
 local bucket and emulator keys, the committed Local session secret, and any
@@ -186,14 +184,15 @@ Google or MSG91 setting is an error, never a fallback.
 
 Migrating from the old `apps/web/.env`: move it to `.env.local` at the
 repository root, add `APP_ENV=development` (or `local`), delete `NODE_ENV`,
-the `NEXT_PUBLIC_APP_URL` line, and every value the profile now supplies, and
-make sure `EMAIL_FROM`, if set, is a plain address.
+the `NEXT_PUBLIC_APP_URL` line, every value the profile now supplies, and every
+retired email-delivery setting (`APPLICATION_BASE_URL`, `EMAIL_*`,
+`RESEND_API_KEY`, `SQS_EMAIL_QUEUE_URL`), which nothing reads any more.
 
 ## Production
 
 Production runs deployed infrastructure only: Vercel for the application,
-Lambda for both workers, AWS SQS, the production S3 bucket, production
-PostgreSQL, Resend, Google OAuth, and MSG91.
+Lambda for the image worker, AWS SQS, the production S3 bucket, production
+PostgreSQL, Google OAuth, and MSG91.
 
 - Secrets come from the deployment platform — Vercel environment variables,
   AWS Secrets Manager or SSM Parameter Store resolved into each Lambda, and a
@@ -209,13 +208,12 @@ Production refuses, at startup:
 - fake Google and fake phone OTP;
 - MinIO, any localhost or compose-host S3 endpoint, and the emulator keys;
 - ElasticMQ and any non-AWS or plain-http queue URL;
-- Mailpit;
 - the local queue consumers (production workers are deployed functions);
 - the local bucket, a bucket without a `prod`/`production` name segment, and a
   bucket, queue, or database name declaring a non-production environment;
 - a local database or the committed local database credentials;
 - the committed session secret and command tokens;
-- an http or non-public `APPLICATION_BASE_URL` or `GOOGLE_REDIRECT_URI`.
+- an http or non-public `GOOGLE_REDIRECT_URI`.
 
 Missing production configuration is always an error. Nothing is filled in by a
 default except the driver choices the production profile itself makes.

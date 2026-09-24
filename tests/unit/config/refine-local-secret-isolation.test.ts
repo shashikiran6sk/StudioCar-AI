@@ -7,7 +7,6 @@ import { refinementIssues } from "./environment-fixtures";
 const COMMITTED = {
   SESSION_SECRET: LOCAL_INFRASTRUCTURE.sessionSecret,
   PROCESSING_DISPATCH_TOKEN: LOCAL_INFRASTRUCTURE.processingDispatchToken,
-  EMAIL_DISPATCH_TOKEN: LOCAL_INFRASTRUCTURE.emailDispatchToken,
   LIFECYCLE_CLEANUP_TOKEN: LOCAL_INFRASTRUCTURE.lifecycleCleanupToken,
   STORAGE_CLEANUP_TOKEN: LOCAL_INFRASTRUCTURE.storageCleanupToken,
 };
