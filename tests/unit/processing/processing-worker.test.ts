@@ -192,6 +192,51 @@ describe("ProcessingWorker", () => {
     });
   });
 
+  it("terminally fails a non-car image without scheduling another attempt", async () => {
+    const repository = new StubRepository(claimedJob);
+    const executor = new StubExecutor({
+      ok: false,
+      failure: {
+        errorMessage:
+          "The background-removal provider could not detect a car in the image.",
+        kind: "NON_CAR_IMAGE",
+        providerLatencyMilliseconds: 45,
+        providerRequestId: "remove-bg-non-car",
+      },
+    });
+    const worker = new ProcessingWorker(
+      repository,
+      executor,
+      {
+        claimTtlMilliseconds: 30_000,
+        retryBaseMilliseconds: 1_000,
+        retryMaximumMilliseconds: 60_000,
+      },
+      () => new Date("2026-09-20T00:01:00.000Z"),
+      () => "worker-non-car",
+    );
+
+    await expect(worker.process(createMessage())).resolves.toEqual({
+      kind: "FAILED",
+      telemetry: {
+        assetId: ASSET_ID,
+        attemptNumber: 1,
+        failureKind: "NON_CAR_IMAGE",
+        provider: "REMOVEBG",
+        providerLatencyMilliseconds: 45,
+        providerRequestId: "remove-bg-non-car",
+        userId: USER_ID,
+        vehicleId: VEHICLE_ID,
+      },
+    });
+    expect(repository.failures).toHaveLength(1);
+    expect(repository.failures[0]).toMatchObject({
+      errorCode: "NON_CAR_IMAGE",
+      retryable: false,
+      workerId: "worker-non-car",
+    });
+  });
+
   it("retries the queue delivery when execution throws unexpectedly", async () => {
     const repository = new StubRepository(claimedJob);
     const executor = new StubExecutor(

@@ -389,6 +389,7 @@ export class PrismaProcessingWorkerRepository
       });
       if (
         input.errorCode === PROCESSING_FAILURE_CODES.INVALID_IMAGE ||
+        input.errorCode === PROCESSING_FAILURE_CODES.NON_CAR_IMAGE ||
         input.errorCode === PROCESSING_FAILURE_CODES.UNSUPPORTED_FORMAT
       ) {
         await transaction.imageAsset.update({

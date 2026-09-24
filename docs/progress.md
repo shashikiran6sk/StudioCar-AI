@@ -754,6 +754,37 @@ exactly as before.
   composition with the supplied Upload Vehicle screenshot; only the error copy
   and aggregation behavior changed.
 
+### SC050 — Permanent non-car image validation through remove.bg
+
+- Audited the raw-HTTP remove.bg adapter, processing-provider port, worker
+  classification, durable retry path, stored failure mapping, and recovery UI.
+  The adapter already used remove.bg's documented `type=car` multipart option,
+  but discarded every non-success response body and therefore reduced the
+  documented `unknown_foreground` validation error to a generic provider
+  request failure.
+- The adapter now validates only the provider's machine-readable error code and
+  maps `unknown_foreground` to the stable `NON_CAR_IMAGE` failure. Provider
+  titles and response bodies remain private. Other 4xx validation failures stay
+  generic, while HTTP 429, HTTP 5xx, network errors, timeouts, and malformed
+  successful responses retain their existing transient classifications.
+- `NON_CAR_IMAGE` is terminal in the shared processing policy, so the worker
+  records one failed attempt and never schedules a durable retry. The original
+  asset becomes `INVALID`, which prevents re-processing the same non-car image
+  and directs the person to replace it. The public contract exposes only the
+  matching user-safe reason and the UI explains that a clear car image is
+  required.
+- No Prisma model, migration, endpoint, provider port shape, or storage behavior
+  changed. Added adapter, parser, classification, worker, contract, UI, and real
+  PostgreSQL repository coverage for car success, non-car rejection, other
+  provider validation failures, 429, 500, network failure, timeout, malformed
+  responses, terminal persistence, duplicate delivery, and replacement state.
+- Verified Prisma schema validity, source mapping, lint, strict typecheck, every
+  package unit suite uncached (including 1,061 web and 328 image-worker tests),
+  all 139 real-PostgreSQL integration tests, the production build, and all 10
+  Playwright tests. The provider boundary was verified with deterministic HTTP
+  fixtures; a live remove.bg call remains a deployment smoke test because it
+  consumes an external provider request and requires deployment credentials.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.

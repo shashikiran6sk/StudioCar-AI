@@ -26,6 +26,7 @@ import {
   REMOVE_BG_TYPE_VALUE,
 } from "./remove-bg-provider.constants";
 import type { RemoveBgProviderOptions } from "./remove-bg-provider.types";
+import { readRemoveBgErrorCode } from "./read-remove-bg-error-code";
 import { readRemoveBgRequestId } from "./read-remove-bg-request-id";
 import { toRemoveBgFailure } from "./to-remove-bg-failure";
 import { toRemoveBgShadowType } from "./to-remove-bg-shadow-type";
@@ -76,12 +77,14 @@ export class RemoveBgProvider implements BackgroundRemovalProvider {
       const providerLatencyMilliseconds = this.now() - startedAt;
       const providerRequestId = readRemoveBgRequestId(response.headers);
       if (!response.ok) {
+        const providerErrorCode = await readRemoveBgErrorCode(response);
         return {
           ok: false,
           failure: toRemoveBgFailure(
             response.status,
             providerLatencyMilliseconds,
             providerRequestId,
+            providerErrorCode,
           ),
         };
       }

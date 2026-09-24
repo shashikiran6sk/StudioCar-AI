@@ -92,6 +92,7 @@ export type ProcessingFailureKind =
   | "INVALID_IMAGE"
   | "INVALID_REQUEST"
   | "NETWORK"
+  | "NON_CAR_IMAGE"
   | "PROVIDER_429"
   | "PROVIDER_5XX"
   | "TIMEOUT"

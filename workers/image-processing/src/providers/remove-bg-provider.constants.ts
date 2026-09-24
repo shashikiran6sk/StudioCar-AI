@@ -12,6 +12,7 @@ export const REMOVE_BG_SIZE_FIELD = "size";
 export const REMOVE_BG_SIZE_VALUE = "auto";
 export const REMOVE_BG_TYPE_FIELD = "type";
 export const REMOVE_BG_TYPE_VALUE = "car";
+export const REMOVE_BG_UNKNOWN_FOREGROUND_CODE = "unknown_foreground";
 export const REMOVE_BG_FORMAT_FIELD = "format";
 export const REMOVE_BG_FORMAT_VALUE = "webp";
 export const REMOVE_BG_TAG_FIELD = "tag";
@@ -32,6 +33,8 @@ export const REMOVE_BG_AUTHORIZATION_MESSAGE =
   "The background-removal provider rejected its server credentials.";
 export const REMOVE_BG_INVALID_REQUEST_MESSAGE =
   "The background-removal provider rejected the image request.";
+export const REMOVE_BG_NON_CAR_IMAGE_MESSAGE =
+  "The background-removal provider could not detect a car in the image.";
 export const REMOVE_BG_INVALID_RESPONSE_MESSAGE =
   "The background-removal provider returned an invalid image response.";
 export const REMOVE_BG_TIMEOUT_MESSAGE =

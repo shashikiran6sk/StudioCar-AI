@@ -33,6 +33,7 @@ export const JobStateSchema = z.enum([
  */
 export const ProcessingFailureReasonSchema = z.enum([
   "UNUSABLE_IMAGE",
+  "NON_CAR_IMAGE",
   "BACKGROUND_REMOVAL_FAILED",
   "SERVICE_UNAVAILABLE",
   "PROCESSING_FAILED",

@@ -15,6 +15,7 @@ const terminalFailures: ProcessingFailureKind[] = [
   "INTERNAL",
   "INVALID_IMAGE",
   "INVALID_REQUEST",
+  "NON_CAR_IMAGE",
   "UNSUPPORTED_FORMAT",
 ];
 
