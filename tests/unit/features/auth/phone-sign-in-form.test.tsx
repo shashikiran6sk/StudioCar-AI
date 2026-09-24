@@ -7,6 +7,7 @@ const CHALLENGE_ID = "4f9d4891-157f-49ed-aa5a-c026abc0a768";
 const WIDGET_PATH = "/api/auth/phone/widget";
 const START_PATH = "/api/auth/phone/start";
 const VERIFY_PATH = "/api/auth/phone/verify";
+const CREATE_PATH = "/api/auth/phone/create-account";
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -82,6 +83,116 @@ async function renderWithWidget(widget: unknown) {
 describe("PhoneSignInForm", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it("moves a newly verified phone to exactly two account choices", async () => {
+    stubFetch({
+      [WIDGET_PATH]: () => json(developmentWidget),
+      [START_PATH]: () => json({
+        status: "challenge_sent",
+        challengeId: CHALLENGE_ID,
+        expiresAt: "2026-09-24T12:10:00.000Z",
+      }, 201),
+      [VERIFY_PATH]: () => json({ status: "account_setup_required" }),
+    });
+    render(<PhoneSignInForm returnTo="/dashboard" />);
+    fireEvent.change(await screen.findByRole("textbox", { name: /Phone number/ }), {
+      target: { value: "9876543210" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Continue with phone" }));
+    const code = await screen.findByRole("textbox", { name: /Verification code/ });
+    fireEvent.change(code, { target: { value: "1234" } });
+    fireEvent.click(screen.getByRole("button", { name: "Verify and continue" }));
+
+    expect(await screen.findByRole("link", { name: "Link with Google" })).toHaveAttribute(
+      "href",
+      "/api/auth/google/start?intent=link_verified_phone&returnTo=%2Fdashboard",
+    );
+    expect(screen.getByRole("button", { name: "Create new account" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Continue with Google" })).toBeNull();
+  });
+
+  it("creates an account with a name only, never a browser-claimed phone", async () => {
+    const fetchMock = stubFetch({
+      [WIDGET_PATH]: () => json(developmentWidget),
+      [CREATE_PATH]: () => json({
+        status: "authenticated",
+        user: {
+          id: "user-1",
+          displayName: "Shashi Kiran",
+          primaryEmail: null,
+          primaryPhone: "+919876543210",
+        },
+      }),
+    });
+    render(
+      <PhoneSignInForm
+        initialVerifiedPhone="+919876543210"
+        returnTo="/dashboard"
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Create new account" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Name" }), {
+      target: { value: "Shashi Kiran" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(CREATE_PATH, expect.anything());
+    });
+    const createCall = fetchMock.mock.calls.find(([path]) => String(path) === CREATE_PATH);
+    expect(JSON.parse(String(createCall?.[1]?.body))).toEqual({
+      displayName: "Shashi Kiran",
+    });
+  });
+
+  it("rejects an invalid account name before submitting", async () => {
+    const fetchMock = stubFetch({ [WIDGET_PATH]: () => json(developmentWidget) });
+    render(
+      <PhoneSignInForm initialVerifiedPhone="+919876543210" returnTo="/dashboard" />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Create new account" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Name" }), {
+      target: { value: "A" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+    expect(await screen.findByText("Display name must contain at least 2 characters.")).toBeVisible();
+    expect(fetchMock).not.toHaveBeenCalledWith(CREATE_PATH, expect.anything());
+  });
+
+  it("requires phone verification again after an account-creation race", async () => {
+    stubFetch({
+      [WIDGET_PATH]: () => json(developmentWidget),
+      [CREATE_PATH]: () => json({
+        error: {
+          code: "CONFLICT",
+          message: "This phone number was linked to an account. Sign in with the phone number instead.",
+          requestId: "request-1",
+        },
+      }, 409),
+    });
+    render(
+      <PhoneSignInForm initialVerifiedPhone="+919876543210" returnTo="/dashboard" />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Create new account" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Name" }), {
+      target: { value: "Shashi Kiran" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+    expect(await screen.findByRole("textbox", { name: /Phone number/ })).toBeVisible();
+    expect(screen.getByText(/phone number was linked to an account/)).toBeVisible();
+  });
+
+  it("returns an OAuth cancellation to the account choices", async () => {
+    stubFetch({ [WIDGET_PATH]: () => json(developmentWidget) });
+    render(
+      <PhoneSignInForm
+        initialVerifiedPhone="+919876543210"
+        phoneSetupError="cancelled"
+        returnTo="/dashboard"
+      />,
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent("Google linking was cancelled");
+    expect(screen.getByRole("button", { name: "Create new account" })).toBeVisible();
   });
 
   it("validates the phone number before reserving a challenge", async () => {
@@ -201,7 +312,7 @@ describe("PhoneSignInForm", () => {
     expect(body).toEqual({
       challengeId: CHALLENGE_ID,
       phoneNumber: "+919876543210",
-      accessToken: "dev-otp:919876543210:1234",
+      accessToken: `dev-otp:919876543210:1234:${CHALLENGE_ID}`,
     });
   });
 

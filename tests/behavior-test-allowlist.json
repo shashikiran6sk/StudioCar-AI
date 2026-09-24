@@ -72,6 +72,10 @@
     "reason": "Type-only application port definitions with no runtime behavior."
   },
   {
+    "source": "apps/web/src/server/auth/phone/phone-account.types.ts",
+    "reason": "Type-only verified-phone account port definitions with no runtime behavior."
+  },
+  {
     "source": "apps/web/src/server/auth/session-runtime.ts",
     "reason": "Composition root that wires separately tested services and adapters."
   },

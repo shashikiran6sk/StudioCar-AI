@@ -87,7 +87,7 @@ databaseDescribe("PrismaPhoneOtpCompletionRepository", () => {
     return { challengeId: created.challenge.id, attemptId: claim.attemptId, now };
   }
 
-  it("atomically creates one phone identity and one session", async () => {
+  it("proves a new phone without creating a user, identity, or session", async () => {
     const verified = await verifiedChallenge(PRIMARY_PHONE_NUMBER, "p");
     const command = {
       challengeId: verified.challengeId,
@@ -96,26 +96,71 @@ databaseDescribe("PrismaPhoneOtpCompletionRepository", () => {
       browserBindingHash,
       tokenHash: "t".repeat(64),
       sessionExpiresAt: new Date("2026-10-18T12:00:00.000Z"),
+      accountSetupExpiresAt: new Date("2026-09-18T12:10:00.000Z"),
+      authenticatedAt: verified.now,
+    };
+    await expect(completions.complete(command)).resolves.toEqual({
+      status: PhoneOtpCompletionStatus.AccountSetupRequired,
+      expiresAt: new Date("2026-09-18T12:10:00.000Z"),
+    });
+    await expect(completions.complete(command)).resolves.toMatchObject({
+      status: PhoneOtpCompletionStatus.AccountSetupRequired,
+    });
+    await expect(
+      database.authIdentity.count({
+        where: { provider: "PHONE", providerSubject: PRIMARY_PHONE_NUMBER },
+      }),
+    ).resolves.toBe(0);
+    await expect(
+      database.user.count({ where: { primaryPhone: PRIMARY_PHONE_NUMBER } }),
+    ).resolves.toBe(0);
+    await expect(
+      database.session.count({
+        where: { user: { primaryPhone: PRIMARY_PHONE_NUMBER } },
+      }),
+    ).resolves.toBe(0);
+  });
+
+  it("signs in an existing verified phone identity once", async () => {
+    await database.user.create({
+      data: {
+        primaryPhone: PRIMARY_PHONE_NUMBER,
+        authIdentities: {
+          create: {
+            provider: "PHONE",
+            providerSubject: PRIMARY_PHONE_NUMBER,
+            phoneNumber: PRIMARY_PHONE_NUMBER,
+          },
+        },
+      },
+    });
+    const verified = await verifiedChallenge(PRIMARY_PHONE_NUMBER, "r");
+    const command = {
+      challengeId: verified.challengeId,
+      attemptId: verified.attemptId,
+      phoneNumber: PRIMARY_PHONE_NUMBER,
+      browserBindingHash,
+      tokenHash: "s".repeat(64),
+      sessionExpiresAt: new Date("2026-10-18T12:00:00.000Z"),
+      accountSetupExpiresAt: new Date("2026-09-18T12:10:00.000Z"),
       authenticatedAt: verified.now,
     };
     const [first, concurrent] = await Promise.all([
       completions.complete(command),
       completions.complete({ ...command, tokenHash: "u".repeat(64) }),
     ]);
-    const results = [first, concurrent];
-
     expect(
-      results.filter((result) => result.status === PhoneOtpCompletionStatus.Resolved),
+      [first, concurrent].filter(
+        (result) => result.status === PhoneOtpCompletionStatus.Resolved,
+      ),
     ).toHaveLength(1);
     expect(
-      results.filter(
+      [first, concurrent].filter(
         (result) => result.status === PhoneOtpCompletionStatus.InvalidChallenge,
       ),
     ).toHaveLength(1);
     await expect(
-      database.authIdentity.count({
-        where: { provider: "PHONE", providerSubject: PRIMARY_PHONE_NUMBER },
-      }),
+      database.user.count({ where: { primaryPhone: PRIMARY_PHONE_NUMBER } }),
     ).resolves.toBe(1);
     await expect(
       database.session.count({
@@ -137,6 +182,7 @@ databaseDescribe("PrismaPhoneOtpCompletionRepository", () => {
         browserBindingHash,
         tokenHash: "v".repeat(64),
         sessionExpiresAt: new Date("2026-10-18T12:00:00.000Z"),
+        accountSetupExpiresAt: new Date("2026-09-18T12:10:00.000Z"),
         authenticatedAt: verified.now,
       }),
     ).resolves.toEqual({ status: PhoneOtpCompletionStatus.LinkRequired });

@@ -9,6 +9,7 @@ import type {
 } from "@studiocar/contracts";
 
 import type { IssuedSession } from "../session-service";
+import type { ActiveSession, PreparedSession } from "../session-service";
 
 export interface GoogleAuthorizationRequest {
   authorizationUrl: URL;
@@ -69,6 +70,27 @@ export interface AdminBootstrapEvaluator {
 
 export interface SessionIssuer {
   issue(userId: string): Promise<IssuedSession>;
+  prepareIssue(): PreparedSession;
+}
+
+export interface VerifiedPhoneGoogleResolutionCommand {
+  challengeId: string;
+  browserBindingHash: string;
+  identity: GoogleIdentity;
+  authenticatedAt: Date;
+  session: PreparedSession;
+}
+
+export type VerifiedPhoneGoogleResolution =
+  | { kind: "RESOLVED"; session: ActiveSession }
+  | { kind: "INVALID_VERIFICATION" }
+  | { kind: "PHONE_TAKEN" }
+  | { kind: "GOOGLE_CONFLICT" };
+
+export interface VerifiedPhoneGoogleStore {
+  resolve(
+    command: VerifiedPhoneGoogleResolutionCommand,
+  ): Promise<VerifiedPhoneGoogleResolution>;
 }
 
 /**
@@ -78,11 +100,15 @@ export interface SessionIssuer {
  */
 export type GoogleOAuthCompletion =
   | { kind: "SIGNED_IN"; issuedSession: IssuedSession; returnTo: string }
+  | { kind: "PHONE_LINKED_SIGNED_IN"; issuedSession: IssuedSession; returnTo: string }
   | { kind: "LINKED"; returnTo: string };
 
 export interface GoogleOAuthApplication {
   start(
-    input: GoogleAuthStart & { linkUserId?: string },
+    input: GoogleAuthStart & {
+      linkUserId?: string;
+      verifiedPhone?: { challengeId: string; browserBinding: string };
+    },
   ): Promise<{
     authorizationUrl: URL;
     state: string;
@@ -92,5 +118,6 @@ export interface GoogleOAuthApplication {
     callbackUrl: URL;
     state: string;
     sessionUserId: string | null;
+    phoneBrowserBinding?: string | null;
   }): Promise<GoogleOAuthCompletion>;
 }

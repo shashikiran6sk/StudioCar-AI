@@ -2,13 +2,15 @@
 
 import {
   ApiErrorSchema,
+  PhoneAuthenticationStatus,
   PhoneStartResponseSchema,
   PhoneStartSchema,
   PhoneVerifyResponseSchema,
   PhoneVerifySchema,
+  UpdateProfileSchema,
   type PhoneOtpWidget,
 } from "@studiocar/contracts";
-import { Button, Field } from "@studiocar/ui";
+import { Button, ButtonLink, Field } from "@studiocar/ui";
 import {
   useEffect,
   useId,
@@ -20,9 +22,14 @@ import {
 
 import {
   PHONE_AUTH_START_PATH,
+  PHONE_AUTH_CREATE_ACCOUNT_PATH,
   PHONE_AUTH_VERIFY_PATH,
 } from "../../app/app-routes";
 import { createDevelopmentAccessToken } from "./create-development-access-token";
+import { createGoogleAuthStartHref } from "./create-google-auth-start-href";
+import { GOOGLE_PHONE_SETUP_CANCELLED_VALUE } from "../../server/auth/google/google-auth.constants";
+import { PhoneAccountChoices } from "./phone-account-choices";
+import { PhoneCreateAccountStep } from "./phone-create-account-step";
 import { loadMsg91Widget } from "./msg91-widget/load-msg91-widget";
 import { retryMsg91Otp } from "./msg91-widget/retry-msg91-otp";
 import { sendMsg91Otp } from "./msg91-widget/send-msg91-otp";
@@ -45,6 +52,13 @@ import {
   PHONE_RESEND_PENDING_LABEL,
   PHONE_SUBMIT_LABEL,
   PHONE_WIDGET_UNAVAILABLE_MESSAGE,
+  PHONE_GOOGLE_BUTTON_LABEL,
+  PHONE_GOOGLE_MARK,
+  PHONE_AUTH_DIVIDER_LABEL,
+  PHONE_OAUTH_CANCELLED_MESSAGE,
+  PHONE_SIGNING_IN_MESSAGE,
+  PHONE_ACCOUNT_REVERIFY_HTTP_STATUSES,
+  PhoneSignInStage,
 } from "./phone-sign-in.constants";
 import { readResponseJson } from "./read-response-json";
 import { requestPhoneOtpWidget } from "./request-phone-otp-widget";
@@ -52,22 +66,39 @@ import { toWidgetIdentifier } from "./to-widget-identifier";
 
 export interface PhoneSignInFormProps {
   returnTo: string;
+  initialVerifiedPhone?: string | null;
+  phoneSetupError?: string | null;
 }
 
-export function PhoneSignInForm({ returnTo }: PhoneSignInFormProps) {
+export function PhoneSignInForm({
+  returnTo,
+  initialVerifiedPhone = null,
+  phoneSetupError = null,
+}: PhoneSignInFormProps) {
   const captchaId = useId();
   const [widget, setWidget] = useState<PhoneOtpWidget | null>(null);
   const [widgetResolved, setWidgetResolved] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [normalizedPhoneNumber, setNormalizedPhoneNumber] = useState("");
+  const [stage, setStage] = useState(
+    initialVerifiedPhone
+      ? PhoneSignInStage.AccountChoices
+      : PhoneSignInStage.EnterPhone,
+  );
+  const [displayName, setDisplayName] = useState("");
   const [challengeId, setChallengeId] = useState("");
   const [otp, setOtp] = useState("");
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<string | undefined>(
+    phoneSetupError === GOOGLE_PHONE_SETUP_CANCELLED_VALUE
+      ? PHONE_OAUTH_CANCELLED_MESSAGE
+      : undefined,
+  );
   const [pending, setPending] = useState(false);
   const [resending, setResending] = useState(false);
   const phoneInput = useRef<HTMLInputElement>(null);
   const otpInput = useRef<HTMLInputElement>(null);
-  const awaitingOtp = challengeId.length > 0;
+  const awaitingOtp = stage === PhoneSignInStage.VerifyOtp;
+  const verifiedPhoneNumber = initialVerifiedPhone ?? normalizedPhoneNumber;
 
   useEffect(() => {
     let active = true;
@@ -149,6 +180,7 @@ export function PhoneSignInForm({ returnTo }: PhoneSignInFormProps) {
       await deliverOtp(input.data.phoneNumber, false);
       setNormalizedPhoneNumber(input.data.phoneNumber);
       setChallengeId(reserved);
+      setStage(PhoneSignInStage.VerifyOtp);
       setOtp("");
     } catch (failure) {
       setError(
@@ -193,6 +225,7 @@ export function PhoneSignInForm({ returnTo }: PhoneSignInFormProps) {
           : createDevelopmentAccessToken(
               toWidgetIdentifier(normalizedPhoneNumber),
               otp,
+              challengeId,
             );
       const input = PhoneVerifySchema.safeParse({
         challengeId,
@@ -220,10 +253,18 @@ export function PhoneSignInForm({ returnTo }: PhoneSignInFormProps) {
         );
         return;
       }
-      if (!PhoneVerifyResponseSchema.safeParse(payload).success) {
+      const verified = PhoneVerifyResponseSchema.safeParse(payload);
+      if (!verified.success) {
         setError(PHONE_GENERIC_ERROR_MESSAGE);
         return;
       }
+      if (
+        verified.data.status === PhoneAuthenticationStatus.AccountSetupRequired
+      ) {
+        setStage(PhoneSignInStage.AccountChoices);
+        return;
+      }
+      setStage(PhoneSignInStage.Authenticated);
       window.location.assign(returnTo);
     } catch (failure) {
       setError(
@@ -235,18 +276,92 @@ export function PhoneSignInForm({ returnTo }: PhoneSignInFormProps) {
   }
 
   function changePhoneNumber() {
+    setStage(PhoneSignInStage.EnterPhone);
     setChallengeId("");
     setOtp("");
     setError(undefined);
     queueMicrotask(() => phoneInput.current?.focus());
   }
 
-  if (unavailable) {
+  async function createAccount(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(undefined);
+    const input = UpdateProfileSchema.safeParse({ displayName });
+    if (!input.success) {
+      setError(input.error.issues[0]?.message ?? PHONE_GENERIC_ERROR_MESSAGE);
+      return;
+    }
+    setPending(true);
+    try {
+      const response = await fetch(PHONE_AUTH_CREATE_ACCOUNT_PATH, {
+        method: "POST",
+        headers: { "content-type": PHONE_JSON_CONTENT_TYPE },
+        body: JSON.stringify(input.data),
+      });
+      const payload = await readResponseJson(response);
+      if (!response.ok) {
+        const apiError = ApiErrorSchema.safeParse(payload);
+        const message = apiError.success
+          ? apiError.data.error.message
+          : PHONE_GENERIC_ERROR_MESSAGE;
+        if (PHONE_ACCOUNT_REVERIFY_HTTP_STATUSES.has(response.status)) {
+          setStage(PhoneSignInStage.EnterPhone);
+        }
+        setError(message);
+        return;
+      }
+      const created = PhoneVerifyResponseSchema.safeParse(payload);
+      if (
+        !created.success ||
+        created.data.status !== PhoneAuthenticationStatus.Authenticated
+      ) {
+        setError(PHONE_GENERIC_ERROR_MESSAGE);
+        return;
+      }
+      setStage(PhoneSignInStage.Authenticated);
+      window.location.assign(returnTo);
+    } catch (failure) {
+      setError(
+        failure instanceof Error ? failure.message : PHONE_GENERIC_ERROR_MESSAGE,
+      );
+    } finally {
+      setPending(false);
+    }
+  }
+
+  if (stage === PhoneSignInStage.AccountChoices) {
     return (
-      <p className="auth-form__notice" role="status">
-        {widget?.reason ?? PHONE_WIDGET_UNAVAILABLE_MESSAGE}
-      </p>
+      <PhoneAccountChoices
+        error={error}
+        onCreate={() => {
+          setError(undefined);
+          setStage(PhoneSignInStage.CreateAccount);
+        }}
+        phoneNumber={verifiedPhoneNumber}
+        returnTo={returnTo}
+      />
     );
+  }
+
+  if (stage === PhoneSignInStage.CreateAccount) {
+    return (
+      <PhoneCreateAccountStep
+        displayName={displayName}
+        error={error}
+        onBack={() => {
+          setError(undefined);
+          setStage(PhoneSignInStage.AccountChoices);
+        }}
+        onDisplayNameChange={setDisplayName}
+        onSubmit={(event) => void createAccount(event)}
+        pending={pending}
+        phoneNumber={verifiedPhoneNumber}
+      />
+    );
+  }
+
+  if (stage === PhoneSignInStage.Authenticated) {
+    return <p className="auth-form__notice" role="status">{PHONE_SIGNING_IN_MESSAGE}</p>;
   }
 
   if (awaitingOtp) {
@@ -301,28 +416,48 @@ export function PhoneSignInForm({ returnTo }: PhoneSignInFormProps) {
   }
 
   return (
-    <form className="auth-form" onSubmit={startVerification}>
-      <div className={PHONE_CAPTCHA_CONTAINER_CLASS} id={captchaId} />
-      <Field
-        autoComplete="tel"
-        error={error}
-        id="phone-number"
-        inputMode="tel"
-        label={PHONE_INPUT_LABEL}
-        onChange={(event) => setPhoneNumber(event.currentTarget.value)}
-        placeholder={PHONE_INPUT_PLACEHOLDER}
-        ref={phoneInput}
-        required
-        value={phoneNumber}
-      />
-      <Button
-        className="auth-form__submit"
-        disabled={pending || !widgetResolved}
-        type="submit"
-        variant="primary"
+    <>
+      <ButtonLink
+        className="auth-card__google"
+        href={createGoogleAuthStartHref(returnTo)}
       >
-        {pending ? PHONE_PENDING_LABEL : PHONE_SUBMIT_LABEL}
-      </Button>
-    </form>
+        <span aria-hidden="true" className="auth-card__google-mark">
+          {PHONE_GOOGLE_MARK}
+        </span>
+        {PHONE_GOOGLE_BUTTON_LABEL}
+      </ButtonLink>
+      <div className="auth-divider">
+        <span>{PHONE_AUTH_DIVIDER_LABEL}</span>
+      </div>
+      {unavailable ? (
+        <p className="auth-form__notice" role="status">
+          {widget?.reason ?? PHONE_WIDGET_UNAVAILABLE_MESSAGE}
+        </p>
+      ) : (
+        <form className="auth-form" onSubmit={startVerification}>
+          <div className={PHONE_CAPTCHA_CONTAINER_CLASS} id={captchaId} />
+          <Field
+            autoComplete="tel"
+            error={error}
+            id="phone-number"
+            inputMode="tel"
+            label={PHONE_INPUT_LABEL}
+            onChange={(event) => setPhoneNumber(event.currentTarget.value)}
+            placeholder={PHONE_INPUT_PLACEHOLDER}
+            ref={phoneInput}
+            required
+            value={phoneNumber}
+          />
+          <Button
+            className="auth-form__submit"
+            disabled={pending || !widgetResolved}
+            type="submit"
+            variant="primary"
+          >
+            {pending ? PHONE_PENDING_LABEL : PHONE_SUBMIT_LABEL}
+          </Button>
+        </form>
+      )}
+    </>
   );
 }

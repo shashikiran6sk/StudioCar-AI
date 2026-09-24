@@ -27,6 +27,10 @@ import {
   phoneOtpCookieName,
 } from "./phone-otp-cookie";
 import {
+  clearVerifiedPhoneCookie,
+  createVerifiedPhoneCookie,
+} from "./verified-phone-cookie";
+import {
   PhoneOtpApplicationError,
   PhoneOtpApplicationErrorCode,
 } from "./phone-otp-service";
@@ -88,6 +92,23 @@ export async function handlePhoneAuthVerify(
       browserBinding,
       readClientAddress(request),
     );
+    if (completed.status === PhoneAuthenticationStatus.AccountSetupRequired) {
+      const responseBody: PhoneVerifyResponse = {
+        status: PhoneAuthenticationStatus.AccountSetupRequired,
+      };
+      const response = NextResponse.json(responseBody);
+      const verifiedCookie = createVerifiedPhoneCookie(
+        completed.challengeId,
+        completed.expiresAt,
+        isProduction,
+      );
+      response.cookies.set(
+        verifiedCookie.name,
+        verifiedCookie.value,
+        verifiedCookie.options,
+      );
+      return response;
+    }
     const responseBody: PhoneVerifyResponse = {
       status: PhoneAuthenticationStatus.Authenticated,
       user: completed.user,
@@ -105,6 +126,12 @@ export async function handlePhoneAuthVerify(
     );
     const otpCookie = clearPhoneOtpCookie(isProduction);
     response.cookies.set(otpCookie.name, otpCookie.value, otpCookie.options);
+    const verifiedCookie = clearVerifiedPhoneCookie(isProduction);
+    response.cookies.set(
+      verifiedCookie.name,
+      verifiedCookie.value,
+      verifiedCookie.options,
+    );
     return response;
   } catch (error) {
     if (error instanceof PhoneOtpApplicationError) {

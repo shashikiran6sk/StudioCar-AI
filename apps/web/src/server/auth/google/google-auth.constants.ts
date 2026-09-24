@@ -11,12 +11,17 @@ export const GOOGLE_OAUTH_ERROR_DESCRIPTION_QUERY_KEY = "error_description";
 export const GOOGLE_OAUTH_STATE_QUERY_KEY = "state";
 export const GOOGLE_AUTH_INTENT_QUERY_KEY = "intent";
 export const GOOGLE_AUTH_LINK_INTENT = "link";
+export const GOOGLE_AUTH_VERIFIED_PHONE_INTENT = "link_verified_phone";
+export const GOOGLE_PHONE_SETUP_QUERY_KEY = "phoneSetup";
+export const GOOGLE_PHONE_SETUP_CANCELLED_VALUE = "cancelled";
 export const GOOGLE_AUTH_LINKED_QUERY_KEY = "linked";
 export const GOOGLE_AUTH_LINKED_VALUE = "google";
 export const UNAUTHENTICATED_STATUS = 401;
 export const API_UNAUTHENTICATED_CODE = "UNAUTHENTICATED";
 export const LINK_REQUIRES_SESSION_MESSAGE =
   "Sign in before connecting another sign-in method.";
+export const VERIFIED_PHONE_REQUIRED_MESSAGE =
+  "Verify your phone number again before linking Google.";
 export const OAUTH_REDIRECT_STATUS = 303;
 export const OAUTH_START_REDIRECT_STATUS = 302;
 export const BAD_REQUEST_STATUS = 400;
@@ -35,6 +40,9 @@ export enum GoogleAuthRedirectErrorCode {
   InternalError = "internal_error",
   LinkSessionMismatch = "link_session_mismatch",
   LinkIdentityTaken = "link_identity_taken",
+  VerifiedPhoneExpired = "verified_phone_expired",
+  PhoneIdentityTaken = "phone_identity_taken",
+  GoogleIdentityConflict = "google_identity_conflict",
 }
 
 /**

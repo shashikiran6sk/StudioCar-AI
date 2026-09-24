@@ -165,6 +165,24 @@ describe("PhoneOtpService start", () => {
 });
 
 describe("PhoneOtpService verify", () => {
+  it("returns an expiring verified-phone proof without creating a session for a new phone", async () => {
+    const completions = completionStore();
+    vi.mocked(completions.complete).mockResolvedValue({
+      status: PhoneOtpCompletionStatus.AccountSetupRequired,
+      expiresAt: new Date("2026-09-18T12:10:00.000Z"),
+    });
+    const result = await service(challengeStore(), completions).verify(
+      { challengeId, phoneNumber: "+919876543210", accessToken },
+      binding,
+      "203.0.113.10",
+    );
+    expect(result).toEqual({
+      status: "account_setup_required",
+      challengeId,
+      expiresAt: new Date("2026-09-18T12:10:00.000Z"),
+    });
+  });
+
   it("verifies the widget access token and completes identity plus session", async () => {
     const challenges = challengeStore();
     const completions = completionStore();
@@ -175,6 +193,10 @@ describe("PhoneOtpService verify", () => {
       "203.0.113.10",
     );
 
+    expect(result.status).toBe("authenticated");
+    if (result.status !== "authenticated") {
+      throw new Error("Expected an authenticated result.");
+    }
     expect(result.token).toBe(sessionToken);
     expect(otpProvider.identify).toHaveBeenCalledWith(accessToken);
     expect(challenges.recordProviderVerified).toHaveBeenCalledWith(

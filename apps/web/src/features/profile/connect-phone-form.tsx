@@ -133,7 +133,11 @@ export function ConnectPhoneForm({ onConnected }: ConnectPhoneFormProps) {
       const accessToken =
         widget.driver === "msg91"
           ? await verifyMsg91Otp(otp)
-          : createDevelopmentAccessToken(toWidgetIdentifier(normalized), otp);
+          : createDevelopmentAccessToken(
+              toWidgetIdentifier(normalized),
+              otp,
+              challengeId,
+            );
 
       const response = await fetch(PROFILE_PHONE_IDENTITY_PATH, {
         method: "POST",

@@ -2,6 +2,7 @@ import {
   PhoneOtpChallengeCreationStatus,
   PhoneOtpCompletionStatus,
   PhoneOtpVerificationClaimStatus,
+  PhoneAuthenticationStatus,
   PhoneStartSchema,
   type PhoneStart,
   PhoneVerifySchema,
@@ -22,7 +23,7 @@ import {
 import { toProviderMsisdn } from "./to-provider-msisdn";
 import { createPhoneOtpBrowserBinding } from "./create-phone-otp-browser-binding";
 import type {
-  CompletedPhoneOtp,
+  PhoneOtpVerificationResult,
   PhoneOtpApplication,
   PhoneOtpChallengeStore,
   PhoneIdentityLinkStore,
@@ -164,11 +165,12 @@ export class PhoneOtpService implements PhoneOtpApplication {
     input: PhoneVerify,
     browserBinding: string,
     clientAddress: string,
-  ): Promise<CompletedPhoneOtp> {
+  ): Promise<PhoneOtpVerificationResult> {
     const validated = PhoneVerifySchema.parse(input);
     const claim = await this.proveNumber(validated, browserBinding, clientAddress);
 
     const prepared = this.sessions.prepareIssue();
+    const authenticatedAt = this.now();
     const completion = await this.completions.complete({
       challengeId: validated.challengeId,
       attemptId: claim.attemptId,
@@ -176,7 +178,8 @@ export class PhoneOtpService implements PhoneOtpApplication {
       browserBindingHash: hashAuthSecret(browserBinding),
       tokenHash: prepared.tokenHash,
       sessionExpiresAt: prepared.expiresAt,
-      authenticatedAt: this.now(),
+      accountSetupExpiresAt: new Date(authenticatedAt.getTime() + this.challengeTtlMs),
+      authenticatedAt,
     });
 
     if (completion.status === PhoneOtpCompletionStatus.LinkRequired) {
@@ -190,7 +193,16 @@ export class PhoneOtpService implements PhoneOtpApplication {
       );
     }
 
+    if (completion.status === PhoneOtpCompletionStatus.AccountSetupRequired) {
+      return {
+        status: PhoneAuthenticationStatus.AccountSetupRequired,
+        challengeId: validated.challengeId,
+        expiresAt: completion.expiresAt,
+      };
+    }
+
     return {
+      status: PhoneAuthenticationStatus.Authenticated,
       token: prepared.token,
       expiresAt: prepared.expiresAt,
       session: completion.session,

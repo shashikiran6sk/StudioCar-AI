@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import LoginPage from "../../../../../apps/web/src/app/(auth)/login/page";
 import { getCurrentSession } from "../../../../../apps/web/src/server/auth/get-current-session";
+import { getVerifiedPhoneForBrowser } from "../../../../../apps/web/src/server/auth/phone/get-verified-phone-for-browser";
 
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(() => {
@@ -14,6 +15,9 @@ vi.mock("next/navigation", () => ({
 vi.mock("../../../../../apps/web/src/server/auth/get-current-session", () => ({
   getCurrentSession: vi.fn(),
 }));
+vi.mock("../../../../../apps/web/src/server/auth/phone/get-verified-phone-for-browser", () => ({
+  getVerifiedPhoneForBrowser: vi.fn(),
+}));
 
 describe("LoginPage", () => {
   afterEach(() => {
@@ -22,6 +26,7 @@ describe("LoginPage", () => {
 
   it("offers Google and phone authentication with the safe return path", async () => {
     vi.mocked(getCurrentSession).mockResolvedValue(null);
+    vi.mocked(getVerifiedPhoneForBrowser).mockResolvedValue(null);
     const page = await LoginPage({
       searchParams: Promise.resolve({ returnTo: "/inventory?status=ready" }),
     });
@@ -38,6 +43,18 @@ describe("LoginPage", () => {
     expect(
       screen.getByRole("button", { name: "Continue with phone" }),
     ).toBeInTheDocument();
+  });
+
+  it("restores account choices after a cancelled Google onboarding", async () => {
+    vi.mocked(getCurrentSession).mockResolvedValue(null);
+    vi.mocked(getVerifiedPhoneForBrowser).mockResolvedValue("+919876543210");
+    const page = await LoginPage({
+      searchParams: Promise.resolve({ phoneSetup: "cancelled" }),
+    });
+    render(page);
+    expect(screen.getByRole("link", { name: "Link with Google" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Create new account" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Continue with Google" })).toBeNull();
   });
 
   it("redirects an authenticated user to the dashboard", async () => {

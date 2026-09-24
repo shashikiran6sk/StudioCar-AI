@@ -84,7 +84,7 @@ describe("ConnectPhoneForm", () => {
     expect(JSON.parse(String(call?.[1]?.body))).toEqual({
       challengeId: CHALLENGE_ID,
       phoneNumber: "+919876543210",
-      accessToken: "dev-otp:919876543210:1234",
+      accessToken: `dev-otp:919876543210:1234:${CHALLENGE_ID}`,
     });
   });
 

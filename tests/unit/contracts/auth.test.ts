@@ -47,6 +47,17 @@ describe("phone authentication contracts", () => {
       }).success,
     ).toBe(true);
     expect(
+      PhoneVerifyResponseSchema.safeParse({
+        status: PhoneAuthenticationStatus.AccountSetupRequired,
+      }).success,
+    ).toBe(true);
+    expect(
+      PhoneVerifyResponseSchema.safeParse({
+        status: PhoneAuthenticationStatus.AccountSetupRequired,
+        user: { id: "must-not-leak" },
+      }).success,
+    ).toBe(false);
+    expect(
       Msg91WidgetVerificationSchema.parse({
         type: "SUCCESS",
         message: "919876543210",
@@ -105,6 +116,19 @@ describe("phone authentication contracts", () => {
 });
 
 describe("Google authentication contracts", () => {
+  it("allows one protected linking intent but never profile and phone together", () => {
+    const base = { codeVerifier: oauthValue, nonce: oauthValue };
+    expect(GoogleOAuthChallengePayloadSchema.safeParse({
+      ...base,
+      phoneChallengeId: "4f9d4891-157f-49ed-aa5a-c026abc0a768",
+    }).success).toBe(true);
+    expect(GoogleOAuthChallengePayloadSchema.safeParse({
+      ...base,
+      linkUserId: "4f9d4891-157f-49ed-aa5a-c026abc0a768",
+      phoneChallengeId: "4f9d4891-157f-49ed-aa5a-c026abc0a768",
+    }).success).toBe(false);
+  });
+
   it("allows only application-relative return paths", () => {
     expect(GoogleAuthStartSchema.parse({})).toEqual({ returnTo: "/dashboard" });
     expect(

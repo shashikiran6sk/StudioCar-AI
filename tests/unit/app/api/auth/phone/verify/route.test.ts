@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { PhoneAuthenticationStatus } from "../../../../../../../packages/contracts/src/auth";
 
 import type { PhoneOtpApplication } from "../../../../../../../apps/web/src/server/auth/phone/phone-auth.types";
 import { getPhoneOtpApplication } from "../../../../../../../apps/web/src/server/auth/phone/phone-auth-runtime";
@@ -13,7 +14,8 @@ describe("POST /api/auth/phone/verify", () => {
     const application: PhoneOtpApplication = {
       start: vi.fn(),
       link: vi.fn(),
-      verify: vi.fn(async () => ({
+      verify: vi.fn<PhoneOtpApplication["verify"]>(async () => ({
+        status: PhoneAuthenticationStatus.Authenticated,
         token: "t".repeat(43),
         expiresAt: new Date("2026-10-18T12:00:00.000Z"),
         session: {

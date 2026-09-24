@@ -1,6 +1,5 @@
 import {
   PhoneOtpCompletionStatus,
-  type AuthUser,
   type CompletePhoneOtpCommand,
   type PhoneOtpCompletionResult,
 } from "@studiocar/contracts";
@@ -39,6 +38,7 @@ export class PrismaPhoneOtpCompletionRepository {
           phoneNumber: command.phoneNumber,
           browserBindingHash: command.browserBindingHash,
           providerVerifiedAt: { not: null },
+          expiresAt: { gt: command.authenticatedAt },
           consumedAt: null,
         },
         select: { id: true },
@@ -66,7 +66,6 @@ export class PrismaPhoneOtpCompletionRepository {
         select: { id: true, user: { select: authenticatedUserSelect } },
       });
 
-      let user: AuthUser;
       if (identity) {
         await transaction.authIdentity.update({
           where: { id: identity.id },
@@ -75,71 +74,61 @@ export class PrismaPhoneOtpCompletionRepository {
             lastAuthenticatedAt: command.authenticatedAt,
           },
         });
-        user = identity.user.primaryPhone
+        const user = identity.user.primaryPhone
           ? identity.user
           : await transaction.user.update({
               where: { id: identity.user.id },
               data: { primaryPhone: command.phoneNumber },
               select: authenticatedUserSelect,
             });
-      } else {
-        const phoneOwner = await transaction.user.findUnique({
-          where: { primaryPhone: command.phoneNumber },
-          select: { id: true },
-        });
-
-        if (phoneOwner) {
-          await transaction.phoneOtpChallenge.update({
-            where: { id: command.challengeId },
-            data: {
-              providerVerifiedAt: command.authenticatedAt,
-              consumedAt: command.authenticatedAt,
-            },
-          });
-          return { status: PhoneOtpCompletionStatus.LinkRequired };
-        }
-
-        user = await transaction.user.create({
+        const session = await transaction.session.create({
           data: {
-            primaryPhone: command.phoneNumber,
-            authIdentities: {
-              create: {
-                provider: AuthProvider.PHONE,
-                providerSubject: command.phoneNumber,
-                phoneNumber: command.phoneNumber,
-                lastAuthenticatedAt: command.authenticatedAt,
-              },
-            },
+            userId: user.id,
+            tokenHash: command.tokenHash,
+            expiresAt: command.sessionExpiresAt,
           },
-          select: authenticatedUserSelect,
+          select: sessionSelect,
         });
+        await transaction.phoneOtpChallenge.update({
+          where: { id: command.challengeId },
+          data: {
+            providerVerifiedAt: command.authenticatedAt,
+            consumedAt: command.authenticatedAt,
+            sessionId: session.id,
+          },
+        });
+        await transaction.phoneOtpAttempt.update({
+          where: { id: command.attemptId },
+          data: {
+            outcome: PhoneOtpAttemptOutcome.AUTHENTICATED,
+            completedAt: command.authenticatedAt,
+          },
+        });
+        return { status: PhoneOtpCompletionStatus.Resolved, session };
       }
-
-      const session = await transaction.session.create({
-        data: {
-          userId: user.id,
-          tokenHash: command.tokenHash,
-          expiresAt: command.sessionExpiresAt,
-        },
-        select: sessionSelect,
+      const phoneOwner = await transaction.user.findUnique({
+        where: { primaryPhone: command.phoneNumber },
+        select: { id: true },
       });
+
+      if (phoneOwner) {
+        await transaction.phoneOtpChallenge.update({
+          where: { id: command.challengeId },
+          data: {
+            providerVerifiedAt: command.authenticatedAt,
+            consumedAt: command.authenticatedAt,
+          },
+        });
+        return { status: PhoneOtpCompletionStatus.LinkRequired };
+      }
       await transaction.phoneOtpChallenge.update({
         where: { id: command.challengeId },
-        data: {
-          providerVerifiedAt: command.authenticatedAt,
-          consumedAt: command.authenticatedAt,
-          sessionId: session.id,
-        },
+        data: { expiresAt: command.accountSetupExpiresAt },
       });
-      await transaction.phoneOtpAttempt.update({
-        where: { id: command.attemptId },
-        data: {
-          outcome: PhoneOtpAttemptOutcome.AUTHENTICATED,
-          completedAt: command.authenticatedAt,
-        },
-      });
-
-      return { status: PhoneOtpCompletionStatus.Resolved, session };
+      return {
+        status: PhoneOtpCompletionStatus.AccountSetupRequired,
+        expiresAt: command.accountSetupExpiresAt,
+      };
     });
   }
 }
