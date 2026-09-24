@@ -873,6 +873,31 @@ exactly as before.
   and redriving the two dead-lettered messages with the README procedure, all
   three completed through remove.bg.
 
+### SC054 — The worker's own database address, the application's own connection
+
+- SC053's advice to point `DATABASE_URL` at the Supabase session pooler broke
+  the application: session mode admits 15 clients in total, and `pnpm dev`
+  holds more (about twenty runtime modules each build their own Prisma pool,
+  and pages query in parallel). Every request then failed with
+  `EMAXCONNSESSION`, including the dispatcher's.
+- Only the containerised worker needs IPv4. The new optional Development
+  setting `WORKER_DATABASE_URL` is read by `scripts/local-compose.sh` and
+  given to the worker as its `DATABASE_URL`; the application keeps the direct
+  host. An empty value means "use `DATABASE_URL`", `localhost` is rewritten to
+  the Docker host like every other container address, and the setting is
+  refused outside Development. The worker's parser validates the value it
+  receives exactly as before.
+- `.env.example.development`, `docs/environments.md` and the README describe
+  the split. The example alignment test recognises this one compose-layer
+  setting explicitly rather than weakening its "only variables a runtime
+  reads" rule.
+- Added a behaviour test that runs the real compose wrapper from a scratch
+  copy against its own settings file, with a stand-in `docker`, covering the
+  default, override, empty, `localhost` rewrite, and Local refusal cases.
+- Follow-up: the web application should share one Prisma client instead of
+  one pool per runtime module. That would lower connection use in every
+  environment and deserves its own slice.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
