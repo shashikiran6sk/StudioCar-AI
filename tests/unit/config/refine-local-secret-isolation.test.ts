@@ -33,6 +33,6 @@ describe("refineLocalSecretIsolation", () => {
         APP_ENV: "production",
         ...COMMITTED,
       }),
-    ).toHaveLength(5);
+    ).toHaveLength(Object.keys(COMMITTED).length);
   });
 });
