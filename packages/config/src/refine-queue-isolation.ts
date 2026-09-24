@@ -90,9 +90,9 @@ function refineQueueUrl(
 }
 
 /**
- * Local queues are ElasticMQ, Development queues default to ElasticMQ and may
- * move to AWS later, and production queues are AWS SQS only. Applies only to
- * runtimes that hold a queue.
+ * Local queues are ElasticMQ, and Development and production queues are AWS
+ * SQS only, each refusing the other's queues by name. Applies only to runtimes
+ * that hold a queue.
  */
 export function refineQueueIsolation(
   value: IsolationSubject,

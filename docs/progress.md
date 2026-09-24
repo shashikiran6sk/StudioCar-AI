@@ -898,6 +898,43 @@ exactly as before.
   one pool per runtime module. That would lower connection use in every
   environment and deserves its own slice.
 
+### SC055 — Development processes through AWS SQS; `pnpm infra:up` starts only the worker and dispatcher
+
+- The Development profile now selects AWS SQS as its only processing queue.
+  ElasticMQ, `localhost`, and compose-host queue URLs are refused in
+  Development as they are in production, and Development no longer receives
+  any local queue default: `SQS_IMAGE_QUEUE_URL` is required, and so is
+  `AWS_REGION`, which ElasticMQ used to default. A Development queue name
+  carrying a `prod`/`production` segment is still refused.
+- `infrastructure/local/docker-compose.yml`: ElasticMQ left the `development`
+  profile, so under `APP_ENV=development` `pnpm infra:up` starts only the image
+  worker and the dispatcher. The worker's ElasticMQ dependency is now optional,
+  like PostgreSQL and MinIO, and its queue settings follow `.env.local` through
+  `scripts/local-compose.sh` exactly as its storage settings do. In
+  Development every queue value is passed through, empty ones included, so an
+  empty `SQS_ENDPOINT` means AWS rather than letting compose substitute
+  ElasticMQ; Local still gets the ElasticMQ defaults.
+- `scripts/infra-up.sh` refuses Development without `SQS_IMAGE_QUEUE_URL`
+  before starting anything, instead of leaving the worker to fail validation
+  inside a container.
+- `.env.example.development` documents `SQS_IMAGE_QUEUE_URL` and the optional
+  `SQS_ACCESS_KEY_ID`/`SQS_SECRET_ACCESS_KEY` pair. `docs/environments.md`,
+  the README, and `docs/security.md` describe the new Development queue and how
+  to provision it from `infrastructure/aws/image-processing-queue.yml`.
+- The redundant ElasticMQ region default was removed from
+  `profile-defaults.ts`; Local's storage defaults already supply the region.
+- Tests: the profile, defaults, queue isolation, environment matrix, and
+  example alignment suites now assert AWS SQS in Development; the compose
+  wrapper test covers the queue pass-through and the Local defaults, and runs
+  `infra-up.sh` for the profile it starts and its missing-queue refusal; a
+  compose check asserts the `development` profile holds only the image worker
+  and dispatcher.
+- No schema, migration, contract, worker, or UI change.
+- Operational: an existing Development `.env.local` must add
+  `SQS_IMAGE_QUEUE_URL` (and queue credentials the worker container can see)
+  before `pnpm infra:up`. Jobs still queued in the old local ElasticMQ are not
+  migrated; re-process them after switching.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.

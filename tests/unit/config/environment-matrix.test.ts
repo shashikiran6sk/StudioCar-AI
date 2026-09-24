@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   parseGoogleAuthEnvironment,
   parseImageWorkerEnvironment,
+  parseImageWorkerQueueEnvironment,
   parsePhoneAuthEnvironment,
   parseProcessingEnvironment,
   parseUploadEnvironment,
@@ -60,7 +61,7 @@ describe("Development environment", () => {
     expect(parseError(parser, DEVELOPMENT_ENVIRONMENT)).toBeUndefined();
   });
 
-  it("selects real Google, real MSG91, AWS S3, and ElasticMQ", () => {
+  it("selects real Google, real MSG91, AWS S3, and AWS SQS", () => {
     expect(parseGoogleAuthEnvironment(DEVELOPMENT_ENVIRONMENT).GOOGLE_AUTH_DRIVER).toBe(
       "google",
     );
@@ -70,9 +71,49 @@ describe("Development environment", () => {
     const upload = parseUploadEnvironment(DEVELOPMENT_ENVIRONMENT);
     expect(upload.S3_ENDPOINT).toBeUndefined();
     expect(upload.S3_BUCKET).toBe("studiocar-dev-images");
-    expect(parseProcessingEnvironment(DEVELOPMENT_ENVIRONMENT).SQS_ENDPOINT).toBe(
-      "http://localhost:9324",
+    const processing = parseProcessingEnvironment(DEVELOPMENT_ENVIRONMENT);
+    expect(processing.SQS_ENDPOINT).toBeUndefined();
+    expect(processing.SQS_ACCESS_KEY_ID).toBeUndefined();
+    expect(processing.SQS_IMAGE_QUEUE_URL).toBe(
+      DEVELOPMENT_ENVIRONMENT.SQS_IMAGE_QUEUE_URL,
     );
+  });
+
+  it.each([parseProcessingEnvironment, parseImageWorkerQueueEnvironment])(
+    "requires its own AWS SQS queue instead of defaulting to ElasticMQ",
+    (parser) => {
+      expect(
+        parseError(parser, {
+          ...DEVELOPMENT_ENVIRONMENT,
+          SQS_IMAGE_QUEUE_URL: undefined,
+        }),
+      ).toContain("SQS_IMAGE_QUEUE_URL");
+    },
+  );
+
+  it.each([
+    "http://elasticmq:9324/000000000000/studiocar-images",
+    "http://localhost:9324/000000000000/studiocar-images",
+  ])("refuses the local queue %s", (queueUrl) => {
+    for (const parser of [parseProcessingEnvironment, parseImageWorkerQueueEnvironment]) {
+      expect(
+        parseError(parser, {
+          ...DEVELOPMENT_ENVIRONMENT,
+          SQS_IMAGE_QUEUE_URL: queueUrl,
+        }),
+      ).toMatch(/must be an AWS SQS queue in development; local ElasticMQ is refused/);
+    }
+  });
+
+  it("refuses the ElasticMQ endpoint and emulator key beside its AWS queue", () => {
+    expect(
+      parseError(parseImageWorkerQueueEnvironment, {
+        ...DEVELOPMENT_ENVIRONMENT,
+        SQS_ENDPOINT: "http://elasticmq:9324",
+        SQS_ACCESS_KEY_ID: "studiocarlocal",
+        SQS_SECRET_ACCESS_KEY: "studiocarlocal123",
+      }),
+    ).toMatch(/SQS_ENDPOINT must be an AWS SQS queue[\s\S]*local emulator key/);
   });
 
   it.each(["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"])(

@@ -23,14 +23,23 @@ describe("refineQueueIsolation", () => {
     ).toEqual([expect.stringMatching(/must address local ElasticMQ/)]);
   });
 
-  it("allows Development ElasticMQ by default and AWS SQS deliberately", () => {
-    for (const queueUrl of [LOCAL_QUEUE, AWS_QUEUE]) {
+  it("keeps Development on AWS SQS", () => {
+    expect(
+      refinementIssues(refineQueueIsolation, {
+        APP_ENV: "development",
+        SQS_IMAGE_QUEUE_URL: AWS_QUEUE,
+      }),
+    ).toEqual([]);
+    for (const queueUrl of [
+      LOCAL_QUEUE,
+      "http://elasticmq:9324/000000000000/studiocar-images",
+    ]) {
       expect(
         refinementIssues(refineQueueIsolation, {
           APP_ENV: "development",
           SQS_IMAGE_QUEUE_URL: queueUrl,
         }),
-      ).toEqual([]);
+      ).toEqual([expect.stringMatching(/in development; local ElasticMQ is refused/)]);
     }
   });
 

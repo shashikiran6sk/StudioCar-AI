@@ -58,16 +58,25 @@ describe("getProfileDefaults", () => {
     });
   });
 
-  it("leaves Development's database, session secret, and bucket to the developer", () => {
+  it("leaves Development's database, session secret, bucket, and queue to the developer", () => {
     const development = flatten("development");
 
-    for (const key of ["DATABASE_URL", "SESSION_SECRET", "S3_BUCKET", "S3_ENDPOINT"]) {
+    for (const key of [
+      "DATABASE_URL",
+      "SESSION_SECRET",
+      "AWS_REGION",
+      "S3_BUCKET",
+      "S3_ENDPOINT",
+      "SQS_ENDPOINT",
+      "SQS_ACCESS_KEY_ID",
+      "SQS_SECRET_ACCESS_KEY",
+      "SQS_IMAGE_QUEUE_URL",
+    ]) {
       expect(development).not.toHaveProperty(key);
     }
     expect(development).toMatchObject({
       GOOGLE_AUTH_DRIVER: "google",
       PHONE_OTP_DRIVER: "msg91",
-      SQS_ENDPOINT: "http://localhost:9324",
     });
   });
 
@@ -79,15 +88,17 @@ describe("getProfileDefaults", () => {
     });
   });
 
-  it("applies the local queue connection all or nothing", () => {
-    const queueGroup = getProfileDefaults("development").find(
+  it("applies the local queue connection all or nothing, in Local only", () => {
+    const queueGroup = getProfileDefaults("local").find(
       (group) => group.allOrNothing,
     );
 
     expect(queueGroup?.values).toHaveProperty("SQS_ENDPOINT");
     expect(queueGroup?.values).toHaveProperty("SQS_ACCESS_KEY_ID");
-    expect(getProfileDefaults("production").some((group) => group.allOrNothing)).toBe(
-      false,
-    );
+    for (const environment of ["development", "production"] as const) {
+      expect(
+        getProfileDefaults(environment).some((group) => group.allOrNothing),
+      ).toBe(false);
+    }
   });
 });

@@ -7,10 +7,10 @@ name: studiocar
 #   pnpm infra:up   APP_ENV=local        (profile infra) everything except the
 #                                        Next.js application, so `pnpm dev` can
 #                                        run it natively with fast reloads.
-#                   APP_ENV=development  (profile development) only ElasticMQ,
-#                                        the image worker, and the dispatcher.
-#                                        The database and storage are the real
-#                                        Development ones.
+#                   APP_ENV=development  (profile development) only the image
+#                                        worker and the dispatcher. The
+#                                        database, storage, and queue are the
+#                                        real Development ones.
 #   pnpm app:up     APP_ENV=local only   (profile app) the application too.
 #
 # Every dependency declares a health check and every dependant waits on it, so
@@ -93,9 +93,10 @@ services:
     volumes:
       - ./minio-init.sh:/scripts/minio-init.sh:ro
 
+  # Local only. Development queues are AWS SQS.
   elasticmq:
     image: softwaremill/elasticmq-native:latest
-    profiles: [infra, app, development]
+    profiles: [infra, app]
     ports:
       - "9324:9324"
     volumes:
@@ -128,13 +129,20 @@ services:
       S3_FORCE_PATH_STYLE: ${LOCAL_WORKER_S3_FORCE_PATH_STYLE-true}
       S3_ACCESS_KEY_ID: ${LOCAL_WORKER_S3_ACCESS_KEY_ID-studiocarlocal}
       S3_SECRET_ACCESS_KEY: ${LOCAL_WORKER_S3_SECRET_ACCESS_KEY-studiocarlocal123}
+      # The queue follows .env.local the same way: ElasticMQ under
+      # APP_ENV=local, the AWS SQS Development queue under APP_ENV=development,
+      # where an empty endpoint means AWS itself.
+      SQS_ENDPOINT: ${LOCAL_WORKER_SQS_ENDPOINT-http://elasticmq:9324}
+      SQS_ACCESS_KEY_ID: ${LOCAL_WORKER_SQS_ACCESS_KEY_ID-studiocarlocal}
+      SQS_SECRET_ACCESS_KEY: ${LOCAL_WORKER_SQS_SECRET_ACCESS_KEY-studiocarlocal123}
+      SQS_IMAGE_QUEUE_URL: ${LOCAL_WORKER_SQS_IMAGE_QUEUE_URL-http://elasticmq:9324/000000000000/studiocar-images}
       # Empty means "use the profile default", which is remove.bg.
       BACKGROUND_REMOVAL_PROVIDER: ${BACKGROUND_REMOVAL_PROVIDER:-}
       REMOVEBG_API_KEY: ${REMOVEBG_API_KEY:-}
       FAL_KEY: ${FAL_KEY:-}
       SELF_HOSTED_BIREFNET_ENDPOINT: ${SELF_HOSTED_BIREFNET_ENDPOINT:-}
       # Development may resolve AWS credentials from the standard environment
-      # variables instead of an explicit S3 key pair. A shared ~/.aws profile
+      # variables instead of an explicit S3 or SQS key pair. A shared ~/.aws profile
       # is not visible inside the container.
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
@@ -142,13 +150,15 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
-      # Local PostgreSQL and MinIO exist only under APP_ENV=local; Development
-      # uses its own database and AWS S3, so these are waited on when present.
+      # Local PostgreSQL, ElasticMQ, and MinIO exist only under APP_ENV=local;
+      # Development uses its own database, AWS SQS, and AWS S3, so these are
+      # waited on when present.
       postgres:
         condition: service_healthy
         required: false
       elasticmq:
         condition: service_healthy
+        required: false
       minio-init:
         condition: service_completed_successfully
         required: false

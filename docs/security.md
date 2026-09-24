@@ -174,8 +174,8 @@ no message. StudioCar sends no email in any environment.
 Only the Local profile allows the fake sign-in drivers, and production does
 not allow MinIO, ElasticMQ, localhost endpoints, the local queue
 consumers, non-production buckets or queues, or any committed local value.
-Development refuses the fake sign-in drivers too, and a missing Google or MSG91
-setting is an error in both, never a fallback. The committed Local values
+Development refuses the fake sign-in drivers and ElasticMQ too, and a missing
+Google, MSG91, or queue setting is an error in both, never a fallback. The committed Local values
 (`packages/config/src/local-infrastructure.ts`) are emulator settings and
 throwaway tokens; Development refuses the committed session secret and
 production refuses all of them. The rules live in `packages/config` and are

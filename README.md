@@ -31,17 +31,19 @@ to MinIO, and processing goes through ElasticMQ and the real image worker to
 remove.bg. Results appear through the application's ordinary status polling;
 StudioCar sends no email.
 
-### Development (real Google, MSG91, AWS S3, and database)
+### Development (real Google, MSG91, AWS S3, AWS SQS, and database)
 
 ```bash
 cp .env.example.development .env.local   # then fill in every required value
-pnpm infra:up                            # ElasticMQ, image worker, dispatcher
+pnpm infra:up                            # image worker and dispatcher only
 pnpm db:migrate:deploy                   # against the Development database
 pnpm dev
 ```
 
 Allow-list the Development origin (`http://localhost:3000`) on the MSG91 widget
 and in the Development bucket's CORS rule, and register the Google redirect URI.
+`SQS_IMAGE_QUEUE_URL` names the AWS SQS Development queue; provision it from
+`infrastructure/aws/image-processing-queue.yml` with a Development queue name.
 
 ### Production
 
@@ -118,7 +120,8 @@ the container runs the image it was built from, not the working tree.
 
 A queue message that fails five times is moved to a dead-letter queue and is
 not retried automatically, so its job stays `QUEUED`. Once the cause is fixed,
-move the message back:
+move the message back. Under Development the queues are AWS SQS, so use the
+console's DLQ redrive or `aws sqs start-message-move-task`; under Local:
 
 ```bash
 export AWS_ACCESS_KEY_ID=studiocarlocal AWS_SECRET_ACCESS_KEY=studiocarlocal123 AWS_REGION=ap-south-1

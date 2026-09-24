@@ -3,8 +3,8 @@
 # the application natively.
 #
 #   local        PostgreSQL, MinIO, ElasticMQ, image worker, dispatcher
-#   development  ElasticMQ, image worker, dispatcher; the database and
-#                storage are the real Development ones named in .env.local
+#   development  image worker, dispatcher; the database, storage, and queue
+#                are the real Development ones named in .env.local
 set -eu
 
 cd "$(dirname "$0")/.."
@@ -14,6 +14,13 @@ if [ "$APP_ENV" = local ]; then
   COMPOSE_PROFILE=infra
 else
   COMPOSE_PROFILE=development
+  # Without a queue the worker would start only to fail validation, so the
+  # missing setting is named here instead of in a container log.
+  if [ -z "$(read_setting SQS_IMAGE_QUEUE_URL)" ]; then
+    refuse "SQS_IMAGE_QUEUE_URL is required in Development: the AWS SQS
+Development queue the application publishes to and the image worker consumes.
+See docs/environments.md."
+  fi
 fi
 
 # The worker image installs only the worker dependency tree, so the Prisma
@@ -47,9 +54,8 @@ else
 
 Development support plane is running (APP_ENV=development).
 
-  Queues        http://localhost:9324  (SQS-compatible)
-
-The image worker uses the Development database and AWS S3 bucket from .env.local.
+The image worker consumes the AWS SQS Development queue and uses the
+Development database and AWS S3 bucket, all from .env.local.
 Apply migrations to the Development database when needed, then start:
 
   pnpm db:migrate:deploy

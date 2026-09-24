@@ -49,16 +49,8 @@ const LOCAL_STORAGE_DEFAULTS: EnvironmentDefaults = {
 };
 
 /**
- * ElasticMQ ignores the region, but the SQS client still needs one; a
- * Development settings file supplies its own for S3, which then wins.
- */
-const LOCAL_REGION_DEFAULTS: EnvironmentDefaults = {
-  AWS_REGION: LOCAL_INFRASTRUCTURE.awsRegion,
-};
-
-/**
- * All or nothing: a Development configuration that names AWS queues must not
- * inherit the ElasticMQ endpoint or emulator keys.
+ * All or nothing: a Local configuration that names its own queue must not
+ * inherit the ElasticMQ endpoint or emulator keys for it.
  */
 const LOCAL_QUEUE_DEFAULTS: EnvironmentDefaults = {
   SQS_ENDPOINT: LOCAL_INFRASTRUCTURE.queueEndpoint,
@@ -85,7 +77,6 @@ function individualDefaults(
     ...(profile.storage === StorageTarget.LocalEmulator
       ? LOCAL_STORAGE_DEFAULTS
       : {}),
-    ...(queuesAreLocal(profile) ? LOCAL_REGION_DEFAULTS : {}),
     ...(appEnvironment === AppEnvironment.Production
       ? {}
       : { ...LOCAL_APPLICATION_DEFAULTS, ...LOCAL_COMMAND_TOKEN_DEFAULTS }),

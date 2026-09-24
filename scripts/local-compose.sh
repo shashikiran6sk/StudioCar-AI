@@ -17,22 +17,25 @@ to_container_host() {
 }
 
 # Exports LOCAL_WORKER_<name> for the image worker. In Development every value
-# is passed through, empty ones included: an empty endpoint means AWS S3, and a
-# compose default would silently substitute local MinIO. In Local only values
-# the file actually sets are passed, and compose supplies the MinIO defaults.
+# is passed through, empty ones included: an empty endpoint means AWS S3 or
+# SQS, and a compose default would silently substitute local MinIO or
+# ElasticMQ. In Local only values the file actually sets are passed, and
+# compose supplies the MinIO and ElasticMQ defaults.
 export_worker_setting() {
   value=$(read_setting "$1")
-  case "$1" in *ENDPOINT | DATABASE_URL) value=$(printf '%s' "$value" | to_container_host) ;; esac
+  case "$1" in *ENDPOINT | *_URL) value=$(printf '%s' "$value" | to_container_host) ;; esac
   if [ "$APP_ENV" = development ] || [ -n "$value" ]; then
     eval "LOCAL_WORKER_$1=\$value"
     export "LOCAL_WORKER_$1"
   fi
 }
 
-# The workers read and write where the application does: its database, and
-# the bucket the browser uploaded the original to.
+# The workers read and write where the application does: its database, the
+# bucket the browser uploaded the original to, and the queue the application
+# publishes to.
 for setting in DATABASE_URL AWS_REGION S3_BUCKET S3_ENDPOINT S3_FORCE_PATH_STYLE \
-  S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY; do
+  S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY SQS_ENDPOINT SQS_ACCESS_KEY_ID \
+  SQS_SECRET_ACCESS_KEY SQS_IMAGE_QUEUE_URL; do
   export_worker_setting "$setting"
 done
 

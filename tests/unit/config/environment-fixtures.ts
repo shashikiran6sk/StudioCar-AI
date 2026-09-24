@@ -62,6 +62,8 @@ export const DEVELOPMENT_ENVIRONMENT = {
   MSG91_AUTH_KEY: "msg91-auth-key",
   AWS_REGION: "ap-south-1",
   S3_BUCKET: "studiocar-dev-images",
+  SQS_IMAGE_QUEUE_URL:
+    "https://sqs.ap-south-1.amazonaws.com/123456789012/studiocar-dev-image-processing",
   REMOVEBG_API_KEY: "remove-bg-key",
 } satisfies EnvironmentValues;
 
