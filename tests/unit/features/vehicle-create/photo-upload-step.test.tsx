@@ -107,6 +107,51 @@ describe("PhotoUploadStep", () => {
     expect(useVehicleCreateStore.getState().photos).toHaveLength(1);
   });
 
+  it("shows one batch-limit message beside file-specific validation", async () => {
+    const upload = vi.fn<typeof uploadPhoto>(async () => ({
+      assetId: "331a1e25-b9d8-4b1a-a398-8351a58f8c24",
+      width: 1920,
+      height: 1080,
+    }));
+    render(
+      <PhotoUploadStep
+        limitLabel="Free plan · Up to 5 images per batch."
+        maximumPhotos={5}
+        onBack={vi.fn()}
+        onContinue={vi.fn()}
+        upload={upload}
+      />,
+    );
+    const validFiles = Array.from({ length: 6 }, (_, index) =>
+      new File(["image"], `image-${String(index + 1)}.jpg`, {
+        type: "image/jpeg",
+      }),
+    );
+
+    fireEvent.change(screen.getByLabelText("Select photos"), {
+      target: {
+        files: [
+          ...validFiles,
+          new File(["text"], "notes.txt", { type: "text/plain" }),
+        ],
+      },
+    });
+
+    expect(
+      screen.getAllByText(
+        "You can upload up to 5 images per batch. 1 image was not added.",
+      ),
+    ).toHaveLength(1);
+    expect(screen.getByText(/notes\.txt:/)).toHaveTextContent(
+      "Only JPG, JPEG, PNG, and WEBP images are supported.",
+    );
+    expect(
+      screen.queryByText(/image-6\.jpg:.*image limit/i),
+    ).not.toBeInTheDocument();
+    expect(useVehicleCreateStore.getState().photos).toHaveLength(5);
+    await waitFor(() => expect(upload).toHaveBeenCalledTimes(5));
+  });
+
   it("cancels an in-flight upload when its photo is removed", async () => {
     let signal: AbortSignal | undefined;
     const upload = vi.fn<typeof uploadPhoto>(

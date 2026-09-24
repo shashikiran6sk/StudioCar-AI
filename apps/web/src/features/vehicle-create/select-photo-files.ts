@@ -4,7 +4,6 @@ import {
 } from "@studiocar/contracts";
 
 import {
-  PHOTO_UPLOAD_LIMIT_ERROR,
   PHOTO_UPLOAD_SIZE_ERROR,
   PHOTO_UPLOAD_UNSUPPORTED_ERROR,
 } from "./vehicle-create.constants";
@@ -12,6 +11,7 @@ import type { RejectedPhoto } from "./photo-upload.types";
 
 export interface PhotoSelectionResult {
   accepted: File[];
+  batchLimitRejectedCount: number;
   rejected: RejectedPhoto[];
 }
 
@@ -21,6 +21,7 @@ export function selectPhotoFiles(
   maximumPhotos: number,
 ): PhotoSelectionResult {
   const accepted: File[] = [];
+  let batchLimitRejectedCount = 0;
   const rejected: RejectedPhoto[] = [];
 
   for (const file of files) {
@@ -32,11 +33,11 @@ export function selectPhotoFiles(
     } else if (file.size > MAX_UPLOAD_BYTES) {
       rejected.push({ filename: file.name, reason: PHOTO_UPLOAD_SIZE_ERROR });
     } else if (currentCount + accepted.length >= maximumPhotos) {
-      rejected.push({ filename: file.name, reason: PHOTO_UPLOAD_LIMIT_ERROR });
+      batchLimitRejectedCount += 1;
     } else {
       accepted.push(file);
     }
   }
 
-  return { accepted, rejected };
+  return { accepted, batchLimitRejectedCount, rejected };
 }

@@ -55,7 +55,6 @@ export const PHOTO_UPLOAD_FAILED_STATUS_LABEL = "Upload failed";
 export const PHOTO_UPLOAD_UNSUPPORTED_ERROR =
   "Only JPG, JPEG, PNG, and WEBP images are supported.";
 export const PHOTO_UPLOAD_SIZE_ERROR = "Each image must be 25 MB or smaller.";
-export const PHOTO_UPLOAD_LIMIT_ERROR = "This batch has reached its image limit.";
 export const PHOTO_UPLOAD_PRESIGN_ROUTE = "/api/uploads/presign";
 export const PHOTO_UPLOAD_COMMIT_ROUTE_PREFIX = "/api/uploads";
 export const PHOTO_UPLOAD_COMMIT_ROUTE_SUFFIX = "/commit";
