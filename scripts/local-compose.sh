@@ -36,6 +36,20 @@ for setting in DATABASE_URL AWS_REGION S3_BUCKET S3_ENDPOINT S3_FORCE_PATH_STYLE
   export_worker_setting "$setting"
 done
 
+# A container cannot always reach the address the application uses: Docker
+# Desktop has no IPv6 route, and some hosted databases publish only IPv6 (the
+# Supabase direct host). WORKER_DATABASE_URL then names an IPv4 address for
+# the same database, such as its session pooler, for the worker alone. The
+# application keeps its direct connection and the pooler's small session limit.
+worker_database_url=$(read_setting WORKER_DATABASE_URL)
+if [ -n "$worker_database_url" ]; then
+  if [ "$APP_ENV" != development ]; then
+    refuse "WORKER_DATABASE_URL is a Development setting. Under APP_ENV=$APP_ENV the worker uses the local PostgreSQL. See docs/environments.md."
+  fi
+  LOCAL_WORKER_DATABASE_URL=$(printf '%s' "$worker_database_url" | to_container_host)
+  export LOCAL_WORKER_DATABASE_URL
+fi
+
 # Fills every ${...} placeholder in the compose file from the settings file. A
 # variable already set in the shell still wins.
 exec docker compose -f infrastructure/local/docker-compose.yml \

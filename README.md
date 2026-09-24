@@ -112,8 +112,8 @@ docker logs studiocar-image-worker-1 2>&1 | grep RECORD_RETRY | tail -1
 ```
 
 `PrismaClientKnownRequestError` with `P1001` means the worker cannot reach the
-database; under Development that is usually an IPv6-only host (see
-`docs/environments.md`). Run `pnpm infra:build` after pulling worker changes:
+database; under Development that is usually an IPv6-only host, which
+`WORKER_DATABASE_URL` addresses (see `docs/environments.md`). Run `pnpm infra:build` after pulling worker changes:
 the container runs the image it was built from, not the working tree.
 
 A queue message that fails five times is moved to a dead-letter queue and is
