@@ -429,13 +429,21 @@
 }
 
 .sc-dialog__content {
+  /* The body's vertical padding, which content pinned inside it reclaims. */
+  --sc-dialog-body-inset: 22px;
   position: fixed;
   z-index: 41;
   top: 50%;
   left: 50%;
-  display: grid;
+  /*
+   * A column, so the header and footer keep their height and the body alone
+   * shrinks and scrolls. With auto grid rows the body grew with its content
+   * and anything below the fold was clipped out of reach.
+   */
+  display: flex;
+  flex-direction: column;
   width: min(760px, calc(100vw - 32px));
-  max-height: min(800px, calc(100vh - 32px));
+  max-height: min(800px, calc(100dvh - 32px));
   overflow: hidden;
   border: 1px solid var(--sc-neutral-300);
   border-radius: var(--sc-radius-modal);
@@ -448,6 +456,7 @@
 
 .sc-dialog__header {
   display: flex;
+  flex-shrink: 0;
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
@@ -478,12 +487,15 @@
 }
 
 .sc-dialog__body {
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  padding: 22px 24px;
+  overscroll-behavior: contain;
+  padding: var(--sc-dialog-body-inset) 24px;
 }
 
 .sc-dialog__footer {
+  flex-shrink: 0;
   padding: 16px 24px;
   border-top: 1px solid var(--sc-neutral-300);
 }

@@ -70,6 +70,8 @@ describe("PortfolioService", () => {
     expect(result?.images[0]?.originalUrl).toBe(
       `https://signed.test/inline/${job.imageAsset.originalObjectKey}`,
     );
+    // The page names each file in a ZIP exactly as its single download.
+    expect(result?.images[0]?.downloadFilename).toBe("processed-01.webp");
   });
 
   it("lists a labelled batch as its own version, carrying the label", async () => {

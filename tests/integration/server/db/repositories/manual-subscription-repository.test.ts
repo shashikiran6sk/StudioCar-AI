@@ -201,7 +201,7 @@ databaseDescribe("PrismaManualSubscriptionRepository", () => {
         data: {
           userId: owner.id,
           source: "MANUAL_ADMIN",
-          planKey: "STUDIO_PACK",
+          planKey: "STUDIO_PLUS",
           status: "ACTIVE",
           currentPeriodStart: new Date("2026-01-01T00:00:00.000Z"),
           currentPeriodEnd: new Date("2026-02-01T00:00:00.000Z"),
@@ -233,7 +233,7 @@ databaseDescribe("PrismaManualSubscriptionRepository", () => {
           source: "PAYMENT_PROVIDER",
           provider: "stripe",
           providerSubscriptionId: "sub_integration_owner",
-          planKey: "STUDIO_PACK",
+          planKey: "STUDIO_PLUS",
           status: "ACTIVE",
           currentPeriodStart: now,
           currentPeriodEnd: periodEnd,
@@ -251,7 +251,7 @@ databaseDescribe("PrismaManualSubscriptionRepository", () => {
 
       // The provider is the authority on what somebody has paid for.
       await expect(billing.findOwnedPlanKey(owner.id, now)).resolves.toBe(
-        "STUDIO_PACK",
+        "STUDIO_PLUS",
       );
       expect(
         await database.auditLog.count({
@@ -271,7 +271,7 @@ databaseDescribe("PrismaManualSubscriptionRepository", () => {
           source: "PAYMENT_PROVIDER",
           provider: "stripe",
           providerSubscriptionId: "sub_integration_expired",
-          planKey: "STUDIO_PACK",
+          planKey: "STUDIO_PLUS",
           status: "EXPIRED",
           currentPeriodStart: new Date("2026-01-01T00:00:00.000Z"),
           currentPeriodEnd: new Date("2026-02-01T00:00:00.000Z"),

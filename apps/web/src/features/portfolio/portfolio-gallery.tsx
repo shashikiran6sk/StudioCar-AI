@@ -5,6 +5,7 @@ import { Button, ButtonLink, ComparisonSlider } from "@studiocar/ui";
 import Image from "next/image";
 import { useState } from "react";
 
+import { createPortfolioZipFilename } from "./create-portfolio-zip-filename";
 import {
   PORTFOLIO_CLOSE_VIEWER_LABEL,
   PORTFOLIO_COMPARE_LABEL,
@@ -14,6 +15,8 @@ import {
   PORTFOLIO_NEXT_LABEL,
   PORTFOLIO_PREVIOUS_LABEL,
 } from "./portfolio.constants";
+import { PortfolioZipDownloadButton } from "./portfolio-zip-download-button";
+import { selectPortfolioVersion } from "./select-portfolio-version";
 
 export interface PortfolioGalleryProps {
   portfolio: VehiclePortfolio;
@@ -91,6 +94,13 @@ export function PortfolioGallery({ portfolio }: PortfolioGalleryProps) {
           <Button onClick={() => setViewerOpen(true)} variant="secondary">
             {PORTFOLIO_FULLSCREEN_LABEL}
           </Button>
+          <PortfolioZipDownloadButton
+            images={portfolio.images}
+            zipFilename={createPortfolioZipFilename(
+              portfolio.name,
+              selectPortfolioVersion(portfolio)?.label ?? null,
+            )}
+          />
           <ButtonLink download href={selected.downloadUrl} variant="primary">
             {PORTFOLIO_DOWNLOAD_LABEL}
           </ButtonLink>

@@ -428,7 +428,7 @@ Header with title, explanatory copy, and blue Upgrade plan action. Content grid 
 
 - Current-plan card: dark surface, plan name, description, 9px usage progress, used and remaining values.
 - Quota stack: upload sessions and storage, each in bordered cards.
-- Available Packs appears immediately below current usage and reuses the homepage three-card pricing system: Free, Studio Pack, and Studio Pro. Free is marked Current plan and disabled; Studio Pack keeps the dark Most Popular treatment; Studio Pro uses the blue upgrade action.
+- Available Packs appears immediately below current usage and reuses the homepage three-card pricing system: Free, Studio Plus, and Studio Pro. Free is marked Current plan and disabled; Studio Plus keeps the dark Most Popular treatment; Studio Pro uses the blue upgrade action.
 - Pack cards retain the same names, prices, limits, and benefits as the homepage. Do not maintain separate marketing and application pricing copy.
 - The content area scrolls independently so all pack details and actions remain accessible within the application shell.
 

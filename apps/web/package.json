@@ -30,6 +30,7 @@
     "@studiocar/email": "workspace:*",
     "@studiocar/processing": "workspace:*",
     "@studiocar/ui": "workspace:*",
+    "fflate": "0.8.3",
     "next": "16.3.5",
     "openid-client": "catalog:",
     "pg": "catalog:",

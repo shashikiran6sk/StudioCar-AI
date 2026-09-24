@@ -36,6 +36,8 @@ export const PortfolioImageSchema = z
     processedUrl: z.url(),
     previewUrl: z.url(),
     downloadUrl: z.url(),
+    /** The name the processed image is saved under, alone or inside a ZIP. */
+    downloadFilename: z.string().trim().min(1).max(255),
     width: z.number().int().positive(),
     height: z.number().int().positive(),
   })

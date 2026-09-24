@@ -373,7 +373,7 @@ adminTest(
         page.getByRole("heading", { name: "Studio Plus", level: 2 }),
       ).toBeVisible();
       await expect(
-        page.getByRole("progressbar", { name: "0 of 1,500 images used" }),
+        page.getByRole("progressbar", { name: "0 of 100 images used" }),
       ).toBeVisible();
 
       // An account cannot reach the page that assigned it.

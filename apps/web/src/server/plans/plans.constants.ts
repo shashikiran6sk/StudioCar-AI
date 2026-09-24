@@ -19,7 +19,7 @@ export const PLAN_CADENCE_LABELS = {
 } as const;
 
 export const PLAN_FREE_ACTION_LABEL = "Start free";
-/** `Choose Studio Pack`, `Choose Studio Pro`, and so on. */
+/** `Choose Studio Plus`, `Choose Studio Pro`, and so on. */
 export const PLAN_PAID_ACTION_PREFIX = "Choose";
 
 /** One gibibyte: plan storage is entered in GB and stored in bytes. */

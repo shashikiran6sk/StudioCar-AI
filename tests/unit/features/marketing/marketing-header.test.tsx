@@ -30,14 +30,21 @@ describe("MarketingHeader", () => {
       />,
     );
 
-    // The same account menu as the dashboard, and a way back into it.
-    expect(
-      screen.getByLabelText("Account menu for Shashi Kiran"),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute(
+    // The way back into the workspace lives in the account menu, beside
+    // Profile & security and Log out, rather than as a separate button.
+    const menu = screen.getByLabelText("Account menu for Shashi Kiran");
+    const panel = menu.closest("details");
+    expect(panel).not.toBeNull();
+    expect(screen.getByRole("link", { name: "Dashboard", hidden: true })).toHaveAttribute(
       "href",
       "/dashboard",
     );
+    expect(
+      panel?.contains(screen.getByRole("link", { name: "Dashboard", hidden: true })),
+    ).toBe(true);
+    expect(
+      screen.getByRole("link", { name: "Profile & security", hidden: true }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Log in" })).not.toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: "Start free" }),

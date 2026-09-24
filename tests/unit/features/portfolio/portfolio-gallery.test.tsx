@@ -18,6 +18,12 @@ describe("PortfolioGallery", () => {
     );
   });
 
+  it("offers every image of the version as one ZIP", () => {
+    render(<PortfolioGallery portfolio={PORTFOLIO_TEST_DATA} />);
+
+    expect(screen.getByRole("button", { name: "Download all (ZIP)" })).toBeEnabled();
+  });
+
   it("opens an accessible viewer and navigates the selected portfolio", () => {
     render(<PortfolioGallery portfolio={PORTFOLIO_TEST_DATA} />);
 

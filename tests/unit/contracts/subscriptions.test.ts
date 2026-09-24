@@ -40,9 +40,8 @@ describe("AccountLookupSchema", () => {
 describe("ManualSubscriptionPlanKeySchema", () => {
   it("offers every paid plan", () => {
     expect(ManualSubscriptionPlanKeySchema.options).toEqual([
-      "STUDIO_PACK",
-      "STUDIO_PRO",
       "STUDIO_PLUS",
+      "STUDIO_PRO",
     ]);
   });
 

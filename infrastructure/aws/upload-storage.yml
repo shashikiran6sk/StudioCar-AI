@@ -43,6 +43,9 @@ Resources:
               - x-amz-meta-user-id
               - x-amz-meta-vehicle-id
             AllowedMethods:
+              # GET lets the portfolio build a ZIP in the browser from the
+              # same short-lived signed links as its single downloads.
+              - GET
               - PUT
             AllowedOrigins: !If
               - HasAdditionalBrowserOrigin

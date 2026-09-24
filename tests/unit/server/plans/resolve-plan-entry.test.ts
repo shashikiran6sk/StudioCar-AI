@@ -32,10 +32,10 @@ describe("resolvePlanEntry", () => {
     }));
 
     // A catalog that has been emptied of every paid plan still resolves.
-    const resolved = resolvePlanEntry(withoutPro, "STUDIO_PACK");
+    const resolved = resolvePlanEntry(withoutPro, "STUDIO_PLUS");
 
-    expect(resolved.key).toBe("STUDIO_PACK");
-    expect(resolved.plan.planKey).toBe("STUDIO_PACK");
+    expect(resolved.key).toBe("STUDIO_PLUS");
+    expect(resolved.plan.planKey).toBe("STUDIO_PLUS");
   });
 
   it("never returns a larger allowance than the key asked for", () => {

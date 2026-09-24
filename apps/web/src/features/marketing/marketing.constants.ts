@@ -35,7 +35,6 @@ export const MARKETING_COPY = {
   },
   header: {
     homeLabel: "StudioCar AI home",
-    dashboardLabel: "Dashboard",
     loginLabel: "Log in",
     navigationLabel: "Product",
     startLabel: "Start free",
