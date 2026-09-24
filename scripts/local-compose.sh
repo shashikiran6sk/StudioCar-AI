@@ -1,42 +1,42 @@
 #!/bin/sh
-# Runs docker compose for the local environment against the same settings the
+# Runs docker compose for the local stack against the same settings file the
 # application reads, so the application and the containers can never disagree
-# about a dispatch token, a provider key, or which bucket holds an upload.
+# about APP_ENV, a dispatch token, a provider key, or which bucket holds an
+# upload.
 #
 #   sh scripts/local-compose.sh --profile infra up -d
 set -eu
 
 cd "$(dirname "$0")/.."
+. scripts/local-environment.sh
 
-ENVIRONMENT_FILE=apps/web/.env
-
-# The value of one setting in the file, without surrounding quotes. Absent and
-# empty both read as empty, which is exactly how the application treats them.
-read_setting() {
-  sed -n "s/^$1=//p" "$ENVIRONMENT_FILE" | tail -n 1 | sed -E "s/^[\"']//; s/[\"']\$//"
+# Inside a container `localhost` is the container itself. The developer's
+# machine, where every local port is published, is host.docker.internal.
+to_container_host() {
+  sed -E 's#(://|@)(localhost|127\.0\.0\.1)([:/]|$)#\1host.docker.internal\3#'
 }
 
-if [ -f "$ENVIRONMENT_FILE" ]; then
-  # Fills every ${...} placeholder in the compose file from the same file the
-  # application reads. A variable already set in the shell still wins.
-  set -- --env-file "$ENVIRONMENT_FILE" "$@"
+# Exports LOCAL_WORKER_<name> for the image worker. In Development every value
+# is passed through, empty ones included: an empty endpoint means AWS S3, and a
+# compose default would silently substitute local MinIO. In Local only values
+# the file actually sets are passed, and compose supplies the MinIO defaults.
+export_worker_setting() {
+  value=$(read_setting "$1")
+  case "$1" in *ENDPOINT | DATABASE_URL) value=$(printf '%s' "$value" | to_container_host) ;; esac
+  if [ "$APP_ENV" = development ] || [ -n "$value" ]; then
+    eval "LOCAL_WORKER_$1=\$value"
+    export "LOCAL_WORKER_$1"
+  fi
+}
 
-  # The image worker reads the originals the browser uploaded, so it must use
-  # the application's storage exactly. These are exported even when empty: an
-  # unset path-style flag means something different to AWS than `true`, and a
-  # compose default would silently substitute the local MinIO value.
-  LOCAL_WORKER_AWS_REGION=$(read_setting AWS_REGION)
-  LOCAL_WORKER_S3_BUCKET=$(read_setting S3_BUCKET)
-  LOCAL_WORKER_S3_FORCE_PATH_STYLE=$(read_setting S3_FORCE_PATH_STYLE)
-  LOCAL_WORKER_S3_ACCESS_KEY_ID=$(read_setting S3_ACCESS_KEY_ID)
-  LOCAL_WORKER_S3_SECRET_ACCESS_KEY=$(read_setting S3_SECRET_ACCESS_KEY)
-  # Inside a container `localhost` is the container itself. The developer's
-  # machine, where MinIO's port is published, is host.docker.internal.
-  LOCAL_WORKER_S3_ENDPOINT=$(read_setting S3_ENDPOINT |
-    sed -E 's#^(https?://)(localhost|127\.0\.0\.1)([:/]|$)#\1host.docker.internal\3#')
-  export LOCAL_WORKER_AWS_REGION LOCAL_WORKER_S3_BUCKET \
-    LOCAL_WORKER_S3_FORCE_PATH_STYLE LOCAL_WORKER_S3_ACCESS_KEY_ID \
-    LOCAL_WORKER_S3_SECRET_ACCESS_KEY LOCAL_WORKER_S3_ENDPOINT
-fi
+# The workers read and write where the application does: its database, and
+# the bucket the browser uploaded the original to.
+for setting in DATABASE_URL AWS_REGION S3_BUCKET S3_ENDPOINT S3_FORCE_PATH_STYLE \
+  S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY; do
+  export_worker_setting "$setting"
+done
 
-exec docker compose -f infrastructure/local/docker-compose.yml "$@"
+# Fills every ${...} placeholder in the compose file from the settings file. A
+# variable already set in the shell still wins.
+exec docker compose -f infrastructure/local/docker-compose.yml \
+  --env-file "$ENVIRONMENT_FILE" "$@"

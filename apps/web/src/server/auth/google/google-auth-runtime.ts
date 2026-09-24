@@ -14,8 +14,8 @@ import { PrismaSessionRepository } from "../../db/repositories/session-repositor
 import { OAuthChallengeProtector } from "../oauth-challenge-protector";
 import { SessionService } from "../session-service";
 import type { GoogleOAuthApplication } from "./google-auth.types";
+import { createGoogleIdentityProvider } from "./create-google-identity-provider";
 import { GoogleOAuthService } from "./google-oauth-service";
-import { GoogleOpenIdProvider } from "./google-openid-provider";
 
 let googleOAuthApplication: GoogleOAuthApplication | undefined;
 
@@ -28,11 +28,7 @@ export function getGoogleOAuthApplication(): GoogleOAuthApplication {
   });
   const challenges = new PrismaGoogleOAuthChallengeRepository(database);
   const identities = new PrismaGoogleIdentityRepository(database);
-  const provider = new GoogleOpenIdProvider({
-    clientId: environment.GOOGLE_CLIENT_ID,
-    clientSecret: environment.GOOGLE_CLIENT_SECRET,
-    redirectUri: environment.GOOGLE_REDIRECT_URI,
-  });
+  const provider = createGoogleIdentityProvider(environment);
   const protector = new OAuthChallengeProtector(environment.SESSION_SECRET);
   const sessions = new SessionService(new PrismaSessionRepository(database));
 

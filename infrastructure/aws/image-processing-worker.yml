@@ -121,6 +121,9 @@ Resources:
       Description: Claims and executes StudioCar image-processing jobs
       Environment:
         Variables:
+          # The deployed workers are production's; environment validation
+          # refuses every local adapter under this profile.
+          APP_ENV: production
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           BACKGROUND_REMOVAL_PROVIDER: removebg
           DATABASE_URL: !Sub '{{resolve:secretsmanager:${DatabaseSecretArn}:SecretString:DATABASE_URL}}'

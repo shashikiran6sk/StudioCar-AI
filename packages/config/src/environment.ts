@@ -2,14 +2,42 @@ import { z } from "zod";
 
 import { emptyAsUnset } from "./empty-as-unset";
 
+import { AppEnvironment } from "./app-environment";
+import { AppEnvironmentSchema } from "./app-environment-schema";
+import { applyEnvironmentProfile } from "./apply-environment-profile";
 import {
   refineS3Connection,
   refineSqsConnection,
   S3ConnectionSchema,
   SqsConnectionSchema,
 } from "./aws-connection";
+import { getEnvironmentProfile } from "./environment-profiles";
+import {
+  BackgroundRemovalProviderSchema,
+  EmailDriverSchema,
+  GoogleAuthDriverSchema,
+  PhoneOtpDriverSchema,
+  WorkerRuntime,
+} from "./provider-drivers";
+import { refineDriverSelection } from "./refine-driver-selection";
+import { refineEnvironmentIsolation } from "./refine-environment-isolation";
 
-const EnvironmentNameSchema = z.enum(["development", "test", "production"]);
+export {
+  BackgroundRemovalProviderSchema,
+  EmailDriverSchema,
+  GoogleAuthDriverSchema,
+  PhoneOtpDriverSchema,
+  type BackgroundRemovalProvider,
+  type EmailDriver,
+  type GoogleAuthDriver,
+  type PhoneOtpDriver,
+} from "./provider-drivers";
+
+/**
+ * `NODE_ENV` keeps its ordinary Node.js meaning and selects nothing here. The
+ * client schema below only reports it; every StudioCar choice reads `APP_ENV`.
+ */
+const NodeEnvironmentSchema = z.enum(["development", "test", "production"]);
 const DEFAULT_MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 const MAX_CONFIGURED_UPLOAD_BYTES = DEFAULT_MAX_UPLOAD_BYTES;
 const DEFAULT_PRESIGNED_URL_TTL_SECONDS = 300;
@@ -63,26 +91,53 @@ const ProductionApplicationBaseUrlSchema = z.url({
   hostname: /^(?=.{1,253}$)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/,
 });
 
-function refineProductionApplicationBaseUrl(
-  value: {
-    NODE_ENV: "development" | "test" | "production";
-    APPLICATION_BASE_URL: string;
-  },
+function refineProductionPublicUrl(
+  appEnvironment: AppEnvironment,
+  key: "APPLICATION_BASE_URL" | "GOOGLE_REDIRECT_URI",
+  value: string | undefined,
   context: z.RefinementCtx,
 ): void {
-  if (value.NODE_ENV !== "production") return;
-  if (
-    ProductionApplicationBaseUrlSchema.safeParse(value.APPLICATION_BASE_URL)
-      .success
-  ) {
+  if (appEnvironment !== AppEnvironment.Production || value === undefined) {
+    return;
+  }
+  if (ProductionApplicationBaseUrlSchema.safeParse(value).success) return;
+
+  context.addIssue({
+    code: "custom",
+    message: `${key} must be an https URL with a public hostname in production.`,
+    path: [key],
+  });
+}
+
+function refineProductionApplicationBaseUrl(
+  value: { APP_ENV: AppEnvironment; APPLICATION_BASE_URL: string },
+  context: z.RefinementCtx,
+): void {
+  refineProductionPublicUrl(
+    value.APP_ENV,
+    "APPLICATION_BASE_URL",
+    value.APPLICATION_BASE_URL,
+    context,
+  );
+}
+
+/**
+ * The local queue consumers stand in for deployed functions. Production runs
+ * the deployed handlers only, so starting a local consumer there is refused.
+ */
+function refineLocalWorkerRuntime(
+  value: { APP_ENV: AppEnvironment },
+  context: z.RefinementCtx,
+): void {
+  if (getEnvironmentProfile(value.APP_ENV).workerRuntime === WorkerRuntime.Local) {
     return;
   }
 
   context.addIssue({
     code: "custom",
     message:
-      "APPLICATION_BASE_URL must be an https URL with a public hostname in production.",
-    path: ["APPLICATION_BASE_URL"],
+      "The local queue consumer cannot run in production; production workers are deployed functions.",
+    path: ["APP_ENV"],
   });
 }
 
@@ -100,9 +155,11 @@ const OAuthChallengeTtlSchema = z.coerce
 
 export const SessionEnvironmentSchema = z
   .object({
+    APP_ENV: AppEnvironmentSchema,
     DATABASE_URL: PostgresUrlSchema,
   })
-  .strip();
+  .strip()
+  .superRefine(refineEnvironmentIsolation);
 
 const PhoneOtpChallengeTtlSchema = z.coerce
   .number()
@@ -133,7 +190,44 @@ const CommandRateLimitMaximumSchema = z.coerce
   .min(1)
   .max(10_000);
 
-export const PhoneOtpDriverSchema = z.enum(["msg91", "fake"]);
+/**
+ * The one code the fake driver accepts. It is meaningful only in Local, the
+ * sole environment whose profile allows that driver.
+ */
+const PhoneOtpDevelopmentCodeSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{4,8}$/)
+  .default("1234");
+
+function refinePhoneOtpDriver(
+  value: {
+    APP_ENV: AppEnvironment;
+    PHONE_OTP_DRIVER: z.infer<typeof PhoneOtpDriverSchema>;
+  },
+  context: z.RefinementCtx,
+): void {
+  refineDriverSelection(
+    {
+      appEnvironment: value.APP_ENV,
+      variable: "PHONE_OTP_DRIVER",
+      driver: value.PHONE_OTP_DRIVER,
+      allowed: getEnvironmentProfile(value.APP_ENV).phoneOtpDriver.allowed,
+    },
+    context,
+  );
+}
+
+function addMissingMsg91CredentialIssue(
+  key: string,
+  context: z.RefinementCtx,
+): void {
+  context.addIssue({
+    code: "custom",
+    message: `${key} is required when PHONE_OTP_DRIVER is msg91.`,
+    path: [key],
+  });
+}
 
 /**
  * Only what describes the browser widget. It deliberately excludes the session
@@ -143,28 +237,29 @@ export const PhoneOtpDriverSchema = z.enum(["msg91", "fake"]);
  */
 export const PhoneOtpWidgetEnvironmentSchema = z
   .object({
-    PHONE_OTP_DRIVER: PhoneOtpDriverSchema.default("fake"),
-    PHONE_OTP_DEV_CODE: z
-      .string()
-      .trim()
-      .regex(/^\d{4,8}$/)
-      .default("1234"),
+    APP_ENV: AppEnvironmentSchema,
+    PHONE_OTP_DRIVER: PhoneOtpDriverSchema,
+    PHONE_OTP_DEV_CODE: PhoneOtpDevelopmentCodeSchema,
     MSG91_WIDGET_ID: z.string().trim().min(1).optional(),
     MSG91_WIDGET_TOKEN: z.string().trim().min(1).optional(),
   })
-  .strip();
+  .strip()
+  .superRefine((value, context) => {
+    refinePhoneOtpDriver(value, context);
+    if (value.PHONE_OTP_DRIVER === "fake") return;
+
+    for (const key of ["MSG91_WIDGET_ID", "MSG91_WIDGET_TOKEN"] as const) {
+      if (!value[key]) addMissingMsg91CredentialIssue(key, context);
+    }
+  });
 
 export const PhoneAuthEnvironmentSchema = z
   .object({
-    NODE_ENV: EnvironmentNameSchema.default("development"),
+    APP_ENV: AppEnvironmentSchema,
     DATABASE_URL: PostgresUrlSchema,
     SESSION_SECRET: z.string().min(32),
-    PHONE_OTP_DRIVER: PhoneOtpDriverSchema.default("fake"),
-    PHONE_OTP_DEV_CODE: z
-      .string()
-      .trim()
-      .regex(/^\d{4,8}$/)
-      .default("1234"),
+    PHONE_OTP_DRIVER: PhoneOtpDriverSchema,
+    PHONE_OTP_DEV_CODE: PhoneOtpDevelopmentCodeSchema,
     MSG91_AUTH_KEY: z.string().trim().min(1).optional(),
     MSG91_WIDGET_ID: z.string().trim().min(1).optional(),
     MSG91_WIDGET_TOKEN: z.string().trim().min(1).optional(),
@@ -178,17 +273,14 @@ export const PhoneAuthEnvironmentSchema = z
   })
   .strip()
   .superRefine((value, context) => {
-    if (value.PHONE_OTP_DRIVER === "fake") {
-      if (value.NODE_ENV === "production") {
-        context.addIssue({
-          code: "custom",
-          message:
-            "PHONE_OTP_DRIVER must be msg91 in production; the fake driver accepts a fixed code and sends no message.",
-          path: ["PHONE_OTP_DRIVER"],
-        });
-      }
-      return;
-    }
+    refineEnvironmentIsolation(value, context);
+    /**
+     * The fake driver accepts a fixed code and sends no message, so only the
+     * Local profile allows it. Elsewhere a missing MSG91 setting is an error,
+     * never a quiet fallback to it.
+     */
+    refinePhoneOtpDriver(value, context);
+    if (value.PHONE_OTP_DRIVER === "fake") return;
 
     /**
      * The browser runs the widget, so it needs the widget identifier and its
@@ -201,13 +293,7 @@ export const PhoneAuthEnvironmentSchema = z
       "MSG91_WIDGET_TOKEN",
     ] as const;
     for (const key of required) {
-      if (!value[key]) {
-        context.addIssue({
-          code: "custom",
-          message: `${key} is required when PHONE_OTP_DRIVER is msg91.`,
-          path: [key],
-        });
-      }
+      if (!value[key]) addMissingMsg91CredentialIssue(key, context);
     }
   });
 
@@ -229,17 +315,53 @@ export const AdminBootstrapEnvironmentSchema = z
   })
   .strip();
 
+/**
+ * `fake` completes the ordinary OAuth challenge, identity, and session flow
+ * with one fixed local identity instead of redirecting to Google. Only the
+ * Local profile allows it; the client credentials are required whenever the
+ * real driver is selected.
+ */
 export const GoogleAuthEnvironmentSchema = z
   .object({
-    NODE_ENV: EnvironmentNameSchema.default("development"),
+    APP_ENV: AppEnvironmentSchema,
     DATABASE_URL: PostgresUrlSchema,
     SESSION_SECRET: z.string().min(32),
-    GOOGLE_CLIENT_ID: z.string().trim().min(1),
-    GOOGLE_CLIENT_SECRET: z.string().trim().min(1),
+    GOOGLE_AUTH_DRIVER: GoogleAuthDriverSchema,
+    GOOGLE_CLIENT_ID: emptyAsUnset(z.string().trim().min(1)),
+    GOOGLE_CLIENT_SECRET: emptyAsUnset(z.string().trim().min(1)),
     GOOGLE_REDIRECT_URI: z.url(),
     OAUTH_CHALLENGE_TTL_SECONDS: OAuthChallengeTtlSchema,
   })
-  .strip();
+  .strip()
+  .superRefine((value, context) => {
+    refineEnvironmentIsolation(value, context);
+    refineDriverSelection(
+      {
+        appEnvironment: value.APP_ENV,
+        variable: "GOOGLE_AUTH_DRIVER",
+        driver: value.GOOGLE_AUTH_DRIVER,
+        allowed: getEnvironmentProfile(value.APP_ENV).googleAuthDriver.allowed,
+      },
+      context,
+    );
+    refineProductionPublicUrl(
+      value.APP_ENV,
+      "GOOGLE_REDIRECT_URI",
+      value.GOOGLE_REDIRECT_URI,
+      context,
+    );
+    if (value.GOOGLE_AUTH_DRIVER === "fake") return;
+
+    for (const key of ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"] as const) {
+      if (!value[key]) {
+        context.addIssue({
+          code: "custom",
+          message: `${key} is required when GOOGLE_AUTH_DRIVER is google.`,
+          path: [key],
+        });
+      }
+    }
+  });
 
 const UploadConfigurationSchema = z.object({
   ...S3ConnectionSchema.shape,
@@ -276,17 +398,19 @@ const UploadConfigurationSchema = z.object({
 
 export const UploadEnvironmentSchema = z
   .object({
+    APP_ENV: AppEnvironmentSchema,
     DATABASE_URL: PostgresUrlSchema,
     ...UploadConfigurationSchema.shape,
   })
   .strip()
-  .superRefine(refineS3Connection);
-
-export const EmailDriverSchema = z.enum(["resend", "mailpit"]);
+  .superRefine((value, context) => {
+    refineS3Connection(value, context);
+    refineEnvironmentIsolation(value, context);
+  });
 
 export const EmailWorkerEnvironmentSchema = z
   .object({
-    NODE_ENV: EnvironmentNameSchema.default("development"),
+    APP_ENV: AppEnvironmentSchema,
     APPLICATION_BASE_URL: ApplicationBaseUrlSchema,
     DATABASE_URL: PostgresUrlSchema,
     EMAIL_DELIVERY_CLAIM_TTL_MS: z.coerce
@@ -295,7 +419,7 @@ export const EmailWorkerEnvironmentSchema = z
       .min(1_000)
       .max(300_000)
       .default(DEFAULT_EMAIL_DELIVERY_CLAIM_TTL_MS),
-    EMAIL_DRIVER: EmailDriverSchema.default("resend"),
+    EMAIL_DRIVER: EmailDriverSchema,
     EMAIL_FROM: z.email(),
     MAILPIT_BASE_URL: ApplicationBaseUrlSchema.optional(),
     RESEND_API_KEY: z.string().trim().min(1).optional(),
@@ -303,20 +427,22 @@ export const EmailWorkerEnvironmentSchema = z
   })
   .strip()
   .superRefine((value, context) => {
+    refineEnvironmentIsolation(value, context);
     refineProductionApplicationBaseUrl(value, context);
+    /**
+     * The local inbox never forwards mail off this machine, which is exactly
+     * why the production profile does not allow it.
+     */
+    refineDriverSelection(
+      {
+        appEnvironment: value.APP_ENV,
+        variable: "EMAIL_DRIVER",
+        driver: value.EMAIL_DRIVER,
+        allowed: getEnvironmentProfile(value.APP_ENV).emailDriver.allowed,
+      },
+      context,
+    );
     if (value.EMAIL_DRIVER === "mailpit") {
-      /**
-       * The local inbox never forwards mail off this machine, which is exactly
-       * why it must not be selectable in production.
-       */
-      if (value.NODE_ENV === "production") {
-        context.addIssue({
-          code: "custom",
-          message:
-            "EMAIL_DRIVER must be resend in production; mailpit delivers only to a local inbox.",
-          path: ["EMAIL_DRIVER"],
-        });
-      }
       if (!value.MAILPIT_BASE_URL) {
         context.addIssue({
           code: "custom",
@@ -338,7 +464,7 @@ export const EmailWorkerEnvironmentSchema = z
 
 export const EmailDispatchEnvironmentSchema = z
   .object({
-    NODE_ENV: EnvironmentNameSchema.default("development"),
+    APP_ENV: AppEnvironmentSchema,
     APPLICATION_BASE_URL: ApplicationBaseUrlSchema,
     ...SqsConnectionSchema.shape,
     DATABASE_URL: PostgresUrlSchema,
@@ -372,6 +498,7 @@ export const EmailDispatchEnvironmentSchema = z
   .strip()
   .superRefine((value, context) => {
     refineSqsConnection(value, context);
+    refineEnvironmentIsolation(value, context);
     refineProductionApplicationBaseUrl(value, context);
     if (value.EMAIL_OUTBOX_RETRY_MAX_MS < value.EMAIL_OUTBOX_RETRY_BASE_MS) {
       context.addIssue({
@@ -384,6 +511,7 @@ export const EmailDispatchEnvironmentSchema = z
 
 export const LifecycleCleanupEnvironmentSchema = z
   .object({
+    APP_ENV: AppEnvironmentSchema,
     DATABASE_URL: PostgresUrlSchema,
     LIFECYCLE_CLEANUP_TOKEN: z.string().min(32),
     LIFECYCLE_CLEANUP_BATCH_SIZE: z.coerce
@@ -411,10 +539,12 @@ export const LifecycleCleanupEnvironmentSchema = z
       .max(168)
       .default(DEFAULT_COMMAND_RATE_LIMIT_RETENTION_HOURS),
   })
-  .strip();
+  .strip()
+  .superRefine(refineEnvironmentIsolation);
 
 export const StorageCleanupEnvironmentSchema = z
   .object({
+    APP_ENV: AppEnvironmentSchema,
     DATABASE_URL: PostgresUrlSchema,
     ...S3ConnectionSchema.shape,
     S3_BUCKET: z.string().trim().min(3).max(63),
@@ -459,6 +589,7 @@ export const StorageCleanupEnvironmentSchema = z
   .strip()
   .superRefine((value, context) => {
     refineS3Connection(value, context);
+    refineEnvironmentIsolation(value, context);
     if (
       value.STORAGE_DELETION_RETRY_MAX_MS < value.STORAGE_DELETION_RETRY_BASE_MS
     ) {
@@ -470,14 +601,28 @@ export const StorageCleanupEnvironmentSchema = z
     }
   });
 
-export const BackgroundRemovalProviderSchema = z.enum([
-  "removebg",
-  "fal",
-  "birefnet",
-]);
+function refineBackgroundRemovalProvider(
+  value: {
+    APP_ENV: AppEnvironment;
+    BACKGROUND_REMOVAL_PROVIDER: z.infer<typeof BackgroundRemovalProviderSchema>;
+  },
+  context: z.RefinementCtx,
+): void {
+  refineDriverSelection(
+    {
+      appEnvironment: value.APP_ENV,
+      variable: "BACKGROUND_REMOVAL_PROVIDER",
+      driver: value.BACKGROUND_REMOVAL_PROVIDER,
+      allowed: getEnvironmentProfile(value.APP_ENV).backgroundRemovalProvider
+        .allowed,
+    },
+    context,
+  );
+}
 
 export const ProcessingEnvironmentSchema = z
   .object({
+    APP_ENV: AppEnvironmentSchema,
     DATABASE_URL: PostgresUrlSchema,
     ...SqsConnectionSchema.shape,
     SQS_IMAGE_QUEUE_URL: z.url(),
@@ -515,6 +660,8 @@ export const ProcessingEnvironmentSchema = z
   .strip()
   .superRefine((value, context) => {
     refineSqsConnection(value, context);
+    refineEnvironmentIsolation(value, context);
+    refineBackgroundRemovalProvider(value, context);
     if (
       value.PROCESSING_OUTBOX_RETRY_MAX_MS <
       value.PROCESSING_OUTBOX_RETRY_BASE_MS
@@ -534,22 +681,33 @@ export const ProcessingEnvironmentSchema = z
  */
 export const ImageWorkerQueueEnvironmentSchema = z
   .object({
+    APP_ENV: AppEnvironmentSchema,
     ...SqsConnectionSchema.shape,
     SQS_IMAGE_QUEUE_URL: z.url(),
   })
   .strip()
-  .superRefine(refineSqsConnection);
+  .superRefine((value, context) => {
+    refineLocalWorkerRuntime(value, context);
+    refineSqsConnection(value, context);
+    refineEnvironmentIsolation(value, context);
+  });
 
 export const EmailWorkerQueueEnvironmentSchema = z
   .object({
+    APP_ENV: AppEnvironmentSchema,
     ...SqsConnectionSchema.shape,
     SQS_EMAIL_QUEUE_URL: z.url(),
   })
   .strip()
-  .superRefine(refineSqsConnection);
+  .superRefine((value, context) => {
+    refineLocalWorkerRuntime(value, context);
+    refineSqsConnection(value, context);
+    refineEnvironmentIsolation(value, context);
+  });
 
 export const ImageWorkerEnvironmentSchema = z
   .object({
+    APP_ENV: AppEnvironmentSchema,
     DATABASE_URL: PostgresUrlSchema,
     ...S3ConnectionSchema.shape,
     S3_BUCKET: z.string().trim().min(3).max(63),
@@ -609,6 +767,8 @@ export const ImageWorkerEnvironmentSchema = z
   .strip()
   .superRefine((value, context) => {
     refineS3Connection(value, context);
+    refineEnvironmentIsolation(value, context);
+    refineBackgroundRemovalProvider(value, context);
     if (value.PROCESSING_RETRY_MAX_MS < value.PROCESSING_RETRY_BASE_MS) {
       context.addIssue({
         code: "custom",
@@ -637,7 +797,7 @@ export const ImageWorkerEnvironmentSchema = z
 
 export const ClientEnvironmentSchema = z
   .object({
-    NODE_ENV: EnvironmentNameSchema.default("development"),
+    NODE_ENV: NodeEnvironmentSchema.default("development"),
     NEXT_PUBLIC_APP_URL: z.url(),
   })
   .strip();
@@ -648,7 +808,6 @@ export type AdminBootstrapEnvironment = z.infer<
   typeof AdminBootstrapEnvironmentSchema
 >;
 export type PhoneAuthEnvironment = z.infer<typeof PhoneAuthEnvironmentSchema>;
-export type PhoneOtpDriver = z.infer<typeof PhoneOtpDriverSchema>;
 export type PhoneOtpWidgetEnvironment = z.infer<
   typeof PhoneOtpWidgetEnvironmentSchema
 >;
@@ -669,7 +828,6 @@ export type EmailWorkerQueueEnvironment = z.infer<
 export type EmailWorkerEnvironment = z.infer<
   typeof EmailWorkerEnvironmentSchema
 >;
-export type EmailDriver = z.infer<typeof EmailDriverSchema>;
 export type EmailDispatchEnvironment = z.infer<
   typeof EmailDispatchEnvironmentSchema
 >;
@@ -678,9 +836,6 @@ export type LifecycleCleanupEnvironment = z.infer<
 >;
 export type StorageCleanupEnvironment = z.infer<
   typeof StorageCleanupEnvironmentSchema
->;
-export type BackgroundRemovalProvider = z.infer<
-  typeof BackgroundRemovalProviderSchema
 >;
 
 export function parseClientEnvironment(
@@ -698,77 +853,77 @@ export function parseAdminBootstrapEnvironment(
 export function parseGoogleAuthEnvironment(
   environment: Record<string, string | undefined>,
 ): GoogleAuthEnvironment {
-  return GoogleAuthEnvironmentSchema.parse(environment);
+  return GoogleAuthEnvironmentSchema.parse(applyEnvironmentProfile(environment));
 }
 
 export function parsePhoneOtpWidgetEnvironment(
   environment: Record<string, string | undefined>,
 ): PhoneOtpWidgetEnvironment {
-  return PhoneOtpWidgetEnvironmentSchema.parse(environment);
+  return PhoneOtpWidgetEnvironmentSchema.parse(applyEnvironmentProfile(environment));
 }
 
 export function parsePhoneAuthEnvironment(
   environment: Record<string, string | undefined>,
 ): PhoneAuthEnvironment {
-  return PhoneAuthEnvironmentSchema.parse(environment);
+  return PhoneAuthEnvironmentSchema.parse(applyEnvironmentProfile(environment));
 }
 
 export function parseSessionEnvironment(
   environment: Record<string, string | undefined>,
 ): SessionEnvironment {
-  return SessionEnvironmentSchema.parse(environment);
+  return SessionEnvironmentSchema.parse(applyEnvironmentProfile(environment));
 }
 
 export function parseUploadEnvironment(
   environment: Record<string, string | undefined>,
 ): UploadEnvironment {
-  return UploadEnvironmentSchema.parse(environment);
+  return UploadEnvironmentSchema.parse(applyEnvironmentProfile(environment));
 }
 
 export function parseProcessingEnvironment(
   environment: Record<string, string | undefined>,
 ): ProcessingEnvironment {
-  return ProcessingEnvironmentSchema.parse(environment);
+  return ProcessingEnvironmentSchema.parse(applyEnvironmentProfile(environment));
 }
 
 export function parseImageWorkerQueueEnvironment(
   environment: Record<string, string | undefined>,
 ): ImageWorkerQueueEnvironment {
-  return ImageWorkerQueueEnvironmentSchema.parse(environment);
+  return ImageWorkerQueueEnvironmentSchema.parse(applyEnvironmentProfile(environment));
 }
 
 export function parseEmailWorkerQueueEnvironment(
   environment: Record<string, string | undefined>,
 ): EmailWorkerQueueEnvironment {
-  return EmailWorkerQueueEnvironmentSchema.parse(environment);
+  return EmailWorkerQueueEnvironmentSchema.parse(applyEnvironmentProfile(environment));
 }
 
 export function parseImageWorkerEnvironment(
   environment: Record<string, string | undefined>,
 ): ImageWorkerEnvironment {
-  return ImageWorkerEnvironmentSchema.parse(environment);
+  return ImageWorkerEnvironmentSchema.parse(applyEnvironmentProfile(environment));
 }
 
 export function parseEmailWorkerEnvironment(
   environment: Record<string, string | undefined>,
 ): EmailWorkerEnvironment {
-  return EmailWorkerEnvironmentSchema.parse(environment);
+  return EmailWorkerEnvironmentSchema.parse(applyEnvironmentProfile(environment));
 }
 
 export function parseEmailDispatchEnvironment(
   environment: Record<string, string | undefined>,
 ): EmailDispatchEnvironment {
-  return EmailDispatchEnvironmentSchema.parse(environment);
+  return EmailDispatchEnvironmentSchema.parse(applyEnvironmentProfile(environment));
 }
 
 export function parseLifecycleCleanupEnvironment(
   environment: Record<string, string | undefined>,
 ): LifecycleCleanupEnvironment {
-  return LifecycleCleanupEnvironmentSchema.parse(environment);
+  return LifecycleCleanupEnvironmentSchema.parse(applyEnvironmentProfile(environment));
 }
 
 export function parseStorageCleanupEnvironment(
   environment: Record<string, string | undefined>,
 ): StorageCleanupEnvironment {
-  return StorageCleanupEnvironmentSchema.parse(environment);
+  return StorageCleanupEnvironmentSchema.parse(applyEnvironmentProfile(environment));
 }

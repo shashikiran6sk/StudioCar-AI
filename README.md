@@ -7,11 +7,49 @@ Production-oriented automotive image processing built as a pnpm and Turborepo mo
 - Node.js 24 or newer
 - pnpm 12.3.4
 
+## Getting started
+
+StudioCar runs in three environments selected by `APP_ENV` — `local`,
+`development`, and `production`. See [`docs/environments.md`](./docs/environments.md)
+for what each one runs and requires.
+
+### Local (no external accounts except remove.bg)
+
+```bash
+cp .env.example.local .env.local   # then fill in REMOVEBG_API_KEY
+pnpm install --frozen-lockfile
+pnpm infra:up                      # PostgreSQL, MinIO, ElasticMQ, Mailpit, workers, dispatcher
+pnpm db:reset                      # Local only: drop and reapply every migration
+pnpm db:seed                       # install the plan catalog
+pnpm dev                           # http://localhost:3000
+```
+
+"Continue with Google" signs in as `developer@studiocar.local` without
+contacting Google, and phone sign-in accepts the code `1234` without sending a
+message. Both run the ordinary challenge, identity, and session flow. Uploads go
+to MinIO, processing goes through ElasticMQ and the real image worker to
+remove.bg, and completion email arrives in Mailpit.
+
+### Development (real Google, MSG91, AWS S3, and database)
+
+```bash
+cp .env.example.development .env.local   # then fill in every required value
+pnpm infra:up                            # ElasticMQ, Mailpit, both workers, dispatcher
+pnpm db:migrate:deploy                   # against the Development database
+pnpm dev
+```
+
+Allow-list the Development origin (`http://localhost:3000`) on the MSG91 widget
+and in the Development bucket's CORS rule, and register the Google redirect URI.
+
+### Production
+
+`.env.example.production` documents the production contract for reference.
+Production values come from the deployment platform, never from a file.
+
 ## Workspace commands
 
 ```bash
-cp apps/web/.env.example apps/web/.env
-pnpm install --frozen-lockfile
 pnpm lint
 pnpm typecheck
 pnpm test
@@ -20,55 +58,48 @@ pnpm build
 pnpm e2e
 ```
 
-## Local development
+## Local stack
 
-Two startup modes, both driven by `infrastructure/local/docker-compose.yml`:
+Both startup modes are driven by `infrastructure/local/docker-compose.yml`:
 
 ```bash
-pnpm infra:up    # PostgreSQL, MinIO, ElasticMQ, Mailpit, both workers, dispatcher
+pnpm infra:up    # the support plane for the configured APP_ENV
 pnpm dev         # Next.js natively, with fast reloads
 
-pnpm app:up      # the same, plus the application in a container
+pnpm app:up      # Local only: the same, plus the application in a container
 pnpm app:down    # or pnpm infra:down
 ```
 
-`pnpm infra:up` is the usual choice: it starts every dependency and background
-process except the web application. `pnpm infra:build` rebuilds the worker and
-application images after changing their code or dependencies; `up` on its own
-reuses them.
+`pnpm infra:build` rebuilds the worker and application images after changing
+their code or dependencies; `up` on its own reuses them.
 
 | Service | Address | Notes |
 | --- | --- | --- |
 | Application | http://localhost:3000 | `pnpm dev`, or the `web` container under `app:up` |
-| PostgreSQL | `postgresql://studiocar:studiocar@localhost:5432/studiocar` | |
-| Object storage | http://localhost:9001 | MinIO console, `studiocarlocal` / `studiocarlocal123` |
+| PostgreSQL | `postgresql://studiocar:studiocar@localhost:5432/studiocar` | Local only |
+| Object storage | http://localhost:9001 | MinIO console, `studiocarlocal` / `studiocarlocal123`; Local only |
 | Queues | http://localhost:9324 | ElasticMQ, SQS-compatible |
 | Mail inbox | http://localhost:8025 | Mailpit; no mail leaves the machine |
 
-The local environment reproduces the production data plane: a presigned browser
-upload to MinIO, a durable outbox drained by the dispatcher, an SQS-compatible
-queue, the real image worker, and the real email worker delivering to a local
-inbox. Both workers run the same deployed handler the Lambda runtime does.
+The local stack reproduces the production data plane: a presigned browser
+upload, a durable outbox drained by the dispatcher, an SQS-compatible queue, the
+real image worker, and the real email worker. Both workers run the same deployed
+handler the Lambda runtime does.
 
-Phone sign-in defaults to `PHONE_OTP_DRIVER=fake`, which sends no message and
-accepts `PHONE_OTP_DEV_CODE`. Email defaults to the Mailpit driver. Both are
-refused in production by environment validation.
+### One settings file
 
-### One settings file for the application and the containers
+Every local process reads the repository-root `.env.local`: the application,
+Prisma, `pnpm db:reset`, `pnpm db:seed`, and every compose command, which runs
+through `scripts/local-compose.sh`. The dispatcher and the application therefore
+always agree on the dispatch tokens, and the image worker receives the
+background-removal key without a second copy of it. Settings files inside
+`apps/web` are refused, and no `.env` file is ever copied into an image.
 
-Every compose command runs through `scripts/local-compose.sh`, which reads
-`apps/web/.env` — the same file the application reads. The dispatcher and the
-application therefore always agree on the dispatch tokens, and the image
-worker receives your background-removal key without a second copy of it.
-
-The image worker also uses the application's **storage** settings, so it reads
-originals from whichever bucket the browser uploaded them to: local MinIO or a
-real AWS bucket. A `localhost` endpoint is rewritten to `host.docker.internal`,
-because inside a container `localhost` is the container itself. With no
-`apps/web/.env` at all, everything falls back to local MinIO.
-
-Only the placeholders in the compose file are filled from `apps/web/.env`. The
-containers' database and queue addresses stay on the compose network.
+The image worker uses the application's database and storage settings, so it
+reads originals from whichever bucket the browser uploaded them to: MinIO under
+Local, the AWS Development bucket under Development. A `localhost` address is
+rewritten to `host.docker.internal`, because inside a container `localhost` is
+the container itself.
 
 ### A job stuck on "Processing"
 
@@ -108,17 +139,18 @@ vehicles or images, and it never overwrites a plan an administrator has edited,
 so it is safe to re-run. Social links are deliberately not seeded; a link exists
 only once a real address is configured.
 
-`pnpm db:reset` creates no sample data. It refuses to run when `NODE_ENV` is
-`production` or when `DATABASE_URL` does not point at a known local host, and
-that second guard can only be overridden with an explicit flag. Prisma itself
+`pnpm db:reset` creates no sample data. It runs only when `APP_ENV=local`, and
+refuses when `NODE_ENV` is `production` or when the database does not point at
+a known local host; that last guard can only be overridden with an explicit
+flag. Prisma itself
 additionally refuses a destructive reset requested by an AI agent unless a human
 has consented through `PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION`.
 
 Database commands are deliberately invoked directly rather than through
 Turborepo, so stateful migration work is never served from a task cache.
 
-They read `DATABASE_URL` from `apps/web/.env`, alongside the schema and the
-application that use it. Copy `apps/web/.env.example` to start. A variable
+They read the repository-root `.env.local`; under `APP_ENV=local` the database
+address comes from the Local profile, so nothing needs to be set. A variable
 already set in the environment always wins, so a deployment or CI run is never
 masked by a local file.
 

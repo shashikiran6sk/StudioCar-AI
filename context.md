@@ -89,6 +89,8 @@ Important invariants:
 - Strict TypeScript is mandatory; see `/AGENTS.md` for prohibited escape hatches.
 - Canonical external contracts live in `packages/contracts` and infer their TypeScript types from Zod.
 - Environment access is validated in `packages/config`; callers do not read ad hoc environment variables.
+- `APP_ENV` (`local`, `development`, `production`) selects the environment profile in `packages/config/src/environment-profiles.ts`, which is the single source of provider and infrastructure selection. `NODE_ENV` keeps its Node.js meaning and never selects infrastructure. See `/docs/environments.md`.
+- The one local settings file is the repository-root `.env.local`, started from `.env.example.local` or `.env.example.development`.
 - One focused endpoint, component, or reusable function per file. Shared utilities and constants live in focused modules.
 - Prefer explicit Prisma `select` clauses and indexed, tenant-scoped queries.
 - Use structured, correlated logs without sensitive data.
@@ -96,4 +98,4 @@ Important invariants:
 
 ## Local verification
 
-Install with `pnpm install --frozen-lockfile`. Standard quality commands are documented in `README.md` and mandated by `/AGENTS.md`. Integration tests require a real PostgreSQL test database through `DATABASE_URL`. Never point test commands at a shared or production database.
+Install with `pnpm install --frozen-lockfile`. Environment setup is documented in `/docs/environments.md`; standard quality commands are documented in `README.md` and mandated by `/AGENTS.md`. Integration tests require a real PostgreSQL test database through `DATABASE_URL`. Never point test commands at a shared or production database.

@@ -4,8 +4,9 @@ import { EmailDeliveryProcessor } from "../../../../../packages/email/src/email-
 import { createEmailDeliveryWorker } from "../../../../../workers/email-delivery/src/runtime/create-email-delivery-worker";
 
 const ENVIRONMENT = {
+  APP_ENV: "production",
   APPLICATION_BASE_URL: "https://app.studiocar.example",
-  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/studiocar_test",
+  DATABASE_URL: "postgresql://studiocar:secret@db.studiocar.example:5432/studiocar",
   EMAIL_FROM: "mail@example.com",
   RESEND_API_KEY: "secret",
 };

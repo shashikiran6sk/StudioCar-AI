@@ -6,7 +6,19 @@ Parameters:
     Type: String
     MinLength: 3
     MaxLength: 63
-    Description: Globally unique private image bucket name
+    Description: >-
+      Globally unique private image bucket name. The application checks
+      ownership by name: a production bucket must carry a prod or production
+      segment (for example studiocar-prod-images), and Development refuses
+      any bucket that does.
+  AppEnvironment:
+    Type: String
+    AllowedValues:
+      - development
+      - production
+    Description: >-
+      The APP_ENV that owns this bucket. Recorded as the studiocar:environment
+      tag; it must match the APP_ENV of every runtime given this bucket.
   WebApplicationOrigin:
     Type: String
     AllowedPattern: ^https://[^/]+$
@@ -30,6 +42,9 @@ Resources:
     UpdateReplacePolicy: Retain
     Properties:
       BucketName: !Ref BucketName
+      Tags:
+        - Key: studiocar:environment
+          Value: !Ref AppEnvironment
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:

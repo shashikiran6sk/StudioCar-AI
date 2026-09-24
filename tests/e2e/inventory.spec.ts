@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import { Pool } from "pg";
 
 import { hashSessionToken } from "../../apps/web/src/server/auth/session-service";
+import { LOCAL_INFRASTRUCTURE } from "../../packages/config/src/local-infrastructure";
 
 const databaseUrl = process.env["DATABASE_URL"];
 const inventoryTest = databaseUrl ? test : test.skip;
@@ -12,7 +13,9 @@ const SESSION_TOKEN = "i".repeat(43);
 const INVENTORY_EMAIL = "inventory-e2e@studiocar.test";
 const SESSION_COOKIE_NAME = "__Host-studiocar_session";
 const SESSION_COOKIE_SCOPE_URL = "https://localhost:3100";
-const PRIVATE_S3_ROUTE = "https://studiocar-ci-private.s3.ap-south-1.amazonaws.com/**";
+// The browser suite runs under APP_ENV=local, so signed links address the
+// Local profile's MinIO bucket; they are intercepted before any request leaves.
+const PRIVATE_S3_ROUTE = `${LOCAL_INFRASTRUCTURE.storageEndpoint}/${LOCAL_INFRASTRUCTURE.storageBucket}/**`;
 const TEST_IMAGE = `
   <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
     <rect width="1280" height="720" fill="#e8e8e5"/>

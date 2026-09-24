@@ -1,16 +1,15 @@
+import { applyEnvironmentProfile } from "@studiocar/config";
 import { defineConfig } from "prisma/config";
 
-try {
-  // Prisma 7 stops reading `.env` itself once this file exists. The commands
-  // run in this directory, which is where `.env` lives, so the default path is
-  // the right one. A missing file is the CI case, where variables are already
-  // set, and a variable that is set always wins over the file.
-  process.loadEnvFile();
-} catch {
-  /* No `.env`; the environment is expected to carry the values. */
-}
+import { loadRepositoryEnvironment } from "./src/server/environment/load-repository-environment";
 
-const databaseUrl = process.env["DATABASE_URL"];
+// Prisma 7 stops reading `.env` itself once this file exists. Every command
+// reads the repository-root `.env.local` instead, the same file the
+// application reads; a variable already set always wins, and a missing file is
+// the CI case. The Local profile supplies the Docker database address.
+loadRepositoryEnvironment(process.cwd());
+
+const databaseUrl = applyEnvironmentProfile(process.env)["DATABASE_URL"];
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

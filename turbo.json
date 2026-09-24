@@ -4,6 +4,8 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "env": ["APP_ENV", "S3_ENDPOINT"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/.env.local"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "dev": {
@@ -13,13 +15,7 @@
     "e2e": {
       "dependsOn": ["build"],
       "cache": false,
-      "env": [
-        "AWS_ACCESS_KEY_ID",
-        "AWS_REGION",
-        "AWS_SECRET_ACCESS_KEY",
-        "DATABASE_URL",
-        "S3_BUCKET"
-      ],
+      "env": ["APP_ENV", "DATABASE_URL"],
       "outputs": ["playwright-report/**", "test-results/**"]
     },
     "lint": {
