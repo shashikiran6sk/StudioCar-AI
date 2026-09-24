@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import { createPhotoUploadItem } from "./create-photo-upload-item";
+import { describeBatchLimitRejection } from "./describe-batch-limit-rejection";
 import { PhotoUploadItemRow } from "./photo-upload-item-row";
 import {
   EXISTING_PHOTO_NONE_SELECTED_ERROR,
@@ -60,6 +61,7 @@ export function PhotoUploadStep({
   const replaceTarget = useRef<string | null>(null);
   const uploadControllers = useRef(new Map<string, AbortController>());
   const [dragActive, setDragActive] = useState(false);
+  const [batchLimitRejectedCount, setBatchLimitRejectedCount] = useState(0);
   const [rejected, setRejected] = useState<RejectedPhoto[]>([]);
   const [stepError, setStepError] = useState<string | null>(null);
   const photos = useVehicleCreateStore((state) => state.photos);
@@ -134,6 +136,7 @@ export function PhotoUploadStep({
       selectedPhotos.length,
       maximumPhotos,
     );
+    setBatchLimitRejectedCount(selection.batchLimitRejectedCount);
     setRejected(selection.rejected);
     const items = selection.accepted.map((file) => createPhotoUploadItem(file));
     addPhotos(items);
@@ -163,6 +166,7 @@ export function PhotoUploadStep({
     if (!target || !file) return;
     setStepError(null);
     const selection = selectPhotoFiles([file], 0, 1);
+    setBatchLimitRejectedCount(selection.batchLimitRejectedCount);
     setRejected(selection.rejected);
     const accepted = selection.accepted[0];
     if (!accepted) return;
@@ -239,8 +243,16 @@ export function PhotoUploadStep({
         />
       </div>
       <p className="photo-upload-step__limit">{limitLabel}</p>
-      {rejected.length > 0 ? (
+      {batchLimitRejectedCount > 0 || rejected.length > 0 ? (
         <ul className="photo-upload-step__rejections" role="alert">
+          {batchLimitRejectedCount > 0 ? (
+            <li>
+              {describeBatchLimitRejection(
+                maximumPhotos,
+                batchLimitRejectedCount,
+              )}
+            </li>
+          ) : null}
           {rejected.map((photo) => (
             <li key={`${photo.filename}-${photo.reason}`}>
               {photo.filename}: {photo.reason}

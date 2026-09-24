@@ -166,6 +166,34 @@ describe("handleCreateProcessingBatch", () => {
     });
   });
 
+  it("returns the plan-backed batch limit when the service refuses a direct request", async () => {
+    const jobs: ProcessingJobApplication = {
+      createBatch: vi.fn().mockResolvedValue({
+        ok: false,
+        reason: "BATCH_LIMIT_EXCEEDED",
+        maxImagesPerBatch: 5,
+      }),
+    };
+
+    const response = await handleCreateProcessingBatch(
+      createRequest({ vehicleId: VEHICLE_ID, assetIds: [ASSET_ID], options: {} }),
+      session,
+      jobs,
+      allowingRateLimiter(),
+      () => "request-batch-limit",
+    );
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toMatchObject({
+      error: {
+        code: "BATCH_LIMIT_EXCEEDED",
+        message:
+          "Your plan allows up to 5 images in one batch. Remove some images and try again.",
+        requestId: "request-batch-limit",
+      },
+    });
+  });
+
   it("returns a retry window without reserving a processing batch", async () => {
     const jobs: ProcessingJobApplication = { createBatch: vi.fn() };
     const rateLimiter: CommandRateLimiterPort = {

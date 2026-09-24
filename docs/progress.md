@@ -727,6 +727,33 @@ exactly as before.
 - Updated `README.md`, `context.md`, `AGENTS.md`, `docs/environments.md`,
   `docs/security.md`, the AWS README, and the environment examples.
 
+### SC049 — Aggregated upload batch-limit validation
+
+- Audited the upload wizard from the database-backed plan context through file
+  selection, parallel browser-to-S3 uploads, and the transactional processing
+  reservation. Valid files were already accepted up to the remaining capacity,
+  but every excess file was converted into the same filename-level error.
+- Preserved partial acceptance and parallel uploads while replacing those
+  repeated excess-file entries with one batch-level message that names the
+  authoritative limit and how many otherwise-valid images were not added.
+  Unsupported and oversized files continue to render their own filename-level
+  explanations beside that single batch message.
+- Confirmed that `POST /api/jobs` already resolves the signed-in account's live
+  plan and that the repository refuses an oversized batch inside its reservation
+  transaction before creating jobs or outbox messages. Added handler coverage
+  for the stable `422 BATCH_LIMIT_EXCEEDED` response; no API or schema change was
+  needed.
+- Added selection and rendered-component coverage for exact-limit acceptance,
+  one and many excess files, remaining capacity after existing selections,
+  preserved partial acceptance, and a batch-limit rejection combined with an
+  unsupported file.
+- Verified a clean production dependency audit, Prisma schema validation,
+  source mapping, lint, strict typecheck, every package unit suite
+  (including 1,060 web tests), all 138 real-PostgreSQL integration tests, the
+  production build, and all 10 Playwright tests. Compared the unchanged upload
+  composition with the supplied Upload Vehicle screenshot; only the error copy
+  and aggregation behavior changed.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
