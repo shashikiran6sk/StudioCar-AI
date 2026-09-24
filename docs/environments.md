@@ -176,8 +176,13 @@ start without `SQS_IMAGE_QUEUE_URL`.
   `S3_SECRET_ACCESS_KEY` pair for storage and `SQS_ACCESS_KEY_ID` /
   `SQS_SECRET_ACCESS_KEY` for the queue, or, when a pair is empty, the AWS
   default chain (CLI profile, SSO, or `AWS_*` variables). The containerised
-  image worker cannot see `~/.aws`: give it the explicit pairs, or export
-  `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` before `pnpm infra:up`.
+  image worker cannot see `~/.aws`: give it the explicit pairs, or
+  `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, exported or in `.env.local`.
+  The simplest setup is one IAM key with S3 and SQS access under those two
+  `AWS_*` names in `.env.local`, with both pairs empty: `pnpm dev` loads it into
+  its environment and compose passes it to the worker, so both processes
+  reach S3 and SQS through the default chain. Without any of these the worker
+  logs `image worker receive failed: CredentialsProviderError`.
 - **The processing queue** is a dedicated AWS SQS Development queue with its
   own dead-letter queue. Provision it from
   `infrastructure/aws/image-processing-queue.yml` with a Development name, for
