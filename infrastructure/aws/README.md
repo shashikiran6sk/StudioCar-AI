@@ -52,7 +52,11 @@ immutable, reviewed archive in a private artifact bucket. The archive must place
 `handler.mjs` and its production dependencies (including the Linux arm64 Sharp
 binary) at its root. The stack resolves database and remove.bg credentials from
 Secrets Manager, grants only tenant-prefix object access, caps both reserved and
-SQS event-source concurrency, and enables `ReportBatchItemFailures`. Configure
+SQS event-source concurrency, and enables `ReportBatchItemFailures`. The role
+also holds `s3:ListBucket` limited to the `users/` prefix: without it S3
+answers a read of an absent key with 403 instead of 404, so every first
+attempt would mistake the not-yet-staged provider result for unavailable
+storage and retry until it failed. A hand-built role needs the same statement. Configure
 alarm actions and ensure the queue visibility timeout is longer than the Lambda
 timeout before production deployment. The worker emits structured CloudWatch
 Embedded Metric Format events under `StudioCarAI/Operations`, with correlation

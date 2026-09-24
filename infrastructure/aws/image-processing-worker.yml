@@ -109,6 +109,16 @@ Resources:
                   - s3:GetObject
                   - s3:PutObject
                 Resource: !Sub arn:${AWS::Partition}:s3:::${ImageBucketName}/users/*
+              # Without ListBucket, S3 answers a read of an absent key with 403
+              # rather than 404, and the worker cannot tell a provider result
+              # that was never staged from denied storage.
+              - Sid: DistinguishMissingPrivateImages
+                Effect: Allow
+                Action: s3:ListBucket
+                Resource: !Sub arn:${AWS::Partition}:s3:::${ImageBucketName}
+                Condition:
+                  StringLike:
+                    s3:prefix: users/*
 
   ImageProcessingWorker:
     Type: AWS::Lambda::Function

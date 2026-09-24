@@ -1,6 +1,6 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-09-24
+Last updated: 2026-09-25
 
 ## Current status
 
@@ -934,6 +934,26 @@ exactly as before.
   `SQS_IMAGE_QUEUE_URL` (and queue credentials the worker container can see)
   before `pnpm infra:up`. Jobs still queued in the old local ElasticMQ are not
   migrated; re-process them after switching.
+
+### SC056 — The deployed worker role can tell an absent object from denied storage
+
+- `infrastructure/aws/image-processing-worker.yml`: the worker role gains
+  `s3:ListBucket` on the image bucket, conditioned on the `users/` prefix.
+  Without it S3 answers a `GetObject` for an absent key with 403 rather than
+  404. The worker looks up the staged provider result before every remove.bg
+  call, and on a first attempt that object never exists, so every job failed
+  with "Private image storage was unavailable during processing." and retried
+  until exhausted, before any provider call was made.
+- `infrastructure/aws/README.md` records the requirement, including for a
+  hand-built role.
+- Tests: a template check asserts the prefix-scoped listing statement and that
+  object access stays within `users/*`.
+- No schema, migration, contract, application, worker, or UI change.
+- Operational: an existing deployed worker role must add the same statement;
+  jobs left `RETRYING` resume on the next dispatch.
+- Follow-up: the executor's catch-all storage failure records no error class,
+  so this failure was visible only as a retry metric. Carrying the class from
+  `classifyOperationalError` into that failure deserves its own slice.
 
 ### Repository governance
 
