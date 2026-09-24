@@ -5,7 +5,7 @@ StudioCar AI runs in exactly three environments, selected by `APP_ENV`:
 | `APP_ENV` | Purpose |
 | --- | --- |
 | `local` | Everything on the developer's machine. Needs nothing but a remove.bg key. |
-| `development` | Real Google, MSG91, AWS S3, remove.bg, and database; the processing queue and image worker stay local. |
+| `development` | Real Google, MSG91, AWS S3, AWS SQS, remove.bg, and database; the image worker and dispatcher stay local. |
 | `production` | Fully deployed. No local adapter can be selected. |
 
 `NODE_ENV` keeps its ordinary Node.js and Next.js meaning (how the code was
@@ -25,12 +25,12 @@ every runtime; no environment is ever assumed.
 | Phone OTP | fake (code `1234`) | MSG91 Widget | MSG91 Widget |
 | Database | Docker PostgreSQL | Development PostgreSQL | Production PostgreSQL |
 | Original and processed images | MinIO | AWS S3 Development bucket | AWS S3 production bucket |
-| Processing queue | ElasticMQ | ElasticMQ (AWS SQS allowed later) | AWS SQS |
+| Processing queue | ElasticMQ | AWS SQS Development queue | AWS SQS |
 | Image worker | local container | local container | deployed Lambda |
 | Background removal | remove.bg | remove.bg | configured provider (remove.bg) |
 | Email delivery | none | none | none |
 | Dispatch scheduler | local ticker | local ticker | trusted scheduler |
-| AWS credentials | none | explicit S3 pair or AWS default chain | workload identity |
+| AWS credentials | none | explicit S3 and SQS pairs or AWS default chain | workload identity |
 | Google credentials | none | required | required |
 | MSG91 credentials | none | required | required |
 
@@ -139,22 +139,24 @@ providers at their ports.
 
 ## Development
 
-Development tests the external boundaries that matter while keeping the
-processing queue and the image worker easy to debug locally.
+Development tests the external boundaries that matter, the processing queue
+included, while keeping the image worker easy to debug locally.
 
 ```bash
 cp .env.example.development .env.local   # then fill in every required value
-pnpm infra:up                            # ElasticMQ, image worker, dispatcher
+pnpm infra:up                            # image worker and dispatcher only
 pnpm db:migrate:deploy                   # against the Development database
 pnpm dev                                 # http://localhost:3000
 ```
 
 Required: `DATABASE_URL` (the Development database), `SESSION_SECRET`,
 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MSG91_WIDGET_ID`,
-`MSG91_WIDGET_TOKEN`, `MSG91_AUTH_KEY`, `S3_BUCKET` (the Development bucket),
-and `REMOVEBG_API_KEY`. `AWS_REGION` defaults to `ap-south-1`. Optional:
-`WORKER_DATABASE_URL`, for a database the worker container cannot reach at
-`DATABASE_URL` (see below).
+`MSG91_WIDGET_TOKEN`, `MSG91_AUTH_KEY`, `AWS_REGION` (the example sets
+`ap-south-1`), `S3_BUCKET` (the Development bucket), `SQS_IMAGE_QUEUE_URL` (the
+Development queue), and `REMOVEBG_API_KEY`. Optional: the `S3_*` and `SQS_*`
+key pairs (see below), and `WORKER_DATABASE_URL`, for a database the worker
+container cannot reach at `DATABASE_URL` (see below). `pnpm infra:up` refuses to
+start without `SQS_IMAGE_QUEUE_URL`.
 
 - **Google OAuth** is real. Register
   `http://localhost:3000/api/auth/google/callback` (or your Development
@@ -171,13 +173,28 @@ and `REMOVEBG_API_KEY`. `AWS_REGION` defaults to `ap-south-1`. Optional:
   allow the Development origin (`AdditionalBrowserOrigin` in
   `infrastructure/aws/upload-storage.yml`).
 - **AWS credentials** come from an explicit `S3_ACCESS_KEY_ID` /
-  `S3_SECRET_ACCESS_KEY` pair, or, when both are empty, the AWS default chain
-  (CLI profile, SSO, or `AWS_*` variables). The containerised image worker
-  cannot see `~/.aws`: give it the explicit pair, or export
-  `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` before `pnpm infra:up`.
-- **The processing queue and image worker** are the local ElasticMQ and the
-  same worker container as Local, pointed at the Development database and
-  bucket.
+  `S3_SECRET_ACCESS_KEY` pair for storage and `SQS_ACCESS_KEY_ID` /
+  `SQS_SECRET_ACCESS_KEY` for the queue, or, when a pair is empty, the AWS
+  default chain (CLI profile, SSO, or `AWS_*` variables). The containerised
+  image worker cannot see `~/.aws`: give it the explicit pairs, or
+  `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, exported or in `.env.local`.
+  The simplest setup is one IAM key with S3 and SQS access under those two
+  `AWS_*` names in `.env.local`, with both pairs empty: `pnpm dev` loads it into
+  its environment and compose passes it to the worker, so both processes
+  reach S3 and SQS through the default chain. Without any of these the worker
+  logs `image worker receive failed: CredentialsProviderError`.
+- **The processing queue** is a dedicated AWS SQS Development queue with its
+  own dead-letter queue. Provision it from
+  `infrastructure/aws/image-processing-queue.yml` with a Development name, for
+  example `QueueName=studiocar-dev-image-processing`; a name with a `prod` or
+  `production` segment is refused. The application publishes to it, so its
+  credentials need the publisher policy, and the worker's need the consumer
+  policy. ElasticMQ, and any localhost or compose-host queue, is refused.
+- **The image worker and the dispatcher** are the only containers
+  `pnpm infra:up` starts. The worker is the same container as Local, pointed
+  at the Development database, bucket, and queue; the dispatcher calls the
+  application on the host. If an ElasticMQ container is left over from an
+  earlier Development stack, `pnpm infra:down` removes it.
 - **The worker may need its own database address.** Docker Desktop
   containers have no IPv6 route, so a host that publishes only an AAAA record
   works for `pnpm dev` on the host but fails inside the worker. Supabase's
@@ -192,9 +209,10 @@ and `REMOVEBG_API_KEY`. `AWS_REGION` defaults to `ap-south-1`. Optional:
   changing either value, because the worker reads it at start.
   `WORKER_DATABASE_URL` is refused outside Development.
 
-Development refuses the fake sign-in drivers, MinIO and localhost storage, the
-local bucket and emulator keys, the committed Local session secret, and any
-bucket, queue, or database that declares production ownership. A missing
+Development refuses the fake sign-in drivers, MinIO and localhost storage,
+ElasticMQ and localhost queues, the local bucket and emulator keys, the
+committed Local session secret, and any bucket, queue, or database that
+declares production ownership. A missing
 Google or MSG91 setting is an error, never a fallback.
 
 Migrating from the old `apps/web/.env`: move it to `.env.local` at the

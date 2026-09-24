@@ -11,6 +11,26 @@ const repositoryRoot = path.resolve(import.meta.dirname, "../../..");
 const read = (relative: string): string =>
   readFileSync(path.join(repositoryRoot, relative), "utf8");
 
+const COMPOSE_SERVICE_PATTERN = /^ {2}([a-z][a-z0-9-]*):$/;
+const COMPOSE_PROFILES_PATTERN = /^ {4}profiles: \[([^\]]*)\]$/;
+
+/** The compose services, in file order, that the given profile starts. */
+function composeServicesInProfile(compose: string, profile: string): string[] {
+  const services: string[] = [];
+  let service: string | undefined;
+  for (const line of compose.split("\n")) {
+    service = COMPOSE_SERVICE_PATTERN.exec(line)?.[1] ?? service;
+    const profiles = COMPOSE_PROFILES_PATTERN.exec(line)?.[1];
+    if (
+      service !== undefined &&
+      profiles?.split(",").map((name) => name.trim()).includes(profile)
+    ) {
+      services.push(service);
+    }
+  }
+  return services;
+}
+
 /**
  * The compose file and the dispatch ticker cannot import TypeScript, so they
  * carry the local values literally. These checks keep them in step with the
@@ -72,6 +92,14 @@ describe("LOCAL_INFRASTRUCTURE", () => {
     ]) {
       expect(token.length).toBeGreaterThanOrEqual(32);
     }
+  });
+
+  it("runs only the image worker and dispatcher under APP_ENV=development", () => {
+    expect(composeServicesInProfile(compose, "development")).toEqual([
+      "image-worker",
+      "dispatcher",
+    ]);
+    expect(composeServicesInProfile(compose, "infra")).toContain("elasticmq");
   });
 
   it("knows the compose service hosts as local", () => {

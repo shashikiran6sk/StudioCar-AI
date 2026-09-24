@@ -13,8 +13,8 @@ import {
   parseUploadEnvironment,
 } from "../../../packages/config/src/environment";
 
-// A Development configuration that has moved its queues to AWS SQS, so every
-// explicit value below is also what the parsers return.
+// A complete Development configuration, so every explicit value below is also
+// what the parsers return.
 const validEnvironment = {
   APP_ENV: "development",
   DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/studiocar_test",

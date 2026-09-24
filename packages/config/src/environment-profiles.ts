@@ -39,8 +39,8 @@ const EVERY_BACKGROUND_REMOVAL_PROVIDER: readonly BackgroundRemovalProvider[] = 
  * - Local needs nothing but a remove.bg key: fake sign-in, MinIO, ElasticMQ,
  *   and a locally running image worker.
  * - Development exercises the real external boundaries (Google, MSG91, AWS S3,
- *   remove.bg) while the queue and the image worker stay local and easy to
- *   debug.
+ *   AWS SQS, remove.bg) while the image worker and the dispatcher stay local
+ *   and easy to debug.
  * - Production is fully deployed and tolerates no local adapter at all.
  */
 export const ENVIRONMENT_PROFILES = {
@@ -66,11 +66,9 @@ export const ENVIRONMENT_PROFILES = {
       allowed: EVERY_BACKGROUND_REMOVAL_PROVIDER,
     },
     storage: StorageTarget.AwsS3,
-    // AWS Development queues can be introduced later without touching worker
-    // or domain code; ElasticMQ is what runs today.
     processingQueue: {
-      default: QueueTarget.LocalEmulator,
-      allowed: [QueueTarget.LocalEmulator, QueueTarget.AwsSqs],
+      default: QueueTarget.AwsSqs,
+      allowed: [QueueTarget.AwsSqs],
     },
     workerRuntime: WorkerRuntime.Local,
   },

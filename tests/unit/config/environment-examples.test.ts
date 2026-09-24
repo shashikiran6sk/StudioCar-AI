@@ -83,8 +83,6 @@ const LOCAL_ONLY_VARIABLES = [
   "S3_ENDPOINT",
   "S3_FORCE_PATH_STYLE",
   "SQS_ENDPOINT",
-  "SQS_ACCESS_KEY_ID",
-  "SQS_SECRET_ACCESS_KEY",
 ];
 
 /** Selections the profile makes; an example repeating them is redundant. */
@@ -114,10 +112,11 @@ const EXAMPLES: Record<string, ExampleCase> = {
     placeholders: DEVELOPMENT_ENVIRONMENT,
     parsers: [...APPLICATION_PARSERS, ...WORKER_PARSERS, ...LOCAL_CONSUMER_PARSERS],
     optional: [
-      "AWS_REGION",
       "GOOGLE_REDIRECT_URI",
       "S3_ACCESS_KEY_ID",
       "S3_SECRET_ACCESS_KEY",
+      "SQS_ACCESS_KEY_ID",
+      "SQS_SECRET_ACCESS_KEY",
       "BOOTSTRAP_ADMIN_EMAIL",
       "WORKER_DATABASE_URL",
     ],
@@ -241,10 +240,18 @@ describe("environment example files", () => {
     );
   });
 
-  it("keeps the production queue out of Development", () => {
-    const documented = Object.keys(readExample(".env.example.development"));
+  it("asks Development for its own AWS SQS queue, and Local for none", () => {
+    expect(readExample(".env.example.development")["SQS_IMAGE_QUEUE_URL"]).toBe("");
+    expect(Object.keys(readExample(".env.example.local"))).not.toContain(
+      "SQS_IMAGE_QUEUE_URL",
+    );
+  });
 
-    expect(documented).not.toContain("SQS_IMAGE_QUEUE_URL");
+  it("offers explicit queue credentials to Development only", () => {
+    for (const key of ["SQS_ACCESS_KEY_ID", "SQS_SECRET_ACCESS_KEY"]) {
+      expect(Object.keys(readExample(".env.example.development"))).toContain(key);
+      expect(Object.keys(readExample(".env.example.production"))).not.toContain(key);
+    }
   });
 
   it("ships no value for any production setting but APP_ENV", () => {

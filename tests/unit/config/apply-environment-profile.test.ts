@@ -44,9 +44,9 @@ describe("applyEnvironmentProfile", () => {
 
   it("drops every local queue default once any queue setting is configured", () => {
     const resolved = applyEnvironmentProfile({
-      APP_ENV: "development",
+      APP_ENV: "local",
       SQS_IMAGE_QUEUE_URL:
-        "https://sqs.ap-south-1.amazonaws.com/123456789012/studiocar-dev-images",
+        "http://host.docker.internal:9324/000000000000/studiocar-images",
     });
 
     expect(resolved["SQS_ENDPOINT"]).toBeUndefined();

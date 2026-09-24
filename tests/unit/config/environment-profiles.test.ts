@@ -17,21 +17,15 @@ describe("environment profiles", () => {
     });
   });
 
-  it("gives Development real external boundaries and local queues", () => {
+  it("gives Development real external boundaries, AWS SQS included", () => {
     expect(getEnvironmentProfile("development")).toMatchObject({
       googleAuthDriver: { default: "google", allowed: ["google"] },
       phoneOtpDriver: { default: "msg91", allowed: ["msg91"] },
       backgroundRemovalProvider: { default: "removebg" },
       storage: "aws-s3",
-      processingQueue: { default: "local-emulator" },
+      processingQueue: { default: "aws-sqs", allowed: ["aws-sqs"] },
       workerRuntime: "local",
     });
-  });
-
-  it("keeps Development able to move its queues to AWS later", () => {
-    const development = getEnvironmentProfile("development");
-
-    expect(development.processingQueue.allowed).toContain("aws-sqs");
   });
 
   it("deploys production and allows no local adapter", () => {

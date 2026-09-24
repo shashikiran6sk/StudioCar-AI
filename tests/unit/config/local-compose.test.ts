@@ -17,41 +17,81 @@ const APPLICATION_DATABASE_URL =
 const POOLER_DATABASE_URL =
   "postgresql://postgres.project:secret@aws-0-ap-south-1.pooler.supabase.com:5432/postgres";
 
-const DOCKER_OUTPUT_PREFIX = "worker-database-url=";
+const DEVELOPMENT_QUEUE_URL =
+  "https://sqs.ap-south-1.amazonaws.com/123456789012/studiocar-dev-image-processing";
+
+const DOCKER_INVOKED_MARKER = "docker-invoked";
+const DOCKER_ARGUMENTS_PREFIX = "docker-arguments=";
+const WORKER_SETTING_PREFIX = "LOCAL_WORKER_";
 
 interface ComposeRun {
   dockerInvoked: boolean;
+  dockerArguments: string | undefined;
   status: number | null;
   stderr: string;
+  workerSettings: Readonly<Record<string, string>>;
   workerDatabaseUrl: string | undefined;
 }
 
 const roots: string[] = [];
 
+function writeExecutable(file: string, contents: string): void {
+  writeFileSync(file, contents);
+  chmodSync(file, 0o755);
+}
+
 /**
- * Runs the real compose wrapper from a scratch copy of the repository layout,
- * so it reads a settings file written here instead of the developer's own. A
- * stand-in `docker` records the worker's database address rather than
- * starting anything.
+ * The worker settings the stand-in `docker` saw, without their prefix. An
+ * exported empty value is kept, because it means something different from an
+ * unset one: compose substitutes its Local default only for the latter.
  */
-function runLocalCompose(settings: string): ComposeRun {
+function parseWorkerSettings(lines: readonly string[]): Record<string, string> {
+  return Object.fromEntries(
+    lines
+      .filter((line) => line.startsWith(WORKER_SETTING_PREFIX))
+      .map((line) => {
+        const separator = line.indexOf("=");
+        return [
+          line.slice(WORKER_SETTING_PREFIX.length, separator),
+          line.slice(separator + 1),
+        ];
+      }),
+  );
+}
+
+/**
+ * Runs a real local-stack script from a scratch copy of the repository
+ * layout, so it reads a settings file written here instead of the developer's
+ * own. A stand-in `docker` records its arguments and the worker settings
+ * rather than starting anything, and a stand-in `pnpm` does nothing.
+ */
+function runScript(
+  script: string,
+  settings: string,
+  scriptArguments: readonly string[],
+): ComposeRun {
   const root = mkdtempSync(path.join(tmpdir(), "studiocar-compose-"));
   roots.push(root);
   mkdirSync(path.join(root, "scripts"));
   mkdirSync(path.join(root, "bin"));
-  for (const script of ["local-compose.sh", "local-environment.sh"]) {
+  for (const file of ["infra-up.sh", "local-compose.sh", "local-environment.sh"]) {
     copyFileSync(
-      path.join(repositoryRoot, "scripts", script),
-      path.join(root, "scripts", script),
+      path.join(repositoryRoot, "scripts", file),
+      path.join(root, "scripts", file),
     );
   }
   writeFileSync(path.join(root, ".env.local"), settings);
-  const docker = path.join(root, "bin", "docker");
-  writeFileSync(
-    docker,
-    `#!/bin/sh\nprintf '${DOCKER_OUTPUT_PREFIX}%s' "\${LOCAL_WORKER_DATABASE_URL-}"\n`,
+  writeExecutable(
+    path.join(root, "bin", "docker"),
+    [
+      "#!/bin/sh",
+      `echo ${DOCKER_INVOKED_MARKER}`,
+      `echo "${DOCKER_ARGUMENTS_PREFIX}$*"`,
+      `env | grep '^${WORKER_SETTING_PREFIX}' || true`,
+      "",
+    ].join("\n"),
   );
-  chmodSync(docker, 0o755);
+  writeExecutable(path.join(root, "bin", "pnpm"), "#!/bin/sh\nexit 0\n");
 
   const environment: NodeJS.ProcessEnv = {
     HOME: root,
@@ -59,18 +99,30 @@ function runLocalCompose(settings: string): ComposeRun {
   };
   const result = spawnSync(
     "sh",
-    [path.join(root, "scripts", "local-compose.sh"), "config"],
+    [path.join(root, "scripts", script), ...scriptArguments],
     { encoding: "utf8", env: environment },
   );
-  const dockerInvoked = result.stdout.startsWith(DOCKER_OUTPUT_PREFIX);
+  const lines = result.stdout.split("\n");
+  const dockerInvoked = lines.includes(DOCKER_INVOKED_MARKER);
+  const workerSettings = parseWorkerSettings(lines);
   return {
     dockerInvoked,
+    dockerArguments: lines
+      .find((line) => line.startsWith(DOCKER_ARGUMENTS_PREFIX))
+      ?.slice(DOCKER_ARGUMENTS_PREFIX.length),
     status: result.status,
     stderr: result.stderr,
-    workerDatabaseUrl: dockerInvoked
-      ? result.stdout.slice(DOCKER_OUTPUT_PREFIX.length)
-      : undefined,
+    workerSettings,
+    workerDatabaseUrl: dockerInvoked ? workerSettings["DATABASE_URL"] ?? "" : undefined,
   };
+}
+
+function runLocalCompose(settings: string): ComposeRun {
+  return runScript("local-compose.sh", settings, ["config"]);
+}
+
+function runInfraUp(settings: string): ComposeRun {
+  return runScript("infra-up.sh", settings, []);
 }
 
 afterEach(() => {
@@ -135,5 +187,63 @@ describe("scripts/local-compose.sh", () => {
     expect(run.status).not.toBe(0);
     expect(run.stderr).toContain("WORKER_DATABASE_URL is a Development setting");
     expect(run.dockerInvoked).toBe(false);
+  });
+
+  it("gives the worker the Development AWS SQS queue, and never ElasticMQ", () => {
+    const run = runLocalCompose(
+      [
+        "APP_ENV=development",
+        `DATABASE_URL=${APPLICATION_DATABASE_URL}`,
+        `SQS_IMAGE_QUEUE_URL=${DEVELOPMENT_QUEUE_URL}`,
+        "SQS_ACCESS_KEY_ID=",
+        "",
+      ].join("\n"),
+    );
+
+    expect(run.status).toBe(0);
+    expect(run.workerSettings).toMatchObject({
+      SQS_IMAGE_QUEUE_URL: DEVELOPMENT_QUEUE_URL,
+      // Exported empty, so compose cannot substitute its ElasticMQ defaults.
+      SQS_ENDPOINT: "",
+      SQS_ACCESS_KEY_ID: "",
+      SQS_SECRET_ACCESS_KEY: "",
+    });
+  });
+
+  it("leaves the Local worker on the compose ElasticMQ defaults", () => {
+    const run = runLocalCompose("APP_ENV=local\nREMOVEBG_API_KEY=key\n");
+
+    expect(run.status).toBe(0);
+    expect(
+      Object.keys(run.workerSettings).filter((key) => key.startsWith("SQS_")),
+    ).toEqual([]);
+  });
+});
+
+describe("scripts/infra-up.sh", () => {
+  it("starts only the Development profile once the queue is configured", () => {
+    const run = runInfraUp(
+      `APP_ENV=development\nDATABASE_URL=${APPLICATION_DATABASE_URL}\nSQS_IMAGE_QUEUE_URL=${DEVELOPMENT_QUEUE_URL}\n`,
+    );
+
+    expect(run.status).toBe(0);
+    expect(run.dockerArguments).toContain("--profile development up -d");
+  });
+
+  it("refuses Development without its AWS SQS queue before starting anything", () => {
+    const run = runInfraUp(
+      `APP_ENV=development\nDATABASE_URL=${APPLICATION_DATABASE_URL}\nSQS_IMAGE_QUEUE_URL=\n`,
+    );
+
+    expect(run.status).not.toBe(0);
+    expect(run.stderr).toContain("SQS_IMAGE_QUEUE_URL is required in Development");
+    expect(run.dockerInvoked).toBe(false);
+  });
+
+  it("starts the Local profile without any queue setting", () => {
+    const run = runInfraUp("APP_ENV=local\nREMOVEBG_API_KEY=key\n");
+
+    expect(run.status).toBe(0);
+    expect(run.dockerArguments).toContain("--profile infra up -d");
   });
 });
