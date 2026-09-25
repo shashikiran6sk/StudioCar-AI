@@ -952,6 +952,31 @@ exactly as before.
   database validation, build, and end-to-end suite.
 - Next reviewable slice: dedicated, debounced inventory search.
 
+### SC057 — Dedicated inventory search with debounce
+
+- Added authenticated `GET /api/inventory/search?q=...` with Zod validation
+  and the existing inventory page response contract. Optional status, sort,
+  mode, cursor, and limit parameters preserve the inventory controls.
+- Search uses a bounded, tenant-scoped PostgreSQL query on vehicle name with
+  case-insensitive partial matching. The existing list repository and its
+  legacy query behavior remain compatible with saved inventory records.
+- The inventory toolbar searches after 400 ms of inactivity, cancels older
+  requests, and ignores stale responses. Clearing the field restores the
+  server-rendered inventory list without calling the search endpoint. The
+  toolbar has a search icon, clear control, loading state, and no Apply button;
+  zero matches show a search-specific reset action.
+- Contract, handler, service, component, and real PostgreSQL repository tests
+  cover validation, tenant isolation, matching, filters, debounce, clearing,
+  and stale responses. Browser coverage verifies the search endpoint, status
+  filter, empty state, and screenshots.
+- No schema migration or infrastructure change. The current tenant/name
+  index supports scoped reads; a substring-specific index should be reviewed
+  if inventory search volume grows substantially.
+- Verification: focused tests and full repository gates including lint,
+  typecheck, unit and integration suites, database validation, build, and E2E.
+- Next reviewable slice: any later inventory search expansion based on product
+  needs and measured query performance.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.

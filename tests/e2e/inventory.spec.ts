@@ -222,6 +222,52 @@ inventoryTest(
         path: testInfo.outputPath("desktop-processing-inventory.png"),
       });
 
+      const searchVehicleId = randomUUID();
+      await database.query(
+        'INSERT INTO "Vehicle" ("id", "userId", "name", "status", "updatedAt") VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)',
+        [searchVehicleId, userId, "2025 Porsche 911 Carrera", "READY"],
+      );
+      await page.goto("/inventory");
+      const searchInput = page.getByRole("searchbox", {
+        name: "Search vehicles by name or reference",
+      });
+      const matchingResponse = page.waitForResponse((response) =>
+        response.url().includes("/api/inventory/search?q=porsche") && response.status() === 200,
+      );
+      await searchInput.fill("porsche");
+      await matchingResponse;
+      await expect(page.getByRole("heading", { name: "2025 Porsche 911 Carrera" }))
+        .toBeVisible();
+      await expect(page.getByRole("heading", { name: "2026 Audi Q5" })).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "Apply" })).toHaveCount(0);
+      await page.screenshot({
+        fullPage: true,
+        path: testInfo.outputPath("desktop-inventory-search.png"),
+      });
+      await page.getByRole("link", { name: /Completed/ }).click();
+      await expect(page.getByRole("heading", { name: "2025 Porsche 911 Carrera" }))
+        .toBeVisible();
+      await expect(page.getByRole("searchbox")).toHaveValue("porsche");
+      await page.getByRole("link", { name: /All/ }).click();
+      await expect(page.getByRole("link", { name: /All/ })).toHaveAttribute("aria-current", "page");
+      await expect(page.getByRole("heading", { name: "2025 Porsche 911 Carrera" })).toBeVisible();
+      const emptyResponse = page.waitForResponse((response) =>
+        response.url().includes("/api/inventory/search?q=nonexistent") && response.status() === 200,
+      );
+      await page.getByRole("searchbox").fill("nonexistent");
+      await emptyResponse;
+      await expect(page.getByRole("heading", { name: "No vehicles found for 'nonexistent'" }))
+        .toBeVisible();
+      await page.screenshot({
+        fullPage: true,
+        path: testInfo.outputPath("desktop-inventory-search-empty.png"),
+      });
+      await page.getByRole("button", { name: "Clear search" }).first().click();
+      await expect(page.getByRole("heading", { name: "2025 Porsche 911 Carrera" }))
+        .toBeVisible();
+      await expect(page.getByRole("heading", { name: "2026 Audi Q5" })).toBeVisible();
+      await database.query('DELETE FROM "Vehicle" WHERE "id" = $1', [searchVehicleId]);
+
       await database.query(
         'UPDATE "ProcessingJob" SET "status" = $1, "completedAt" = $2, "batchRequestHash" = $3, "options" = $4, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $5',
         [
@@ -439,9 +485,9 @@ inventoryTest(
 
       await page.goto("/inventory?query=BMW");
       await expect(
-        page.getByRole("heading", { name: "No vehicles match these filters" }),
+        page.getByRole("heading", { name: "No vehicles found for 'BMW'" }),
       ).toBeVisible();
-      await expect(page.getByRole("searchbox", { name: "Search inventory" }))
+      await expect(page.getByRole("searchbox", { name: "Search vehicles by name or reference" }))
         .toHaveValue("BMW");
       await page.screenshot({
         fullPage: true,

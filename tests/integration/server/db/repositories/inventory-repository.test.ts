@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import { InventoryQuerySchema } from "../../../../../packages/contracts/src/inventory";
+import { InventoryQuerySchema, InventorySearchQuerySchema } from "../../../../../packages/contracts/src/inventory";
 import { createDatabaseClient } from "../../../../../packages/database-runtime/src/client";
 import { PrismaInventoryRepository } from "../../../../../apps/web/src/server/db/repositories/inventory-repository";
 
@@ -217,5 +217,43 @@ databaseDescribe("PrismaInventoryRepository", () => {
         InventoryQuerySchema.parse({ filter: "PROCESSING", mode: "CREATE_STUDIO" }),
       ),
     ).resolves.toMatchObject({ items: [] });
+  });
+
+  it("searches owned vehicle names by case insensitive substring and status", async () => {
+    const [owner, other] = await Promise.all([
+      database.user.create({ data: { primaryEmail: ownerEmail } }),
+      database.user.create({ data: { primaryEmail: otherEmail } }),
+    ]);
+    const [porsche, processing] = await Promise.all([
+      database.vehicle.create({
+        data: { name: "2025 Porsche 911 Carrera", status: "READY", userId: owner.id },
+      }),
+      database.vehicle.create({
+        data: { name: "Porsche Macan", status: "PROCESSING", userId: owner.id },
+      }),
+      database.vehicle.create({
+        data: { name: "Audi Q5", brand: "Porsche", status: "READY", userId: owner.id },
+      }),
+      database.vehicle.create({
+        data: { name: "Other tenant Porsche", status: "READY", userId: other.id },
+      }),
+    ]);
+
+    const allMatches = await repository.searchOwned(
+      owner.id,
+      InventorySearchQuerySchema.parse({ q: "pOrSc" }),
+    );
+    expect(allMatches.items.map(({ id }) => id).sort()).toEqual([porsche.id, processing.id].sort());
+    expect(allMatches.counts).toMatchObject({ all: 2, completed: 1, processing: 1 });
+
+    const completed = await repository.searchOwned(
+      owner.id,
+      InventorySearchQuerySchema.parse({ q: "PORSCHE", status: "COMPLETED" }),
+    );
+    expect(completed.items.map(({ id }) => id)).toEqual([porsche.id]);
+    await expect(repository.searchOwned(
+      owner.id,
+      InventorySearchQuerySchema.parse({ q: "porsche", cursor: processing.id, status: "COMPLETED" }),
+    )).resolves.toMatchObject({ items: [], nextCursor: null });
   });
 });

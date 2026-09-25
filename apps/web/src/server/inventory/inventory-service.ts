@@ -2,6 +2,7 @@ import type {
   InventoryItem,
   InventoryPage,
   InventoryQuery,
+  InventorySearchQuery,
 } from "@studiocar/contracts";
 import type { InventoryVehicleRecord } from "../db/repositories/inventory-repository";
 
@@ -26,7 +27,17 @@ export class InventoryService {
     userId: string,
     query: InventoryQuery,
   ): Promise<InventoryPage> {
-    const page = await this.repository.listOwned(userId, query);
+    return this.toPage(await this.repository.listOwned(userId, query));
+  }
+
+  public async search(
+    userId: string,
+    query: InventorySearchQuery,
+  ): Promise<InventoryPage> {
+    return this.toPage(await this.repository.searchOwned(userId, query));
+  }
+
+  private async toPage(page: Awaited<ReturnType<InventoryRepositoryPort["listOwned"]>>): Promise<InventoryPage> {
     const items = await Promise.all(
       page.items.map((record) => this.toItem(record)),
     );

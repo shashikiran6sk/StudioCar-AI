@@ -86,9 +86,9 @@ describe("InventoryPage", () => {
     });
   });
 
-  it("renders authorized server-owned inventory and URL filter state", async () => {
+  it("renders authorized server-owned inventory", async () => {
     const page = await InventoryPage({
-      searchParams: Promise.resolve({ query: "BMW" }),
+      searchParams: Promise.resolve({}),
     });
     render(page);
 
@@ -96,7 +96,6 @@ describe("InventoryPage", () => {
       filter: "ALL",
       limit: 24,
       mode: "BROWSE",
-      query: "BMW",
       sort: "CREATED_DESC",
       view: "GRID",
     });

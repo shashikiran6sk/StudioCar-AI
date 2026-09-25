@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   InventoryPageSchema,
   InventoryQuerySchema,
+  InventorySearchQuerySchema,
 } from "../../../packages/contracts/src/inventory";
 
 describe("InventoryQuerySchema", () => {
@@ -38,6 +39,21 @@ describe("InventoryQuerySchema", () => {
     expect(InventoryQuerySchema.safeParse({ filter: "FAILED" }).success).toBe(false);
     expect(InventoryQuerySchema.safeParse({ mode: "PICK" }).success).toBe(false);
     expect(InventoryQuerySchema.safeParse({ limit: 101 }).success).toBe(false);
+  });
+});
+
+describe("InventorySearchQuerySchema", () => {
+  it("requires a bounded nonempty term and normalizes status and sort", () => {
+    expect(InventorySearchQuerySchema.parse({ q: "  PorSche  ", status: "COMPLETED" })).toEqual({
+      limit: 24,
+      mode: "BROWSE",
+      q: "PorSche",
+      sort: "CREATED_DESC",
+      status: "COMPLETED",
+    });
+    expect(InventorySearchQuerySchema.safeParse({ q: " " }).success).toBe(false);
+    expect(InventorySearchQuerySchema.safeParse({ q: "x".repeat(101) }).success).toBe(false);
+    expect(InventorySearchQuerySchema.safeParse({ q: "car", status: "UNKNOWN" }).success).toBe(false);
   });
 });
 
