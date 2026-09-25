@@ -14,7 +14,7 @@ export interface DialogContentProps {
   description: string;
   eyebrow?: string;
   footer?: ReactNode;
-  step?: { current: number; total: number };
+  step?: { current: number; labels?: readonly string[]; total: number };
   title: string;
 }
 
@@ -30,7 +30,7 @@ export function DialogContent({ children, description, eyebrow, footer, step, ti
             <DialogPrimitive.Description className="sc-visually-hidden">
               {description}
             </DialogPrimitive.Description>
-            {step ? <Stepper current={step.current} total={step.total} /> : null}
+            {step ? <Stepper current={step.current} {...(step.labels ? { labels: step.labels } : {})} total={step.total} /> : null}
           </div>
           <DialogPrimitive.Close asChild>
             <Button aria-label="Close dialog" size="icon">
@@ -44,4 +44,3 @@ export function DialogContent({ children, description, eyebrow, footer, step, ti
     </DialogPrimitive.Portal>
   );
 }
-

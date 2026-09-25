@@ -29,6 +29,7 @@ describe("VehicleDetailsForm", () => {
     fireEvent.change(screen.getByRole("textbox", { name: /vehicle name/i }), {
       target: { value: "  Porsche 911 Carrera  " },
     });
+    fireEvent.click(screen.getByText("Add vehicle specifications (optional)"));
     fireEvent.change(screen.getByRole("textbox", { name: "Brand" }), {
       target: { value: " Porsche " },
     });
@@ -47,6 +48,39 @@ describe("VehicleDetailsForm", () => {
     expect(useVehicleCreateStore.getState().details.name).toBe(
       "  Porsche 911 Carrera  ",
     );
+  });
+
+  it("continues with only a vehicle name and keeps specifications optional", async () => {
+    const onContinue = vi.fn(async () => undefined);
+    render(<VehicleDetailsForm onContinue={onContinue} />);
+
+    expect(screen.queryByRole("textbox", { name: /internal id/i })).not.toBeInTheDocument();
+    expect(screen.getByText("Enter a name that helps you identify this vehicle.")).toBeVisible();
+    expect(screen.getByText("Your dealership's existing vehicle reference. Optional.")).toBeVisible();
+    expect(screen.getByRole("textbox", { name: "Brand" }).closest("details")).not.toHaveAttribute("open");
+    fireEvent.change(screen.getByRole("textbox", { name: /vehicle name/i }), {
+      target: { value: "2025 Porsche 911 Carrera" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Continue to photos" }));
+
+    await waitFor(() => expect(onContinue).toHaveBeenCalledWith({
+      name: "2025 Porsche 911 Carrera",
+    }));
+  });
+
+  it("expands and collapses the optional specifications", () => {
+    render(<VehicleDetailsForm onContinue={vi.fn()} />);
+    const summary = screen.getByText("Add vehicle specifications (optional)");
+    const specifications = summary.closest("details");
+
+    fireEvent.click(summary);
+    expect(specifications?.open).toBe(true);
+    expect(screen.getByRole("textbox", { name: "Brand" })).toBeVisible();
+    expect(screen.getByRole("textbox", { name: "Model" })).toBeVisible();
+    expect(screen.getByRole("textbox", { name: "Variant" })).toBeVisible();
+    expect(screen.getByRole("textbox", { name: "Year" })).toBeVisible();
+    fireEvent.click(summary);
+    expect(specifications?.open).toBe(false);
   });
 
   it("announces a recoverable submission failure", async () => {

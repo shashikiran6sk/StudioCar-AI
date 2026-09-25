@@ -10,7 +10,7 @@ describe("studioSelectionHeading", () => {
         "Create a vehicle, upload its photos, and choose a studio treatment.",
       eyebrow: "New vehicle batch",
       photosNote: undefined,
-      step: { current: 2, total: 4 },
+      step: { current: 2, labels: ["Vehicle", "Photos", "Studio", "Review"], total: 4 },
       title: "Upload photos",
     });
   });

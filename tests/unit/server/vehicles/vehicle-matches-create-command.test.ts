@@ -36,4 +36,13 @@ describe("vehicleMatchesCreateCommand", () => {
       }),
     ).toBe(false);
   });
+
+  it("ignores a stored legacy internal reference when comparing a replay", () => {
+    expect(vehicleMatchesCreateCommand({ ...vehicle, internalId: "LEGACY-1" }, {
+      name: "Porsche 911 Carrera",
+      brand: "Porsche",
+      model: "911",
+      year: 2026,
+    })).toBe(true);
+  });
 });

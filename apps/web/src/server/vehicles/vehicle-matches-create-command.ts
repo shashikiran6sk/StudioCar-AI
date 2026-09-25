@@ -11,7 +11,6 @@ export function vehicleMatchesCreateCommand(
     vehicle.variant === (command.variant ?? null) &&
     vehicle.year === (command.year ?? null) &&
     vehicle.stockId === (command.stockId ?? null) &&
-    vehicle.internalId === (command.internalId ?? null) &&
     vehicle.notes === (command.notes ?? null)
   );
 }

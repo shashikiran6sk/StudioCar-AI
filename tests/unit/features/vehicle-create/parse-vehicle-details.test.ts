@@ -12,7 +12,6 @@ describe("parseVehicleDetails", () => {
         variant: "",
         year: "2026",
         stockId: "",
-        internalId: "",
         notes: "",
       }),
     ).toEqual({
@@ -35,7 +34,6 @@ describe("parseVehicleDetails", () => {
         variant: "",
         year: "1800",
         stockId: "",
-        internalId: "",
         notes: "",
       }),
     ).toMatchObject({

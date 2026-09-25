@@ -8,6 +8,7 @@ import {
 import {
   VEHICLE_CREATE_DESCRIPTION,
   VEHICLE_CREATE_EYEBROW,
+  VEHICLE_CREATE_STEP_LABELS,
   VEHICLE_CREATE_TOTAL_STEPS,
 } from "./vehicle-create.constants";
 import { VehicleCreateStep } from "./vehicle-create-step";
@@ -17,7 +18,7 @@ export interface StudioSelectionHeading {
   description: string;
   eyebrow: string;
   photosNote: string | undefined;
-  step: { current: number; total: number };
+  step: { current: number; labels?: readonly string[]; total: number };
   title: string;
 }
 
@@ -34,7 +35,7 @@ export function studioSelectionHeading(
       description: VEHICLE_CREATE_DESCRIPTION,
       eyebrow: VEHICLE_CREATE_EYEBROW,
       photosNote: undefined,
-      step: { current: step, total: VEHICLE_CREATE_TOTAL_STEPS },
+      step: { current: step, labels: VEHICLE_CREATE_STEP_LABELS, total: VEHICLE_CREATE_TOTAL_STEPS },
       title: vehicleCreateStepTitle(step),
     };
   }

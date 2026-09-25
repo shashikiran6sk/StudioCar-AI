@@ -1,6 +1,6 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-09-24
+Last updated: 2026-09-25
 
 ## Current status
 
@@ -934,6 +934,23 @@ exactly as before.
   `SQS_IMAGE_QUEUE_URL` (and queue credentials the worker container can see)
   before `pnpm infra:up`. Jobs still queued in the old local ElasticMQ are not
   migrated; re-process them after switching.
+
+### SC056 — Simplified new-vehicle metadata
+
+- Step 1 now requires only the vehicle name/reference. Stock/inventory ID and
+  notes remain optional, and brand, model, variant, and year sit in an optional
+  expandable specifications section. The four visible step labels are Vehicle,
+  Photos, Studio, and Review.
+- Create and update request schemas reject manually submitted `internalId`.
+  The database-generated vehicle UUID remains the internal identity. The
+  existing nullable `internalId` column and response field remain for older
+  records. No migration is required.
+- Form, contract, stepper, replay, and authenticated browser coverage were
+  updated. The browser flow verifies a name-only draft advances to Photos and
+  captures the simplified form.
+- Verification: focused tests, lint, typecheck, unit and integration suites,
+  database validation, build, and end-to-end suite.
+- Next reviewable slice: dedicated, debounced inventory search.
 
 ### Repository governance
 

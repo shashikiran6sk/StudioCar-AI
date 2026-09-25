@@ -15,7 +15,7 @@ const SESSION_COOKIE_NAME = "__Host-studiocar_session";
 const SESSION_COOKIE_SCOPE_URL = "https://localhost:3100";
 // The browser suite runs under APP_ENV=local, so signed links address the
 // Local profile's MinIO bucket; they are intercepted before any request leaves.
-const PRIVATE_S3_ROUTE = `${LOCAL_INFRASTRUCTURE.storageEndpoint}/${LOCAL_INFRASTRUCTURE.storageBucket}/**`;
+const PRIVATE_S3_ROUTE = `${LOCAL_INFRASTRUCTURE.storageEndpoint}/**`;
 const TEST_IMAGE = `
   <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
     <rect width="1280" height="720" fill="#e8e8e5"/>
@@ -83,6 +83,31 @@ inventoryTest(
         fullPage: true,
         path: testInfo.outputPath("desktop-empty-inventory.png"),
       });
+
+      await page.getByRole("button", { name: /Upload Vehicle/ }).first().click();
+      const vehicleDialog = page.getByRole("dialog");
+      await expect(vehicleDialog.getByText("Vehicle", { exact: true })).toBeVisible();
+      await expect(vehicleDialog.getByText("Photos", { exact: true })).toBeVisible();
+      await expect(vehicleDialog.getByText("Studio", { exact: true })).toBeVisible();
+      await expect(vehicleDialog.getByText("Review", { exact: true })).toBeVisible();
+      await expect(vehicleDialog.getByRole("textbox", { name: /internal id/i }))
+        .toHaveCount(0);
+      await vehicleDialog.getByText("Add vehicle specifications (optional)").click();
+      await expect(vehicleDialog.getByRole("textbox", { name: "Brand" })).toBeVisible();
+      await vehicleDialog.getByText("Add vehicle specifications (optional)").click();
+      await expect(vehicleDialog.getByRole("textbox", { name: "Brand" })).toBeHidden();
+      await vehicleDialog.getByRole("textbox", { name: /vehicle name/i })
+        .fill("2025 Porsche 911 Carrera");
+      await page.screenshot({
+        path: testInfo.outputPath("simplified-vehicle-details.png"),
+      });
+      await vehicleDialog.getByRole("button", { name: "Continue to photos" }).click();
+      await expect(vehicleDialog.getByText("Upload photos", { exact: true })).toBeVisible();
+      await vehicleDialog.getByRole("button", { name: "Close dialog" }).click();
+      await database.query('DELETE FROM "Vehicle" WHERE "userId" = $1 AND "name" = $2', [
+        userId,
+        "2025 Porsche 911 Carrera",
+      ]);
 
       await database.query(
         'INSERT INTO "Vehicle" ("id", "userId", "name", "brand", "model", "year", "stockId", "status", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)',
