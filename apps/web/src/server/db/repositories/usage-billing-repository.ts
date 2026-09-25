@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@studiocar/database-runtime";
 import {
   ImageAssetStatus,
+  SubscriptionSource,
   SubscriptionStatus,
   UsageEventType,
 } from "@studiocar/database-runtime";
@@ -26,6 +27,7 @@ export class PrismaUsageBillingRepository {
   ): Promise<string | null> {
     const subscription = await this.database.planSubscription.findFirst({
       where: {
+        source: SubscriptionSource.MANUAL_ADMIN,
         currentPeriodEnd: { gt: now },
         status: {
           in: [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING],
@@ -79,6 +81,7 @@ export class PrismaUsageBillingRepository {
         }),
         this.database.planSubscription.findFirst({
           where: {
+            source: SubscriptionSource.MANUAL_ADMIN,
             currentPeriodEnd: { gt: now },
             status: {
               in: [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING],

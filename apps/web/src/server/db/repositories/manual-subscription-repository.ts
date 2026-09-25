@@ -2,6 +2,7 @@ import type { ManualSubscriptionAssignment } from "@studiocar/contracts";
 import type { PrismaClient } from "@studiocar/database-runtime";
 import {
   AuthProvider,
+  CreditLedgerType,
   SubscriptionSource,
   SubscriptionStatus,
 } from "@studiocar/database-runtime";
@@ -48,6 +49,36 @@ export type RevokeManualSubscriptionResult =
 export class PrismaManualSubscriptionRepository {
   public constructor(private readonly database: PrismaClient) {}
 
+  public async grantPlusCredits(command: { actorUserId: string; userId: string; note?: string }): Promise<"GRANTED" | "UNKNOWN_ACCOUNT"> {
+    return this.database.$transaction(async (transaction) => {
+      const [account, plan] = await Promise.all([
+        transaction.user.findUnique({ where: { id: command.userId }, select: { id: true } }),
+        transaction.planConfig.findUnique({ where: { planKey: "STUDIO_PLUS" }, select: { active: true, includedImages: true } }),
+      ]);
+      if (!account) return "UNKNOWN_ACCOUNT";
+      if (!plan?.active) throw new Error("Studio Plus is unavailable.");
+      const entry = await transaction.creditLedger.create({
+        data: {
+          userId: command.userId,
+          amount: plan.includedImages,
+          type: CreditLedgerType.ADMIN_ADJUSTMENT,
+          referenceId: crypto.randomUUID(),
+        },
+        select: { id: true },
+      });
+      await transaction.auditLog.create({
+        data: {
+          userId: command.actorUserId,
+          action: "ADMIN_CREDIT_GRANTED",
+          resourceType: "CreditLedger",
+          resourceId: entry.id,
+          metadata: { accountUserId: command.userId, amount: plan.includedImages, note: command.note ?? null },
+        },
+      });
+      return "GRANTED";
+    });
+  }
+
   /**
    * Finds the one account that has **verified** an exact contact.
    *
@@ -89,7 +120,7 @@ export class PrismaManualSubscriptionRepository {
   }
 
   /**
-   * Hands a paid plan to one account until a billing provider exists.
+   * Grants paid plan access manually without recording a provider payment.
    *
    * A subscription a provider owns is never touched: the provider is the
    * authority on what somebody has paid for, and overwriting its row here

@@ -92,7 +92,7 @@ export const ADMIN_SUBSCRIPTIONS_PATH = "/admin/subscriptions";
 export const ADMIN_SUBSCRIPTIONS_EYEBROW = "Administration";
 export const ADMIN_SUBSCRIPTIONS_TITLE = "Subscriptions";
 export const ADMIN_SUBSCRIPTIONS_DESCRIPTION =
-  "Assign a paid plan by hand until a billing provider is connected. A subscription a provider owns is never overwritten from here.";
+  "Grant Studio Plus credits or Studio Pro access manually. Provider subscriptions remain under Razorpay control.";
 
 export const ADMIN_LOOKUP_LABEL = "Find an account";
 export const ADMIN_LOOKUP_FIELD_LABEL = "Verified email or mobile number";

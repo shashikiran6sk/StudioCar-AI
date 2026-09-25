@@ -119,7 +119,7 @@ databaseDescribe("PrismaPlanConfigRepository", () => {
     const plus = stored.find((plan) => plan.planKey === "STUDIO_PLUS");
     expect(plus).toMatchObject({
       displayName: "Studio Plus",
-      priceMinorUnits: 149_900,
+      priceMinorUnits: 199_900,
       includedImages: 100,
       maxImagesPerBatch: 20,
       allowanceScope: "LIFETIME",

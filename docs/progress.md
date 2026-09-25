@@ -2,6 +2,10 @@
 
 Last updated: 2026-09-25
 
+## Razorpay billing integration in progress
+
+The dedicated billing branch adds Test/Live key validation, explicit price-version/Plan mapping, Studio Plus Orders Checkout, Studio Pro Subscription Checkout, signature verification, a raw-body signed webhook inbox, per-payment receipts, separate purchased credits and Pro period allowances, and owner-scoped billing reads. Processing reservations use a per-user PostgreSQL lock, allocate Pro before purchased credits, and settle or release allocations with terminal worker outcomes. The existing processing outbox remains the enqueue recovery path. Manual Studio Plus grants are ledger adjustments; manual Pro grants remain distinct from provider subscriptions. The billing business record is stored in `AppConfig` and receipts snapshot a non-GST sole proprietor identity. See `docs/razorpay-billing.md` for setup and the current GST/refund reconciliation limits. The full unit, PostgreSQL integration, and browser end-to-end suites, lint, typecheck, Prisma validation/status, and production build passed on the billing branch against an isolated database; no actual Razorpay Test or Live transaction has been performed because credentials and Dashboard resources must be supplied by the merchant. Branch review and CI remain before merge.
+
 ## Current status
 
 Every slice in the accepted plan is implemented and merged.

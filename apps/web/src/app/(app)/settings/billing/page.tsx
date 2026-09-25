@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 
 import { LOGIN_PATH } from "../../../app-routes";
 import { BillingPlanGrid } from "../../../../features/billing/billing-plan-grid";
-import { BillingUnavailableAction } from "../../../../features/billing/billing-unavailable-action";
 import { UsageOverview } from "../../../../features/billing/usage-overview";
+import { BillingAccountDetails } from "../../../../features/billing/billing-account-details";
 import {
   USAGE_BILLING_DESCRIPTION,
   USAGE_BILLING_EYEBROW,
@@ -13,6 +13,8 @@ import {
 import { getCurrentSession } from "../../../../server/auth/get-current-session";
 import { getUsageBillingSummary } from "../../../../server/billing/get-usage-billing-summary";
 import { getPlanCatalog } from "../../../../server/plans/get-plan-catalog";
+import { getBillingRuntime } from "../../../../server/billing/billing-runtime";
+import { getBillingStatus } from "../../../../server/billing/get-billing-status";
 
 export const dynamic = "force-dynamic";
 
@@ -20,9 +22,16 @@ export default async function UsageBillingPage() {
   const session = await getCurrentSession();
   if (!session) redirect(LOGIN_PATH);
 
-  const [summary, plans] = await Promise.all([
+  const database = getBillingRuntime().database;
+  const [summary, plans, billingStatus, payments] = await Promise.all([
     getUsageBillingSummary(session.userId),
     getPlanCatalog(),
+    getBillingStatus(database, session.userId),
+    database.payment.findMany({
+      where: { userId: session.userId, status: { in: ["PAID", "REFUNDED", "PARTIALLY_REFUNDED"] } },
+      orderBy: { createdAt: "desc" }, take: 100,
+      select: { id: true, createdAt: true, productCode: true, amountPaise: true, currency: true, status: true, receipt: { select: { id: true } } },
+    }),
   ]);
 
   return (
@@ -33,9 +42,10 @@ export default async function UsageBillingPage() {
           <h1>{USAGE_BILLING_TITLE}</h1>
           <p>{USAGE_BILLING_DESCRIPTION}</p>
         </div>
-        <BillingUnavailableAction label={USAGE_BILLING_UPGRADE_LABEL} />
+        <a className="sc-button sc-button--blue" href="#packs">{USAGE_BILLING_UPGRADE_LABEL}</a>
       </header>
       <UsageOverview summary={summary} />
+      <BillingAccountDetails status={billingStatus} payments={payments} />
       <BillingPlanGrid currentPlanKey={summary.currentPlan.key} plans={plans} />
     </div>
   );

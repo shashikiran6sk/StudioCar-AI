@@ -99,6 +99,11 @@ jobs:
       # is contacted and no credential is needed.
       APP_ENV: local
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/studiocar_e2e
+      # Browser smoke tests do not call Razorpay; these satisfy strict Local
+      # startup validation without using a merchant credential.
+      RAZORPAY_KEY_ID: rzp_test_ci_placeholder
+      RAZORPAY_KEY_SECRET: ci_placeholder
+      RAZORPAY_WEBHOOK_SECRET: ci_placeholder
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
@@ -119,6 +124,12 @@ jobs:
 
       - name: Apply migrations for authenticated browser tests
         run: pnpm db:migrate:deploy
+
+      - name: Generate Prisma client for billing seed
+        run: pnpm db:generate
+
+      - name: Seed billing plans for authenticated browser tests
+        run: pnpm db:seed
 
       - name: Build
         run: pnpm build

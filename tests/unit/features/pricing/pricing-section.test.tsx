@@ -11,7 +11,7 @@ describe("PricingSection", () => {
     expect(
       screen.getByRole("heading", { name: /Start free. Add capacity/ }),
     ).toBeVisible();
-    expect(screen.getByText("₹1,499")).toBeVisible();
+    expect(screen.getByText("₹1,999")).toBeVisible();
     expect(screen.getByText(/billing provider is connected/)).toBeVisible();
     for (const action of screen.getAllByRole("link")) {
       expect(action).toHaveAttribute("href", "/login?returnTo=%2Fdashboard");
@@ -28,6 +28,6 @@ describe("PricingSection", () => {
     render(<PricingSection plans={edited} />);
 
     expect(screen.getByText("₹2,499")).toBeVisible();
-    expect(screen.queryByText("₹1,499")).not.toBeInTheDocument();
+    expect(screen.queryByText("₹1,999")).not.toBeInTheDocument();
   });
 });

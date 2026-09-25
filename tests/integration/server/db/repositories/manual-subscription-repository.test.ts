@@ -182,9 +182,7 @@ databaseDescribe("PrismaManualSubscriptionRepository", () => {
       ).resolves.toEqual({ kind: "REPLACED" });
 
       // Exactly one plan applies, so "which plan" is never ambiguous.
-      await expect(billing.findOwnedPlanKey(owner.id, now)).resolves.toBe(
-        "STUDIO_PLUS",
-      );
+      await expect(billing.findOwnedPlanKey(owner.id, now)).resolves.toBe("STUDIO_PLUS");
       expect(
         await database.planSubscription.count({
           where: { userId: owner.id, status: "ACTIVE" },
@@ -217,9 +215,7 @@ databaseDescribe("PrismaManualSubscriptionRepository", () => {
           periodEnd,
         }),
       ).resolves.toEqual({ kind: "REPLACED" });
-      await expect(billing.findOwnedPlanKey(owner.id, now)).resolves.toBe(
-        "STUDIO_PRO",
-      );
+      await expect(billing.findOwnedPlanKey(owner.id, now)).resolves.toBe("STUDIO_PRO");
     });
 
     it("never overwrites a subscription a payment provider owns", async () => {
@@ -250,9 +246,7 @@ databaseDescribe("PrismaManualSubscriptionRepository", () => {
       ).resolves.toEqual({ kind: "PROVIDER_MANAGED" });
 
       // The provider is the authority on what somebody has paid for.
-      await expect(billing.findOwnedPlanKey(owner.id, now)).resolves.toBe(
-        "STUDIO_PLUS",
-      );
+      await expect(billing.findOwnedPlanKey(owner.id, now)).resolves.toBeNull();
       expect(
         await database.auditLog.count({
           where: { resourceType: "PlanSubscription" },
@@ -415,9 +409,7 @@ databaseDescribe("PrismaManualSubscriptionRepository", () => {
       await expect(
         repository.revoke({ actorUserId: admin.id, now, userId: owner.id }),
       ).resolves.toEqual({ kind: "NOT_ASSIGNED" });
-      await expect(billing.findOwnedPlanKey(owner.id, now)).resolves.toBe(
-        "STUDIO_PRO",
-      );
+      await expect(billing.findOwnedPlanKey(owner.id, now)).resolves.toBeNull();
     });
 
     it("reports an account with nothing to end", async () => {

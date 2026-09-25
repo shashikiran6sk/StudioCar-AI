@@ -531,7 +531,7 @@ Sentence case everywhere. Uppercase is limited to eyebrow/micro labels with incr
 
 ### 4.15 Currency and locale
 
-Prototype pricing uses Indian rupees and `en-IN` grouping: `₹1,499`, `₹3,999 / month`. These values are illustrative until commercial approval. Dates use `Sep 18, 2026` in compact metadata and `September 18, 2026` when written in full. Store dates in an unambiguous machine format and localize at render time.
+Pricing uses Indian rupees and `en-IN` grouping: `₹1,999` one-time for Studio Plus and `₹5,499 / month` for Studio Pro. The admin-managed catalog is authoritative. Dates use `Sep 18, 2026` in compact metadata and `September 18, 2026` when written in full. Store dates in an unambiguous machine format and localize at render time.
 
 ### 4.16 Accessibility
 
