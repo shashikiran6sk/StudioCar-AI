@@ -201,6 +201,12 @@ rebuild.
 credential that makes access-token verification a server-to-server call, and it
 is the only thing that distinguishes a proven handset from a claimed one.
 
+Phone verification diagnostics never contain the typed code, an access token,
+the widget token, `MSG91_AUTH_KEY`, or a session cookie. Browser widget
+failures are logged only in development builds. The server records refused
+verifications as a bounded reason and a count, without the phone number. See
+`docs/phone-otp.md`.
+
 `PHONE_OTP_DRIVER=fake` sends no message and accepts `PHONE_OTP_DEV_CODE`.
 Only the Local profile allows it. Under Development and production, missing
 widget credentials are a configuration error rather than a silently hidden

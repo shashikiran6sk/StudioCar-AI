@@ -129,12 +129,18 @@ export const SessionEnvironmentSchema = z
   .strip()
   .superRefine(refineEnvironmentIsolation);
 
+/**
+ * How long the server honours a phone challenge. It must not end before the
+ * provider's own code expiry, or a code MSG91 still accepts would be refused:
+ * the default matches the MSG91 widget's configured 15-minute `expiryTime`,
+ * so MSG91 stays the effective authority on code expiry.
+ */
 const PhoneOtpChallengeTtlSchema = z.coerce
   .number()
   .int()
   .min(60)
   .max(900)
-  .default(600);
+  .default(900);
 
 const PhoneOtpRateLimitWindowSchema = z.coerce
   .number()

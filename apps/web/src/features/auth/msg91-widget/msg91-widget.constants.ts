@@ -8,10 +8,18 @@ export const MSG91_WIDGET_LOAD_ERROR =
   "The verification service could not be loaded.";
 export const MSG91_WIDGET_STARTUP_ERROR =
   "The verification service did not finish starting up. Check that this domain is allow-listed on the MSG91 widget.";
-export const MSG91_WIDGET_NO_TOKEN_ERROR =
-  "The verification service returned no access token.";
-export const MSG91_WIDGET_UNAVAILABLE_ERROR =
-  "The verification service is not available on this page.";
+export const MSG91_OTP_FAILURE_LOG_MESSAGE = "MSG91 OTP widget call failed";
+
+/**
+ * `getWidgetData().widgetType.value` for a widget configured as Custom. The
+ * provider script requires an explicit channel for `retryOtp` on these, and
+ * throws when it is `null`.
+ */
+export const MSG91_CUSTOM_WIDGET_TYPE = "2";
+/** `processes[].processVia.value` for a resend (retry) process. */
+export const MSG91_RETRY_PROCESS_VIA = "5";
+/** `processes[].channel.value` and `retryOtp` channel for SMS. */
+export const MSG91_SMS_CHANNEL = "11";
 
 export const MSG91_ACCESS_TOKEN_KEYS: readonly string[] = [
   "message",

@@ -90,7 +90,7 @@ export async function handlePhoneAuthStart(
     }
     return createPhoneAuthErrorResponse(
       new PhoneOtpApplicationError(
-        PhoneOtpApplicationErrorCode.ProviderUnavailable,
+        PhoneOtpApplicationErrorCode.ServiceUnavailable,
       ),
       createRequestId,
     );

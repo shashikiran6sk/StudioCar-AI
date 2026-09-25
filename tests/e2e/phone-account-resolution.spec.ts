@@ -59,3 +59,43 @@ phoneTest("verifies a new phone, creates one account, then signs into it", async
     await database.end();
   }
 });
+
+phoneTest("keeps a wrong code on the code step as an incorrect code, not an outage", async ({ page }, testInfo) => {
+  if (!databaseUrl) throw new Error("DATABASE_URL is required.");
+  const database = new Pool({ connectionString: databaseUrl, max: 1 });
+  const phone = "+918765430103";
+
+  try {
+    await database.query('DELETE FROM "PhoneOtpChallenge" WHERE "phoneNumber" = $1', [phone]);
+    await page.goto("/login");
+    await page.getByRole("textbox", { name: "Phone number" }).fill(phone);
+    await page.getByRole("button", { name: "Continue with phone" }).click();
+
+    await expect(page.getByRole("heading", { name: "Enter verification code" })).toBeVisible();
+    await expect(page.getByText("+91 ******0103")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Resend code in \d+s/ })).toBeDisabled();
+
+    const code = page.getByRole("textbox", { name: "Verification code" });
+    await code.fill("9999");
+    await page.getByRole("button", { name: "Verify and continue" }).click();
+
+    await expect(
+      page.getByText("The verification code you entered is incorrect. Please try again."),
+    ).toBeVisible();
+    await expect(page.getByText(/not available/)).toHaveCount(0);
+    await expect(code).toHaveValue("");
+    await expect(code).toBeFocused();
+    await page.screenshot({
+      fullPage: true,
+      path: testInfo.outputPath("incorrect-code.png"),
+    });
+
+    await code.fill(DEV_CODE);
+    await page.getByRole("button", { name: "Verify and continue" }).click();
+    await expect(page.getByRole("button", { name: "Create new account" })).toBeVisible();
+  } finally {
+    await database.query('DELETE FROM "PhoneOtpChallenge" WHERE "phoneNumber" = $1', [phone]);
+    await database.query('DELETE FROM "User" WHERE "primaryPhone" = $1', [phone]);
+    await database.end();
+  }
+});

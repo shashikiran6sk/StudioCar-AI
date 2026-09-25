@@ -5,6 +5,10 @@ import {
   GoogleIdTokenClaimsSchema,
   GoogleOAuthCallbackSchema,
   GoogleOAuthChallengePayloadSchema,
+  Msg91WidgetDataSchema,
+  Msg91WidgetFailureSchema,
+  Msg91WidgetSuccessSchema,
+  Msg91WidgetTransportFailureSchema,
   Msg91WidgetVerificationSchema,
   PhoneOtpWidgetSchema,
   PhoneAuthenticationStatus,
@@ -187,5 +191,55 @@ describe("Google authentication contracts", () => {
         email_verified: false,
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("MSG91 widget callback contracts", () => {
+  it("reads a send or resend success as a request id", () => {
+    expect(
+      Msg91WidgetSuccessSchema.parse({
+        type: "success",
+        message: "36697969654e303536353038",
+      }).message,
+    ).toBe("36697969654e303536353038");
+    expect(
+      Msg91WidgetSuccessSchema.safeParse({ type: "error", message: "x" }).success,
+    ).toBe(false);
+  });
+
+  it("accepts every observed refusal shape", () => {
+    for (const refusal of [
+      { message: "invalid otp", type: "error", code: 705 },
+      { message: "reqId is required.", type: "error", hasError: true, status: "fail" },
+      { message: "OTP not provided in verifyOtp() method." },
+    ]) {
+      expect(Msg91WidgetFailureSchema.safeParse(refusal).success).toBe(true);
+    }
+    expect(Msg91WidgetFailureSchema.safeParse({ code: { nested: 1 } }).success).toBe(
+      false,
+    );
+  });
+
+  it("recognises the widget's transport failure list", () => {
+    expect(
+      Msg91WidgetTransportFailureSchema.safeParse(["Something went wrong."])
+        .success,
+    ).toBe(true);
+    expect(
+      Msg91WidgetTransportFailureSchema.safeParse({ message: "x" }).success,
+    ).toBe(false);
+  });
+
+  it("reads the dashboard settings the application depends on", () => {
+    expect(
+      Msg91WidgetDataSchema.parse({
+        widgetType: { value: "2", name: "Custom" },
+        otpLength: "6",
+        retryTime: 60,
+        processes: [{ processVia: { value: "5" }, channel: { value: "11" } }],
+        companyId: 1,
+      }),
+    ).toMatchObject({ otpLength: 6, retryTime: 60 });
+    expect(Msg91WidgetDataSchema.safeParse({ otpLength: 0 }).success).toBe(false);
   });
 });

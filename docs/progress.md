@@ -977,6 +977,58 @@ exactly as before.
 - Next reviewable slice: any later inventory search expansion based on product
   needs and measured query performance.
 
+### SC058 — Distinct MSG91 OTP errors, a working resend, and the template audit
+
+- **Root cause.** MSG91 reports a refused code as a plain object
+  (`{ type: "error", message: "invalid otp", code: 705 }`), not an `Error`.
+  `callMsg91Method` turned every non-`Error` refusal into "The verification
+  service is not available on this page", so a wrong code read as an outage.
+  Failures are now normalized by `normalizeMsg91OtpError` into
+  `INVALID_OTP`, `OTP_EXPIRED`, `TOO_MANY_ATTEMPTS`, `RATE_LIMITED`,
+  `OTP_SESSION_EXPIRED`, `INVALID_REQUEST`, `NETWORK_ERROR`,
+  `SERVICE_UNAVAILABLE`, or `UNKNOWN_PROVIDER_ERROR`. Only the last three
+  unreachable cases are described as unavailable.
+- **Provider codes from live responses.** MSG91 publishes none for the widget
+  endpoints, so codes were recorded against the real widget: `705` invalid
+  OTP, `704` limit after three wrong codes on verify but "wait N seconds" on
+  resend, `709` unknown request, `708` malformed request. The mapping is keyed
+  on operation and code, and unseen codes stay unknown rather than guessed.
+- **Resend.** The widget is Custom, and the provider script throws when
+  `retryOtp` gets a `null` channel. Every resend therefore silently became a
+  fresh `sendOtp`. Resend now calls `retryOtp` with the widget's SMS resend
+  channel and the current `reqId`, never falls back on failure, and starts a
+  new request only once the current one is spent. The countdown follows the
+  widget's `retryTime` or MSG91's stated wait.
+- **Form.** Code length comes from the widget configuration. Verify stays
+  disabled until the code is complete; letters are stripped and malformed codes
+  never reach MSG91. A ref guard allows one verification at a time. A refused
+  code is cleared and focus returns to the field, while an outage keeps it.
+  Confirmation, countdown, masked number, and live-region error states were
+  added in a new `PhoneOtpStep` component. The profile connect form passes the
+  `reqId` and uses the same guard.
+- **Server.** Messages for invalid, expired, locked, rate-limited,
+  verification-rate-limited, provider-unavailable and unexpected failures are
+  now distinct. The per-challenge attempt cap answers 429. Refused
+  verifications emit the bounded `phone_otp_verification_refused` event
+  through `@studiocar/observability`. The challenge TTL default is now 900 s to
+  match the widget's 15-minute expiry, so StudioCar no longer refuses a code
+  in minutes 10–15 that MSG91 still accepts.
+- **SMS template audit.** The "Team Dashanan" text is MSG91's shared default
+  template: every widget process has `use_default: true` and no template id.
+  Branding needs a DLT-registered custom template and sender, attached to the
+  widget's SMS send and resend processes in the MSG91 dashboard. It moves
+  billing from the OTP Widget subscription to the SMS wallet. The steps are in
+  `docs/phone-otp.md`; no application change is needed.
+- No schema migration. `apps/web` now depends on `@studiocar/observability`.
+- Verification: focused tests; lint, typecheck, unit, integration against a
+  fresh PostgreSQL 17, database validation and migration status, build, and
+  end-to-end suite.
+- Open items: confirm in the MSG91 widget logs the code MSG91 returns for an
+  expired OTP, and whether `retryOtp` resets the three-attempt limit. Then add
+  them to the mapping. Review the widget's captcha and OTP security settings.
+- Next reviewable slice: DLT-registered StudioCar SMS template (dashboard
+  only), then map the confirmed expiry code.
+
 ### Repository governance
 
 - Added mandatory repository-wide agent instructions and repository context.
@@ -1026,7 +1078,7 @@ true when it does ship.
 - Prisma CLI validation/generation can run without secrets; migration and integration commands require `DATABASE_URL`.
 - Real PostgreSQL integration tests currently cover schema constraints, tenant-scoped vehicle operations, sessions, one-time OAuth challenges, canonical Google identities, OTP throttling, canonical phone identities, atomic phone-session completion, image upload idempotency, and concurrent processing-batch reservation.
 - Google OAuth requires an exact registered `GOOGLE_REDIRECT_URI`; production must use HTTPS. OAuth challenge TTL defaults to 10 minutes and is bounded to 1–15 minutes.
-- MSG91 uses the Widget flow, not the DLT-template server API. Allow-list every origin that renders the sign-in surface on the MSG91 widget, or `sendOtp` and `verifyOtp` will never answer. Raw OTPs are never received, persisted, or logged; only a hash of the verified access token is stored, to make it single use.
+- MSG91 uses the Widget flow, not the DLT-template server API. Error mapping, attempt/resend policy and SMS template setup: `docs/phone-otp.md`. Allow-list every origin that renders the sign-in surface on the MSG91 widget, or `sendOtp` and `verifyOtp` will never answer. Raw OTPs are never received, persisted, or logged; only a hash of the verified access token is stored, to make it single use.
 - Expired OTP challenge and verification-attempt cleanup is intentionally deferred to the production cleanup-jobs slice; indexes support bounded deletion without affecting authentication correctness.
 - The authenticated route group enforces session authorization on the server. Future API handlers and repositories must still perform their own authentication, tenant authorization, and ownership checks.
 - Product navigation entries remain non-interactive until their corresponding slices land; this prevents dead routes while preserving the screenshot-derived application shell.

@@ -21,6 +21,29 @@ import type {
   PreparedSession,
 } from "../session-service";
 
+/**
+ * Why the server refused a phone verification. Bounded values only: these are
+ * written to operational logs and metrics, never a number, code or token.
+ */
+export enum PhoneOtpRefusalReason {
+  ProviderRejected = "provider_rejected",
+  IdentifierMismatch = "identifier_mismatch",
+  TokenReplayed = "token_replayed",
+  ProviderUnavailable = "provider_unavailable",
+  ChallengeExpired = "challenge_expired",
+  TooManyAttempts = "too_many_attempts",
+  RateLimited = "rate_limited",
+  InvalidChallenge = "invalid_challenge",
+}
+
+/**
+ * Observes refused verifications so operators can compare StudioCar's view
+ * with MSG91's widget logs. Implementations must never throw.
+ */
+export interface PhoneOtpVerificationObserver {
+  verificationRefused(reason: PhoneOtpRefusalReason): void;
+}
+
 export enum PhoneOtpIdentificationStatus {
   Verified = "verified",
   Rejected = "rejected",

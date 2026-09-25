@@ -20,6 +20,7 @@ import { Msg91WidgetOtpProvider } from "./msg91-widget-otp-provider";
 import type { PhoneOtpApplication, PhoneOtpProvider } from "./phone-auth.types";
 import { PhoneOtpService } from "./phone-otp-service";
 import { PhoneAccountService } from "./phone-account-service";
+import { TelemetryPhoneOtpVerificationObserver } from "./telemetry-phone-otp-verification-observer";
 
 const MISSING_MSG91_AUTH_KEY_ERROR =
   "MSG91_AUTH_KEY is required when PHONE_OTP_DRIVER is msg91.";
@@ -73,6 +74,7 @@ export function getPhoneOtpApplication(): PhoneOtpApplication {
       verifyMaxPerChallenge: environment.PHONE_OTP_VERIFY_MAX_PER_CHALLENGE,
       verifyMaxPerIp: environment.PHONE_OTP_VERIFY_MAX_PER_IP,
       generateBrowserBinding: createPhoneOtpBrowserBinding,
+      observer: new TelemetryPhoneOtpVerificationObserver(),
     },
   );
 
