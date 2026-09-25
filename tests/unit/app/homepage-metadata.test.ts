@@ -39,6 +39,9 @@ describe("homepage metadata", () => {
     vi.stubEnv("APP_ENV", "local");
     request.host = "localhost:3000";
     expect((await generateMetadata()).robots).toEqual({ index: false, follow: false });
+    vi.stubEnv("APP_ENV", undefined);
+    request.host = "studiocarai.com";
+    expect((await generateMetadata()).robots).toEqual({ index: false, follow: false });
   });
 
   it("adds Search Console verification only when a real token is configured", async () => {

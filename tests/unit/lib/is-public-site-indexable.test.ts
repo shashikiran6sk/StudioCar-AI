@@ -12,5 +12,6 @@ describe("isPublicSiteIndexable", () => {
     expect(isPublicSiteIndexable("production", "production", "preview.vercel.app")).toBe(false);
     expect(isPublicSiteIndexable("production", "production", "localhost:3000")).toBe(false);
     expect(isPublicSiteIndexable("production", "production", "www.studiocarai.com")).toBe(false);
+    expect(isPublicSiteIndexable(undefined, "preview", "studiocarai.com")).toBe(false);
   });
 });

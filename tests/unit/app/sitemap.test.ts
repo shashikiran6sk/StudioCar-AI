@@ -25,4 +25,10 @@ describe("sitemap route", () => {
     vi.stubEnv("VERCEL_ENV", "preview");
     expect(await sitemap()).toEqual([]);
   });
+
+  it("publishes no URLs when a preview lacks APP_ENV", async () => {
+    vi.stubEnv("APP_ENV", undefined);
+    vi.stubEnv("VERCEL_ENV", "preview");
+    expect(await sitemap()).toEqual([]);
+  });
 });

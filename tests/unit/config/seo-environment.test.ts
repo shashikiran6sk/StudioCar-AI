@@ -8,6 +8,7 @@ describe("parseSeoEnvironment", () => {
       .toEqual({ APP_ENV: "production", VERCEL_ENV: "production" });
     expect(parseSeoEnvironment({ APP_ENV: "production", GOOGLE_SITE_VERIFICATION: "token" }))
       .toMatchObject({ GOOGLE_SITE_VERIFICATION: "token" });
+    expect(parseSeoEnvironment({ VERCEL_ENV: "preview" })).toEqual({ VERCEL_ENV: "preview" });
     expect(() => parseSeoEnvironment({ APP_ENV: "unknown" })).toThrow();
     expect(() => parseSeoEnvironment({ APP_ENV: "production", VERCEL_ENV: "unknown" })).toThrow();
   });

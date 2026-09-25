@@ -257,7 +257,7 @@ default except the driver choices the production profile itself makes.
 
 Only the canonical `https://studiocarai.com/` homepage is indexable. The SEO
 routes use `APP_ENV`, Vercel's `VERCEL_ENV` when present, and the request host:
-Local, Development, previews, and noncanonical hosts emit `noindex, nofollow`,
+Local, Development, previews, missing `APP_ENV`, and noncanonical hosts emit `noindex, nofollow`,
 disallow crawling, and publish an empty sitemap. Workspace, administrator,
 sign-in, and authentication error pages are always `noindex, nofollow`.
 

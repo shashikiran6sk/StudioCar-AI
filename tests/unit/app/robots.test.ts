@@ -31,4 +31,10 @@ describe("robots route", () => {
     vi.stubEnv("VERCEL_ENV", "preview");
     expect((await robots()).rules).toMatchObject({ disallow: "/" });
   });
+
+  it("fails closed when a preview has no APP_ENV", async () => {
+    vi.stubEnv("APP_ENV", undefined);
+    vi.stubEnv("VERCEL_ENV", "preview");
+    expect((await robots()).rules).toMatchObject({ disallow: "/" });
+  });
 });

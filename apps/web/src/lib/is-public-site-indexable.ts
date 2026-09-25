@@ -3,7 +3,7 @@ import { AppEnvironment } from "@studiocar/config";
 import { siteConfig } from "./site-config";
 
 export function isPublicSiteIndexable(
-  appEnvironment: AppEnvironment,
+  appEnvironment: AppEnvironment | undefined,
   vercelEnvironment: "development" | "preview" | "production" | undefined,
   host: string | null,
 ): boolean {
