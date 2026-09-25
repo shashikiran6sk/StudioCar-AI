@@ -253,6 +253,20 @@ Production refuses, at startup:
 Missing production configuration is always an error. Nothing is filled in by a
 default except the driver choices the production profile itself makes.
 
+### Search indexing and Search Console
+
+Only the canonical `https://studiocarai.com/` homepage is indexable. The SEO
+routes use `APP_ENV`, Vercel's `VERCEL_ENV` when present, and the request host:
+Local, Development, previews, and noncanonical hosts emit `noindex, nofollow`,
+disallow crawling, and publish an empty sitemap. Workspace, administrator,
+sign-in, and authentication error pages are always `noindex, nofollow`.
+
+To complete Google Search Console verification, add the Google-provided token
+as optional server-side `GOOGLE_SITE_VERIFICATION` in the Vercel Production
+environment. The homepage then emits the verification meta tag. No token is
+needed to build or deploy. Verify the `studiocarai.com` property and submit
+`https://studiocarai.com/sitemap.xml` after deployment.
+
 ## Storage and queue ownership
 
 The application cannot see an AWS account, so it checks ownership by declared

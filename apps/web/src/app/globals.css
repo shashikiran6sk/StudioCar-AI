@@ -672,6 +672,7 @@ html {
 }
 
 .marketing-footer__brand {
+  scroll-margin-top: 78px;
   display: grid;
   align-content: start;
   justify-items: start;

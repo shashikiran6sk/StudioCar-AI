@@ -1,7 +1,15 @@
 [
   {
-    "source": "apps/web/src/app/layout.tsx",
-    "reason": "Static Next.js root layout and metadata only."
+    "source": "apps/web/src/lib/private-robots.ts",
+    "reason": "Static noindex policy asserted through the authenticated, admin, and auth layout tests."
+  },
+  {
+    "source": "apps/web/src/lib/seo-routes.ts",
+    "reason": "Static route list asserted through the robots route test."
+  },
+  {
+    "source": "apps/web/src/lib/site-config.ts",
+    "reason": "Static site identity asserted through root, homepage, sitemap, and JSON-LD tests."
   },
   {
     "source": "apps/web/src/app/app-routes.ts",
