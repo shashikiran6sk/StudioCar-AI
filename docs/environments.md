@@ -168,6 +168,8 @@ start without `SQS_IMAGE_QUEUE_URL`.
   on the MSG91 widget** — `http://localhost:3000` locally, and the exact origin
   of any hosted Development deployment. Do not disable the widget's domain
   restriction to make localhost work.
+  Error mapping, attempt and resend policy, and the SMS template setup are in
+  `docs/phone-otp.md`.
 - **Storage** is the dedicated AWS S3 Development bucket, reached by the
   browser through presigned PUTs exactly as in production. Its CORS rule must
   allow the Development origin (`AdditionalBrowserOrigin` in

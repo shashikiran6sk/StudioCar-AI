@@ -139,7 +139,7 @@ export async function handlePhoneAuthVerify(
     }
     return createPhoneAuthErrorResponse(
       new PhoneOtpApplicationError(
-        PhoneOtpApplicationErrorCode.ProviderUnavailable,
+        PhoneOtpApplicationErrorCode.ServiceUnavailable,
       ),
       createRequestId,
     );

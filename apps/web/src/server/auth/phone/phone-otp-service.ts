@@ -29,22 +29,32 @@ import type {
   PhoneIdentityLinkStore,
   PhoneOtpCompletionStore,
   PhoneOtpProvider,
+  PhoneOtpVerificationObserver,
   SessionPreparer,
   StartedPhoneOtp,
 } from "./phone-auth.types";
-import { PhoneOtpIdentificationStatus } from "./phone-auth.types";
+import {
+  PhoneOtpIdentificationStatus,
+  PhoneOtpRefusalReason,
+} from "./phone-auth.types";
 
 const INVALID_CONFIGURATION_MESSAGE =
   "Phone OTP configuration values must be positive safe integers.";
 
 export enum PhoneOtpApplicationErrorCode {
+  /** Too many codes requested for this phone or network. */
   RateLimited = "rate_limited",
+  /** Too many verification submissions from this network. */
+  VerificationRateLimited = "verification_rate_limited",
   InvalidChallenge = "invalid_challenge",
   InvalidOtp = "invalid_otp",
   Expired = "expired",
   TooManyAttempts = "too_many_attempts",
   IdentityLinkRequired = "identity_link_required",
+  /** MSG91 could not be reached to check the access token. */
   ProviderUnavailable = "provider_unavailable",
+  /** An unexpected failure unrelated to the code or the provider's answer. */
+  ServiceUnavailable = "service_unavailable",
 }
 
 export class PhoneOtpApplicationError extends Error {
@@ -67,13 +77,19 @@ export interface PhoneOtpServiceOptions {
   verifyMaxPerIp: number;
   now?: () => Date;
   generateBrowserBinding?: () => string;
+  observer?: PhoneOtpVerificationObserver;
 }
+
+const SILENT_OBSERVER: PhoneOtpVerificationObserver = {
+  verificationRefused: () => undefined,
+};
 
 export class PhoneOtpService implements PhoneOtpApplication {
   private readonly challengeTtlMs: number;
   private readonly rateLimitWindowMs: number;
   private readonly now: () => Date;
   private readonly generateBrowserBinding: () => string;
+  private readonly observer: PhoneOtpVerificationObserver;
 
   public constructor(
     private readonly challenges: PhoneOtpChallengeStore,
@@ -90,6 +106,7 @@ export class PhoneOtpService implements PhoneOtpApplication {
     this.now = options.now ?? (() => new Date());
     this.generateBrowserBinding =
       options.generateBrowserBinding ?? createPhoneOtpBrowserBinding;
+    this.observer = options.observer ?? SILENT_OBSERVER;
 
     const numericValues = [
       this.challengeTtlMs,
@@ -258,6 +275,9 @@ export class PhoneOtpService implements PhoneOtpApplication {
     const identification = await this.provider.identify(validated.accessToken);
 
     if (identification.status === PhoneOtpIdentificationStatus.Unavailable) {
+      this.observer.verificationRefused(
+        PhoneOtpRefusalReason.ProviderUnavailable,
+      );
       await this.challenges.recordProviderError(
         validated.challengeId,
         claim.attemptId,
@@ -280,6 +300,11 @@ export class PhoneOtpService implements PhoneOtpApplication {
       claimedIdentifier === null ||
       identification.identifier !== claimedIdentifier
     ) {
+      this.observer.verificationRefused(
+        identification.status === PhoneOtpIdentificationStatus.Rejected
+          ? PhoneOtpRefusalReason.ProviderRejected
+          : PhoneOtpRefusalReason.IdentifierMismatch,
+      );
       await this.challenges.recordInvalid(
         validated.challengeId,
         claim.attemptId,
@@ -303,6 +328,7 @@ export class PhoneOtpService implements PhoneOtpApplication {
       this.now(),
     );
     if (!providerRecorded) {
+      this.observer.verificationRefused(PhoneOtpRefusalReason.TokenReplayed);
       throw new PhoneOtpApplicationError(
         PhoneOtpApplicationErrorCode.InvalidOtp,
       );
@@ -319,19 +345,23 @@ export class PhoneOtpService implements PhoneOtpApplication {
     now: Date,
   ): never {
     if (claim.status === PhoneOtpVerificationClaimStatus.RateLimited) {
+      this.observer.verificationRefused(PhoneOtpRefusalReason.RateLimited);
       throw new PhoneOtpApplicationError(
-        PhoneOtpApplicationErrorCode.RateLimited,
+        PhoneOtpApplicationErrorCode.VerificationRateLimited,
         this.retryAfterSeconds(claim.retryAt, now),
       );
     }
     if (claim.status === PhoneOtpVerificationClaimStatus.TooManyAttempts) {
+      this.observer.verificationRefused(PhoneOtpRefusalReason.TooManyAttempts);
       throw new PhoneOtpApplicationError(
         PhoneOtpApplicationErrorCode.TooManyAttempts,
       );
     }
     if (claim.status === PhoneOtpVerificationClaimStatus.Expired) {
+      this.observer.verificationRefused(PhoneOtpRefusalReason.ChallengeExpired);
       throw new PhoneOtpApplicationError(PhoneOtpApplicationErrorCode.Expired);
     }
+    this.observer.verificationRefused(PhoneOtpRefusalReason.InvalidChallenge);
     throw new PhoneOtpApplicationError(
       PhoneOtpApplicationErrorCode.InvalidChallenge,
     );

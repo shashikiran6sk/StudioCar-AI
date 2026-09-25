@@ -558,5 +558,17 @@
   {
     "source": "packages/config/src/environment-isolation.types.ts",
     "reason": "Type-only description of the settings environment isolation inspects."
+  },
+  {
+    "source": "apps/web/src/features/auth/phone-otp-error/phone-otp-error.types.ts",
+    "reason": "Enum and type-only phone verification error definitions with no runtime behavior."
+  },
+  {
+    "source": "apps/web/src/features/auth/phone-otp-error/phone-otp-error.constants.ts",
+    "reason": "Static user-facing phone verification messages and category sets; exercised through create-phone-otp-error tests."
+  },
+  {
+    "source": "apps/web/src/features/auth/msg91-widget/msg91-otp-error.constants.ts",
+    "reason": "Static table of observed MSG91 widget refusal codes; exercised through normalize-msg91-otp-error tests."
   }
 ]

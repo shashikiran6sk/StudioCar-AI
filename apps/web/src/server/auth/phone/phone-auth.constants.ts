@@ -23,15 +23,26 @@ export const API_SERVICE_UNAVAILABLE_CODE = "SERVICE_UNAVAILABLE";
 
 export const INVALID_REQUEST_MESSAGE = "The request is invalid.";
 export const FORBIDDEN_REQUEST_MESSAGE = "The request origin is not allowed.";
-export const RATE_LIMITED_MESSAGE = "Too many attempts. Try again later.";
-export const INVALID_CHALLENGE_MESSAGE = "The OTP challenge is invalid or expired.";
-export const INVALID_OTP_MESSAGE = "The OTP is invalid.";
+export const RATE_LIMITED_MESSAGE =
+  "Too many OTP requests. Please wait before requesting another code.";
+export const VERIFICATION_RATE_LIMITED_MESSAGE =
+  "Too many verification attempts. Please try again later.";
+export const INVALID_CHALLENGE_MESSAGE =
+  "This verification session has ended. Request a new code to continue.";
+export const INVALID_OTP_MESSAGE =
+  "The verification code you entered is incorrect. Please try again.";
+export const OTP_EXPIRED_MESSAGE =
+  "This verification code has expired. Request a new code to continue.";
+export const TOO_MANY_ATTEMPTS_MESSAGE =
+  "Too many incorrect verification attempts. Please request a new code and try again.";
 export const IDENTITY_LINK_TAKEN_MESSAGE =
   "That sign-in method already belongs to another StudioCar AI account.";
 export const IDENTITY_LINK_REQUIRED_MESSAGE =
   "This phone number is already associated with an account.";
 export const PROVIDER_UNAVAILABLE_MESSAGE =
-  "Phone verification is temporarily unavailable.";
+  "We couldn't verify your code right now. Please try again.";
+export const SERVICE_UNAVAILABLE_MESSAGE =
+  "Phone verification is temporarily unavailable. Please try again.";
 export const PHONE_VERIFICATION_REQUIRED_MESSAGE =
   "Verify your phone number again before creating an account.";
 export const PHONE_ACCOUNT_TAKEN_MESSAGE =
@@ -55,3 +66,8 @@ export const DEVELOPMENT_OTP_TOKEN_SEPARATOR = ":";
 export const PHONE_OTP_WIDGET_DISABLED_REASON =
   "Set MSG91_WIDGET_ID, MSG91_WIDGET_TOKEN, and MSG91_AUTH_KEY to verify phone numbers.";
 export const PHONE_OTP_IDENTIFIER_MISMATCH_CODE = "identifier_mismatch";
+
+export const PHONE_OTP_TELEMETRY_SERVICE = "web-phone-auth";
+export const PHONE_OTP_REFUSAL_EVENT_NAME = "phone_otp_verification_refused";
+export const PHONE_OTP_REFUSAL_METRIC_NAME = "PhoneOtpVerificationRefused";
+export const PHONE_OTP_REFUSAL_REASON_DIMENSION = "Reason";
