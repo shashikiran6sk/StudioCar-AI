@@ -7,6 +7,7 @@ describe("vehicleReviewMetadata", () => {
     expect(
       vehicleReviewMetadata({
         brand: " BMW ",
+        internalId: "",
         model: "3 Series",
         name: "2022 BMW 3 Series",
         notes: "",

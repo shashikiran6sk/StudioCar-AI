@@ -8,6 +8,7 @@ export function toVehicleDetailsValues(
 ): VehicleDetailsValues {
   return {
     brand: vehicle.brand ?? "",
+    internalId: "",
     model: vehicle.model ?? "",
     name: vehicle.name,
     notes: "",

@@ -935,23 +935,6 @@ exactly as before.
   before `pnpm infra:up`. Jobs still queued in the old local ElasticMQ are not
   migrated; re-process them after switching.
 
-### SC056 — Simplified new-vehicle metadata
-
-- Step 1 now requires only the vehicle name/reference. Stock/inventory ID and
-  notes remain optional, and brand, model, variant, and year sit in an optional
-  expandable specifications section. The four visible step labels are Vehicle,
-  Photos, Studio, and Review.
-- Create and update request schemas reject manually submitted `internalId`.
-  The database-generated vehicle UUID remains the internal identity. The
-  existing nullable `internalId` column and response field remain for older
-  records. No migration is required.
-- Form, contract, stepper, replay, and authenticated browser coverage were
-  updated. The browser flow verifies a name-only draft advances to Photos and
-  captures the simplified form.
-- Verification: focused tests, lint, typecheck, unit and integration suites,
-  database validation, build, and end-to-end suite.
-- Next reviewable slice: dedicated, debounced inventory search.
-
 ### SC057 — Dedicated inventory search with debounce
 
 - Added authenticated `GET /api/inventory/search?q=...` with Zod validation
@@ -972,6 +955,20 @@ exactly as before.
 - No schema migration or infrastructure change. The current tenant/name
   index supports scoped reads; a substring-specific index should be reviewed
   if inventory search volume grows substantially.
+- Verification: focused tests and full repository gates including lint,
+  typecheck, unit and integration suites, database validation, build, and E2E.
+- Next reviewable slice: any later inventory search expansion based on product
+  needs and measured query performance.
+
+### SC058 — Revert simplified new-vehicle metadata
+
+- Reverted SC056 (PR #69) at the user's request. The original vehicle details
+  form, visible fields, stepper, validation, and create/update mappings are
+  restored. Existing vehicle records remain compatible; no migration is needed.
+- Kept SC057 (PR #70): the dedicated search endpoint and debounced inventory
+  toolbar still operate on the vehicle name and remain tenant scoped.
+- Updated browser coverage to verify the restored vehicle form and active
+  inventory search together.
 - Verification: focused tests and full repository gates including lint,
   typecheck, unit and integration suites, database validation, build, and E2E.
 - Next reviewable slice: any later inventory search expansion based on product

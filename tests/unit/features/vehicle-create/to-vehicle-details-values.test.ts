@@ -7,6 +7,7 @@ describe("toVehicleDetailsValues", () => {
   it("fills the review step's fields from an existing vehicle", () => {
     expect(toVehicleDetailsValues(selectionContext().vehicle)).toEqual({
       brand: "BMW",
+      internalId: "",
       model: "X1",
       name: "2024 BMW X1",
       notes: "",

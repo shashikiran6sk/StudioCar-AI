@@ -21,6 +21,7 @@ export function parseVehicleDetails(
     variant: optionalValue(values.variant),
     year: optionalValue(values.year),
     stockId: optionalValue(values.stockId),
+    internalId: optionalValue(values.internalId),
     notes: optionalValue(values.notes),
   });
   if (result.success) return { success: true, command: result.data };

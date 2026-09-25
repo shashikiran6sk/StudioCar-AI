@@ -28,6 +28,7 @@ export const CreateVehicleSchema = z
     variant: optionalText(80),
     year: z.coerce.number().int().min(1886).max(currentYear + 1).optional(),
     stockId: optionalText(80),
+    internalId: optionalText(80),
     notes: optionalText(2_000),
   })
   .strict();
