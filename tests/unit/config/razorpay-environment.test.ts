@@ -25,7 +25,7 @@ describe("Razorpay environment", () => {
   });
 
   it.each(["RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "RAZORPAY_WEBHOOK_SECRET"])("requires %s", (missing) => {
-    const input = { ...base, APP_ENV: "development", RAZORPAY_KEY_ID: "rzp_test_123" };
+    const input: Record<string, string | undefined> = { ...base, APP_ENV: "development", RAZORPAY_KEY_ID: "rzp_test_123" };
     delete input[missing];
     expect(() => parseRazorpayEnvironment(input)).toThrow();
   });
