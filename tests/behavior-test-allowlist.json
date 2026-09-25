@@ -352,6 +352,22 @@
     "reason": "Static inventory labels, filter presentation, and bounded page configuration only."
   },
   {
+    "source": "apps/web/src/app/api/inventory/search/route.ts",
+    "reason": "Composition route delegates to the tested inventory search handler."
+  },
+  {
+    "source": "apps/web/src/features/inventory/inventory-search-empty-state.tsx",
+    "reason": "Search-specific empty state and reset are exercised through InventoryExplorer tests."
+  },
+  {
+    "source": "apps/web/src/features/inventory/use-debounced-value.ts",
+    "reason": "The 400 ms debounce is exercised through InventoryExplorer tests with fake timers."
+  },
+  {
+    "source": "apps/web/src/features/inventory/use-inventory-search.ts",
+    "reason": "Cancellation and stale response handling are exercised through InventoryExplorer tests."
+  },
+  {
     "source": "apps/web/src/server/portfolio/portfolio.constants.ts",
     "reason": "Static private asset response and MIME-to-extension constants only."
   },

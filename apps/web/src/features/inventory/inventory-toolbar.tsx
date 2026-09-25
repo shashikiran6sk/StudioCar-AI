@@ -1,45 +1,68 @@
-import type { InventoryQuery } from "@studiocar/contracts";
-import { Button } from "@studiocar/ui";
-import Link from "next/link";
+"use client";
 
-import { INVENTORY_PATH } from "../../app/app-routes";
+import type { InventoryQuery } from "@studiocar/contracts";
+import { VehicleSortSchema } from "@studiocar/contracts";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
 import { createInventoryHref } from "./create-inventory-href";
 import {
-  INVENTORY_APPLY_LABEL,
-  INVENTORY_MODE_QUERY_KEY,
+  INVENTORY_CLEAR_SEARCH_LABEL,
   INVENTORY_SEARCH_LABEL,
+  INVENTORY_SEARCH_MAX_LENGTH,
   INVENTORY_SEARCH_PLACEHOLDER,
+  INVENTORY_SEARCHING_LABEL,
   INVENTORY_SORT_OPTIONS,
   INVENTORY_VIEWS,
 } from "./inventory.constants";
 
 export interface InventoryToolbarProps {
+  onClear: () => void;
+  onSearchChange: (value: string) => void;
   query: InventoryQuery;
+  searching: boolean;
+  searchText: string;
 }
 
-export function InventoryToolbar({ query }: InventoryToolbarProps) {
+export function InventoryToolbar({ onClear, onSearchChange, query, searching, searchText }: InventoryToolbarProps) {
+  const router = useRouter();
+
   return (
     <div className="inventory-toolbar">
-      <form action={INVENTORY_PATH} className="inventory-toolbar__form" method="get">
+      <div className="inventory-toolbar__form">
         <label className="sc-visually-hidden" htmlFor="inventory-search">
           {INVENTORY_SEARCH_LABEL}
         </label>
-        <input
-          className="sc-input inventory-toolbar__search"
-          defaultValue={query.query}
-          id="inventory-search"
-          name="query"
-          placeholder={INVENTORY_SEARCH_PLACEHOLDER}
-          type="search"
-        />
+        <div className="inventory-toolbar__search-wrap">
+          <svg aria-hidden="true" className="inventory-toolbar__search-icon" fill="none" viewBox="0 0 24 24">
+            <circle cx="10.8" cy="10.8" r="6.5" stroke="currentColor" strokeWidth="1.8" />
+            <path d="m15.6 15.6 5 5" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+          </svg>
+          <input
+            className="sc-input inventory-toolbar__search"
+            id="inventory-search"
+            maxLength={INVENTORY_SEARCH_MAX_LENGTH}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder={INVENTORY_SEARCH_PLACEHOLDER}
+            type="search"
+            value={searchText}
+          />
+          {searching ? <span aria-label={INVENTORY_SEARCHING_LABEL} className="inventory-toolbar__spinner" role="status" /> : null}
+          {searchText ? (
+            <button aria-label={INVENTORY_CLEAR_SEARCH_LABEL} className="inventory-toolbar__clear" onClick={onClear} type="button">×</button>
+          ) : null}
+        </div>
         <label className="sc-visually-hidden" htmlFor="inventory-sort">
           Sort inventory
         </label>
         <select
           className="inventory-toolbar__select"
-          defaultValue={query.sort}
           id="inventory-sort"
-          name="sort"
+          onChange={(event) => {
+            const sort = VehicleSortSchema.safeParse(event.target.value);
+            if (sort.success) router.push(createInventoryHref(query, { cursor: undefined, sort: sort.data }));
+          }}
+          value={query.sort}
         >
           {INVENTORY_SORT_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
@@ -47,19 +70,7 @@ export function InventoryToolbar({ query }: InventoryToolbarProps) {
             </option>
           ))}
         </select>
-        {query.filter !== "ALL" ? (
-          <input name="filter" type="hidden" value={query.filter} />
-        ) : null}
-        {query.mode !== "BROWSE" ? (
-          <input name={INVENTORY_MODE_QUERY_KEY} type="hidden" value={query.mode} />
-        ) : null}
-        {query.view !== "GRID" ? (
-          <input name="view" type="hidden" value={query.view} />
-        ) : null}
-        <Button size="small" type="submit">
-          {INVENTORY_APPLY_LABEL}
-        </Button>
-      </form>
+      </div>
       <div aria-label="Inventory layout" className="inventory-toolbar__views">
         {INVENTORY_VIEWS.map((view) => (
           <Link

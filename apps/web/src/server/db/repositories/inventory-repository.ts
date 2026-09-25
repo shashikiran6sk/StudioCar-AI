@@ -1,6 +1,7 @@
 import type {
   InventoryFilterCounts,
   InventoryQuery,
+  InventorySearchQuery,
 } from "@studiocar/contracts";
 
 import type { Prisma, PrismaClient } from "@studiocar/database-runtime";
@@ -88,20 +89,23 @@ function inventoryOrderBy(
 function inventoryWhere(
   userId: string,
   query: Pick<InventoryQuery, "filter" | "mode" | "query">,
+  searchSource: "LEGACY_FIELDS" | "NAME_ONLY",
 ): Prisma.VehicleWhereInput {
   return {
     userId,
     status: { in: statusesForQuery(query) },
     ...(query.query
-      ? {
-          OR: [
-            { name: { contains: query.query, mode: "insensitive" } },
-            { brand: { contains: query.query, mode: "insensitive" } },
-            { model: { contains: query.query, mode: "insensitive" } },
-            { stockId: { contains: query.query, mode: "insensitive" } },
-            { internalId: { contains: query.query, mode: "insensitive" } },
-          ],
-        }
+      ? searchSource === "NAME_ONLY"
+        ? { name: { contains: query.query, mode: "insensitive" } }
+        : {
+            OR: [
+              { name: { contains: query.query, mode: "insensitive" } },
+              { brand: { contains: query.query, mode: "insensitive" } },
+              { model: { contains: query.query, mode: "insensitive" } },
+              { stockId: { contains: query.query, mode: "insensitive" } },
+              { internalId: { contains: query.query, mode: "insensitive" } },
+            ],
+          }
       : {}),
   };
 }
@@ -123,7 +127,30 @@ export class PrismaInventoryRepository {
     userId: string,
     query: InventoryQuery,
   ): Promise<InventoryRepositoryPage> {
-    const filteredWhere = inventoryWhere(userId, query);
+    return this.readOwned(userId, query, "LEGACY_FIELDS");
+  }
+
+  public async searchOwned(
+    userId: string,
+    query: InventorySearchQuery,
+  ): Promise<InventoryRepositoryPage> {
+    return this.readOwned(userId, {
+      ...(query.cursor ? { cursor: query.cursor } : {}),
+      filter: query.status,
+      limit: query.limit,
+      mode: query.mode,
+      query: query.q,
+      sort: query.sort,
+      view: "GRID",
+    }, "NAME_ONLY");
+  }
+
+  private async readOwned(
+    userId: string,
+    query: InventoryQuery,
+    searchSource: "LEGACY_FIELDS" | "NAME_ONLY",
+  ): Promise<InventoryRepositoryPage> {
+    const filteredWhere = inventoryWhere(userId, query, searchSource);
     if (query.cursor) {
       const cursor = await this.database.vehicle.findFirst({
         where: { ...filteredWhere, id: query.cursor },
@@ -131,7 +158,7 @@ export class PrismaInventoryRepository {
       });
       if (!cursor) {
         return {
-          counts: await this.countOwned(userId, query),
+          counts: await this.countOwned(userId, query, searchSource),
           items: [],
           nextCursor: null,
         };
@@ -146,7 +173,7 @@ export class PrismaInventoryRepository {
         ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
         select: inventoryVehicleSelect,
       }),
-      this.countOwned(userId, query),
+      this.countOwned(userId, query, searchSource),
     ]);
     const hasNextPage = records.length > query.limit;
     if (hasNextPage) records.pop();
@@ -176,6 +203,7 @@ export class PrismaInventoryRepository {
   private async countOwned(
     userId: string,
     query: Pick<InventoryQuery, "mode" | "query">,
+    searchSource: "LEGACY_FIELDS" | "NAME_ONLY",
   ): Promise<InventoryFilterCounts> {
     const groups = await this.database.vehicle.groupBy({
       by: ["status"],
@@ -183,7 +211,7 @@ export class PrismaInventoryRepository {
         filter: "ALL",
         mode: query.mode,
         query: query.query,
-      }),
+      }, searchSource),
       _count: { _all: true },
     });
     const counts = emptyCounts();

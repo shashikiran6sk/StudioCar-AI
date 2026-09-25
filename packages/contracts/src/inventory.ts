@@ -31,6 +31,13 @@ export const InventoryQuerySchema = CursorPaginationSchema.extend({
   view: InventoryViewSchema.default("GRID"),
 }).strict();
 
+export const InventorySearchQuerySchema = CursorPaginationSchema.extend({
+  q: z.string().trim().min(1).max(100),
+  status: InventoryFilterSchema.default("ALL"),
+  mode: InventoryModeSchema.default("BROWSE"),
+  sort: VehicleSortSchema.default("CREATED_DESC"),
+}).strict();
+
 export const InventoryItemStatusSchema = z.enum([
   "PROCESSING",
   "COMPLETED",
@@ -79,6 +86,7 @@ export type InventoryFilter = z.infer<typeof InventoryFilterSchema>;
 export type InventoryMode = z.infer<typeof InventoryModeSchema>;
 export type InventoryView = z.infer<typeof InventoryViewSchema>;
 export type InventoryQuery = z.infer<typeof InventoryQuerySchema>;
+export type InventorySearchQuery = z.infer<typeof InventorySearchQuerySchema>;
 export type InventoryItemStatus = z.infer<typeof InventoryItemStatusSchema>;
 export type InventoryItem = z.infer<typeof InventoryItemSchema>;
 export type InventoryFilterCounts = z.infer<

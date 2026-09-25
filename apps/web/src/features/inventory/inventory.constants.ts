@@ -19,10 +19,19 @@ export const INVENTORY_EMPTY_DESCRIPTION =
 export const INVENTORY_NO_RESULTS_TITLE = "No vehicles match these filters";
 export const INVENTORY_NO_RESULTS_DESCRIPTION =
   "Adjust your search or choose another status to see more vehicles.";
-export const INVENTORY_SEARCH_LABEL = "Search inventory";
+export const INVENTORY_SEARCH_LABEL = "Search vehicles by name or reference";
 export const INVENTORY_SEARCH_PLACEHOLDER =
-  "Search vehicle, brand, stock ID, or reference";
-export const INVENTORY_APPLY_LABEL = "Apply";
+  "Search vehicles by name or reference...";
+export const INVENTORY_CLEAR_SEARCH_LABEL = "Clear search";
+export const INVENTORY_SEARCHING_LABEL = "Searching vehicles…";
+export const INVENTORY_SEARCH_ERROR_TITLE = "Search is unavailable";
+export const INVENTORY_SEARCH_ERROR_DESCRIPTION = "Try your search again.";
+export const INVENTORY_SEARCH_RETRY_LABEL = "Retry search";
+export const INVENTORY_SEARCH_NO_RESULTS_PREFIX = "No vehicles found for '";
+export const INVENTORY_SEARCH_NO_RESULTS_SUFFIX = "'";
+export const INVENTORY_SEARCH_DEBOUNCE_MS = 400;
+export const INVENTORY_SEARCH_ROUTE = "/api/inventory/search";
+export const INVENTORY_SEARCH_MAX_LENGTH = 100;
 export const INVENTORY_GRID_LABEL = "Grid view";
 export const INVENTORY_LIST_LABEL = "List view";
 export const INVENTORY_NEXT_PAGE_LABEL = "Next page";

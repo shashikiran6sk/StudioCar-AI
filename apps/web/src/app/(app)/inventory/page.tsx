@@ -4,9 +4,7 @@ import { redirect } from "next/navigation";
 
 import { INVENTORY_PATH, LOGIN_PATH } from "../../app-routes";
 import { createInventoryHref } from "../../../features/inventory/create-inventory-href";
-import { InventoryEmptyState } from "../../../features/inventory/inventory-empty-state";
-import { InventoryFilterBar } from "../../../features/inventory/inventory-filter-bar";
-import { InventoryGrid } from "../../../features/inventory/inventory-grid";
+import { InventoryExplorer } from "../../../features/inventory/inventory-explorer";
 import {
   INVENTORY_CREATE_STUDIO_DESCRIPTION,
   INVENTORY_CREATE_STUDIO_EXIT_LABEL,
@@ -14,7 +12,6 @@ import {
   INVENTORY_CREATE_STUDIO_TITLE,
   INVENTORY_DESCRIPTION,
   INVENTORY_EYEBROW,
-  INVENTORY_NEXT_PAGE_LABEL,
   INVENTORY_TITLE,
   INVENTORY_VEHICLE_QUERY_KEY,
 } from "../../../features/inventory/inventory.constants";
@@ -22,7 +19,6 @@ import {
   parseInventorySearchParams,
   type InventorySearchParams,
 } from "../../../features/inventory/parse-inventory-search-params";
-import { InventoryToolbar } from "../../../features/inventory/inventory-toolbar";
 import { PORTFOLIO_STUDIO_UNAVAILABLE_MESSAGE } from "../../../features/portfolio/portfolio.constants";
 import { StudioSelectionLauncher } from "../../../features/vehicle-create/studio-selection-launcher";
 import { VehicleCreateLauncher } from "../../../features/vehicle-create/vehicle-create-launcher";
@@ -42,10 +38,12 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
 
   const parameters = await searchParams;
   const query = parseInventorySearchParams(parameters);
+  const listingQuery = { ...query };
+  delete listingQuery.query;
   const choosing = query.mode === "CREATE_STUDIO";
   const vehicle = EntityIdSchema.safeParse(parameters[INVENTORY_VEHICLE_QUERY_KEY]);
   const [page, selection] = await Promise.all([
-    getInventoryService().list(session.userId, query),
+    getInventoryService().list(session.userId, listingQuery),
     choosing && vehicle.success
       ? getPortfolioService().getStudioSelection(session.userId, vehicle.data, {
           mode: "CREATE_VARIANT",
@@ -53,7 +51,6 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
         })
       : null,
   ]);
-  const filtered = Boolean(query.query) || query.filter !== "ALL";
 
   return (
     <div className="inventory-page">
@@ -78,29 +75,7 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
           {PORTFOLIO_STUDIO_UNAVAILABLE_MESSAGE}
         </p>
       ) : null}
-      <InventoryToolbar query={query} />
-      {choosing ? null : <InventoryFilterBar counts={page.counts} query={query} />}
-      {page.items.length > 0 ? (
-        <InventoryGrid
-          items={page.items}
-          selectHref={
-            choosing
-              ? (vehicleId) => createInventoryHref(query, {}, vehicleId)
-              : undefined
-          }
-          view={query.view}
-        />
-      ) : (
-        <InventoryEmptyState choosing={choosing} filtered={filtered} />
-      )}
-      {page.nextCursor ? (
-        <a
-          className="sc-button sc-button--secondary inventory-page__next"
-          href={createInventoryHref(query, { cursor: page.nextCursor })}
-        >
-          {INVENTORY_NEXT_PAGE_LABEL}
-        </a>
-      ) : null}
+      <InventoryExplorer choosing={choosing} initialPage={page} key={createInventoryHref(query, {})} query={query} />
       {selection ? (
         <StudioSelectionLauncher
           cancelHref={createInventoryHref(query, {})}

@@ -38,6 +38,7 @@ describe("InventoryService", () => {
         items: [createRecord()],
         nextCursor: null,
       }),
+      searchOwned: vi.fn(),
     };
     const previewSigner = {
       signPreview: vi.fn().mockResolvedValue("https://signed.example/preview.webp"),
@@ -101,6 +102,7 @@ describe("InventoryService", () => {
           items: [record],
           nextCursor: null,
         }),
+        searchOwned: vi.fn(),
       },
       previewSigner,
       { previewUrlTtlSeconds: 300 },
@@ -116,5 +118,25 @@ describe("InventoryService", () => {
 
     expect(result.items[0]?.previewUrl).toBeNull();
     expect(previewSigner.signPreview).not.toHaveBeenCalled();
+  });
+
+  it("uses the dedicated repository search and shared card projection", async () => {
+    const repository = {
+      listOwned: vi.fn(),
+      searchOwned: vi.fn().mockResolvedValue({
+        counts: { all: 1, archived: 0, completed: 0, needsAttention: 1, processing: 0 },
+        items: [createRecord()],
+        nextCursor: null,
+      }),
+    };
+    const service = new InventoryService(repository, {
+      signPreview: vi.fn().mockResolvedValue("https://signed.example/preview.webp"),
+    }, { previewUrlTtlSeconds: 300 });
+    const query = { limit: 24, mode: "BROWSE", q: "bmw", sort: "CREATED_DESC", status: "ALL" } satisfies Parameters<typeof service.search>[1];
+
+    const result = await service.search("user-1", query);
+
+    expect(repository.searchOwned).toHaveBeenCalledWith("user-1", query);
+    expect(result.items[0]).toMatchObject({ name: "2026 BMW 3 Series", status: "FAILED" });
   });
 });
