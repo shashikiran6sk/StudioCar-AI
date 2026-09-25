@@ -51,7 +51,7 @@ function isOffered(
 }
 
 /**
- * Hands a paid plan to one account until a billing provider exists.
+ * Grants a paid offering to one account without recording a provider payment.
  *
  * The plan must be one the catalog currently offers, so an assignment cannot
  * put somebody on a plan the product no longer describes.
@@ -79,6 +79,17 @@ export async function assignSubscriptionAction(
   }
 
   try {
+    if (assignment.data.planKey === "STUDIO_PLUS") {
+      const result = await getManualSubscriptionRepository().grantPlusCredits({
+        actorUserId,
+        userId: assignment.data.userId,
+        ...(assignment.data.note ? { note: assignment.data.note } : {}),
+      });
+      revalidatePath(BILLING_PATH);
+      return result === "GRANTED"
+        ? { kind: "success", message: "Studio Plus credits granted." }
+        : { kind: "error", message: ADMIN_SUBSCRIPTION_UNKNOWN_ACCOUNT_MESSAGE };
+    }
     const now = new Date();
     const result = await getManualSubscriptionRepository().assign({
       actorUserId,

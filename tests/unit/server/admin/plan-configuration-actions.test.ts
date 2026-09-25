@@ -31,11 +31,11 @@ function form(overrides: Record<string, string> = {}): FormData {
     description: "For high-volume teams.",
     displayName: "Studio Pro",
     displayOrder: "2",
-    features: "500 images each month",
-    includedImages: "500",
+    features: "400 images each month",
+    includedImages: "400",
     maxImagesPerBatch: "20",
     planKey: "STUDIO_PRO",
-    priceRupees: "4999",
+    priceRupees: "5499",
     segment: "Teams",
     storageGigabytes: "",
     ...overrides,
@@ -64,7 +64,7 @@ describe("savePlanConfigurationAction", () => {
       expect.objectContaining({
         actorUserId: ADMIN_ID,
         planKey: "STUDIO_PRO",
-        update: expect.objectContaining({ priceMinorUnits: 499_900 }),
+        update: expect.objectContaining({ priceMinorUnits: 549_900 }),
       }),
     );
   });

@@ -37,6 +37,8 @@ export function describeAuditEntry(entry: AuditLogRecord): string {
       return describeWith("Updated a plan", entry.resourceId);
     case "SUBSCRIPTION_ASSIGNED":
       return describeWith("Assigned a plan", metadata.planKey);
+    case "ADMIN_CREDIT_GRANTED":
+      return describeWith("Granted Studio Plus credits", metadata.accountUserId);
     case "SUBSCRIPTION_REVOKED":
       return describeWith("Ended an assigned plan", metadata.planKey);
     case "SOCIAL_LINK_SAVED":

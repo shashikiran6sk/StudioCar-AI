@@ -7,6 +7,8 @@
   },
   "packageManager": "pnpm@12.3.4",
   "scripts": {
+    "billing:razorpay:setup": "pnpm --filter @studiocar/web billing:razorpay:setup",
+    "billing:business:setup": "pnpm --filter @studiocar/web billing:business:setup",
     "app:down": "sh scripts/local-compose.sh --profile app down",
     "app:logs": "sh scripts/local-compose.sh --profile app logs -f web image-worker",
     "app:up": "sh scripts/app-up.sh",

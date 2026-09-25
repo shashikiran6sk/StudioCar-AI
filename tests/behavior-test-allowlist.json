@@ -570,5 +570,25 @@
   {
     "source": "apps/web/src/features/auth/msg91-widget/msg91-otp-error.constants.ts",
     "reason": "Static table of observed MSG91 widget refusal codes; exercised through normalize-msg91-otp-error tests."
+  },
+  {
+    "source": "apps/web/src/server/billing/billing-runtime.ts",
+    "reason": "Composition root for the separately tested billing service and database client."
+  },
+  {
+    "source": "apps/web/src/server/billing/create-receipt.ts",
+    "reason": "Receipt snapshot and unique numbering are exercised by the real-PostgreSQL Razorpay webhook integration test."
+  },
+  {
+    "source": "apps/web/src/server/billing/get-billing-status.ts",
+    "reason": "Paid-period and purchased-credit status are exercised by the real-PostgreSQL concurrent reservation integration test."
+  },
+  {
+    "source": "packages/database-runtime/src/repositories/release-credit-allocation.ts",
+    "reason": "Terminal purchased-credit refund is exercised by the real-PostgreSQL credit reservation integration test."
+  },
+  {
+    "source": "packages/database-runtime/src/repositories/settle-credit-allocation.ts",
+    "reason": "Successful Pro allowance settlement is exercised by the real-PostgreSQL credit reservation integration test."
   }
 ]

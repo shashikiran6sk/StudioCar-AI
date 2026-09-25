@@ -78,11 +78,45 @@ enum UsageEventType {
 }
 
 enum SubscriptionStatus {
+  CREATED
+  AUTHENTICATED
   TRIALING
   ACTIVE
+  PENDING
+  PAUSED
+  HALTED
   PAST_DUE
   CANCELLED
+  COMPLETED
   EXPIRED
+}
+
+enum PaymentStatus {
+  CREATED
+  VERIFIED
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum CreditAllocationSource {
+  PRO
+  PURCHASED
+}
+
+enum CreditAllocationStatus {
+  RESERVED
+  CONSUMED
+  RELEASED
+}
+
+enum CreditLedgerType {
+  PURCHASE_GRANT
+  PROCESSING_DEBIT
+  PROCESSING_REFUND
+  REFUND_REVERSAL
+  ADMIN_ADJUSTMENT
 }
 
 enum WebhookProcessingStatus {
@@ -170,6 +204,11 @@ model User {
   acceptedAdminInvites   AdminInvite[]        @relation("AdminInviteAcceptedBy")
   assignedSubscriptions  PlanSubscription[]   @relation("PlanSubscriptionAssignedBy")
   commandRateLimitEvents CommandRateLimitEvent[]
+  payments               Payment[]
+  receipts               Receipt[]
+  creditLedger           CreditLedger[]
+  creditAllocations      CreditAllocation[]
+  subscriptionAllowances SubscriptionAllowance[]
 }
 
 /**
@@ -250,8 +289,26 @@ model PlanConfig {
   providerPriceId   String?             @db.VarChar(255)
   createdAt         DateTime            @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime            @updatedAt @db.Timestamptz(3)
+  priceVersions     PlanPrice[]
 
   @@index([active, displayOrder])
+}
+
+/** A Razorpay plan is immutable and belongs to exactly one environment/price. */
+model PlanPrice {
+  id                String       @id @default(uuid()) @db.Uuid
+  planConfigId      String       @db.Uuid
+  environment       String       @db.VarChar(20)
+  priceMinorUnits   Int
+  currency          String       @db.Char(3)
+  includedImages    Int
+  razorpayPlanId    String       @unique @db.VarChar(255)
+  createdAt         DateTime     @default(now()) @db.Timestamptz(3)
+  planConfig        PlanConfig   @relation(fields: [planConfigId], references: [id], onDelete: Restrict)
+  payments          Payment[]
+  subscriptions     PlanSubscription[]
+
+  @@unique([planConfigId, environment, priceMinorUnits, includedImages])
 }
 
 model SocialLink {
@@ -450,6 +507,7 @@ model StorageDeletionOutboxMessage {
 model ProcessingJob {
   id                  String                   @id @default(uuid()) @db.Uuid
   userId              String                   @db.Uuid
+  creditAllocation    CreditAllocation?
   vehicleId           String                   @db.Uuid
   imageAssetId        String                   @db.Uuid
   status              ProcessingJobStatus      @default(CREATED)
@@ -582,6 +640,8 @@ model PlanSubscription {
   source                 SubscriptionSource @default(PAYMENT_PROVIDER)
   provider               String?            @db.VarChar(50)
   providerSubscriptionId String?            @unique @db.VarChar(255)
+  razorpayPlanId         String?            @db.VarChar(255)
+  planPriceId            String?            @db.Uuid
   planKey                String             @db.VarChar(80)
   status                 SubscriptionStatus
   currentPeriodStart     DateTime           @db.Timestamptz(3)
@@ -593,8 +653,125 @@ model PlanSubscription {
   updatedAt              DateTime           @updatedAt @db.Timestamptz(3)
   user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   assignedBy             User?              @relation("PlanSubscriptionAssignedBy", fields: [assignedByUserId], references: [id], onDelete: SetNull)
+  planPrice              PlanPrice?         @relation(fields: [planPriceId], references: [id], onDelete: Restrict)
+  allowances             SubscriptionAllowance[]
+  payments               Payment[]
 
   @@index([userId, status, currentPeriodEnd])
+  @@index([userId, source, status])
+}
+
+model Payment {
+  id                         String        @id @default(uuid()) @db.Uuid
+  userId                     String        @db.Uuid
+  productCode                String        @db.VarChar(80)
+  billingType                PlanBillingInterval
+  planPriceId                String?       @db.Uuid
+  subscriptionId             String?       @db.Uuid
+  razorpayOrderId            String?       @unique @db.VarChar(255)
+  razorpayPaymentId          String?       @unique @db.VarChar(255)
+  razorpaySubscriptionId     String?       @db.VarChar(255)
+  amountPaise                Int
+  currency                   String        @db.Char(3)
+  includedImages             Int
+  status                     PaymentStatus @default(CREATED)
+  paidAt                     DateTime?     @db.Timestamptz(3)
+  createdAt                  DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt                  DateTime      @updatedAt @db.Timestamptz(3)
+  user                       User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  planPrice                  PlanPrice?    @relation(fields: [planPriceId], references: [id], onDelete: Restrict)
+  subscription               PlanSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  receipt                    Receipt?
+  refunds                    BillingRefund[]
+
+  @@index([userId, createdAt])
+  @@index([razorpaySubscriptionId])
+}
+
+model BillingRefund {
+  id                String   @id @default(uuid()) @db.Uuid
+  paymentId         String   @db.Uuid
+  razorpayRefundId  String   @unique @db.VarChar(255)
+  amountPaise       Int
+  status            String   @db.VarChar(40)
+  createdAt         DateTime @default(now()) @db.Timestamptz(3)
+  payment           Payment  @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+}
+
+model Receipt {
+  id                     String   @id @default(uuid()) @db.Uuid
+  receiptNumber          String   @unique @db.VarChar(40)
+  userId                 String   @db.Uuid
+  paymentId              String   @unique @db.Uuid
+  productCode            String   @db.VarChar(80)
+  productName            String   @db.VarChar(120)
+  description            String   @db.VarChar(255)
+  subtotalPaise          Int
+  taxPaise               Int
+  totalPaise             Int
+  currency               String   @db.Char(3)
+  paidAt                 DateTime @db.Timestamptz(3)
+  paymentMethod          String?  @db.VarChar(40)
+  customerName           String?  @db.VarChar(120)
+  customerEmail          String?  @db.VarChar(320)
+  customerPhone          String?  @db.VarChar(20)
+  businessType           String   @db.VarChar(40)
+  businessLegalName      String   @db.VarChar(160)
+  tradingName            String   @db.VarChar(160)
+  proprietorName         String   @db.VarChar(160)
+  businessAddress        String   @db.VarChar(1000)
+  billingEmail           String   @db.VarChar(320)
+  businessGstin          String?  @db.VarChar(15)
+  createdAt              DateTime @default(now()) @db.Timestamptz(3)
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  payment                Payment  @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+
+  @@index([userId, createdAt])
+}
+
+model SubscriptionAllowance {
+  id                 String   @id @default(uuid()) @db.Uuid
+  userId             String   @db.Uuid
+  subscriptionId     String   @db.Uuid
+  providerPaymentId  String   @unique @db.VarChar(255)
+  periodStart        DateTime @db.Timestamptz(3)
+  periodEnd          DateTime @db.Timestamptz(3)
+  allowance          Int
+  consumed           Int      @default(0)
+  createdAt          DateTime @default(now()) @db.Timestamptz(3)
+  user               User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  subscription       PlanSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  allocations        CreditAllocation[]
+
+  @@unique([subscriptionId, periodStart])
+  @@index([userId, periodEnd])
+}
+
+model CreditLedger {
+  id          String           @id @default(uuid()) @db.Uuid
+  userId      String           @db.Uuid
+  amount      Int
+  type        CreditLedgerType
+  referenceId String           @db.VarChar(255)
+  createdAt   DateTime         @default(now()) @db.Timestamptz(3)
+  user        User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([type, referenceId])
+  @@index([userId, createdAt])
+}
+
+model CreditAllocation {
+  id            String                 @id @default(uuid()) @db.Uuid
+  userId        String                 @db.Uuid
+  jobId         String                 @unique @db.Uuid
+  allowanceId   String?                @db.Uuid
+  source        CreditAllocationSource
+  status        CreditAllocationStatus @default(RESERVED)
+  createdAt     DateTime               @default(now()) @db.Timestamptz(3)
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  job           ProcessingJob          @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  allowance     SubscriptionAllowance? @relation(fields: [allowanceId], references: [id], onDelete: Restrict)
+
   @@index([userId, source, status])
 }
 
