@@ -7,11 +7,14 @@ vi.mock(
   () => ({ requireAdministrator }),
 );
 
-const { default: AdminLayout } = await import(
+const { default: AdminLayout, metadata } = await import(
   "../../../../../apps/web/src/app/(app)/admin/layout"
 );
 
 describe("AdminLayout", () => {
+  it("keeps administrator pages out of search indexes", () => {
+    expect(metadata.robots).toEqual({ index: false, follow: false });
+  });
   it("authorizes before rendering anything", async () => {
     requireAdministrator.mockResolvedValue({ userId: "user-1" });
 

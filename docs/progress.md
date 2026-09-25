@@ -1,6 +1,14 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-09-25
+Last updated: 2026-09-26
+
+## SEO foundation
+
+- Added one canonical, indexable production marketing document at `https://studiocarai.com/`, with native App Router metadata, Open Graph/Twitter previews, a branded favicon/icon set, and a 1200×630 social image composed from the existing brand mark and owned vehicle asset.
+- Added `robots.txt` and a one-entry production sitemap. Local, Development, Vercel preview, and noncanonical hosts disallow indexing; the sitemap is empty there. The root, authenticated, admin, and authentication layouts default to `noindex, nofollow`; only the canonical Production homepage opts in.
+- Added factual SoftwareApplication JSON-LD without prices. Homepage prices remain database-owned and are deliberately absent from structured data. Existing homepage hierarchy and hash sections are preserved; navigation now uses independent `/#section` links, the footer's existing brand description supplies the `#about` target, and vehicle images describe their displayed treatments. Gallery images now advertise smaller responsive widths while the LCP comparison retains priority loading.
+- Added unit and browser checks for metadata, robots, sitemap, structured data, icons, indexability, and fragment navigation. Search Console verification is optional through `GOOGLE_SITE_VERIFICATION`; the owner must supply the real token in Vercel after verifying the domain.
+- Preview SEO output fails closed when `APP_ENV` is absent, since Vercel evaluates metadata routes during the build. This does not relax the required `APP_ENV` validation used by application runtimes.
 
 ## Current status
 

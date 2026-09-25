@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { LOGIN_PATH } from "../app-routes";
@@ -8,6 +9,9 @@ import { getPlanUsageSummary } from "../../server/plan-usage/get-plan-usage-summ
 import { isCurrentUserAdministrator } from "../../server/admin/is-current-user-administrator";
 import { findLargestBatch } from "../../server/plans/find-largest-batch";
 import { getPlanCatalog } from "../../server/plans/get-plan-catalog";
+import { privateRobots } from "../../lib/private-robots";
+
+export const metadata: Metadata = { robots: privateRobots };
 
 export default async function AuthenticatedLayout({
   children,

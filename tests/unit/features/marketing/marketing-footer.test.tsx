@@ -21,6 +21,8 @@ describe("MarketingFooter", () => {
       "/inventory",
     );
     expect(screen.getByText("Privacy")).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("href", "/#about");
+    expect(screen.getByRole("heading", { name: "About StudioCar AI" })).toBeInTheDocument();
   });
 
   it("shows nothing at all when no social link is configured", () => {
