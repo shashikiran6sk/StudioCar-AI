@@ -12,6 +12,8 @@ import { SensitiveIdentifierHasher } from "../../../../../apps/web/src/server/au
 import { hashSessionToken } from "../../../../../apps/web/src/server/auth/session-service";
 import {
   PhoneOtpIdentificationStatus,
+  PhoneOtpRefusalReason,
+  type PhoneOtpVerificationObserver,
   type PhoneOtpChallengeStore,
   type PhoneOtpCompletionStore,
   type PhoneOtpProvider,
@@ -101,6 +103,7 @@ function service(
   completions: PhoneOtpCompletionStore = completionStore(),
   otpProvider: PhoneOtpProvider = provider(),
   sessions: SessionPreparer = sessionPreparer(),
+  observer?: PhoneOtpVerificationObserver,
 ): PhoneOtpService {
   return new PhoneOtpService(
     challenges,
@@ -118,6 +121,7 @@ function service(
       verifyMaxPerIp: 30,
       now: () => now,
       generateBrowserBinding: () => binding,
+      ...(observer ? { observer } : {}),
     },
   );
 }
@@ -358,5 +362,118 @@ describe("PhoneOtpService verify", () => {
     ).rejects.toMatchObject({
       code: PhoneOtpApplicationErrorCode.IdentityLinkRequired,
     });
+  });
+});
+
+describe("PhoneOtpService refusals", () => {
+  const verifyInput = {
+    challengeId,
+    phoneNumber: "+919876543210",
+    accessToken,
+  };
+
+  function observer() {
+    return { verificationRefused: vi.fn() };
+  }
+
+  it("reports a verification-rate limit distinctly from a send limit", async () => {
+    const challenges = challengeStore();
+    vi.mocked(challenges.claimVerification).mockResolvedValue({
+      status: PhoneOtpVerificationClaimStatus.RateLimited,
+      retryAt: new Date(now.getTime() + 90_000),
+    });
+    const watcher = observer();
+
+    await expect(
+      service(challenges, completionStore(), provider(), sessionPreparer(), watcher)
+        .verify(verifyInput, binding, "203.0.113.10"),
+    ).rejects.toMatchObject({
+      code: PhoneOtpApplicationErrorCode.VerificationRateLimited,
+      retryAfterSeconds: 90,
+    });
+    expect(watcher.verificationRefused).toHaveBeenCalledWith(
+      PhoneOtpRefusalReason.RateLimited,
+    );
+  });
+
+  const refusedClaims: ReadonlyArray<
+    [
+      (
+        | PhoneOtpVerificationClaimStatus.Expired
+        | PhoneOtpVerificationClaimStatus.TooManyAttempts
+        | PhoneOtpVerificationClaimStatus.InvalidChallenge
+      ),
+      PhoneOtpRefusalReason,
+    ]
+  > = [
+    [PhoneOtpVerificationClaimStatus.Expired, PhoneOtpRefusalReason.ChallengeExpired],
+    [
+      PhoneOtpVerificationClaimStatus.TooManyAttempts,
+      PhoneOtpRefusalReason.TooManyAttempts,
+    ],
+    [
+      PhoneOtpVerificationClaimStatus.InvalidChallenge,
+      PhoneOtpRefusalReason.InvalidChallenge,
+    ],
+  ];
+
+  it.each(refusedClaims)("records a %s claim as %s", async (status, reason) => {
+    const challenges = challengeStore();
+    vi.mocked(challenges.claimVerification).mockResolvedValue({ status });
+    const watcher = observer();
+
+    await expect(
+      service(challenges, completionStore(), provider(), sessionPreparer(), watcher)
+        .verify(verifyInput, binding, "203.0.113.10"),
+    ).rejects.toBeInstanceOf(Error);
+    expect(watcher.verificationRefused).toHaveBeenCalledWith(reason);
+  });
+
+  it("records why the provider's answer was refused", async () => {
+    const rejected = provider();
+    vi.mocked(rejected.identify).mockResolvedValue({
+      status: PhoneOtpIdentificationStatus.Rejected,
+    });
+    const mismatched = provider();
+    vi.mocked(mismatched.identify).mockResolvedValue({
+      status: PhoneOtpIdentificationStatus.Verified,
+      identifier: "919999999999",
+    });
+    const unavailable = provider();
+    vi.mocked(unavailable.identify).mockResolvedValue({
+      status: PhoneOtpIdentificationStatus.Unavailable,
+    });
+    const replayed = challengeStore();
+    vi.mocked(replayed.recordProviderVerified).mockResolvedValue(false);
+
+    const cases: Array<[PhoneOtpService, PhoneOtpRefusalReason]> = [];
+    const watchers = [observer(), observer(), observer(), observer()];
+    cases.push(
+      [service(challengeStore(), completionStore(), rejected, sessionPreparer(), watchers[0]), PhoneOtpRefusalReason.ProviderRejected],
+      [service(challengeStore(), completionStore(), mismatched, sessionPreparer(), watchers[1]), PhoneOtpRefusalReason.IdentifierMismatch],
+      [service(challengeStore(), completionStore(), unavailable, sessionPreparer(), watchers[2]), PhoneOtpRefusalReason.ProviderUnavailable],
+      [service(replayed, completionStore(), provider(), sessionPreparer(), watchers[3]), PhoneOtpRefusalReason.TokenReplayed],
+    );
+
+    for (const [index, [candidate, reason]] of cases.entries()) {
+      await expect(
+        candidate.verify(verifyInput, binding, "203.0.113.10"),
+      ).rejects.toBeInstanceOf(Error);
+      expect(watchers[index]?.verificationRefused).toHaveBeenCalledWith(reason);
+    }
+  });
+
+  it("records nothing for a successful verification", async () => {
+    const watcher = observer();
+
+    await service(
+      challengeStore(),
+      completionStore(),
+      provider(),
+      sessionPreparer(),
+      watcher,
+    ).verify(verifyInput, binding, "203.0.113.10");
+
+    expect(watcher.verificationRefused).not.toHaveBeenCalled();
   });
 });

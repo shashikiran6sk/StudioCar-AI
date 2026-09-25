@@ -263,6 +263,9 @@ importers:
       '@studiocar/database-runtime':
         specifier: workspace:*
         version: link:../../packages/database-runtime
+      '@studiocar/observability':
+        specifier: workspace:*
+        version: link:../../packages/observability
       '@studiocar/processing':
         specifier: workspace:*
         version: link:../../packages/processing

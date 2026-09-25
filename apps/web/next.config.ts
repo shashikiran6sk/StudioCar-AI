@@ -26,6 +26,7 @@ const nextConfig: NextConfig = {
     "@studiocar/config",
     "@studiocar/contracts",
     "@studiocar/database-runtime",
+    "@studiocar/observability",
     "@studiocar/ui",
   ],
 };

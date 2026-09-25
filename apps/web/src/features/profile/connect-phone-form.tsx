@@ -17,6 +17,8 @@ import { createDevelopmentAccessToken } from "../auth/create-development-access-
 import { loadMsg91Widget } from "../auth/msg91-widget/load-msg91-widget";
 import { sendMsg91Otp } from "../auth/msg91-widget/send-msg91-otp";
 import { verifyMsg91Otp } from "../auth/msg91-widget/verify-msg91-otp";
+import { PhoneOtpError } from "../auth/phone-otp-error/phone-otp-error";
+import { PHONE_OTP_AVAILABILITY_CATEGORIES } from "../auth/phone-otp-error/phone-otp-error.constants";
 import {
   PHONE_CAPTCHA_CONTAINER_CLASS,
   PHONE_GENERIC_ERROR_MESSAGE,
@@ -50,6 +52,8 @@ export function ConnectPhoneForm({ onConnected }: ConnectPhoneFormProps) {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
+  const [requestId, setRequestId] = useState<string | null>(null);
+  const connecting = useRef(false);
   const otpInput = useRef<HTMLInputElement>(null);
   const awaitingOtp = challengeId.length > 0;
 
@@ -105,7 +109,9 @@ export function ConnectPhoneForm({ onConnected }: ConnectPhoneFormProps) {
           tokenAuth: widget.tokenAuth ?? "",
           captchaRenderId: captchaId,
         });
-        await sendMsg91Otp(toWidgetIdentifier(input.data.phoneNumber));
+        setRequestId(
+          await sendMsg91Otp(toWidgetIdentifier(input.data.phoneNumber)),
+        );
       }
 
       setNormalized(input.data.phoneNumber);
@@ -122,17 +128,19 @@ export function ConnectPhoneForm({ onConnected }: ConnectPhoneFormProps) {
 
   async function connect(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (connecting.current) return;
     setError(undefined);
     if (!widget) {
       setError(PHONE_WIDGET_UNAVAILABLE_MESSAGE);
       return;
     }
 
+    connecting.current = true;
     setPending(true);
     try {
       const accessToken =
         widget.driver === "msg91"
-          ? await verifyMsg91Otp(otp)
+          ? await verifyMsg91Otp(otp, requestId)
           : createDevelopmentAccessToken(
               toWidgetIdentifier(normalized),
               otp,
@@ -164,7 +172,15 @@ export function ConnectPhoneForm({ onConnected }: ConnectPhoneFormProps) {
       setError(
         failure instanceof Error ? failure.message : PHONE_GENERIC_ERROR_MESSAGE,
       );
+      if (
+        failure instanceof PhoneOtpError &&
+        !PHONE_OTP_AVAILABILITY_CATEGORIES.has(failure.category)
+      ) {
+        setOtp("");
+        otpInput.current?.focus();
+      }
     } finally {
+      connecting.current = false;
       setPending(false);
     }
   }

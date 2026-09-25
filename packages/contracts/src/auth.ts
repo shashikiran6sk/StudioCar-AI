@@ -314,6 +314,64 @@ export const Msg91WidgetVerificationSchema = z
   })
   .loose();
 
+/**
+ * What the browser widget hands a `sendOtp` or `retryOtp` success callback.
+ * `message` is the provider's request id (`reqId`) for that verification.
+ */
+export const Msg91WidgetSuccessSchema = z
+  .object({
+    type: z.literal("success"),
+    message: z.string().trim().min(1),
+  })
+  .loose();
+
+/**
+ * What the browser widget hands a failure callback when MSG91 answered.
+ * MSG91 reports refusals as HTTP 200 with `type: "error"` and a numeric
+ * `code`; request-validation refusals carry `status: "fail"` and no code; the
+ * widget's own argument checks send only a `message`.
+ */
+export const Msg91WidgetFailureSchema = z
+  .object({
+    type: z.string().optional(),
+    code: z.union([z.number(), z.string()]).optional(),
+    message: z.string().optional(),
+    status: z.string().optional(),
+  })
+  .loose();
+
+/**
+ * When the widget's HTTP request itself fails (network, provider 4xx/5xx), the
+ * widget replaces the response with a list of human-readable strings.
+ */
+export const Msg91WidgetTransportFailureSchema = z.array(z.string());
+
+const Msg91WidgetOptionSchema = z
+  .object({ value: z.union([z.string(), z.number()]) })
+  .loose();
+
+/**
+ * The subset of `window.getWidgetData()` the application reads: the dashboard
+ * settings that decide code length, resend delay and resend channels.
+ */
+export const Msg91WidgetDataSchema = z
+  .object({
+    widgetType: Msg91WidgetOptionSchema.optional(),
+    otpLength: z.coerce.number().int().positive().optional(),
+    retryTime: z.coerce.number().int().nonnegative().optional(),
+    processes: z
+      .array(
+        z
+          .object({
+            processVia: Msg91WidgetOptionSchema,
+            channel: Msg91WidgetOptionSchema,
+          })
+          .loose(),
+      )
+      .optional(),
+  })
+  .loose();
+
 export const LogoutSchema = z
   .object({
     allSessions: z.boolean().default(false),
@@ -344,6 +402,9 @@ export type PhoneOtpWidget = z.infer<typeof PhoneOtpWidgetSchema>;
 export type Msg91WidgetVerification = z.infer<
   typeof Msg91WidgetVerificationSchema
 >;
+export type Msg91WidgetSuccess = z.infer<typeof Msg91WidgetSuccessSchema>;
+export type Msg91WidgetFailure = z.infer<typeof Msg91WidgetFailureSchema>;
+export type Msg91WidgetData = z.infer<typeof Msg91WidgetDataSchema>;
 export type PhoneVerify = z.infer<typeof PhoneVerifySchema>;
 export type PhoneStartResponse = z.infer<typeof PhoneStartResponseSchema>;
 export type PhoneVerifyResponse = z.infer<typeof PhoneVerifyResponseSchema>;

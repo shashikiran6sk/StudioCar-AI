@@ -30,26 +30,36 @@ import { createGoogleAuthStartHref } from "./create-google-auth-start-href";
 import { GOOGLE_PHONE_SETUP_CANCELLED_VALUE } from "../../server/auth/google/google-auth.constants";
 import { PhoneAccountChoices } from "./phone-account-choices";
 import { PhoneCreateAccountStep } from "./phone-create-account-step";
+import { isCompleteOtpCode } from "./is-complete-otp-code";
+import { maskPhoneNumber } from "./mask-phone-number";
 import { loadMsg91Widget } from "./msg91-widget/load-msg91-widget";
+import type { Msg91WidgetSettings } from "./msg91-widget/msg91-widget.types";
+import { readMsg91WidgetSettings } from "./msg91-widget/read-msg91-widget-settings";
 import { retryMsg91Otp } from "./msg91-widget/retry-msg91-otp";
 import { sendMsg91Otp } from "./msg91-widget/send-msg91-otp";
 import { verifyMsg91Otp } from "./msg91-widget/verify-msg91-otp";
+import { createPhoneOtpError } from "./phone-otp-error/create-phone-otp-error";
+import { PhoneOtpError } from "./phone-otp-error/phone-otp-error";
+import {
+  PHONE_OTP_AVAILABILITY_CATEGORIES,
+  PHONE_OTP_TERMINAL_CATEGORIES,
+} from "./phone-otp-error/phone-otp-error.constants";
+import {
+  PhoneOtpErrorCategory,
+  PhoneOtpOperation,
+} from "./phone-otp-error/phone-otp-error.types";
+import { PhoneOtpStep } from "./phone-otp-step";
 import {
   PHONE_CAPTCHA_CONTAINER_CLASS,
-  PHONE_CHANGE_NUMBER_LABEL,
-  PHONE_DEVELOPMENT_NOTICE,
   PHONE_GENERIC_ERROR_MESSAGE,
   PHONE_INPUT_LABEL,
   PHONE_INPUT_PLACEHOLDER,
   PHONE_JSON_CONTENT_TYPE,
-  PHONE_OTP_INPUT_LABEL,
-  PHONE_OTP_INPUT_PLACEHOLDER,
-  PHONE_OTP_PENDING_LABEL,
-  PHONE_OTP_SENT_MESSAGE,
-  PHONE_OTP_SUBMIT_LABEL,
+  PHONE_OTP_FALLBACK_MAX_LENGTH,
+  PHONE_OTP_FORMAT_MESSAGE,
+  PHONE_OTP_RESENT_MESSAGE,
   PHONE_PENDING_LABEL,
-  PHONE_RESEND_LABEL,
-  PHONE_RESEND_PENDING_LABEL,
+  PHONE_RESEND_FALLBACK_COOLDOWN_SECONDS,
   PHONE_SUBMIT_LABEL,
   PHONE_WIDGET_UNAVAILABLE_MESSAGE,
   PHONE_GOOGLE_BUTTON_LABEL,
@@ -58,11 +68,14 @@ import {
   PHONE_OAUTH_CANCELLED_MESSAGE,
   PHONE_SIGNING_IN_MESSAGE,
   PHONE_ACCOUNT_REVERIFY_HTTP_STATUSES,
+  PHONE_OTP_RETRYABLE_HTTP_STATUSES,
   PhoneSignInStage,
 } from "./phone-sign-in.constants";
 import { readResponseJson } from "./read-response-json";
 import { requestPhoneOtpWidget } from "./request-phone-otp-widget";
+import { toOtpDigits } from "./to-otp-digits";
 import { toWidgetIdentifier } from "./to-widget-identifier";
+import { useCountdown } from "./use-countdown";
 
 export interface PhoneSignInFormProps {
   returnTo: string;
@@ -93,12 +106,27 @@ export function PhoneSignInForm({
       ? PHONE_OAUTH_CANCELLED_MESSAGE
       : undefined,
   );
+  const [notice, setNotice] = useState<string | undefined>();
   const [pending, setPending] = useState(false);
   const [resending, setResending] = useState(false);
+  /** The provider's id for the current verification request (`reqId`). */
+  const [requestId, setRequestId] = useState<string | null>(null);
+  /** The provider will not accept another code for the current request. */
+  const [requestSpent, setRequestSpent] = useState(false);
+  const [widgetSettings, setWidgetSettings] =
+    useState<Msg91WidgetSettings | null>(null);
+  const [resendCountdown, startResendCountdown] = useCountdown();
+  const verifying = useRef(false);
   const phoneInput = useRef<HTMLInputElement>(null);
   const otpInput = useRef<HTMLInputElement>(null);
   const awaitingOtp = stage === PhoneSignInStage.VerifyOtp;
   const verifiedPhoneNumber = initialVerifiedPhone ?? normalizedPhoneNumber;
+  const usesMsg91 = widget?.driver === "msg91";
+  const codeLength = usesMsg91
+    ? (widgetSettings?.otpLength ?? null)
+    : (widget?.devCode?.length ?? null);
+  const canVerify =
+    isCompleteOtpCode(otp, codeLength) && !(usesMsg91 && requestSpent);
 
   useEffect(() => {
     let active = true;
@@ -151,16 +179,66 @@ export function PhoneSignInForm({
     return started.data.challengeId;
   }
 
-  async function deliverOtp(normalized: string, resend: boolean): Promise<void> {
-    if (!widget || widget.driver !== "msg91") return;
-    await loadMsg91Widget({
-      widgetId: widget.widgetId ?? "",
-      tokenAuth: widget.tokenAuth ?? "",
-      captchaRenderId: captchaId,
-    });
-    const identifier = toWidgetIdentifier(normalized);
-    if (resend) await retryMsg91Otp(identifier);
-    else await sendMsg91Otp(identifier);
+  async function prepareMsg91Widget(
+    active: PhoneOtpWidget,
+    operation: PhoneOtpOperation,
+  ): Promise<Msg91WidgetSettings> {
+    try {
+      await loadMsg91Widget({
+        widgetId: active.widgetId ?? "",
+        tokenAuth: active.tokenAuth ?? "",
+        captchaRenderId: captchaId,
+      });
+    } catch {
+      throw createPhoneOtpError(
+        PhoneOtpErrorCategory.ServiceUnavailable,
+        operation,
+      );
+    }
+    return widgetSettings ?? readMsg91WidgetSettings();
+  }
+
+  /**
+   * The resend pause follows the provider's own resend delay whenever the
+   * widget reports it; StudioCar's fallback applies only when it does not.
+   */
+  function restartResendCountdown(settings: Msg91WidgetSettings | null) {
+    startResendCountdown(
+      settings?.resendDelaySeconds ?? PHONE_RESEND_FALLBACK_COOLDOWN_SECONDS,
+    );
+  }
+
+  function focusOtpInput() {
+    otpInput.current?.focus();
+  }
+
+  /**
+   * Shows a normalized failure. A refused code is cleared so another can be
+   * typed; a code that failed only because the service was unreachable is
+   * kept so the person can simply try again.
+   */
+  function showFailure(failure: unknown) {
+    if (!(failure instanceof PhoneOtpError)) {
+      setError(PHONE_GENERIC_ERROR_MESSAGE);
+      return;
+    }
+    setError(failure.message);
+    if (PHONE_OTP_TERMINAL_CATEGORIES.has(failure.category)) {
+      setRequestSpent(true);
+    }
+    if (
+      failure.category === PhoneOtpErrorCategory.RateLimited &&
+      failure.retryAfterSeconds !== undefined
+    ) {
+      startResendCountdown(failure.retryAfterSeconds);
+    }
+    if (
+      failure.operation === PhoneOtpOperation.Verify &&
+      !PHONE_OTP_AVAILABILITY_CATEGORIES.has(failure.category)
+    ) {
+      setOtp("");
+      focusOtpInput();
+    }
   }
 
   async function startVerification(event: FormEvent<HTMLFormElement>) {
@@ -177,33 +255,64 @@ export function PhoneSignInForm({
     try {
       const reserved = await reserveChallenge(input.data.phoneNumber);
       if (!reserved) return;
-      await deliverOtp(input.data.phoneNumber, false);
+      let settings: Msg91WidgetSettings | null = null;
+      if (widget?.driver === "msg91") {
+        await prepareMsg91Widget(widget, PhoneOtpOperation.Send);
+        const sentRequestId = await sendMsg91Otp(
+          toWidgetIdentifier(input.data.phoneNumber),
+        );
+        settings = readMsg91WidgetSettings();
+        setRequestId(sentRequestId);
+        setWidgetSettings(settings);
+      }
+      setRequestSpent(false);
+      setNotice(undefined);
       setNormalizedPhoneNumber(input.data.phoneNumber);
       setChallengeId(reserved);
       setStage(PhoneSignInStage.VerifyOtp);
       setOtp("");
+      restartResendCountdown(settings);
     } catch (failure) {
-      setError(
-        failure instanceof Error ? failure.message : PHONE_GENERIC_ERROR_MESSAGE,
-      );
+      showFailure(failure);
     } finally {
       setPending(false);
     }
   }
 
+  /**
+   * Resends through MSG91's `retryOtp` for the current request. Only when that
+   * request can no longer be verified (expired, locked after too many wrong
+   * codes, or unknown to the provider), or the widget has no resend channel,
+   * does a resend start a new request instead.
+   */
   async function resendOtp() {
     setError(undefined);
+    setNotice(undefined);
     setResending(true);
     try {
       const reserved = await reserveChallenge(normalizedPhoneNumber);
       if (!reserved) return;
-      await deliverOtp(normalizedPhoneNumber, true);
+      /**
+       * Reserving replaced the browser-binding cookie, so the new challenge is
+       * the one this browser can verify against even if the resend fails.
+       */
       setChallengeId(reserved);
+      let settings: Msg91WidgetSettings | null = null;
+      if (widget?.driver === "msg91") {
+        settings = await prepareMsg91Widget(widget, PhoneOtpOperation.Resend);
+        const nextRequestId =
+          !requestSpent && settings.canRetry
+            ? await retryMsg91Otp(requestId, settings.retryChannel)
+            : await sendMsg91Otp(toWidgetIdentifier(normalizedPhoneNumber));
+        setRequestId(nextRequestId);
+      }
+      setRequestSpent(false);
       setOtp("");
+      setNotice(PHONE_OTP_RESENT_MESSAGE);
+      restartResendCountdown(settings);
+      focusOtpInput();
     } catch (failure) {
-      setError(
-        failure instanceof Error ? failure.message : PHONE_GENERIC_ERROR_MESSAGE,
-      );
+      showFailure(failure);
     } finally {
       setResending(false);
     }
@@ -211,17 +320,30 @@ export function PhoneSignInForm({
 
   async function verifyOtp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    /**
+     * A ref, not state: two clicks or Enter presses in the same frame both
+     * see stale state, but only one can pass this guard.
+     */
+    if (verifying.current) return;
     setError(undefined);
+    setNotice(undefined);
     if (!widget) {
       setError(PHONE_WIDGET_UNAVAILABLE_MESSAGE);
       return;
     }
+    if (!isCompleteOtpCode(otp, codeLength)) {
+      setError(PHONE_OTP_FORMAT_MESSAGE);
+      focusOtpInput();
+      return;
+    }
+    if (!canVerify) return;
 
+    verifying.current = true;
     setPending(true);
     try {
       const accessToken =
         widget.driver === "msg91"
-          ? await verifyMsg91Otp(otp)
+          ? await verifyMsg91Otp(otp, requestId)
           : createDevelopmentAccessToken(
               toWidgetIdentifier(normalizedPhoneNumber),
               otp,
@@ -251,6 +373,10 @@ export function PhoneSignInForm({
             ? apiError.data.error.message
             : PHONE_GENERIC_ERROR_MESSAGE,
         );
+        if (PHONE_OTP_RETRYABLE_HTTP_STATUSES.has(response.status)) {
+          setOtp("");
+          focusOtpInput();
+        }
         return;
       }
       const verified = PhoneVerifyResponseSchema.safeParse(payload);
@@ -267,10 +393,9 @@ export function PhoneSignInForm({
       setStage(PhoneSignInStage.Authenticated);
       window.location.assign(returnTo);
     } catch (failure) {
-      setError(
-        failure instanceof Error ? failure.message : PHONE_GENERIC_ERROR_MESSAGE,
-      );
+      showFailure(failure);
     } finally {
+      verifying.current = false;
       setPending(false);
     }
   }
@@ -280,6 +405,10 @@ export function PhoneSignInForm({
     setChallengeId("");
     setOtp("");
     setError(undefined);
+    setNotice(undefined);
+    setRequestId(null);
+    setRequestSpent(false);
+    startResendCountdown(0);
     queueMicrotask(() => phoneInput.current?.focus());
   }
 
@@ -366,52 +495,28 @@ export function PhoneSignInForm({
 
   if (awaitingOtp) {
     return (
-      <form className="auth-form" onSubmit={verifyOtp}>
-        <p className="auth-form__notice">
-          {PHONE_OTP_SENT_MESSAGE} <strong>{normalizedPhoneNumber}</strong>.
-        </p>
-        {widget?.driver === "fake" ? (
-          <p className="auth-form__notice">{PHONE_DEVELOPMENT_NOTICE}</p>
-        ) : null}
-        <div className={PHONE_CAPTCHA_CONTAINER_CLASS} id={captchaId} />
-        <Field
-          autoComplete="one-time-code"
-          error={error}
-          id="phone-otp"
-          inputMode="numeric"
-          label={PHONE_OTP_INPUT_LABEL}
-          onChange={(event) => setOtp(event.currentTarget.value)}
-          pattern="[0-9]*"
-          placeholder={PHONE_OTP_INPUT_PLACEHOLDER}
-          ref={otpInput}
-          required
-          value={otp}
-        />
-        <Button
-          className="auth-form__submit"
-          disabled={pending || resending}
-          type="submit"
-          variant="primary"
-        >
-          {pending ? PHONE_OTP_PENDING_LABEL : PHONE_OTP_SUBMIT_LABEL}
-        </Button>
-        <Button
-          disabled={pending || resending}
-          onClick={() => void resendOtp()}
-          type="button"
-          variant="ghost"
-        >
-          {resending ? PHONE_RESEND_PENDING_LABEL : PHONE_RESEND_LABEL}
-        </Button>
-        <Button
-          disabled={pending || resending}
-          onClick={changePhoneNumber}
-          type="button"
-          variant="ghost"
-        >
-          {PHONE_CHANGE_NUMBER_LABEL}
-        </Button>
-      </form>
+      <PhoneOtpStep
+        canVerify={canVerify}
+        captchaId={captchaId}
+        code={otp}
+        codeLength={codeLength}
+        developmentMode={widget?.driver === "fake"}
+        error={error}
+        maskedPhoneNumber={maskPhoneNumber(normalizedPhoneNumber)}
+        notice={notice}
+        onChangeNumber={changePhoneNumber}
+        onCodeChange={(value) => {
+          setOtp(
+            toOtpDigits(value, codeLength ?? PHONE_OTP_FALLBACK_MAX_LENGTH),
+          );
+        }}
+        onResend={() => void resendOtp()}
+        onSubmit={(event) => void verifyOtp(event)}
+        pending={pending}
+        ref={otpInput}
+        resendCountdownSeconds={resendCountdown}
+        resending={resending}
+      />
     );
   }
 

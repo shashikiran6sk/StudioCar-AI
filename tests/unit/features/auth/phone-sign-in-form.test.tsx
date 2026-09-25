@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PhoneSignInForm } from "../../../../apps/web/src/features/auth/phone-sign-in-form";
@@ -220,7 +220,7 @@ describe("PhoneSignInForm", () => {
     expect(
       await screen.findByRole("textbox", { name: /Verification code/ }),
     ).toHaveFocus();
-    expect(screen.getByText("+919876543210")).toBeInTheDocument();
+    expect(screen.getByText("+91 ******3210")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       START_PATH,
       expect.objectContaining({
@@ -328,7 +328,8 @@ describe("PhoneSignInForm", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("offers a resend that reserves a fresh rate-limited challenge", async () => {
+  it("offers a resend, after a pause, that reserves a fresh rate-limited challenge", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     const fetchMock = await renderWithWidget(developmentWidget);
 
     fireEvent.change(screen.getByRole("textbox", { name: /Phone number/ }), {
@@ -337,13 +338,63 @@ describe("PhoneSignInForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Continue with phone" }));
     await screen.findByRole("textbox", { name: /Verification code/ });
 
+    expect(
+      screen.getByRole("button", { name: "Resend code in 30s" }),
+    ).toBeDisabled();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
     fireEvent.click(screen.getByRole("button", { name: "Resend code" }));
 
-    await waitFor(() => {
-      const startCalls = fetchMock.mock.calls.filter(
-        ([path]) => String(path) === START_PATH,
-      );
-      expect(startCalls).toHaveLength(2);
+    expect(
+      await screen.findByText("A new verification code has been sent."),
+    ).toBeVisible();
+    const startCalls = fetchMock.mock.calls.filter(
+      ([path]) => String(path) === START_PATH,
+    );
+    expect(startCalls).toHaveLength(2);
+    vi.useRealTimers();
+  });
+
+  it("rejects a wrong development code as incorrect and clears it", async () => {
+    stubFetch({
+      [WIDGET_PATH]: () => json(developmentWidget),
+      [START_PATH]: () =>
+        json(
+          {
+            status: "challenge_sent",
+            challengeId: CHALLENGE_ID,
+            expiresAt: "2026-09-19T12:10:00.000Z",
+          },
+          201,
+        ),
+      [VERIFY_PATH]: () =>
+        json(
+          {
+            error: {
+              code: "BAD_REQUEST",
+              message:
+                "The verification code you entered is incorrect. Please try again.",
+              requestId: "request-1",
+            },
+          },
+          400,
+        ),
     });
+    render(<PhoneSignInForm returnTo="/dashboard" />);
+    fireEvent.change(await screen.findByRole("textbox", { name: /Phone number/ }), {
+      target: { value: "9876543210" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Continue with phone" }));
+    const code = await screen.findByRole("textbox", { name: /Verification code/ });
+
+    fireEvent.change(code, { target: { value: "9999" } });
+    fireEvent.click(screen.getByRole("button", { name: "Verify and continue" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The verification code you entered is incorrect. Please try again.",
+    );
+    expect(code).toHaveValue("");
+    expect(code).toHaveFocus();
   });
 });

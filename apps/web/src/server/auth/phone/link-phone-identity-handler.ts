@@ -125,7 +125,7 @@ export async function handleLinkPhoneIdentity(
     }
     return createPhoneAuthErrorResponse(
       new PhoneOtpApplicationError(
-        PhoneOtpApplicationErrorCode.ProviderUnavailable,
+        PhoneOtpApplicationErrorCode.ServiceUnavailable,
       ),
       createRequestId,
     );
