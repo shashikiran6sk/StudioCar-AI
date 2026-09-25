@@ -125,6 +125,9 @@ jobs:
       - name: Apply migrations for authenticated browser tests
         run: pnpm db:migrate:deploy
 
+      - name: Generate Prisma client for billing seed
+        run: pnpm db:generate
+
       - name: Seed billing plans for authenticated browser tests
         run: pnpm db:seed
 
