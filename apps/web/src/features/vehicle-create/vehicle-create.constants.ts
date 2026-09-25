@@ -121,18 +121,14 @@ export const PROCESSING_BATCH_IDEMPOTENCY_HEADER = "idempotency-key";
 export const PROCESSING_BATCH_GENERIC_ERROR =
   "Processing could not be started. Your draft and originals are preserved.";
 export const VEHICLE_CREATE_TRIGGER_LABEL = "+ Upload Vehicle";
-export const VEHICLE_CREATE_STEP_LABELS = ["Vehicle", "Photos", "Studio", "Review"];
-export const VEHICLE_DETAILS_NAME_HINT = "Enter a name that helps you identify this vehicle.";
-export const VEHICLE_DETAILS_STOCK_HINT = "Your dealership's existing vehicle reference. Optional.";
-export const VEHICLE_DETAILS_SPECS_LABEL = "Add vehicle specifications (optional)";
-export const VEHICLE_DETAILS_SPECS_HINT = "Add brand, model, variant and year for better organization and search.";
 export const VEHICLE_DETAILS_LABELS = {
-  name: "Vehicle name / reference",
+  name: "Vehicle name",
   brand: "Brand",
   model: "Model",
   variant: "Variant",
   year: "Year",
-  stockId: "Stock / Inventory ID",
+  stockId: "Stock ID",
+  internalId: "Internal ID",
   notes: "Notes",
 } satisfies Record<keyof VehicleDetailsValues, string>;
 export const VEHICLE_DETAILS_PLACEHOLDERS = {
@@ -142,10 +138,12 @@ export const VEHICLE_DETAILS_PLACEHOLDERS = {
   variant: "e.g. Carrera",
   year: "e.g. 2025",
   stockId: "e.g. SC-1042",
+  internalId: "e.g. INV-204",
   notes: "Add any notes about this vehicle",
 } satisfies Record<keyof VehicleDetailsValues, string>;
 export const EMPTY_VEHICLE_DETAILS: VehicleDetailsValues = {
   brand: "",
+  internalId: "",
   model: "",
   name: "",
   notes: "",

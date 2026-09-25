@@ -58,6 +58,8 @@ function updateVehicleDetails(
   switch (field) {
     case "brand":
       return { ...details, brand: value };
+    case "internalId":
+      return { ...details, internalId: value };
     case "model":
       return { ...details, model: value };
     case "name":

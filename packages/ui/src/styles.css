@@ -409,17 +409,6 @@
   gap: 6px;
 }
 
-.sc-stepper__item {
-  display: grid;
-  gap: 6px;
-}
-
-.sc-stepper__label {
-  color: var(--sc-neutral-600);
-  font-size: 10px;
-  text-align: center;
-}
-
 .sc-stepper__bar {
   width: 74px;
   height: 4px;

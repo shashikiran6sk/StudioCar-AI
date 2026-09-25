@@ -1,5 +1,6 @@
 export interface VehicleDetailsValues {
   brand: string;
+  internalId: string;
   model: string;
   name: string;
   notes: string;
