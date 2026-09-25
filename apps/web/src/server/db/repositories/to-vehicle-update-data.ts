@@ -12,9 +12,6 @@ export function toVehicleUpdateData(
     ...(command.variant === undefined ? {} : { variant: command.variant }),
     ...(command.year === undefined ? {} : { year: command.year }),
     ...(command.stockId === undefined ? {} : { stockId: command.stockId }),
-    ...(command.internalId === undefined
-      ? {}
-      : { internalId: command.internalId }),
     ...(command.notes === undefined ? {} : { notes: command.notes }),
   };
 }

@@ -11,8 +11,11 @@ import {
 describe("vehicle contracts", () => {
   it("normalizes a valid vehicle command", () => {
     expect(
-      CreateVehicleSchema.parse({ name: "  2025 Porsche 911 ", year: "2025" }),
-    ).toMatchObject({ name: "2025 Porsche 911", year: 2025 });
+      CreateVehicleSchema.parse({ name: "  2025 Porsche 911 " }),
+    ).toEqual({ name: "2025 Porsche 911" });
+    expect(
+      CreateVehicleSchema.parse({ name: "2025 Porsche 911", year: "2025" }),
+    ).toMatchObject({ year: 2025 });
   });
 
   it("rejects an empty update and unknown command fields", () => {
@@ -20,6 +23,8 @@ describe("vehicle contracts", () => {
     expect(
       CreateVehicleSchema.safeParse({ name: "911", ownerId: "forged" }).success,
     ).toBe(false);
+    expect(CreateVehicleSchema.safeParse({ name: "911", internalId: "manual" }).success).toBe(false);
+    expect(UpdateVehicleSchema.safeParse({ internalId: "manual" }).success).toBe(false);
   });
 
   it("keeps inventory query bounds server-controlled", () => {

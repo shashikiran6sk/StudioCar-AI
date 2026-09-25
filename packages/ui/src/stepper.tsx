@@ -4,10 +4,11 @@ import { cx } from "./utils";
 
 export interface StepperProps extends HTMLAttributes<HTMLDivElement> {
   current: number;
+  labels?: readonly string[];
   total: number;
 }
 
-export function Stepper({ className, current, total, ...props }: StepperProps) {
+export function Stepper({ className, current, labels, total, ...props }: StepperProps) {
   const safeCurrent = Math.min(Math.max(current, 1), total);
 
   return (
@@ -18,11 +19,13 @@ export function Stepper({ className, current, total, ...props }: StepperProps) {
       {...props}
     >
       {Array.from({ length: total }, (_, index) => (
-        <span
-          aria-hidden="true"
-          className={cx("sc-stepper__bar", index < safeCurrent && "sc-stepper__bar--active")}
-          key={index}
-        />
+        <span className="sc-stepper__item" key={index}>
+          <span
+            aria-hidden="true"
+            className={cx("sc-stepper__bar", index < safeCurrent && "sc-stepper__bar--active")}
+          />
+          {labels?.[index] ? <span className="sc-stepper__label">{labels[index]}</span> : null}
+        </span>
       ))}
     </div>
   );
