@@ -2,6 +2,10 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: StudioCar AI image-processing queue, dead-letter queue, IAM policies, and alarms
 
 Parameters:
+  AlarmTopicArn:
+    Type: String
+    Default: ""
+    Description: Optional existing SNS topic for operational notifications
   QueueName:
     Type: String
     Default: studiocar-image-processing
@@ -30,6 +34,9 @@ Parameters:
     Type: Number
     Default: 300
     MinValue: 60
+
+Conditions:
+  HasAlarmTopic: !Not [!Equals [!Ref AlarmTopicArn, ""]]
 
 Resources:
   ImageProcessingDeadLetterQueue:
@@ -106,6 +113,8 @@ Resources:
   QueueDepthAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
       AlarmDescription: Image-processing queue depth is above the configured capacity threshold
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
@@ -122,6 +131,8 @@ Resources:
   OldestMessageAgeAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
       AlarmDescription: Oldest image-processing message exceeds the latency threshold
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
@@ -138,6 +149,8 @@ Resources:
   DeadLetterQueueAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
       AlarmDescription: At least one image-processing message is in the dead-letter queue
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
@@ -162,3 +175,7 @@ Outputs:
     Value: !Ref ProcessingPublisherPolicy
   ProcessingWorkerPolicyArn:
     Value: !Ref ProcessingWorkerPolicy
+  ImageProcessingQueueName:
+    Value: !GetAtt ImageProcessingQueue.QueueName
+  ImageProcessingDeadLetterQueueName:
+    Value: !GetAtt ImageProcessingDeadLetterQueue.QueueName

@@ -1,7 +1,5 @@
-import {
-  GetObjectCommand,
-  PutObjectCommand,
-} from "@aws-sdk/client-s3";
+import { ApplicationErrorCode, logger } from "@studiocar/observability";
+import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 
 import {
   EMPTY_OBJECT_MESSAGE,
@@ -23,7 +21,9 @@ export class S3ProcessingObjectStorage implements ProcessingObjectStoragePort {
     private readonly maximumReadBytes: number,
   ) {}
 
-  public async getOptional(key: string): Promise<StoredProcessingObject | null> {
+  public async getOptional(
+    key: string,
+  ): Promise<StoredProcessingObject | null> {
     try {
       return await this.getRequired(key);
     } catch (error) {
@@ -55,15 +55,29 @@ export class S3ProcessingObjectStorage implements ProcessingObjectStoragePort {
   }
 
   public async put(input: PutProcessingObjectInput): Promise<void> {
-    await this.client.send(
-      new PutObjectCommand({
-        Body: input.bytes,
-        Bucket: this.bucket,
-        ContentLength: input.bytes.byteLength,
-        ContentType: input.contentType,
-        Key: input.key,
-        Metadata: input.metadata,
-      }),
-    );
+    const startedAt = performance.now();
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Body: input.bytes,
+          Bucket: this.bucket,
+          ContentLength: input.bytes.byteLength,
+          ContentType: input.contentType,
+          Key: input.key,
+          Metadata: input.metadata,
+        }),
+      );
+      logger.log("info", "s3_upload_completed", {
+        sizeBytes: input.bytes.byteLength,
+        durationMs: performance.now() - startedAt,
+      });
+    } catch (error) {
+      logger.log("error", "s3_upload_failed", {
+        error,
+        errorCode: ApplicationErrorCode.S3_UPLOAD_FAILED,
+        durationMs: performance.now() - startedAt,
+      });
+      throw error;
+    }
   }
 }

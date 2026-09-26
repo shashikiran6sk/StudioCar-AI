@@ -37,6 +37,7 @@ export function createCloudWatchEmbeddedMetricPayload(
     },
     correlation: event.correlation ?? {},
     ...(event.error ? { error: event.error } : {}),
+    event: event.eventName,
     eventName: event.eventName,
     level: event.level,
     ...dimensions,

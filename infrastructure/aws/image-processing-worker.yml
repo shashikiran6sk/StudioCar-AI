@@ -2,6 +2,18 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: StudioCar AI bounded image-processing Lambda worker and SQS event source
 
 Parameters:
+  AlarmTopicArn:
+    Type: String
+    Default: ""
+    Description: Optional existing SNS topic for operational notifications
+  SentryDsn:
+    Type: String
+    Default: ""
+    Description: Optional worker Sentry project DSN
+  SentryRelease:
+    Type: String
+    Default: ""
+    Description: Reviewed deployment commit SHA or version
   ArtifactBucket:
     Type: String
     Description: Private S3 bucket containing the reviewed worker deployment archive
@@ -59,10 +71,6 @@ Parameters:
     Type: Number
     Default: 20
     MinValue: 1
-  ProviderRateLimitAlarmThreshold:
-    Type: Number
-    Default: 5
-    MinValue: 1
   EndToEndLatencyAlarmMilliseconds:
     Type: Number
     Default: 300000
@@ -71,6 +79,9 @@ Parameters:
     Type: Number
     Default: 100000
     MinValue: 1000
+
+Conditions:
+  HasAlarmTopic: !Not [!Equals [!Ref AlarmTopicArn, ""]]
 
 Resources:
   ImageProcessingWorkerRole:
@@ -124,6 +135,8 @@ Resources:
           # The deployed workers are production's; environment validation
           # refuses every local adapter under this profile.
           APP_ENV: production
+          SENTRY_DSN: !Ref SentryDsn
+          SENTRY_RELEASE: !Ref SentryRelease
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
           BACKGROUND_REMOVAL_PROVIDER: removebg
           DATABASE_URL: !Sub '{{resolve:secretsmanager:${DatabaseSecretArn}:SecretString:DATABASE_URL}}'
@@ -164,25 +177,11 @@ Resources:
       LogGroupName: !Sub /aws/lambda/${ImageProcessingWorker}
       RetentionInDays: !Ref LogRetentionDays
 
-  ImageProcessingWorkerErrorAlarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmDescription: Image-processing Lambda has invocation errors
-      ComparisonOperator: GreaterThanThreshold
-      Dimensions:
-        - Name: FunctionName
-          Value: !Ref ImageProcessingWorker
-      EvaluationPeriods: 1
-      MetricName: Errors
-      Namespace: AWS/Lambda
-      Period: 60
-      Statistic: Sum
-      Threshold: 0
-      TreatMissingData: notBreaching
-
   ImageProcessingWorkerDurationAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
       AlarmDescription: Image-processing Lambda duration is approaching its configured timeout
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
@@ -199,6 +198,8 @@ Resources:
   ImageProcessingTerminalFailureAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
       AlarmDescription: Image-processing terminal failures exceed the configured threshold
       ComparisonOperator: GreaterThanOrEqualToThreshold
       Dimensions:
@@ -215,6 +216,8 @@ Resources:
   ImageProcessingRetryAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
       AlarmDescription: Image-processing retries exceed the configured threshold
       ComparisonOperator: GreaterThanOrEqualToThreshold
       Dimensions:
@@ -228,25 +231,11 @@ Resources:
       Threshold: !Ref RetryAlarmThreshold
       TreatMissingData: notBreaching
 
-  ImageProcessingProviderRateLimitAlarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmDescription: Background-removal provider rate limits exceed the configured threshold
-      ComparisonOperator: GreaterThanOrEqualToThreshold
-      Dimensions:
-        - Name: Service
-          Value: image-processing-worker
-      EvaluationPeriods: 1
-      MetricName: ProviderRateLimitCount
-      Namespace: StudioCarAI/Operations
-      Period: 300
-      Statistic: Sum
-      Threshold: !Ref ProviderRateLimitAlarmThreshold
-      TreatMissingData: notBreaching
-
   ImageProcessingEndToEndLatencyAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
       AlarmDescription: Image-processing end-to-end latency exceeds the configured threshold
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
@@ -265,3 +254,5 @@ Outputs:
     Value: !GetAtt ImageProcessingWorker.Arn
   ImageProcessingWorkerRoleArn:
     Value: !GetAtt ImageProcessingWorkerRole.Arn
+  ImageProcessingWorkerName:
+    Value: !Ref ImageProcessingWorker

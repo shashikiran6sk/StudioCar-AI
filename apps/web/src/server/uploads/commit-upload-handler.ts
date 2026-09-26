@@ -1,3 +1,7 @@
+import {
+  ApplicationErrorCode,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import { randomUUID } from "node:crypto";
 import {
   CommitUploadPathSchema,
@@ -119,7 +123,8 @@ export async function handleCommitUpload(
           requestId,
         });
     }
-  } catch {
+  } catch (error) {
+    reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
     return createApiErrorResponse({
       status: UPLOAD_UNAVAILABLE_STATUS,
       code: UPLOAD_UNAVAILABLE_CODE,

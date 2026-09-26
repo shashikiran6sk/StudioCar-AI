@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { IdempotencyKeySchema } from "./api";
 import { EntityIdSchema, IsoDateTimeSchema, RequestIdSchema } from "./common";
 
 export const WorkerMessageSchema = z
@@ -8,6 +9,7 @@ export const WorkerMessageSchema = z
     type: z.literal("PROCESS_IMAGE"),
     jobId: EntityIdSchema,
     requestId: RequestIdSchema.optional(),
+    batchId: IdempotencyKeySchema.optional(),
     enqueuedAt: IsoDateTimeSchema,
   })
   .strict();

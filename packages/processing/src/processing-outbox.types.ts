@@ -1,6 +1,7 @@
 import type { WorkerMessage } from "@studiocar/contracts";
 
 export interface ProcessingOutboxMessage {
+  job?: { requestId: string | null; batchIdempotencyKey: string | null };
   attemptCount: number;
   createdAt: Date;
   id: string;

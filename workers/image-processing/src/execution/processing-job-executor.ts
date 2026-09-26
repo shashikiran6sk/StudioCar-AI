@@ -1,3 +1,9 @@
+import { LOG_EVENTS } from "@studiocar/observability";
+import {
+  ApplicationErrorCode,
+  logger,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import type {
   BackgroundRemovalProvider,
   ClaimedProcessingJob,
@@ -34,12 +40,19 @@ export class ProcessingJobExecutor implements ProcessingJobExecutorPort {
   public async execute(
     job: ClaimedProcessingJob,
   ): Promise<ProcessingExecutionResult> {
+    logger.log("info", LOG_EVENTS.PROCESSING_STARTED, {
+      assetId: job.imageAssetId,
+      userId: job.userId,
+      vehicleId: job.vehicleId,
+    });
     if (job.sizeBytes > BigInt(this.options.maximumInputBytes)) {
       return this.failure("INVALID_IMAGE", SOURCE_SIZE_MISMATCH_MESSAGE);
     }
 
     try {
-      const sourceObject = await this.storage.getRequired(job.originalObjectKey);
+      const sourceObject = await this.storage.getRequired(
+        job.originalObjectKey,
+      );
       if (
         sourceObject.bytes.byteLength !== Number(job.sizeBytes) ||
         sourceObject.bytes.byteLength > this.options.maximumInputBytes
@@ -71,6 +84,7 @@ export class ProcessingJobExecutor implements ProcessingJobExecutorPort {
           keys.providerResult,
         );
         if (stagedProviderResult) {
+          logger.log("info", LOG_EVENTS.PROVIDER_REUSED);
           const stagedChecksum =
             stagedProviderResult.metadata[OUTPUT_CHECKSUM_METADATA_KEY];
           if (
@@ -169,7 +183,8 @@ export class ProcessingJobExecutor implements ProcessingJobExecutorPort {
         providerLatencyMilliseconds,
         providerRequestId,
       };
-    } catch {
+    } catch (error) {
+      reportUnexpectedError(error, ApplicationErrorCode.S3_UPLOAD_FAILED);
       return this.failure("NETWORK", STORAGE_FAILURE_MESSAGE);
     }
   }

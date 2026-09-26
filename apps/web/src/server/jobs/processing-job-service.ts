@@ -1,3 +1,5 @@
+import { LOG_EVENTS } from "@studiocar/observability";
+import { logger, monitoringContext } from "@studiocar/observability";
 import type { CreateProcessingBatch } from "@studiocar/contracts";
 import type { ProcessingProvider } from "@studiocar/database-runtime";
 import {
@@ -29,8 +31,11 @@ export class ProcessingJobService implements ProcessingJobApplication {
     idempotencyKey: string,
     command: CreateProcessingBatch,
   ): Promise<CreateProcessingJobsResult> {
+    const context = monitoringContext.getStore();
+    if (context) context.batchId = idempotencyKey;
     const now = this.now();
     const reservation = await this.jobs.reserveBatchOwned({
+      ...(context?.requestId ? { requestId: context.requestId } : {}),
       allowance: await this.allowances.resolve(userId, now),
       userId,
       vehicleId: command.vehicleId,
@@ -70,6 +75,12 @@ export class ProcessingJobService implements ProcessingJobApplication {
       return { ok: false, reason: reservation.kind };
     }
 
+    for (const job of reservation.jobs)
+      logger.log("info", LOG_EVENTS.JOB_RESERVED, {
+        jobId: job.id,
+        batchId: idempotencyKey,
+        requestId: job.requestId ?? context?.requestId,
+      });
     await this.dispatcher.dispatch({
       jobIds: reservation.jobs.map((job) => job.id),
     });

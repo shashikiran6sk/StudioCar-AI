@@ -10,6 +10,31 @@ Last updated: 2026-09-26
 - Added unit and browser checks for metadata, robots, sitemap, structured data, icons, indexability, and fragment navigation. Search Console verification is optional through `GOOGLE_SITE_VERIFICATION`; the owner must supply the real token in Vercel after verifying the domain.
 - Preview SEO output fails closed when `APP_ENV` is absent, since Vercel evaluates metadata routes during the build. This does not relax the required `APP_ENV` validation used by application runtimes.
 
+## Production observability
+
+- Extended the existing observability package, provider boundary, durable outbox
+  and AWS stacks without changing processing, ownership or retry rules. API
+  routes now produce status/duration logs and response request IDs; optional
+  post-response CloudWatch API metrics cover requests, 2xx, 401, 403, 4xx and 5xx.
+- Added one nullable job request-ID column. Outbox publication/recovery carries
+  the original request and existing batch key to Lambda, provider and S3 logs.
+- Added actual remove.bg request/outcome/status/latency EMF metrics and reported
+  fractional credits; staged-output reuse never counts as another API call.
+- Added server-only Sentry with sanitized exception frames, no automatic PII or
+  payload collection, and bounded flush. Expected validation/provider refusals
+  remain structured logs.
+- Added a four-section CloudWatch dashboard, sustained Lambda/provider alarms,
+  namespace-scoped HTTP metric publisher IAM policy, and optional SNS actions
+  on existing queue/worker alarms. Deployment/runbook: `docs/observability.md`.
+- Verification: production dependency audit, source/test mapping, lint, strict
+  typecheck, all unit suites (1232 web and 359 worker tests plus the existing
+  four expected worker failures), 151 real-PostgreSQL integration tests, Prisma
+  schema/migration checks, production build, all 14 Playwright tests, and
+  CloudFormation lint passed. Required PR CI must pass before merge.
+- Deployment requires the additive migration, reviewed worker artifact, AWS
+  stack updates, production metric-export configuration and Sentry DSNs. No
+  resources are deployed by this change.
+
 ## Current status
 
 Every slice in the accepted plan is implemented and merged.
@@ -1059,7 +1084,7 @@ Tracked explicitly so the gap between the plan and the repository stays visible.
 - **An assignment does not expire by itself.** The period is honoured on read, so an expired assignment stops applying, but nothing sweeps the row back to `EXPIRED`. That belongs with the scheduled lifecycle jobs.
 - **No social link is seeded.** The footer shows what an administrator configures and nothing otherwise, which is deliberate — but it means a fresh deployment's footer has no social section until somebody adds one.
 - **New plans cannot be created from the interface.** `/admin/pricing` edits the three plans the deployment ships; adding a fourth still needs a code change, because `planKey` is the closed set that subscriptions and the usage contract are keyed by.
-- **A plan-catalog read failure is not observable.** The web application has no logger yet, so a failed `PlanConfig` query surfaces as an error page rather than as a recorded event. This belongs with the control-plane telemetry slice.
+- Plan-catalog read exceptions are captured by the Next server instrumentation hook when Sentry is configured; graceful fallback reads still require explicit caller telemetry where appropriate.
 - **The activity trail is not searchable or paged.** The overview shows the most recent 25 administrative changes and nothing older. Filtering by actor, action or date needs a dedicated page.
 - **There is no command to redrive a dead-lettered job.** A message that fails five times is parked and its job shows "Processing" with no failure state, so it never reaches Attention needed; recovery is the manual `aws sqs` sequence in the README. This belongs with the recovery-operations slice.
 - **Attention cannot be dismissed.** A vehicle keeps needing attention until a later batch succeeds. There is no "ignore these failures" action.

@@ -20,7 +20,9 @@ const { GET } = await import(
 
 describe("GET /api/auth/phone/widget", () => {
   it("serves browser-safe widget configuration without caching", async () => {
-    const response = GET();
+    const response = await GET(
+      new Request("https://app.test/api/auth/phone/widget"),
+    );
 
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");

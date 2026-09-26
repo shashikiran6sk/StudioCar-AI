@@ -1,3 +1,7 @@
+import {
+  ApplicationErrorCode,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import { SupportedImageMimeTypeSchema } from "@studiocar/contracts";
 
 import { IMAGE_HEADER_READ_BYTES } from "./image-validation/image-validation.constants";
@@ -71,11 +75,7 @@ export class CommitUploadService {
         this.options.maximumImagePixels,
       );
       if (!validation.valid) {
-        await this.assets.markInvalidOwned(
-          userId,
-          assetId,
-          validation.reason,
-        );
+        await this.assets.markInvalidOwned(userId, assetId, validation.reason);
         return { ok: false, reason: "OBJECT_INVALID" };
       }
 
@@ -89,7 +89,8 @@ export class CommitUploadService {
       return response
         ? { ok: true, response }
         : { ok: false, reason: "ASSET_INVALID" };
-    } catch {
+    } catch (error) {
+      reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
       return { ok: false, reason: "STORAGE_UNAVAILABLE" };
     }
   }

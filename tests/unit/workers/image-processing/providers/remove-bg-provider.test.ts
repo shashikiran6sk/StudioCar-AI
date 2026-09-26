@@ -2,6 +2,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { RemoveBgProvider } from "../../../../../workers/image-processing/src/providers/remove-bg-provider";
 
+import type { OperationalEvent } from "../../../../../packages/observability/src/operational-telemetry.types";
+import { monitoringContext } from "../../../../../packages/observability/src/monitoring-context";
+
 const INPUT = {
   bytes: Uint8Array.from([1, 2, 3]),
   contentType: "image/jpeg",
@@ -274,5 +277,73 @@ describe("RemoveBgProvider", () => {
         kind: "PROVIDER_5XX",
       },
     });
+  });
+});
+
+it("correlates provider exchanges and records fractional charges without guessing credits", async () => {
+  const events: OperationalEvent[] = [];
+  const provider = new RemoveBgProvider(
+    {
+      apiKey: "secret-provider-key",
+      maximumOutputBytes: 1024,
+      timeoutMilliseconds: 5000,
+    },
+    () =>
+      Promise.resolve(
+        new Response(Uint8Array.from([1]), {
+          headers: {
+            "content-type": "image/webp",
+            "x-credits-charged": "0.25",
+          },
+        }),
+      ),
+    Date.now,
+    {
+      emit: (event) => {
+        events.push(event);
+        return true;
+      },
+    },
+  );
+  const result = await monitoringContext.run(
+    { requestId: "request-1", batchId: "batch-1", jobId: "job-1" },
+    () => provider.process(INPUT),
+  );
+  expect(result.ok).toBe(true);
+  expect(events).toHaveLength(2);
+  expect(events[0]?.correlation).toMatchObject({
+    requestId: "request-1",
+    batchId: "batch-1",
+    jobId: "job-1",
+  });
+  expect(events[0]?.metrics).toContainEqual(
+    expect.objectContaining({ name: "removebg.request.count", value: 1 }),
+  );
+  expect(events[1]?.metrics).toContainEqual(
+    expect.objectContaining({ name: "removebg.success.count", value: 1 }),
+  );
+  expect(events[1]?.metrics).toContainEqual(
+    expect.objectContaining({ name: "removebg.credits.charged", value: 0.25 }),
+  );
+  expect(JSON.stringify(events)).not.toContain("secret-provider-key");
+});
+it("preserves processing outcomes when the telemetry sink throws", async () => {
+  const provider = new RemoveBgProvider(
+    {
+      apiKey: "secret-provider-key",
+      maximumOutputBytes: 1024,
+      timeoutMilliseconds: 5000,
+    },
+    () => Promise.resolve(new Response("rate-limit-details", { status: 429 })),
+    Date.now,
+    {
+      emit: () => {
+        throw new Error("Telemetry unavailable");
+      },
+    },
+  );
+  await expect(provider.process(INPUT)).resolves.toMatchObject({
+    ok: false,
+    failure: { kind: "PROVIDER_429" },
   });
 });

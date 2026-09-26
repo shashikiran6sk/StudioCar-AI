@@ -37,10 +37,7 @@ describe("createCloudWatchEmbeddedMetricPayload", () => {
       _aws: {
         CloudWatchMetrics: [
           {
-            Dimensions: [
-              ["Service"],
-              ["Service", "Outcome", "Provider"],
-            ],
+            Dimensions: [["Service"], ["Service", "Outcome", "Provider"]],
             Metrics: [
               { Name: "ImagesProcessed", Unit: "Count" },
               {
@@ -58,6 +55,7 @@ describe("createCloudWatchEmbeddedMetricPayload", () => {
         providerRequestId: "provider-request-1",
         userId: "user-1",
       },
+      event: "image_processing_completed",
       eventName: "image_processing_completed",
       ImagesProcessed: 1,
       level: "INFO",

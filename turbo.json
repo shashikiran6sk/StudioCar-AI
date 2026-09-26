@@ -4,7 +4,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": ["APP_ENV", "S3_ENDPOINT"],
+      "env": ["APP_ENV", "S3_ENDPOINT", "SENTRY_DSN", "SENTRY_RELEASE", "HTTP_CLOUDWATCH_METRICS_ENABLED", "AWS_REGION"],
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/.env.local"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },

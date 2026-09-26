@@ -578,5 +578,21 @@
   {
     "source": "apps/web/src/features/auth/msg91-widget/msg91-otp-error.constants.ts",
     "reason": "Static table of observed MSG91 widget refusal codes; exercised through normalize-msg91-otp-error tests."
+  },
+  {
+    "source": "packages/observability/src/monitoring.constants.ts",
+    "reason": "Static log, metric and error-code constants verified by logger and metric tests."
+  },
+  {
+    "source": "packages/observability/src/monitoring.types.ts",
+    "reason": "Type-only monitoring context definitions."
+  },
+  {
+    "source": "workers/image-processing/src/providers/remove-bg-telemetry.constants.ts",
+    "reason": "Static provider telemetry definitions verified by provider observation tests."
+  },
+  {
+    "source": "apps/web/src/instrumentation.ts",
+    "reason": "Next instrumentation hook wires tested exception reporting and initialization; verified by build and browser gates."
   }
 ]

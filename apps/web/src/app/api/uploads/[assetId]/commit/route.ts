@@ -1,3 +1,4 @@
+import { withRouteMonitoring } from "../../../../../server/observability/with-route-monitoring";
 import { getCurrentSession } from "../../../../../server/auth/get-current-session";
 import { handleCommitUpload } from "../../../../../server/uploads/commit-upload-handler";
 import { getUploadService } from "../../../../../server/uploads/upload-runtime";
@@ -8,7 +9,7 @@ interface CommitUploadRouteContext {
   params: Promise<{ assetId: string }>;
 }
 
-export async function POST(
+async function handlePOST(
   request: Request,
   context: CommitUploadRouteContext,
 ): Promise<Response> {
@@ -18,3 +19,8 @@ export async function POST(
   ]);
   return handleCommitUpload(request, path, session, getUploadService());
 }
+
+export const POST = withRouteMonitoring(
+  "/api/uploads/[assetId]/commit",
+  handlePOST,
+);

@@ -1,3 +1,4 @@
+import { withRouteMonitoring } from "../../../../server/observability/with-route-monitoring";
 import { getCurrentSession } from "../../../../server/auth/get-current-session";
 import { handleUpdateVehicle } from "../../../../server/vehicles/update-vehicle-handler";
 import { getVehicleService } from "../../../../server/vehicles/vehicle-runtime";
@@ -8,7 +9,7 @@ interface UpdateVehicleRouteContext {
   params: Promise<{ vehicleId: string }>;
 }
 
-export async function PATCH(
+async function handlePATCH(
   request: Request,
   context: UpdateVehicleRouteContext,
 ): Promise<Response> {
@@ -18,3 +19,8 @@ export async function PATCH(
   ]);
   return handleUpdateVehicle(request, path, session, getVehicleService());
 }
+
+export const PATCH = withRouteMonitoring(
+  "/api/vehicles/[vehicleId]",
+  handlePATCH,
+);

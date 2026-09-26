@@ -1,3 +1,10 @@
+import { LOG_EVENTS } from "@studiocar/observability";
+import {
+  ApplicationErrorCode,
+  logger,
+  monitoringContext,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import {
   SendMessageCommand,
   SQSClient,
@@ -26,15 +33,36 @@ export class SqsProcessingQueue implements ProcessingQueuePort {
   public async publish(
     message: WorkerMessage,
   ): Promise<ProcessingQueuePublishResult> {
-    const response = await this.sendMessage(
-      new SendMessageCommand({
-        MessageBody: JSON.stringify(message),
-        QueueUrl: this.queueUrl,
-      }),
-    );
-    if (!response.MessageId) {
-      throw new Error(PROCESSING_QUEUE_MESSAGE_MISSING_ID_ERROR);
+    const startedAt = performance.now();
+    try {
+      const response = await this.sendMessage(
+        new SendMessageCommand({
+          MessageBody: JSON.stringify(message),
+          QueueUrl: this.queueUrl,
+        }),
+      );
+      if (!response.MessageId) {
+        throw new Error(PROCESSING_QUEUE_MESSAGE_MISSING_ID_ERROR);
+      }
+      logger.log("info", LOG_EVENTS.JOB_PUBLISHED, {
+        requestId: message.requestId,
+        batchId: message.batchId,
+        jobId: message.jobId,
+        queueMessageId: response.MessageId,
+        durationMs: performance.now() - startedAt,
+      });
+      return { messageId: response.MessageId };
+    } catch (error) {
+      monitoringContext.run(
+        {
+          ...monitoringContext.getStore(),
+          requestId: message.requestId,
+          batchId: message.batchId,
+          jobId: message.jobId,
+        },
+        () => reportUnexpectedError(error, ApplicationErrorCode.SQS_JOB_FAILED),
+      );
+      throw error;
     }
-    return { messageId: response.MessageId };
   }
 }

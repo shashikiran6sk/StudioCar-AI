@@ -51,6 +51,10 @@ export class ProcessingOutboxDispatcher {
           version: PROCESS_IMAGE_MESSAGE_VERSION,
           type: PROCESS_IMAGE_MESSAGE_TYPE,
           jobId: message.jobId,
+          requestId: message.job?.requestId ?? message.jobId,
+          ...(message.job?.batchIdempotencyKey
+            ? { batchId: message.job.batchIdempotencyKey }
+            : {}),
           enqueuedAt: message.createdAt.toISOString(),
         });
         const queueResult = await this.queue.publish(workerMessage);

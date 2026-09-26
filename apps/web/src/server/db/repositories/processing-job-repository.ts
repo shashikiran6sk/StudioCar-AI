@@ -17,6 +17,7 @@ const MISSING_USAGE_JOB_ERROR =
   "A processing batch must contain a usage-accounting job.";
 
 const processingJobSelect = {
+  requestId: true,
   id: true,
   userId: true,
   vehicleId: true,
@@ -55,6 +56,7 @@ export interface ProcessingAllowance {
 }
 
 export interface ReserveProcessingBatchCommand {
+  requestId?: string;
   allowance: ProcessingAllowance;
   batchIdempotencyKey: string;
   /** The batch's own name; null when the person gave none. */
@@ -80,7 +82,11 @@ export type ReserveProcessingBatchResult =
         | "VEHICLE_NOT_FOUND";
     }
   | { kind: "BATCH_LIMIT_EXCEEDED"; maxImagesPerBatch: number }
-  | { kind: "ALLOWANCE_EXHAUSTED"; imageCapacity: number; imagesRemaining: number };
+  | {
+      kind: "ALLOWANCE_EXHAUSTED";
+      imageCapacity: number;
+      imagesRemaining: number;
+    };
 
 type TransactionResult =
   | { kind: "CREATED"; jobs: ProcessingJobRecord[] }
@@ -88,7 +94,11 @@ type TransactionResult =
   | { kind: "VEHICLE_UNAVAILABLE" }
   | { kind: "VEHICLE_NOT_FOUND" }
   | { kind: "BATCH_LIMIT_EXCEEDED"; maxImagesPerBatch: number }
-  | { kind: "ALLOWANCE_EXHAUSTED"; imageCapacity: number; imagesRemaining: number }
+  | {
+      kind: "ALLOWANCE_EXHAUSTED";
+      imageCapacity: number;
+      imagesRemaining: number;
+    }
   | { kind: "WRITE_RACE" };
 
 export class PrismaProcessingJobRepository {
@@ -214,6 +224,7 @@ export class PrismaProcessingJobRepository {
     for (const job of command.jobs) {
       const processingJob = await transaction.processingJob.create({
         data: {
+          requestId: command.requestId ?? null,
           userId: command.userId,
           vehicleId: command.vehicleId,
           imageAssetId: job.assetId,
