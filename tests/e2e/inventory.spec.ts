@@ -458,8 +458,55 @@ inventoryTest(
         animations: "disabled",
         path: testInfo.outputPath("desktop-reprocess-dialog.png"),
       });
-      await customizeDialog.getByRole("button", { name: "Close dialog" }).click();
+      // Reuse this owned failure as the accepted job fixture; status polling
+      // still uses the real tenant-scoped API and database.
+      await database.query(
+        'UPDATE "ProcessingJob" SET "errorCode" = $1 WHERE "id" = $2',
+        ["PROVIDER_PAYMENT_REQUIRED", failedJobId],
+      );
+      await page.route("**/api/jobs", async (route) => {
+        if (route.request().method() !== "POST") {
+          await route.continue();
+          return;
+        }
+        await route.fulfill({
+          status: 202,
+          contentType: "application/json",
+          body: JSON.stringify({
+            jobs: [
+              { jobId: failedJobId, assetId: imageAssetId, state: "QUEUED" },
+            ],
+            replayed: false,
+          }),
+        });
+      });
+      await customizeDialog
+        .getByRole("button", { name: "Review batch →" })
+        .click();
+      await page
+        .getByRole("dialog", { name: "Review & process" })
+        .getByRole("button", { name: "Process Photos" })
+        .click();
       await expect(page).toHaveURL(new RegExp(`/inventory/${vehicleId}$`));
+      const processingActivity = page.getByRole("button", {
+        name: "Image processing activity",
+      });
+      await expect(processingActivity).toContainText("needs attention");
+      await processingActivity.click();
+      const processingPanel = page.getByRole("region", {
+        name: "Processing activity",
+      });
+      await expect(processingPanel).toContainText(
+        "The studio image couldn't be created. Re-process to try again.",
+      );
+      await expect(processingPanel).not.toContainText("PAYMENT_REQUIRED");
+      await expect(processingPanel).not.toContainText("remove.bg");
+      await page.screenshot({
+        path: testInfo.outputPath("desktop-credit-failure-panel.png"),
+        animations: "disabled",
+      });
+      await processingPanel.getByRole("button", { name: /Dismiss/ }).click();
+      await page.unroute("**/api/jobs");
 
       await page.goto("/inventory?filter=NEEDS_ATTENTION");
       await expect(page.getByRole("link", { name: /Review issues/ })).toHaveAttribute(

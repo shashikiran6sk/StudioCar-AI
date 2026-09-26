@@ -1,3 +1,4 @@
+import { REMOVE_BG_PAYMENT_REQUIRED_MESSAGE } from "@studiocar/observability";
 import type { ProcessingExecutionFailure } from "@studiocar/processing";
 
 import {
@@ -31,7 +32,15 @@ export function toRemoveBgFailure(
       providerRequestId,
     };
   }
-  if (status === 401 || status === 402 || status === 403) {
+  if (status === 402) {
+    return {
+      errorMessage: REMOVE_BG_PAYMENT_REQUIRED_MESSAGE,
+      kind: "PAYMENT_REQUIRED",
+      providerLatencyMilliseconds,
+      providerRequestId,
+    };
+  }
+  if (status === 401 || status === 403) {
     return {
       errorMessage: REMOVE_BG_AUTHORIZATION_MESSAGE,
       kind: "AUTHORIZATION",

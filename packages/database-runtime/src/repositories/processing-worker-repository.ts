@@ -11,10 +11,7 @@ import {
   type ProcessingWorkerRepositoryPort,
 } from "@studiocar/processing";
 
-import type {
-  Prisma,
-  PrismaClient,
-} from "../../generated/prisma/client";
+import type { Prisma, PrismaClient } from "../../generated/prisma/client";
 import {
   ImageAssetStatus,
   ProcessingAttemptStatus,
@@ -91,6 +88,12 @@ export class PrismaProcessingWorkerRepository
         job.claimExpiresAt !== null &&
         job.claimExpiresAt <= input.now;
       if (
+        job.status === ProcessingJobStatus.PROCESSING &&
+        !expiredProcessingClaim
+      ) {
+        return { kind: "CLAIM_BUSY" };
+      }
+      if (
         job.status !== ProcessingJobStatus.QUEUED &&
         !expiredProcessingClaim
       ) {
@@ -155,7 +158,7 @@ export class PrismaProcessingWorkerRepository
           workerId: input.workerId,
         },
       });
-      if (claimed.count !== 1) return { kind: "NOT_READY" };
+      if (claimed.count !== 1) return { kind: "CLAIM_BUSY" };
 
       if (expiredProcessingClaim) {
         await transaction.processingAttempt.updateMany({
@@ -225,10 +228,7 @@ export class PrismaProcessingWorkerRepository
         },
       });
       if (!job) return { kind: "NOT_FOUND" };
-      if (
-        job.status === ProcessingJobStatus.COMPLETED &&
-        job.processedAsset
-      ) {
+      if (job.status === ProcessingJobStatus.COMPLETED && job.processedAsset) {
         return {
           kind: "ALREADY_COMPLETED",
           processedAssetId: job.processedAsset.id,

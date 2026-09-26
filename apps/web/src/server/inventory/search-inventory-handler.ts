@@ -1,3 +1,7 @@
+import {
+  ApplicationErrorCode,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import { randomUUID } from "node:crypto";
 import { InventorySearchQuerySchema } from "@studiocar/contracts";
 
@@ -43,7 +47,8 @@ export async function handleSearchInventory(
     return Response.json(page, {
       headers: { "cache-control": INVENTORY_SEARCH_CACHE_CONTROL },
     });
-  } catch {
+  } catch (error) {
+    reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
     return createApiErrorResponse({
       code: "SERVICE_UNAVAILABLE",
       message: INVENTORY_SEARCH_UNAVAILABLE_MESSAGE,

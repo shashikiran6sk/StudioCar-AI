@@ -1,3 +1,7 @@
+import {
+  ApplicationErrorCode,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import { randomUUID } from "node:crypto";
 import {
   CreateVehicleSchema,
@@ -112,7 +116,8 @@ export async function handleCreateVehicle(
           : VEHICLE_REFERENCE_CONFLICT_MESSAGE,
       requestId: createRequestId(),
     });
-  } catch {
+  } catch (error) {
+    reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
     return createApiErrorResponse({
       status: VEHICLE_UNAVAILABLE_STATUS,
       code: VEHICLE_UNAVAILABLE_CODE,

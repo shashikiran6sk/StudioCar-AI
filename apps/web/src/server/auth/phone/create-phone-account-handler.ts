@@ -1,3 +1,7 @@
+import {
+  ApplicationErrorCode,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import { randomUUID } from "node:crypto";
 import {
   PhoneAuthenticationStatus,
@@ -88,7 +92,8 @@ export async function handleCreatePhoneAccount(
       browserBinding,
       parsed.data,
     );
-  } catch {
+  } catch (error) {
+    reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
     return createApiErrorResponse({
       status: HTTP_SERVICE_UNAVAILABLE_STATUS,
       code: API_SERVICE_UNAVAILABLE_CODE,
@@ -123,7 +128,11 @@ export async function handleCreatePhoneAccount(
     result.issuedSession.expiresAt,
     isProduction,
   );
-  response.cookies.set(sessionCookie.name, sessionCookie.value, sessionCookie.options);
+  response.cookies.set(
+    sessionCookie.name,
+    sessionCookie.value,
+    sessionCookie.options,
+  );
   const otpCookie = clearPhoneOtpCookie(isProduction);
   response.cookies.set(otpCookie.name, otpCookie.value, otpCookie.options);
   const verifiedCookie = clearVerifiedPhoneCookie(isProduction);

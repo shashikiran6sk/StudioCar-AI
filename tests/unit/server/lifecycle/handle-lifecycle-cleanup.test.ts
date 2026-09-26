@@ -1,4 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { captureException } from "@sentry/node";
+vi.mock("@sentry/node", () => ({
+  captureException: vi.fn(),
+  withScope: (
+    callback: (scope: { setTag: (key: string, value: string) => void }) => void,
+  ) => callback({ setTag: vi.fn() }),
+}));
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { handleLifecycleCleanup } from "../../../../apps/web/src/server/lifecycle/handle-lifecycle-cleanup";
 import type { LifecycleCleanupApplication } from "../../../../apps/web/src/server/lifecycle/lifecycle-cleanup.types";
@@ -14,6 +21,7 @@ function request(token: string): Request {
 }
 
 describe("handleLifecycleCleanup", () => {
+  beforeEach(() => vi.clearAllMocks());
   it("rejects invalid credentials without running cleanup", async () => {
     const cleanup: LifecycleCleanupApplication = { run: vi.fn() };
     const response = await handleLifecycleCleanup(
@@ -25,6 +33,7 @@ describe("handleLifecycleCleanup", () => {
 
     expect(response.status).toBe(403);
     expect(cleanup.run).not.toHaveBeenCalled();
+    expect(captureException).not.toHaveBeenCalled();
   });
 
   it("returns private aggregate counts and maps storage failures", async () => {
@@ -40,7 +49,11 @@ describe("handleLifecycleCleanup", () => {
         })
         .mockRejectedValueOnce(new Error("database unavailable")),
     };
-    const success = await handleLifecycleCleanup(request(TOKEN), TOKEN, cleanup);
+    const success = await handleLifecycleCleanup(
+      request(TOKEN),
+      TOKEN,
+      cleanup,
+    );
     const unavailable = await handleLifecycleCleanup(
       request(TOKEN),
       TOKEN,
@@ -52,5 +65,6 @@ describe("handleLifecycleCleanup", () => {
     expect(success.headers.get("cache-control")).toBe("no-store");
     await expect(success.json()).resolves.toMatchObject({ total: 10 });
     expect(unavailable.status).toBe(503);
+    expect(captureException).toHaveBeenCalledTimes(1);
   });
 });

@@ -112,4 +112,43 @@ describe("ProcessingIndicator", () => {
     expect(trigger).toHaveTextContent("1 image ready");
     expect(trigger).not.toHaveTextContent("attention");
   });
+
+  it("shows a generic message and refreshes when provider credits end processing", () => {
+    useProcessingStatusStore
+      .getState()
+      .register([{ jobId: JOB_ID, assetId: ASSET_ID, state: "QUEUED" }]);
+    render(<ProcessingIndicator />);
+    act(() =>
+      useProcessingStatusStore
+        .getState()
+        .update([
+          {
+            jobId: JOB_ID,
+            assetId: ASSET_ID,
+            vehicleId: "0e879f46-1193-4d77-b785-057fe026d998",
+            vehicleName: "Credit failure vehicle",
+            updatedAt: "2026-09-26T10:00:00.000Z",
+            state: "FAILED",
+            stage: "REMOVING_BACKGROUND",
+            errorCode: "PROVIDER_PAYMENT_REQUIRED",
+            retryable: false,
+          },
+        ]),
+    );
+    expect(refresh).toHaveBeenCalledTimes(1);
+    const trigger = screen.getByRole("button", {
+      name: "Image processing activity",
+    });
+    expect(trigger).toHaveTextContent("needs attention");
+    fireEvent.click(trigger);
+    expect(
+      screen.getByText(
+        "The studio image couldn't be created. Re-process to try again.",
+      ),
+    ).toBeVisible();
+    expect(
+      screen.queryByText(/remove.bg|PAYMENT_REQUIRED|credits/i),
+    ).not.toBeInTheDocument();
+  });
+
 });

@@ -1,3 +1,5 @@
+import { classifyProcessingFailure } from "@studiocar/processing";
+import { LOG_EVENTS } from "@studiocar/observability";
 import {
   SqsBatchResponseSchema,
   SqsWorkerEventSchema,
@@ -6,6 +8,11 @@ import {
   type WorkerMessage,
 } from "@studiocar/contracts";
 import {
+  ApplicationErrorCode,
+  logger,
+  monitoringContext,
+  reportUnexpectedError,
+  emitOperationalEvent,
   classifyOperationalError,
   OperationalTelemetry,
   type OperationalTelemetryPort,
@@ -27,12 +34,56 @@ export async function handleProcessingQueueEvent(
 
   for (const record of parsedEvent.Records) {
     const startedAtMilliseconds = now();
+    const logStartedAt = performance.now();
     let message: WorkerMessage | undefined;
     try {
       const body: unknown = JSON.parse(record.body);
       message = WorkerMessageSchema.parse(body);
-      const result = await processor.process(message);
-      telemetry.emit(
+      const validatedMessage = message;
+      const result = await monitoringContext.run(
+        {
+          requestId: message.requestId ?? message.jobId,
+          batchId: message.batchId,
+          jobId: message.jobId,
+          queueMessageId: record.messageId,
+        },
+        async () => {
+          logger.log("info", LOG_EVENTS.JOB_RECEIVED);
+          try {
+            return await processor.process(validatedMessage);
+          } catch (error) {
+            reportUnexpectedError(error, ApplicationErrorCode.SQS_JOB_FAILED);
+            throw error;
+          }
+        },
+      );
+      logger.log(
+        result.kind === "COMPLETED" || result.kind === "IGNORED"
+          ? "info"
+          : "error",
+        result.kind === "COMPLETED"
+          ? LOG_EVENTS.PROCESSING_COMPLETED
+          : result.kind === "IGNORED"
+            ? LOG_EVENTS.JOB_IGNORED
+            : LOG_EVENTS.PROCESSING_FAILED,
+        {
+          requestId: message.requestId ?? message.jobId,
+          batchId: message.batchId,
+          jobId: message.jobId,
+          queueMessageId: record.messageId,
+          durationMs: Math.max(0, performance.now() - logStartedAt),
+          outcome: result.kind,
+          ...(result.telemetry?.failureKind
+            ? {
+                errorCode: classifyProcessingFailure(
+                  result.telemetry.failureKind,
+                ).errorCode,
+              }
+            : {}),
+        },
+      );
+      emitOperationalEvent(
+        telemetry,
         createProcessingOperationalEvent({
           finishedAtMilliseconds: now(),
           message,
@@ -45,7 +96,18 @@ export async function handleProcessingQueueEvent(
         batchItemFailures.push({ itemIdentifier: record.messageId });
       }
     } catch (error) {
-      telemetry.emit(
+      if (message)
+        logger.log("error", LOG_EVENTS.PROCESSING_FAILED, {
+          requestId: message.requestId ?? message.jobId,
+          batchId: message.batchId,
+          jobId: message.jobId,
+          queueMessageId: record.messageId,
+          durationMs: Math.max(0, performance.now() - logStartedAt),
+          errorCode: ApplicationErrorCode.SQS_JOB_FAILED,
+          error,
+        });
+      emitOperationalEvent(
+        telemetry,
         createProcessingOperationalEvent({
           error: classifyOperationalError(error),
           finishedAtMilliseconds: now(),

@@ -1,12 +1,10 @@
 import type { PrismaClient } from "@studiocar/database-runtime";
-import {
-  type Prisma,
-  ProcessingJobStatus,
-} from "@studiocar/database-runtime";
+import { type Prisma, ProcessingJobStatus } from "@studiocar/database-runtime";
 
 const processingOutboxSelect = {
   id: true,
   jobId: true,
+  job: { select: { requestId: true, batchIdempotencyKey: true } },
   attemptCount: true,
   nextAttemptAt: true,
   claimedAt: true,
@@ -73,10 +71,7 @@ export class PrismaProcessingOutboxRepository {
         nextAttemptAt: { lte: command.now },
         job: {
           status: {
-            in: [
-              ProcessingJobStatus.CREATED,
-              ProcessingJobStatus.RETRYING,
-            ],
+            in: [ProcessingJobStatus.CREATED, ProcessingJobStatus.RETRYING],
           },
         },
         ...(command.jobIds ? { jobId: { in: command.jobIds } } : {}),
@@ -139,10 +134,7 @@ export class PrismaProcessingOutboxRepository {
           where: {
             id: message.jobId,
             status: {
-              in: [
-                ProcessingJobStatus.CREATED,
-                ProcessingJobStatus.RETRYING,
-              ],
+              in: [ProcessingJobStatus.CREATED, ProcessingJobStatus.RETRYING],
             },
           },
           data: {

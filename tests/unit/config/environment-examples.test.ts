@@ -1,3 +1,4 @@
+import { ObservabilityEnvironmentSchema } from "../../../packages/config/src/observability-environment";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { parseEnv } from "node:util";
@@ -40,6 +41,7 @@ const LOCAL_COMPOSE_VARIABLES = ["WORKER_DATABASE_URL"];
 const KNOWN_VARIABLES = new Set([
   ...LOCAL_COMPOSE_VARIABLES,
   ...[
+    ObservabilityEnvironmentSchema,
     SessionEnvironmentSchema,
     PhoneOtpWidgetEnvironmentSchema,
     PhoneAuthEnvironmentSchema,
@@ -104,13 +106,21 @@ const EXAMPLES: Record<string, ExampleCase> = {
   ".env.example.local": {
     appEnvironment: "local",
     placeholders: LOCAL_ENVIRONMENT,
-    parsers: [...APPLICATION_PARSERS, ...WORKER_PARSERS, ...LOCAL_CONSUMER_PARSERS],
+    parsers: [
+      ...APPLICATION_PARSERS,
+      ...WORKER_PARSERS,
+      ...LOCAL_CONSUMER_PARSERS,
+    ],
     optional: [],
   },
   ".env.example.development": {
     appEnvironment: "development",
     placeholders: DEVELOPMENT_ENVIRONMENT,
-    parsers: [...APPLICATION_PARSERS, ...WORKER_PARSERS, ...LOCAL_CONSUMER_PARSERS],
+    parsers: [
+      ...APPLICATION_PARSERS,
+      ...WORKER_PARSERS,
+      ...LOCAL_CONSUMER_PARSERS,
+    ],
     optional: [
       "GOOGLE_REDIRECT_URI",
       "S3_ACCESS_KEY_ID",
@@ -125,7 +135,12 @@ const EXAMPLES: Record<string, ExampleCase> = {
     appEnvironment: "production",
     placeholders: PRODUCTION_ENVIRONMENT,
     parsers: [...APPLICATION_PARSERS, ...WORKER_PARSERS],
-    optional: ["BOOTSTRAP_ADMIN_EMAIL"],
+    optional: [
+      "BOOTSTRAP_ADMIN_EMAIL",
+      "SENTRY_DSN",
+      "SENTRY_RELEASE",
+      "HTTP_CLOUDWATCH_METRICS_ENABLED",
+    ],
   },
 };
 
@@ -134,12 +149,15 @@ function readExample(file: string): EnvironmentValues {
 }
 
 /** The example as a developer would complete it: blanks get placeholders. */
-function completeExample(file: string, placeholders: EnvironmentValues): EnvironmentValues {
+function completeExample(
+  file: string,
+  placeholders: EnvironmentValues,
+): EnvironmentValues {
   const example = readExample(file);
   return Object.fromEntries(
     Object.entries(example).map(([key, value]) => [
       key,
-      value === "" ? placeholders[key] ?? "" : value,
+      value === "" ? (placeholders[key] ?? "") : value,
     ]),
   );
 }
@@ -159,7 +177,9 @@ describe("environment example files", () => {
       expect(existsSync(path.join(repositoryRoot, file)), file).toBe(true);
     }
     expect(existsSync(path.join(repositoryRoot, ".env.example"))).toBe(false);
-    expect(existsSync(path.join(repositoryRoot, "apps/web/.env.example"))).toBe(false);
+    expect(existsSync(path.join(repositoryRoot, "apps/web/.env.example"))).toBe(
+      false,
+    );
   });
 
   describe.each(Object.entries(EXAMPLES))("%s", (file, example) => {
@@ -202,7 +222,10 @@ describe("environment example files", () => {
         if (example.optional.includes(key)) {
           expect(failures, `${key} is marked optional`).toEqual([]);
         } else {
-          expect(failures.length, `${key} is documented as required`).toBeGreaterThan(0);
+          expect(
+            failures.length,
+            `${key} is documented as required`,
+          ).toBeGreaterThan(0);
         }
       }
     });
@@ -241,7 +264,9 @@ describe("environment example files", () => {
   });
 
   it("asks Development for its own AWS SQS queue, and Local for none", () => {
-    expect(readExample(".env.example.development")["SQS_IMAGE_QUEUE_URL"]).toBe("");
+    expect(readExample(".env.example.development")["SQS_IMAGE_QUEUE_URL"]).toBe(
+      "",
+    );
     expect(Object.keys(readExample(".env.example.local"))).not.toContain(
       "SQS_IMAGE_QUEUE_URL",
     );
@@ -249,8 +274,12 @@ describe("environment example files", () => {
 
   it("offers explicit queue credentials to Development only", () => {
     for (const key of ["SQS_ACCESS_KEY_ID", "SQS_SECRET_ACCESS_KEY"]) {
-      expect(Object.keys(readExample(".env.example.development"))).toContain(key);
-      expect(Object.keys(readExample(".env.example.production"))).not.toContain(key);
+      expect(Object.keys(readExample(".env.example.development"))).toContain(
+        key,
+      );
+      expect(Object.keys(readExample(".env.example.production"))).not.toContain(
+        key,
+      );
     }
   });
 

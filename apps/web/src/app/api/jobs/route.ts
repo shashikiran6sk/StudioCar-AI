@@ -1,3 +1,4 @@
+import { withRouteMonitoring } from "../../../server/observability/with-route-monitoring";
 import { getCurrentSession } from "../../../server/auth/get-current-session";
 import { handleCreateProcessingBatch } from "../../../server/jobs/create-processing-batch-handler";
 import { handleGetProcessingStatuses } from "../../../server/jobs/get-processing-status-handler";
@@ -5,7 +6,7 @@ import { getProcessingRuntime } from "../../../server/jobs/processing-runtime";
 
 export const runtime = "nodejs";
 
-export async function GET(request: Request): Promise<Response> {
+async function handleGET(request: Request): Promise<Response> {
   const session = await getCurrentSession();
   return handleGetProcessingStatuses(
     request,
@@ -14,7 +15,7 @@ export async function GET(request: Request): Promise<Response> {
   );
 }
 
-export async function POST(request: Request): Promise<Response> {
+async function handlePOST(request: Request): Promise<Response> {
   const session = await getCurrentSession();
   const runtime = getProcessingRuntime();
   return handleCreateProcessingBatch(
@@ -24,3 +25,7 @@ export async function POST(request: Request): Promise<Response> {
     runtime.rateLimiter,
   );
 }
+
+export const GET = withRouteMonitoring("/api/jobs", handleGET);
+
+export const POST = withRouteMonitoring("/api/jobs", handlePOST);

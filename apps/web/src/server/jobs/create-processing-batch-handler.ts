@@ -1,3 +1,7 @@
+import {
+  ApplicationErrorCode,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import { randomUUID } from "node:crypto";
 import {
   CreateProcessingBatchSchema,
@@ -163,7 +167,8 @@ export async function handleCreateProcessingBatch(
             : PROCESSING_VEHICLE_UNAVAILABLE_MESSAGE,
       requestId: createRequestId(),
     });
-  } catch {
+  } catch (error) {
+    reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
     return createApiErrorResponse({
       status: PROCESSING_UNAVAILABLE_STATUS,
       code: PROCESSING_UNAVAILABLE_CODE,

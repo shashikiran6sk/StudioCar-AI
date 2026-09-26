@@ -57,8 +57,8 @@ alarm actions and ensure the queue visibility timeout is longer than the Lambda
 timeout before production deployment. The worker emits structured CloudWatch
 Embedded Metric Format events under `StudioCarAI/Operations`, with correlation
 IDs kept out of metric dimensions. The stack applies configurable log retention
-and alarms on Lambda errors/duration, terminal failures, retry spikes, provider
-rate limits, and end-to-end latency.
+and alarms on duration, terminal failures, retry spikes and end-to-end latency.
+The observability stack adds sustained Lambda/provider failure and throttle alarms.
 
 Configure a second trusted scheduler to invoke
 `POST /api/internal/lifecycle/cleanup` with
@@ -79,3 +79,12 @@ object keys before attempting a bounded number of S3 deletes. Repeat while
 or `claimConflicts`; failed rows retain retry authority for an explicit replay
 procedure. The configured grace period begins after the upload intent expires,
 and committed `UPLOADED` assets are never eligible.
+
+## Production observability
+
+Deploy `observability.yml` with worker/queue/DLQ names from the existing stack
+outputs. Attach its HTTP metric policy to the Vercel application workload role.
+Pass a confirmed existing SNS `AlarmTopicArn` to all three stacks to receive
+notifications. Configure worker `SentryDsn`/`SentryRelease` and the corresponding
+Vercel server variables. See [the operational guide](../../docs/observability.md)
+for thresholds, packaging, deployment order, queries and smoke verification.

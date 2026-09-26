@@ -1,0 +1,221 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: StudioCar operational dashboard, HTTP metric policy, and sustained failure alarms
+Parameters:
+  DashboardName:
+    Type: String
+    Default: studiocar-production
+  WorkerFunctionName:
+    Type: String
+  QueueName:
+    Type: String
+  DeadLetterQueueName:
+    Type: String
+  AlarmTopicArn:
+    Type: String
+    Default: ""
+    Description: Optional existing SNS topic for incident notifications; confirm subscriptions
+  LambdaErrorRatePercent:
+    Type: Number
+    Default: 5
+    MinValue: 1
+    MaxValue: 100
+  MinimumLambdaInvocations:
+    Type: Number
+    Default: 20
+    MinValue: 1
+  LambdaThrottleCount:
+    Type: Number
+    Default: 5
+    MinValue: 1
+  RemoveBgRateLimitCount:
+    Type: Number
+    Default: 5
+    MinValue: 1
+  RemoveBgServerErrorCount:
+    Type: Number
+    Default: 5
+    MinValue: 1
+  RemoveBgFailureRatePercent:
+    Type: Number
+    Default: 20
+    MinValue: 1
+    MaxValue: 100
+  MinimumRemoveBgRequests:
+    Type: Number
+    Default: 20
+    MinValue: 1
+Conditions:
+  HasAlarmTopic: !Not [!Equals [!Ref AlarmTopicArn, ""]]
+Resources:
+  HttpMetricPublisherPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Attach to the Vercel application's existing AWS workload role
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: cloudwatch:PutMetricData
+            Resource: "*"
+            Condition:
+              StringEquals:
+                cloudwatch:namespace: StudioCarAI/Operations
+  Dashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Ref DashboardName
+      DashboardBody: !Sub |
+        {"widgets": [
+          {"type":"text","x":0,"y":0,"width":24,"height":1,"properties":{"markdown":"## API \u2014 Vercel route completions (enable HTTP metric publication)"}},
+          {"type":"metric","x":0,"y":1,"width":12,"height":6,"properties":{"title":"Requests and HTTP status","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","HttpRequests","Service","nextjs-api"],["StudioCarAI/Operations","Http2xx","Service","nextjs-api"],["StudioCarAI/Operations","Http401","Service","nextjs-api"],["StudioCarAI/Operations","Http403","Service","nextjs-api"],["StudioCarAI/Operations","Http4xx","Service","nextjs-api"],["StudioCarAI/Operations","Http5xx","Service","nextjs-api"]]}},
+          {"type":"metric","x":12,"y":1,"width":12,"height":6,"properties":{"title":"API latency in milliseconds","region":"${AWS::Region}","period":300,"stat":"Average","view":"timeSeries","metrics":[["StudioCarAI/Operations","HttpDuration","Service","nextjs-api"]]}},
+          {"type":"text","x":0,"y":7,"width":24,"height":1,"properties":{"markdown":"## Lambda \u2014 AWS native metrics"}},
+          {"type":"metric","x":0,"y":8,"width":12,"height":6,"properties":{"title":"Invocations, errors, throttles","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["AWS/Lambda","Invocations","FunctionName","${WorkerFunctionName}"],["AWS/Lambda","Errors","FunctionName","${WorkerFunctionName}"],["AWS/Lambda","Throttles","FunctionName","${WorkerFunctionName}"]]}},
+          {"type":"metric","x":12,"y":8,"width":12,"height":6,"properties":{"title":"Lambda error rate %","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["AWS/Lambda","Invocations","FunctionName","${WorkerFunctionName}",{"id":"inv","visible":false}],["AWS/Lambda","Errors","FunctionName","${WorkerFunctionName}",{"id":"err","visible":false}],[{"expression":"IF(inv>0,100*err/inv,0)","label":"Error rate %","id":"rate"}]]}},
+          {"type":"metric","x":0,"y":14,"width":12,"height":6,"properties":{"title":"Lambda duration in milliseconds","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["AWS/Lambda","Duration","FunctionName","${WorkerFunctionName}",{"stat":"Average"}],["AWS/Lambda","Duration","FunctionName","${WorkerFunctionName}",{"stat":"p95"}],["AWS/Lambda","Duration","FunctionName","${WorkerFunctionName}",{"stat":"Maximum"}]]}},
+          {"type":"metric","x":12,"y":14,"width":12,"height":6,"properties":{"title":"Concurrent executions","region":"${AWS::Region}","period":300,"stat":"Maximum","view":"timeSeries","metrics":[["AWS/Lambda","ConcurrentExecutions","FunctionName","${WorkerFunctionName}"]]}},
+          {"type":"text","x":0,"y":20,"width":24,"height":1,"properties":{"markdown":"## SQS \u2014 AWS native metrics (delivery counts include retries)"}},
+          {"type":"metric","x":0,"y":21,"width":12,"height":6,"properties":{"title":"Queue depth and DLQ messages","region":"${AWS::Region}","period":300,"stat":"Maximum","view":"timeSeries","metrics":[["AWS/SQS","ApproximateNumberOfMessagesVisible","QueueName","${QueueName}"],["AWS/SQS","ApproximateNumberOfMessagesNotVisible","QueueName","${QueueName}"],["AWS/SQS","ApproximateNumberOfMessagesVisible","QueueName","${DeadLetterQueueName}"]]}},
+          {"type":"metric","x":12,"y":21,"width":12,"height":6,"properties":{"title":"Oldest message age in seconds","region":"${AWS::Region}","period":300,"stat":"Maximum","view":"timeSeries","metrics":[["AWS/SQS","ApproximateAgeOfOldestMessage","QueueName","${QueueName}"]]}},
+          {"type":"metric","x":0,"y":27,"width":12,"height":6,"properties":{"title":"Messages sent, received, deleted","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["AWS/SQS","NumberOfMessagesSent","QueueName","${QueueName}"],["AWS/SQS","NumberOfMessagesReceived","QueueName","${QueueName}"],["AWS/SQS","NumberOfMessagesDeleted","QueueName","${QueueName}"]]}},
+          {"type":"metric","x":12,"y":27,"width":12,"height":6,"properties":{"title":"Images completed (application success)","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","ImagesProcessed","Service","image-processing-worker"]]}},
+          {"type":"text","x":0,"y":33,"width":24,"height":1,"properties":{"markdown":"## remove.bg \u2014 actual API exchanges only; staged result reuse is excluded"}},
+          {"type":"metric","x":0,"y":34,"width":12,"height":6,"properties":{"title":"Requests, successes, failures","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","removebg.request.count","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.success.count","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.failure.count","Service","image-processing-worker"]]}},
+          {"type":"metric","x":12,"y":34,"width":12,"height":6,"properties":{"title":"HTTP errors","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","removebg.status.4xx","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.status.401","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.status.402","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.status.403","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.status.429","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.status.5xx","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.status.500","Service","image-processing-worker"]]}},
+          {"type":"metric","x":0,"y":40,"width":12,"height":6,"properties":{"title":"Provider duration in milliseconds","region":"${AWS::Region}","period":300,"stat":"Average","view":"timeSeries","metrics":[["StudioCarAI/Operations","removebg.duration","Service","image-processing-worker"]]}},
+          {"type":"metric","x":12,"y":40,"width":12,"height":6,"properties":{"title":"Reported credits charged and successes without credit headers","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","removebg.credits.charged","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.success.unreported_credits.count","Service","image-processing-worker"]]}}
+        ]}
+
+  LambdaErrorRateAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Sustained Lambda errors; minimum traffic suppresses isolated errors
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 2
+      TreatMissingData: notBreaching
+      Threshold: !Ref LambdaErrorRatePercent
+      Metrics:
+        - Id: inv
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/Lambda
+              MetricName: Invocations
+              Dimensions:
+                - Name: FunctionName
+                  Value: !Ref WorkerFunctionName
+            Period: 300
+            Stat: Sum
+        - Id: err
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/Lambda
+              MetricName: Errors
+              Dimensions:
+                - Name: FunctionName
+                  Value: !Ref WorkerFunctionName
+            Period: 300
+            Stat: Sum
+        - Id: rate
+          Expression: !Sub 'IF(inv >= ${MinimumLambdaInvocations}, 100*FILL(err,0)/inv, 0)'
+          ReturnData: true
+  LambdaThrottlesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Sustained Lambda throttling
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 2
+      TreatMissingData: notBreaching
+      Threshold: !Ref LambdaThrottleCount
+      Namespace: AWS/Lambda
+      MetricName: Throttles
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref WorkerFunctionName
+      Period: 300
+      Statistic: Sum
+  RemoveBgRateLimitAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Sustained remove.bg 429 responses
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 2
+      TreatMissingData: notBreaching
+      Threshold: !Ref RemoveBgRateLimitCount
+      Namespace: StudioCarAI/Operations
+      MetricName: removebg.status.429
+      Dimensions:
+        - Name: Service
+          Value: image-processing-worker
+      Period: 300
+      Statistic: Sum
+  RemoveBgServerErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Sustained remove.bg 5xx responses
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 2
+      TreatMissingData: notBreaching
+      Threshold: !Ref RemoveBgServerErrorCount
+      Namespace: StudioCarAI/Operations
+      MetricName: removebg.status.5xx
+      Dimensions:
+        - Name: Service
+          Value: image-processing-worker
+      Period: 300
+      Statistic: Sum
+  RemoveBgFailureRateAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Sustained provider failures with a minimum request volume
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 2
+      TreatMissingData: notBreaching
+      Threshold: !Ref RemoveBgFailureRatePercent
+      Metrics:
+        - Id: req
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: StudioCarAI/Operations
+              MetricName: removebg.request.count
+              Dimensions:
+                - Name: Service
+                  Value: image-processing-worker
+            Period: 300
+            Stat: Sum
+        - Id: fail
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: StudioCarAI/Operations
+              MetricName: removebg.failure.count
+              Dimensions:
+                - Name: Service
+                  Value: image-processing-worker
+            Period: 300
+            Stat: Sum
+        - Id: rate
+          Expression: !Sub 'IF(req >= ${MinimumRemoveBgRequests}, 100*FILL(fail,0)/req, 0)'
+          ReturnData: true
+Outputs:
+  DashboardUrl:
+    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${DashboardName}
+  HttpMetricPublisherPolicyArn:
+    Value: !Ref HttpMetricPublisherPolicy

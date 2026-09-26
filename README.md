@@ -198,3 +198,10 @@ authorization model.
 
 Product and architecture requirements live in [`docs/`](./docs/).
 
+
+## Observability
+
+Next.js uses Vercel JSON logs and server-side Sentry; image workers use CloudWatch
+logs/metrics and Sentry. Request and existing batch IDs follow durable SQS
+publication, remove.bg and private S3 output. See [the observability guide](docs/observability.md)
+for metrics, dashboards, alarms, deployment variables and correlation queries.

@@ -1,3 +1,13 @@
+import { LOG_EVENTS } from "@studiocar/observability";
+import {
+  emitOperationalEvent,
+  logger,
+  OperationalTelemetry,
+  type OperationalTelemetryPort,
+} from "@studiocar/observability";
+import { classifyRemoveBgError } from "./classify-remove-bg-error";
+import { createRemoveBgOperationalEvent } from "./create-remove-bg-operational-event";
+import { readRemoveBgCredits } from "./read-remove-bg-credits";
 import type {
   BackgroundRemovalProvider,
   ProcessImageInput,
@@ -39,19 +49,28 @@ export class RemoveBgProvider implements BackgroundRemovalProvider {
     private readonly options: RemoveBgProviderOptions,
     private readonly fetcher: typeof fetch = fetch,
     private readonly now: () => number = Date.now,
+    private readonly telemetry: OperationalTelemetryPort = new OperationalTelemetry(),
   ) {
     validateRemoveBgProviderOptions(options);
   }
 
   public async process(input: ProcessImageInput): Promise<ProcessImageResult> {
+    const metricStartedAt = performance.now();
+    let statusCode: number | undefined;
+    let creditsCharged: number | undefined;
+    let providerRequestId: string | null = null;
+    let success = false;
+    let caughtError: unknown;
+    logger.log("info", LOG_EVENTS.REMOVE_BG_STARTED, { provider: "remove.bg" });
+    emitOperationalEvent(
+      this.telemetry,
+      createRemoveBgOperationalEvent({ phase: "started" }),
+    );
     const startedAt = this.now();
     const controller = new AbortController();
-    const timeout = setTimeout(
-      () => {
-        controller.abort();
-      },
-      this.options.timeoutMilliseconds,
-    );
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, this.options.timeoutMilliseconds);
 
     try {
       const form = new FormData();
@@ -74,8 +93,12 @@ export class RemoveBgProvider implements BackgroundRemovalProvider {
         method: REMOVE_BG_METHOD,
         signal: controller.signal,
       });
+      statusCode = response.status;
+      creditsCharged = response.ok
+        ? readRemoveBgCredits(response.headers)
+        : undefined;
       const providerLatencyMilliseconds = this.now() - startedAt;
-      const providerRequestId = readRemoveBgRequestId(response.headers);
+      providerRequestId = readRemoveBgRequestId(response.headers);
       if (!response.ok) {
         const providerErrorCode = await readRemoveBgErrorCode(response);
         return {
@@ -108,6 +131,7 @@ export class RemoveBgProvider implements BackgroundRemovalProvider {
           },
         };
       }
+      success = true;
       return {
         ok: true,
         result: {
@@ -117,7 +141,8 @@ export class RemoveBgProvider implements BackgroundRemovalProvider {
           providerRequestId,
         },
       };
-    } catch {
+    } catch (error) {
+      caughtError = error;
       const timedOut = controller.signal.aborted;
       return {
         ok: false,
@@ -132,6 +157,34 @@ export class RemoveBgProvider implements BackgroundRemovalProvider {
       };
     } finally {
       clearTimeout(timeout);
+      const durationMs = Math.max(0, performance.now() - metricStartedAt);
+      logger.log(
+        success ? "info" : "error",
+        success ? LOG_EVENTS.REMOVE_BG_COMPLETED : LOG_EVENTS.REMOVE_BG_FAILED,
+        {
+          provider: "remove.bg",
+          durationMs,
+          statusCode,
+          creditsCharged,
+          providerRequestId: providerRequestId ?? undefined,
+          ...(success
+            ? {}
+            : {
+                errorCode: classifyRemoveBgError(statusCode),
+                ...(caughtError !== undefined ? { error: caughtError } : {}),
+              }),
+        },
+      );
+      emitOperationalEvent(
+        this.telemetry,
+        createRemoveBgOperationalEvent({
+          phase: "finished",
+          success,
+          statusCode,
+          durationMs,
+          creditsCharged,
+        }),
+      );
     }
   }
 }

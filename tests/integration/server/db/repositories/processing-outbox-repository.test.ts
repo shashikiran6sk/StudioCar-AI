@@ -12,6 +12,7 @@ import { createProcessingJobIdempotencyKey } from "../../../../../packages/proce
 const databaseUrl = process.env["DATABASE_URL"];
 const databaseDescribe = databaseUrl ? describe : describe.skip;
 const ownerEmail = "outbox-owner@integration.studiocar.test";
+const REQUEST_ID = "7e38d07b-c3c3-4ce0-9a50-91055e9bf3de";
 const CLAIM_NOW = new Date("2099-09-19T12:00:00.000Z");
 const RETRY_AT = new Date("2100-09-19T12:00:00.000Z");
 
@@ -63,6 +64,7 @@ databaseDescribe("PrismaProcessingOutboxRepository", () => {
     const options = ProcessingOptionsSchema.parse({});
     const request = { vehicleId: vehicle.id, assetIds: [assetId], options };
     const reserved = await jobs.reserveBatchOwned({
+      requestId: REQUEST_ID,
       allowance: {
         imageCapacity: 100,
         maxImagesPerBatch: 20,
@@ -94,6 +96,12 @@ databaseDescribe("PrismaProcessingOutboxRepository", () => {
     const job = reserved.jobs[0];
     if (!job) throw new Error("Expected one processing job.");
 
+    // An HTTP replay cannot replace the original durable correlation.
+    await database.processingJob
+      .findUniqueOrThrow({ where: { id: job.id } })
+      .then((stored) => {
+        expect(stored.requestId).toBe(REQUEST_ID);
+      });
     const competingClaims = await Promise.all([
       outbox.claimPendingOutbox({
         claimExpiresAt: new Date("2099-09-19T12:01:00.000Z"),
@@ -112,6 +120,10 @@ databaseDescribe("PrismaProcessingOutboxRepository", () => {
     ]);
     const claimed = competingClaims.flat();
     expect(claimed).toHaveLength(1);
+    expect(claimed[0]?.job).toEqual({
+      requestId: REQUEST_ID,
+      batchIdempotencyKey,
+    });
     const message = claimed[0];
     if (!message?.claimToken) throw new Error("Expected an owned outbox claim.");
 
@@ -139,6 +151,10 @@ databaseDescribe("PrismaProcessingOutboxRepository", () => {
       jobIds: [job.id],
       limit: 1,
       now: RETRY_AT,
+    });
+    expect(retryMessages[0]?.job).toEqual({
+      requestId: REQUEST_ID,
+      batchIdempotencyKey,
     });
     const retryMessage = retryMessages[0];
     if (!retryMessage) throw new Error("Expected retry claim to become due.");

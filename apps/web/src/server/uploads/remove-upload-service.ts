@@ -1,3 +1,7 @@
+import {
+  ApplicationErrorCode,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import type {
   ObjectDeletionStoragePort,
   UserUploadRemovalRepositoryPort,
@@ -33,7 +37,8 @@ export class RemoveUploadService implements UploadRemovalApplication {
 
     try {
       await this.storage.deleteObject(reservation.objectKey);
-    } catch {
+    } catch (error) {
+      reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
       return { ok: false, reason: "STORAGE_UNAVAILABLE" };
     }
     const completed = await this.removals.completeUserUploadRemoval({

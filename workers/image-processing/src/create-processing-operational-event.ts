@@ -127,7 +127,15 @@ export function createProcessingOperationalEvent(
             vehicleId: input.result.telemetry.vehicleId,
           }
         : {}),
-      ...(input.message ? { jobId: input.message.jobId } : {}),
+      ...(input.message
+        ? {
+            jobId: input.message.jobId,
+            requestId: input.message.requestId ?? input.message.jobId,
+            ...(input.message.batchId
+              ? { batchId: input.message.batchId }
+              : {}),
+          }
+        : {}),
       queueMessageId: input.queueMessageId,
     },
     dimensions: {

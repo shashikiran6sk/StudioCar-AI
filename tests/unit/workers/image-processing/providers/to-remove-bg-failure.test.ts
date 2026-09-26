@@ -7,7 +7,7 @@ describe("toRemoveBgFailure", () => {
     { status: 429, kind: "PROVIDER_429" },
     { status: 503, kind: "PROVIDER_5XX" },
     { status: 401, kind: "AUTHORIZATION" },
-    { status: 402, kind: "AUTHORIZATION" },
+    { status: 402, kind: "PAYMENT_REQUIRED" },
     { status: 403, kind: "AUTHORIZATION" },
     { status: 400, kind: "INVALID_REQUEST" },
   ])("maps HTTP $status to $kind", ({ status, kind }) => {
