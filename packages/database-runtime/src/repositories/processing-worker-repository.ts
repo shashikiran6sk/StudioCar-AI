@@ -78,8 +78,11 @@ export class PrismaProcessingWorkerRepository
       }
 
       // The dispatcher sends a message before recording its job as queued,
-      // so a fast worker can see the job a moment early.
-      if (job.status === ProcessingJobStatus.CREATED) {
+      // so a fast worker can see an initial job or retry a moment early.
+      if (
+        job.status === ProcessingJobStatus.CREATED ||
+        job.status === ProcessingJobStatus.RETRYING
+      ) {
         return { kind: "AWAITING_PUBLICATION" };
       }
 
