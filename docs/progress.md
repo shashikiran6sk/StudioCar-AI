@@ -2,6 +2,29 @@
 
 Last updated: 2026-09-26
 
+## Processing retry publication race
+
+- Production batch diagnosis found remove.bg HTTP 429 responses followed by
+  stalled retry publications. EventBridge recovery is now scheduled every
+  minute; both affected 14-image batches completed after recovery.
+- Extended the existing publication-wait claim result to `RETRYING` jobs.
+  A retry message arriving before the dispatcher commits `QUEUED` now waits
+  briefly, then remains on SQS for redelivery if publication is still pending.
+  Only `QUEUED` jobs execute; retry timing and attempt budgets stay authoritative.
+- Added real-PostgreSQL regressions through the queue handler for publication
+  during the wait and after SQS redelivery, including early duplicates, no
+  execution before publication, and exactly one output and usage charge.
+  Both regressions reproduced the original failure before the fix.
+- No schema, migration, public contract, UI, or AWS configuration change.
+  Deploy a rebuilt image-worker artifact after merge to activate this fix.
+  Provider request pacing remains a separate follow-up.
+- Verification: focused worker regressions, source/test mapping, lint, strict
+  typecheck, all unit suites uncached (2,097 passes plus five existing expected
+  failures), 154 isolated real-PostgreSQL integration tests, Prisma validation,
+  production build, dependency audit, and all 14 Playwright tests passed.
+  Browser verification used the Local queue settings to avoid inheriting the
+  Development queue from the settings file. Required PR CI must pass before merge.
+
 ## SEO foundation
 
 - Added one canonical, indexable production marketing document at `https://studiocarai.com/`, with native App Router metadata, Open Graph/Twitter previews, a branded favicon/icon set, and a 1200×630 social image composed from the existing brand mark and owned vehicle asset.

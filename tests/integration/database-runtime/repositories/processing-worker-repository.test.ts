@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { ProcessingOptionsSchema } from "../../../../packages/contracts/src/processing";
+import { WorkerMessageSchema } from "../../../../packages/contracts/src/worker";
 import { createDatabaseClient } from "../../../../packages/database-runtime/src/client";
 import { PrismaProcessingJobRepository } from "../../../../apps/web/src/server/db/repositories/processing-job-repository";
 import { PrismaProcessingOutboxRepository } from "../../../../apps/web/src/server/db/repositories/processing-outbox-repository";
@@ -10,7 +11,13 @@ import { ProcessingProvider } from "../../../../packages/database-runtime/genera
 import { createProcessingBatchRequestHash } from "../../../../packages/processing/src/create-processing-batch-request-hash";
 import { createProcessingJobIdempotencyKey } from "../../../../packages/processing/src/create-processing-job-idempotency-key";
 import { createProcessingUsageIdempotencyKey } from "../../../../packages/processing/src/create-processing-usage-idempotency-key";
-import type { CompleteProcessingJobInput } from "../../../../packages/processing/src/processing-worker.types";
+import { ProcessingWorker } from "../../../../packages/processing/src/processing-worker";
+import type {
+  CompleteProcessingJobInput,
+  ProcessingJobExecutorPort,
+} from "../../../../packages/processing/src/processing-worker.types";
+import type { OperationalTelemetryPort } from "../../../../packages/observability/src/operational-telemetry.types";
+import { handleProcessingQueueEvent } from "../../../../workers/image-processing/src/handle-processing-queue-event";
 
 const databaseUrl = process.env["DATABASE_URL"];
 const databaseDescribe = databaseUrl ? describe : describe.skip;
@@ -362,6 +369,135 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       }),
     ).resolves.toBe(0);
   });
+
+  it.each([true, false])(
+    "retains an early retry delivery and completes exactly once (publication during wait: %s)",
+    async (publishDuringWait) => {
+      const record = await createQueuedJob(
+        `worker-retry-publication-${publishDuringWait}`,
+      );
+      const firstWorkerId = "worker-before-retry-publication";
+      await workers.claimJob({
+        claimExpiresAt: CLAIM_EXPIRES_AT,
+        jobId: record.jobId,
+        now: NOW,
+        workerId: firstWorkerId,
+      });
+      await expect(workers.failJob({
+        attemptNumber: 1,
+        errorCode: "PROVIDER_RATE_LIMITED",
+        errorMessage: "Provider rate limited the request.",
+        failedAt: NOW,
+        jobId: record.jobId,
+        nextAttemptAt: NEXT_ATTEMPT_AT,
+        providerLatencyMilliseconds: 25,
+        providerRequestId: null,
+        retryable: true,
+        workerId: firstWorkerId,
+      })).resolves.toEqual({ kind: "RETRY_SCHEDULED", nextAttemptAt: NEXT_ATTEMPT_AT });
+
+      // An old duplicate cannot execute the retry before its scheduled publication.
+      await expect(workers.claimJob({
+        claimExpiresAt: CLAIM_EXPIRES_AT,
+        jobId: record.jobId,
+        now: NOW,
+        workerId: "worker-early-duplicate",
+      })).resolves.toEqual({ kind: "AWAITING_PUBLICATION" });
+      const claimToken = "retry-publication-publisher";
+      const [message] = await outbox.claimPendingOutbox({
+        claimExpiresAt: CLAIM_EXPIRES_AT,
+        claimToken,
+        jobIds: [record.jobId],
+        limit: 1,
+        now: NEXT_ATTEMPT_AT,
+      });
+      if (!message) throw new Error("Expected a due retry publication.");
+      const queueMessageId = "early-retry-delivery";
+      const event = {
+        Records: [{
+          messageId: queueMessageId,
+          body: JSON.stringify(WorkerMessageSchema.parse({
+            version: 1,
+            type: "PROCESS_IMAGE",
+            jobId: record.jobId,
+            enqueuedAt: NEXT_ATTEMPT_AT.toISOString(),
+          })),
+        }],
+      };
+      let published = false;
+      const publish = async () => {
+        await expect(outbox.markOutboxPublished({
+          claimToken,
+          messageId: message.id,
+          publishedAt: NEXT_ATTEMPT_AT,
+          queueMessageId,
+        })).resolves.toBe(true);
+        published = true;
+      };
+      let executions = 0;
+      const completion = completionInput(record, 2, "worker-after-publication");
+      const executor: ProcessingJobExecutorPort = {
+        execute: (job) => {
+          expect(published).toBe(true);
+          expect(job.attemptNumber).toBe(2);
+          executions += 1;
+          return Promise.resolve({
+            ok: true,
+            output: completion.output,
+            providerLatencyMilliseconds: completion.providerLatencyMilliseconds,
+            providerRequestId: completion.providerRequestId,
+          });
+        },
+      };
+      const worker = new ProcessingWorker(
+        workers,
+        executor,
+        {
+          claimTtlMilliseconds: 30_000,
+          retryBaseMilliseconds: 1_000,
+          retryMaximumMilliseconds: 60_000,
+        },
+        () => NEXT_ATTEMPT_AT,
+        () => "worker-after-publication",
+        () => 0.5,
+        async () => {
+          if (publishDuringWait && !published) await publish();
+        },
+      );
+      const telemetry: OperationalTelemetryPort = { emit: () => true };
+      const firstDelivery = await handleProcessingQueueEvent(
+        event, worker, telemetry,
+      );
+      if (!publishDuringWait) {
+        expect(firstDelivery).toEqual({
+          batchItemFailures: [{ itemIdentifier: queueMessageId }],
+        });
+        expect(executions).toBe(0);
+        await expect(database.processingJob.findUnique({
+          where: { id: record.jobId }, select: { status: true, attemptCount: true },
+        })).resolves.toEqual({ status: "RETRYING", attemptCount: 1 });
+        await publish();
+        await expect(
+          handleProcessingQueueEvent(event, worker, telemetry),
+        ).resolves.toEqual({ batchItemFailures: [] });
+      } else {
+        expect(firstDelivery).toEqual({ batchItemFailures: [] });
+      }
+      await expect(
+        handleProcessingQueueEvent(event, worker, telemetry),
+      ).resolves.toEqual({ batchItemFailures: [] });
+      expect(executions).toBe(1);
+      await expect(database.processingJob.findUnique({
+        where: { id: record.jobId }, select: { status: true, attemptCount: true },
+      })).resolves.toEqual({ status: "COMPLETED", attemptCount: 2 });
+      await expect(
+        database.processedAsset.count({ where: { jobId: record.jobId } }),
+      ).resolves.toBe(1);
+      await expect(database.usageEvent.count({
+        where: { jobId: record.jobId, type: "BACKGROUND_REMOVAL_COMPLETED" },
+      })).resolves.toBe(1);
+    },
+  );
 
   it("terminally rejects a non-car image and invalidates its original", async () => {
     const record = await createQueuedJob("worker-non-car-batch");
