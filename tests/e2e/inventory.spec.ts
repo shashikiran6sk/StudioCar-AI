@@ -521,6 +521,51 @@ inventoryTest(
         failedJobId,
       ]);
 
+      // A large completed version must stay within the comparison stage.
+      for (let index = 1; index < 18; index += 1) {
+        const galleryAssetId = randomUUID();
+        const galleryJobId = randomUUID();
+        await database.query(
+          'INSERT INTO "ImageAsset" ("id", "userId", "vehicleId", "status", "originalObjectKey", "originalFilename", "mimeType", "sizeBytes", "displayOrder", "uploadExpiresAt", "updatedAt") SELECT $1, "userId", "vehicleId", "status", $2, $3, "mimeType", "sizeBytes", $4, "uploadExpiresAt", CURRENT_TIMESTAMP FROM "ImageAsset" WHERE "id" = $5',
+          [galleryAssetId, `users/${userId}/vehicles/${vehicleId}/assets/${galleryAssetId}/original/source.jpg`, `gallery-${String(index)}.jpg`, index, imageAssetId],
+        );
+        await database.query(
+          'INSERT INTO "ProcessingJob" ("id", "userId", "vehicleId", "imageAssetId", "status", "provider", "options", "idempotencyKey", "displayOrder", "completedAt", "updatedAt") SELECT $1, "userId", "vehicleId", $2, "status", "provider", "options", $3, $4, "completedAt", CURRENT_TIMESTAMP FROM "ProcessingJob" WHERE "id" = $5',
+          [galleryJobId, galleryAssetId, `gallery-job-${String(index)}`, index, jobId],
+        );
+        await database.query(
+          'INSERT INTO "ProcessedAsset" ("id", "userId", "vehicleId", "jobId", "objectKey", "previewObjectKey", "outputFormat", "mimeType", "sizeBytes", "width", "height") SELECT $1, "userId", "vehicleId", $2, $3, $4, "outputFormat", "mimeType", "sizeBytes", "width", "height" FROM "ProcessedAsset" WHERE "jobId" = $5',
+          [randomUUID(), galleryJobId, `users/${userId}/vehicles/${vehicleId}/jobs/${galleryJobId}/processed.webp`, `users/${userId}/vehicles/${vehicleId}/jobs/${galleryJobId}/preview.webp`, jobId],
+        );
+      }
+      await page.goto(`/inventory/${vehicleId}`);
+      const thumbnails = page.getByLabel("Portfolio images", { exact: true });
+      await expect(thumbnails.getByRole("button")).toHaveCount(8);
+      await expect(thumbnails.getByRole("button", { name: /View image/ })).toHaveCount(7);
+      const overflow = thumbnails.getByRole("button", { name: "View all 18 images" });
+      await expect(overflow).toContainText("+11");
+      const stageBounds = await page.locator(".portfolio-gallery__stage").boundingBox();
+      const gridBounds = await thumbnails.boundingBox();
+      if (!stageBounds || !gridBounds) throw new Error("Gallery bounds are required.");
+      expect(gridBounds.y + gridBounds.height).toBeLessThanOrEqual(stageBounds.y + stageBounds.height);
+      await page.screenshot({ fullPage: true, path: testInfo.outputPath("desktop-capped-portfolio.png") });
+      await overflow.click();
+      const galleryViewer = page.getByRole("dialog", { name: /full screen viewer/ });
+      await expect(galleryViewer).toContainText("8 / 18");
+      await expect(galleryViewer.getByRole("button", { name: /View image/ })).toHaveCount(18);
+      await galleryViewer.getByRole("button", { name: "View image 18", exact: true }).click();
+      await expect(galleryViewer).toContainText("18 / 18");
+      await galleryViewer.getByRole("button", { name: "Next image" }).click();
+      await expect(galleryViewer).toContainText("1 / 18");
+      await page.keyboard.press("Tab");
+      await expect(galleryViewer.getByRole("button", { name: "Close full screen" })).toBeFocused();
+      await page.keyboard.press("Shift+Tab");
+      await expect(galleryViewer.getByRole("button", { name: "Next image" })).toBeFocused();
+      await page.screenshot({ path: testInfo.outputPath("desktop-all-images-viewer.png") });
+      await page.keyboard.press("Escape");
+      await expect(galleryViewer).toHaveCount(0);
+      await expect(overflow).toBeFocused();
+
       await page.setViewportSize({ height: 844, width: 390 });
       await page.goto(`/inventory/${vehicleId}`);
       await expect(page.getByRole("button", { name: "Enter full screen" }))
@@ -529,6 +574,20 @@ inventoryTest(
         fullPage: true,
         path: testInfo.outputPath("mobile-vehicle-portfolio.png"),
       });
+
+      await overflow.scrollIntoViewIfNeeded();
+      await overflow.click();
+      await expect(galleryViewer.getByRole("button", { name: /View image/ })).toHaveCount(18);
+      await galleryViewer.getByRole("button", { name: "View image 18", exact: true }).click();
+      await expect(galleryViewer).toContainText("18 / 18");
+      await expect(galleryViewer.getByRole("button", { name: "Close full screen" })).toBeInViewport();
+      await expect(galleryViewer.getByRole("button", { name: "Next image" })).toBeInViewport();
+      await expect(galleryViewer.getByRole("img", { name: "2026 Audi Q5 processed" }))
+        .toHaveCSS("object-fit", "contain");
+      await page.screenshot({ path: testInfo.outputPath("mobile-all-images-viewer.png") });
+      await galleryViewer.getByRole("button", { name: "Close full screen" }).click();
+      await expect(overflow).toBeFocused();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 
       await page.goto("/inventory?query=BMW");
       await expect(
