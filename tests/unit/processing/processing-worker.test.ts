@@ -237,7 +237,7 @@ describe("ProcessingWorker", () => {
     });
   });
 
-  it("retries the queue delivery when execution throws unexpectedly", async () => {
+  it("preserves unexpected execution errors for the queue boundary to report and retry", async () => {
     const repository = new StubRepository(claimedJob);
     const executor = new StubExecutor(
       {
@@ -257,19 +257,9 @@ describe("ProcessingWorker", () => {
       retryMaximumMilliseconds: 60_000,
     });
 
-    await expect(worker.process(createMessage())).resolves.toEqual({
-      kind: "RETRY_DELIVERY",
-      telemetry: {
-        assetId: ASSET_ID,
-        attemptNumber: 1,
-        failureKind: null,
-        provider: "REMOVEBG",
-        providerLatencyMilliseconds: null,
-        providerRequestId: null,
-        userId: USER_ID,
-        vehicleId: VEHICLE_ID,
-      },
-    });
+    await expect(worker.process(createMessage())).rejects.toThrow(
+      "executor failure",
+    );
     expect(repository.completions).toEqual([]);
     expect(repository.failures).toEqual([]);
   });
@@ -381,4 +371,26 @@ describe("ProcessingWorker", () => {
       expect(repository.completions).toHaveLength(0);
     });
   });
+});
+
+it("retains a delivery while a live processing claim is busy", async () => {
+  const repository = new StubRepository({ kind: "CLAIM_BUSY" });
+  const executor = new StubExecutor({
+    ok: false,
+    failure: {
+      kind: "PAYMENT_REQUIRED",
+      errorMessage: "Insufficient credits",
+      providerLatencyMilliseconds: 1,
+      providerRequestId: null,
+    },
+  });
+  const worker = new ProcessingWorker(repository, executor, {
+    claimTtlMilliseconds: 30000,
+    retryBaseMilliseconds: 1000,
+    retryMaximumMilliseconds: 60000,
+  });
+  await expect(worker.process(createMessage())).resolves.toEqual({
+    kind: "RETRY_DELIVERY",
+  });
+  expect(repository.failures).toHaveLength(0);
 });

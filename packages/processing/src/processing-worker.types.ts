@@ -23,7 +23,14 @@ export interface ClaimedProcessingJob {
  */
 export type ClaimProcessingJobResult =
   | { kind: "CLAIMED"; job: ClaimedProcessingJob }
-  | { kind: "AWAITING_PUBLICATION" | "NOT_FOUND" | "NOT_READY" | "TERMINAL" };
+  | {
+      kind:
+        | "AWAITING_PUBLICATION"
+        | "CLAIM_BUSY"
+        | "NOT_FOUND"
+        | "NOT_READY"
+        | "TERMINAL";
+    };
 
 export interface ClaimProcessingJobInput {
   claimExpiresAt: Date;
@@ -92,6 +99,7 @@ export type ProcessingFailureKind =
   | "INVALID_IMAGE"
   | "INVALID_REQUEST"
   | "NETWORK"
+  | "PAYMENT_REQUIRED"
   | "NON_CAR_IMAGE"
   | "PROVIDER_429"
   | "PROVIDER_5XX"

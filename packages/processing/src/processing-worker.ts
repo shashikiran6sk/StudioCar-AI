@@ -39,7 +39,7 @@ export class ProcessingWorker {
   ): Promise<ProcessWorkerMessageResult> {
     const workerId = this.createWorkerId();
     const claim = await this.claim(message.jobId, workerId);
-    if (claim.kind === "AWAITING_PUBLICATION") {
+    if (claim.kind === "AWAITING_PUBLICATION" || claim.kind === "CLAIM_BUSY") {
       // Never drop the job's only message: the queue delivers it again.
       return { kind: "RETRY_DELIVERY" };
     }
@@ -57,12 +57,7 @@ export class ProcessingWorker {
       vehicleId: claim.job.vehicleId,
     } satisfies ProcessWorkerMessageResult["telemetry"];
 
-    let execution;
-    try {
-      execution = await this.executor.execute(claim.job);
-    } catch {
-      return { kind: "RETRY_DELIVERY", telemetry };
-    }
+    const execution = await this.executor.execute(claim.job);
 
     if (execution.ok) {
       const completedAt = this.now();
@@ -86,8 +81,7 @@ export class ProcessingWorker {
           processedAssetId: completion.processedAssetId,
           telemetry: {
             ...telemetry,
-            providerLatencyMilliseconds:
-              execution.providerLatencyMilliseconds,
+            providerLatencyMilliseconds: execution.providerLatencyMilliseconds,
             providerRequestId: execution.providerRequestId,
           },
         };

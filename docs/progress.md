@@ -27,10 +27,21 @@ Last updated: 2026-09-26
   namespace-scoped HTTP metric publisher IAM policy, and optional SNS actions
   on existing queue/worker alarms. Deployment/runbook: `docs/observability.md`.
 - Verification: production dependency audit, source/test mapping, lint, strict
-  typecheck, all unit suites (1232 web and 359 worker tests plus the existing
-  four expected worker failures), 151 real-PostgreSQL integration tests, Prisma
+  typecheck, all unit suites (1233 web and 359 worker tests plus the existing
+  four expected worker failures), 152 real-PostgreSQL integration tests, Prisma
   schema/migration checks, production build, all 14 Playwright tests, and
   CloudFormation lint passed. Required PR CI must pass before merge.
+- Follow-up audit in the same PR: remove.bg 402 now has a distinct terminal
+  payment-required classification and an actionable Lambda log. The existing
+  generic failure message is now shown in the activity panel; no
+  automatic queue/outbox retry or successful-processing usage charge follows
+  credit exhaustion. Added a real-provider-adapter/real-PostgreSQL regression
+  covering duplicate delivery and no publication, plus browser/UI checks.
+- Active worker claims have a distinct busy result and retain SQS delivery for
+  later recovery; unexpected executor errors now reach the logging boundary
+  instead of being silently swallowed. The same local gates passed after the
+  fix, including all 14 browser tests and the real database/provider-adapter
+  credit-exhaustion regression. The rendered activity panel was visually checked.
 - Deployment requires the additive migration, reviewed worker artifact, AWS
   stack updates, production metric-export configuration and Sentry DSNs. No
   resources are deployed by this change.

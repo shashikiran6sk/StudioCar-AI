@@ -53,3 +53,16 @@ describe("structured logger", () => {
     ).toBe(false);
   });
 });
+
+it("logs the actionable credit failure without arbitrary provider messages", () => {
+  const write = vi.fn();
+  new StructuredLogger({ write }).log("error", "remove_bg_failed", {
+    statusCode: 402,
+    errorCode: "REMOVE_BG_PAYMENT_REQUIRED",
+    errorMessage: "secret key=credential",
+  });
+  expect(write.mock.calls[0]?.[0]).toContain(
+    "remove.bg has insufficient credits (HTTP 402 Payment Required).",
+  );
+  expect(write.mock.calls[0]?.[0]).not.toContain("credential");
+});

@@ -11,6 +11,7 @@ import {
   PROCESSING_INDICATOR_LABEL,
   PROCESSING_PANEL_HEADING,
 } from "./processing-polling.constants";
+import { PROCESSING_FAILURE_MESSAGES } from "./processing-failure-messages.constants";
 import { processingStageLabel } from "./processing-stage-label";
 import { ProcessingStatusPoller } from "./processing-status-poller";
 import { useProcessingStatusStore } from "./processing-status-store";
@@ -42,7 +43,11 @@ export function ProcessingIndicator() {
           <button
             aria-expanded={open}
             aria-label={PROCESSING_INDICATOR_LABEL}
-            className={failedCount > 0 && activeCount === 0 ? "processing-indicator__trigger processing-indicator__trigger--error" : "processing-indicator__trigger"}
+            className={
+              failedCount > 0 && activeCount === 0
+                ? "processing-indicator__trigger processing-indicator__trigger--error"
+                : "processing-indicator__trigger"
+            }
             onClick={() => setOpen((current) => !current)}
             type="button"
           >
@@ -60,7 +65,9 @@ export function ProcessingIndicator() {
               className="processing-panel"
             >
               <h2>{PROCESSING_PANEL_HEADING}</h2>
-              {error ? <p className="processing-panel__error">{error}</p> : null}
+              {error ? (
+                <p className="processing-panel__error">{error}</p>
+              ) : null}
               <ul>
                 {entries.map((job, index) => {
                   const terminal = job.status
@@ -70,9 +77,15 @@ export function ProcessingIndicator() {
                     <li key={job.jobId}>
                       <span>
                         <strong>
-                          {job.status?.vehicleName ?? `Image ${String(index + 1)}`}
+                          {job.status?.vehicleName ??
+                            `Image ${String(index + 1)}`}
                         </strong>
                         <small>{processingStageLabel(job.status)}</small>
+                        {job.status?.state === "FAILED" ? (
+                          <small className="processing-panel__error">
+                            {PROCESSING_FAILURE_MESSAGES.PROCESSING_FAILED}
+                          </small>
+                        ) : null}
                       </span>
                       {terminal ? (
                         <button

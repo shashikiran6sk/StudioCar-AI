@@ -1,3 +1,4 @@
+import { classifyProcessingFailure } from "@studiocar/processing";
 import { LOG_EVENTS } from "@studiocar/observability";
 import {
   SqsBatchResponseSchema,
@@ -73,7 +74,11 @@ export async function handleProcessingQueueEvent(
           durationMs: Math.max(0, performance.now() - logStartedAt),
           outcome: result.kind,
           ...(result.telemetry?.failureKind
-            ? { errorCode: result.telemetry.failureKind }
+            ? {
+                errorCode: classifyProcessingFailure(
+                  result.telemetry.failureKind,
+                ).errorCode,
+              }
             : {}),
         },
       );

@@ -129,6 +129,22 @@ the provider's invoice. No account polling or remaining-credit estimate is
 introduced. The official [remove.bg API](https://www.remove.bg/api) documents
 `X-Credits-Charged`; `X-RateLimit-Remaining` is a rate limit, not a credit balance.
 
+## Provider failures and queue acknowledgement
+
+remove.bg HTTP 402 is classified as `PAYMENT_REQUIRED`, persisted as
+`PROVIDER_PAYMENT_REQUIRED`, and fails the job immediately. HTTP 401/403 are also
+terminal. After the failed state is committed, Lambda acknowledges their SQS
+records; they do not reopen the outbox or automatically call the provider again.
+Duplicate terminal deliveries are acknowledged without execution. HTTP 429/5xx, network errors and timeouts
+use the existing bounded retry budget and durable outbox.
+
+CloudWatch records `REMOVE_BG_PAYMENT_REQUIRED`, HTTP 402, and an actionable
+insufficient-credit message. The UI uses a generic processing-failure message,
+never provider account details. A busy live claim returns an SQS partial
+failure so a redelivery cannot discard the only remaining message; it becomes
+claimable after lease expiry. Unexpected executor exceptions reach the queue
+boundary for safe logging/Sentry and partial-batch retry.
+
 ## Alarms
 
 New alarms use two breaching periods out of three five-minute periods and
@@ -190,8 +206,11 @@ Locally leave Sentry and HTTP metric export unset. Run `pnpm test` (uncached for
 changed root tests), lint/typecheck/build, and database integration/E2E gates
 against an isolated local PostgreSQL. The deterministic tests cover log/Sentry
 scrubbing, interleaved contexts, HTTP status counts, credits, provider statuses,
-and outbox correlation. Inspect logs while processing a Local batch: the response
-ID appears on queue/provider/S3 logs, with the existing batch key. A live
+and outbox correlation. The credit-exhaustion regression uses a mocked HTTP 402
+response with real PostgreSQL: it checks terminal status, no retry publication,
+no success charge and duplicate acknowledgement. The browser test checks the
+generic error through the real status API. Inspect logs while processing a Local
+batch: the response ID appears on queue/provider/S3 logs, with the existing batch key. A live
 remove.bg smoke consumes a provider request; mocked adapter tests require none.
 
 In production:

@@ -213,7 +213,7 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
     }
     expect([first.kind, duplicate.kind].sort()).toEqual([
       "CLAIMED",
-      "NOT_READY",
+      "CLAIM_BUSY",
     ]);
 
     const completedAt = new Date("2099-09-20T00:00:10.000Z");

@@ -8,7 +8,16 @@ export const METRIC_TIMEOUT_MS = 1000;
 export const SENTRY_FLUSH_TIMEOUT_MS = 2000;
 export const SAFE_ERROR_MESSAGE = "Unexpected application failure";
 export const MAXIMUM_STACK_FRAMES = 30;
+export const REMOVE_BG_PAYMENT_REQUIRED_MESSAGE =
+  "remove.bg has insufficient credits (HTTP 402 Payment Required).";
 export const HTTP_ERROR_MESSAGES: Readonly<Record<string, string>> = {
+  REMOVE_BG_PAYMENT_REQUIRED: REMOVE_BG_PAYMENT_REQUIRED_MESSAGE,
+  PROVIDER_PAYMENT_REQUIRED:
+    "The background-removal provider has insufficient credits.",
+  REMOVE_BG_UNAUTHORIZED:
+    "remove.bg rejected the server credentials or permissions.",
+  REMOVE_BG_RATE_LIMIT: "remove.bg rate limited the request.",
+  REMOVE_BG_SERVER_ERROR: "remove.bg returned a server error.",
   UNAUTHORIZED: "Authentication required",
   UNAUTHENTICATED: "Authentication required",
   FORBIDDEN: "Request forbidden",
