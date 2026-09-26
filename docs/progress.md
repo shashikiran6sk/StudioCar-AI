@@ -2,6 +2,27 @@
 
 Last updated: 2026-09-26
 
+## Portfolio thumbnail overflow
+
+- Versions with more than eight images now show seven selectable thumbnails
+  and an eighth dark `+n / View all` tile. The count includes every image
+  omitted from the grid; eighteen images show `+11`. Eight or fewer keep
+  every thumbnail visible.
+- The count tile opens the full-screen viewer at the first omitted image.
+  A horizontally scrolling thumbnail rail makes every image selectable;
+  comparison, navigation, image downloads and full-version ZIPs remain available.
+- The viewer uses a native modal, locks background scrolling, contains the
+  full image on narrow screens, wraps keyboard focus and restores the trigger
+  on close or Escape. No API, contract, migration or infrastructure change.
+- Added component checks for empty, seven-, eight-, nine-, thirteen- and
+  eighteen-image versions, plus real-database browser checks for grid height,
+  all-image selection, navigation, focus and desktop/mobile layouts.
+- Verification: source mapping, lint, strict typecheck, all unit suites
+  uncached (2,104 passes plus five existing expected failures), all 154 isolated
+  PostgreSQL integration tests, Prisma validation, production build and all
+  fourteen Playwright tests. Screenshots compared with the portfolio reference.
+  Required PR CI must pass before merge.
+
 ## Processing retry publication race
 
 - Production batch diagnosis found remove.bg HTTP 429 responses followed by
