@@ -39,3 +39,12 @@ describe("createBackgroundRemovalProvider", () => {
     expect(() => createBackgroundRemovalProvider(environment)).toThrow(message);
   });
 });
+
+it("creates Leonardo through the same selection mechanism with only its own credential", () => {
+  const environment = parseImageWorkerEnvironment({
+    ...baseEnvironment, BACKGROUND_REMOVAL_PROVIDER: "leonardo",
+    REMOVEBG_API_KEY: undefined, LEONARDO_API_KEY: "leonardo-key",
+  });
+  expect(createBackgroundRemovalProvider(environment, () => Promise.resolve("https://source.example/image.jpg")).key).toBe("LEONARDO");
+  expect(() => createBackgroundRemovalProvider(environment)).toThrow("options");
+});

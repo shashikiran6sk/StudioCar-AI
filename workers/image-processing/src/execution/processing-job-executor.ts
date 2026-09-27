@@ -99,6 +99,8 @@ export class ProcessingJobExecutor implements ProcessingJobExecutorPort {
         } else {
           const providerResult = await this.provider.process({
             bytes: inspection.image.bytes,
+            sourceObjectKey: job.originalObjectKey,
+            context: { assetId: job.imageAssetId, vehicleId: job.vehicleId, attempt: job.attemptNumber },
             contentType: inspection.image.contentType,
             idempotencyKey: job.id,
             shadow: job.options.shadow,

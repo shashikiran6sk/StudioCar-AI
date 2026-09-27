@@ -17,6 +17,9 @@ const STRING_FIELDS = [
   "assetId",
   "queueMessageId",
   "providerRequestId",
+  "providerGenerationId",
+  "size",
+  "format",
   "vehicleId",
   "userId",
   "environment",
@@ -30,6 +33,9 @@ const NUMBER_FIELDS = [
   "statusCode",
   "creditsCharged",
   "sizeBytes",
+  "width",
+  "height",
+  "attempt",
 ] satisfies readonly (keyof StructuredLogFields)[];
 const STDOUT: OperationalEventSink = {
   write: (line) => {
@@ -66,6 +72,13 @@ export class StructuredLogger {
         const value = merged[key];
         if (value !== undefined && Number.isFinite(value) && value >= 0)
           payload[key] = value;
+      }
+      if (
+        merged.cost &&
+        Number.isFinite(Number(merged.cost.amount)) &&
+        Number(merged.cost.amount) >= 0
+      ) {
+        payload.cost = { amount: merged.cost.amount, unit: merged.cost.unit };
       }
       if (merged.route && SAFE_ROUTE_PATTERN.test(merged.route))
         payload.route = merged.route;

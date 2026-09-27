@@ -1,4 +1,4 @@
-import { S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import {
   createS3ClientOptions,
   parseImageWorkerEnvironment,
@@ -8,6 +8,8 @@ import {
   createDatabaseClient,
   PrismaProcessingWorkerRepository,
 } from "@studiocar/database-runtime";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { LEONARDO_SOURCE_URL_TTL_SECONDS } from "../providers/leonardo-provider.constants";
 import { ProcessingWorker } from "@studiocar/processing";
 
 import { ProcessingJobExecutor } from "../execution/processing-job-executor";
@@ -24,12 +26,19 @@ export function createImageProcessingWorker(
     poolSize: 2,
   });
   const jobs = new PrismaProcessingWorkerRepository(database);
+  const s3 = new S3Client(createS3ClientOptions(environment));
   const storage = new S3ProcessingObjectStorage(
-    new S3Client(createS3ClientOptions(environment)),
+    s3,
     environment.S3_BUCKET,
     environment.MAX_PROVIDER_OUTPUT_BYTES,
   );
-  const provider = createBackgroundRemovalProvider(environment);
+  const provider = createBackgroundRemovalProvider(environment, (objectKey) =>
+    getSignedUrl(
+      s3,
+      new GetObjectCommand({ Bucket: environment.S3_BUCKET, Key: objectKey }),
+      { expiresIn: LEONARDO_SOURCE_URL_TTL_SECONDS },
+    ),
+  );
   const executor = new ProcessingJobExecutor(storage, provider, {
     maximumInputBytes: environment.MAX_PROVIDER_INPUT_BYTES,
     maximumPixels: environment.MAX_WORKER_IMAGE_PIXELS,

@@ -48,6 +48,7 @@ const DEFAULT_IMAGE_WORKER_CLAIM_TTL_MS = 120_000;
 const DEFAULT_IMAGE_WORKER_RETRY_BASE_MS = 5_000;
 const DEFAULT_IMAGE_WORKER_RETRY_MAX_MS = 300_000;
 const DEFAULT_REMOVEBG_TIMEOUT_MS = 60_000;
+const DEFAULT_LEONARDO_TIMEOUT_MS = 60_000;
 const DEFAULT_PROVIDER_INPUT_BYTES = 22 * 1024 * 1024;
 const DEFAULT_PROVIDER_OUTPUT_BYTES = 100 * 1024 * 1024;
 const DEFAULT_WORKER_IMAGE_PIXELS = 50_000_000;
@@ -573,6 +574,10 @@ export const ImageWorkerEnvironmentSchema = z
     S3_BUCKET: z.string().trim().min(3).max(63),
     BACKGROUND_REMOVAL_PROVIDER: BackgroundRemovalProviderSchema,
     REMOVEBG_API_KEY: emptyAsUnset(z.string().trim().min(1)),
+    LEONARDO_API_KEY: emptyAsUnset(z.string().trim().min(1)),
+    LEONARDO_TIMEOUT_MS: emptyAsUnset(
+      z.coerce.number().int().min(1_000).max(120_000),
+    ).transform((value) => value ?? DEFAULT_LEONARDO_TIMEOUT_MS),
     FAL_KEY: emptyAsUnset(z.string().trim().min(1)),
     SELF_HOSTED_BIREFNET_ENDPOINT: emptyAsUnset(z.url()),
     IMAGE_WORKER_CLAIM_TTL_MS: z.coerce
@@ -642,6 +647,7 @@ export const ImageWorkerEnvironmentSchema = z
       keyof typeof value
     > = {
       removebg: "REMOVEBG_API_KEY",
+      leonardo: "LEONARDO_API_KEY",
       fal: "FAL_KEY",
       birefnet: "SELF_HOSTED_BIREFNET_ENDPOINT",
     };

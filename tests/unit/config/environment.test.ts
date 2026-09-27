@@ -39,6 +39,7 @@ const validEnvironment = {
 describe("environment validation", () => {
   it.each([
     ["fal", "FAL_KEY"],
+    ["leonardo", "LEONARDO_API_KEY"],
     ["birefnet", "SELF_HOSTED_BIREFNET_ENDPOINT"],
   ])("requires the configured %s provider credential", (provider, key) => {
     const result = (() => {
@@ -217,6 +218,7 @@ describe("environment validation", () => {
       PROCESSING_RETRY_BASE_MS: 5_000,
       PROCESSING_RETRY_MAX_MS: 300_000,
       REMOVEBG_TIMEOUT_MS: 60_000,
+      LEONARDO_TIMEOUT_MS: 60_000,
       MAX_PROVIDER_INPUT_BYTES: 22 * 1024 * 1024,
       MAX_PROVIDER_OUTPUT_BYTES: 100 * 1024 * 1024,
       MAX_WORKER_IMAGE_PIXELS: 50_000_000,

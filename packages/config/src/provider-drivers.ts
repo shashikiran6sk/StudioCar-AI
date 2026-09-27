@@ -9,6 +9,7 @@ export const GoogleAuthDriverSchema = z.enum(["google", "fake"]);
 export const PhoneOtpDriverSchema = z.enum(["msg91", "fake"]);
 export const BackgroundRemovalProviderSchema = z.enum([
   "removebg",
+  "leonardo",
   "fal",
   "birefnet",
 ]);

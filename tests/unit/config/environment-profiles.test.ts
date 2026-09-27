@@ -34,7 +34,7 @@ describe("environment profiles", () => {
       phoneOtpDriver: { default: "msg91", allowed: ["msg91"] },
       backgroundRemovalProvider: {
         default: "removebg",
-        allowed: ["removebg", "fal", "birefnet"],
+        allowed: ["removebg", "leonardo", "fal", "birefnet"],
       },
       storage: "aws-s3",
       processingQueue: { default: "aws-sqs", allowed: ["aws-sqs"] },

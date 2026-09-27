@@ -1,6 +1,6 @@
 import type { ProcessingOptions } from "@studiocar/contracts";
 
-export type ProcessingProviderKey = "REMOVEBG" | "FAL" | "BIREFNET";
+export type ProcessingProviderKey = "REMOVEBG" | "LEONARDO" | "FAL" | "BIREFNET";
 
 export interface ClaimedProcessingJob {
   attemptNumber: number;

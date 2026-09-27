@@ -139,6 +139,8 @@ services:
       # Empty means "use the profile default", which is remove.bg.
       BACKGROUND_REMOVAL_PROVIDER: ${BACKGROUND_REMOVAL_PROVIDER:-}
       REMOVEBG_API_KEY: ${REMOVEBG_API_KEY:-}
+      LEONARDO_API_KEY: ${LEONARDO_API_KEY:-}
+      LEONARDO_TIMEOUT_MS: ${LEONARDO_TIMEOUT_MS:-60000}
       FAL_KEY: ${FAL_KEY:-}
       SELF_HOSTED_BIREFNET_ENDPOINT: ${SELF_HOSTED_BIREFNET_ENDPOINT:-}
       # Development may resolve AWS credentials from the standard environment
