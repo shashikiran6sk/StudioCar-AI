@@ -233,3 +233,11 @@ The repository includes a raw-body HMAC-SHA256 verifier with bounded timestamp
 tolerance and two-secret rotation support. It may be used only when a provider's
 official protocol matches its signing payload and header semantics. Providers
 using another scheme require a separate adapter behind the same verifier port.
+
+
+Leonardo's key belongs only to the image-processing worker. Its composition
+root signs the validated private original for five minutes; the adapter uses a
+private ephemeral generation and immediately downloads the result without
+forwarding Bearer credentials. Signed source/result URLs never enter logs or
+persistent product state. The Lambda template injects only the selected
+background-removal provider's secret.

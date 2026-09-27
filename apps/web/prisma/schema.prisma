@@ -55,6 +55,7 @@ enum ProcessingJobStatus {
 
 enum ProcessingProvider {
   REMOVEBG
+  LEONARDO
   FAL
   BIREFNET
 }

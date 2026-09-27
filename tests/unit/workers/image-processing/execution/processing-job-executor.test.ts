@@ -1,4 +1,5 @@
 import sharp from "sharp";
+import { LeonardoProvider } from "../../../../../workers/image-processing/src/providers/leonardo-provider";
 import { describe, expect, it } from "vitest";
 
 import type {
@@ -153,7 +154,9 @@ describe("ProcessingJobExecutor", () => {
     const images = await createImages();
     const storage = new MemoryStorage();
     const provider = new RecordingProvider(images.provider);
-    const job = createClaimedJob({ sizeBytes: BigInt(images.source.byteLength) });
+    const job = createClaimedJob({
+      sizeBytes: BigInt(images.source.byteLength),
+    });
     storage.objects.set(job.originalObjectKey, {
       bytes: images.source,
       contentType: "image/jpeg",
@@ -184,3 +187,87 @@ describe("ProcessingJobExecutor", () => {
     expect(provider.inputs).toHaveLength(0);
   });
 });
+
+it.each([false, true])(
+  "persists Leonardo bytes using the common artifact path and classifies storage failure: %s",
+  async (failPersistence) => {
+    const images = await createImages();
+    const storage = new MemoryStorage();
+    const job = createClaimedJob({
+      provider: "LEONARDO",
+      sizeBytes: BigInt(images.source.byteLength),
+      options: { ...createClaimedJob().options, enhancement: false },
+    });
+    storage.objects.set(job.originalObjectKey, {
+      bytes: images.source,
+      contentType: "image/jpeg",
+      metadata: {},
+    });
+    const writes: PutProcessingObjectInput[] = [];
+    const recordingStorage: ProcessingObjectStoragePort = {
+      getRequired: (key) => storage.getRequired(key),
+      getOptional: (key) => storage.getOptional(key),
+      put: async (input) => {
+        writes.push(input);
+        if (failPersistence) throw new Error("S3 unavailable");
+        await storage.put(input);
+      },
+    };
+    let requests = 0;
+    const fetcher: typeof fetch = (_url, init) => {
+      requests++;
+      return Promise.resolve(
+        typeof init?.body === "string"
+          ? Response.json({
+              id: "leonardo-generation",
+              results: [
+                {
+                  url: "https://result.example/cutout.webp",
+                  contentType: "image/webp",
+                },
+              ],
+            })
+          : new Response(images.provider, {
+              headers: { "content-type": "image/webp" },
+            }),
+      );
+    };
+    const provider = new LeonardoProvider(
+      {
+        apiKey: "secret",
+        maximumOutputBytes: 1_000_000,
+        maximumPixels: 1_000_000,
+        timeoutMilliseconds: 500,
+      },
+      (key) => {
+        expect(key).toBe(job.originalObjectKey);
+        return Promise.resolve("https://source.example/car.jpg");
+      },
+      fetcher,
+    );
+    const executor = new ProcessingJobExecutor(recordingStorage, provider, {
+      maximumInputBytes: 1_000_000,
+      maximumPixels: 1_000_000,
+      previewMaximumWidth: 320,
+    });
+    const result = await executor.execute(job);
+    expect(writes[0]).toMatchObject({
+      key: expect.stringContaining("provider-result.webp"),
+      contentType: "image/webp",
+      bytes: Uint8Array.from(images.provider),
+      metadata: { "provider-request-id": "leonardo-generation" },
+    });
+    expect(
+      JSON.stringify(writes.map(({ key, metadata }) => ({ key, metadata }))),
+    ).not.toContain("result.example");
+    if (failPersistence) {
+      expect(result).toMatchObject({ ok: false, failure: { kind: "NETWORK" } });
+      expect(writes).toHaveLength(1);
+    } else {
+      expect(result.ok).toBe(true);
+      expect(writes).toHaveLength(3);
+      await executor.execute(job);
+      expect(requests).toBe(2);
+    }
+  },
+);

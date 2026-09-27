@@ -29,6 +29,7 @@ export interface EnvironmentProfile {
 
 const EVERY_BACKGROUND_REMOVAL_PROVIDER: readonly BackgroundRemovalProvider[] = [
   "removebg",
+  "leonardo",
   "fal",
   "birefnet",
 ];

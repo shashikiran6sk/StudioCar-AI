@@ -66,3 +66,29 @@ it("logs the actionable credit failure without arbitrary provider messages", () 
   );
   expect(write.mock.calls[0]?.[0]).not.toContain("credential");
 });
+
+it("logs reported provider cost and dimensions through the safe field allowlist", () => {
+  const write = vi.fn();
+  const logger = new StructuredLogger({ write });
+  logger.log("info", "leonardo_generated", {
+    provider: "leonardo",
+    providerGenerationId: "generation-1",
+    size: "50MP",
+    format: "webp",
+    width: 4000,
+    height: 3000,
+    attempt: 2,
+    cost: { amount: "0.1047", unit: "DOLLARS" },
+  });
+  expect(write.mock.calls[0]?.[0]).toContain(
+    '"cost":{"amount":"0.1047","unit":"DOLLARS"}',
+  );
+  expect(write.mock.calls[0]?.[0]).toContain(
+    '"providerGenerationId":"generation-1"',
+  );
+  expect(write.mock.calls[0]?.[0]).toContain('"width":4000');
+  logger.log("info", "invalid_cost", {
+    cost: { amount: "secret", unit: "DOLLARS" },
+  });
+  expect(write.mock.calls[1]?.[0]).not.toContain("secret");
+});

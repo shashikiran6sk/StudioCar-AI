@@ -18,6 +18,7 @@ describe("provider drivers", () => {
   it("keeps the existing background-removal choices", () => {
     expect(BackgroundRemovalProviderSchema.options).toEqual([
       "removebg",
+      "leonardo",
       "fal",
       "birefnet",
     ]);

@@ -1,6 +1,35 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-09-26
+Last updated: 2026-09-27
+
+## Leonardo background-removal adapter (PR 1)
+
+- Audited the existing binary provider boundary, remove.bg adapter, executor,
+  retry classification and official Leonardo/remove.bg documentation. Added
+  Leonardo beside remove.bg; no replacement abstraction or pipeline redesign.
+- Added worker-only selection/key/timeout configuration and a signed private
+  source-key resolver. Requests use car/WebP/RGBA, semitransparency, no provider
+  shadow, private ephemeral output, and full resolution. Temporary results are
+  bounded, decoded and copied through the existing private-S3 staging path.
+- Added the LEONARDO PostgreSQL provider enum via an additive migration,
+  selection mapping, local compose configuration, and conditional Lambda secret
+  wiring. Production defaults and remove.bg rollback remain unchanged.
+- Added sanitized generation/cost/dimension logs and a development-only
+  preview/full/50MP measurement command. Live pricing and staging validation
+  remain pending because no Leonardo key was available. Cross-job cutout reuse
+  and production cutover remain PR 3 prerequisites; see docs/leonardo-provider.md.
+- Tests cover request/auth mapping, parsing, validation, HTTP/network/timeout,
+  download boundaries, artifact persistence/reuse, S3 failures, cost logging,
+  selection/secret isolation and real-PostgreSQL Leonardo lifecycle completion.
+- Verification: lint, strict typecheck, source mapping, 2,140 uncached unit
+  passes plus five existing expected failures, 155 isolated PostgreSQL
+  integration tests, schema validation, migration status, worker build and all
+  14 Playwright tests passed. Local Turbopack cannot bind its socket, even with
+  escalation; the supported webpack production build passed instead. Browser
+  verification explicitly used Local queue defaults. Required CI must verify
+  the normal production build before merge.
+- Next slice: independently remove the doubled provider/local shadow and
+  derive studio grounding from the lower vehicle region at final scale.
 
 ## Portfolio thumbnail overflow
 

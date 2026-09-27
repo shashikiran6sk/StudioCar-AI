@@ -435,6 +435,9 @@ importers:
       '@aws-sdk/client-sqs':
         specifier: 'catalog:'
         version: 3.1135.0
+      '@aws-sdk/s3-request-presigner':
+        specifier: 'catalog:'
+        version: 3.1135.0
       '@prisma/adapter-pg':
         specifier: 'catalog:'
         version: 7.10.0

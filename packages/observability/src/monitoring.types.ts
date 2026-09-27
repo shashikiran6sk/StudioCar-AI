@@ -20,6 +20,13 @@ export interface StructuredLogFields extends MonitoringContext {
   outcome?: string | undefined;
   creditsCharged?: number | undefined;
   sizeBytes?: number | undefined;
+  providerGenerationId?: string | undefined;
+  size?: string | undefined;
+  format?: string | undefined;
+  width?: number | undefined;
+  height?: number | undefined;
+  attempt?: number | undefined;
+  cost?: { amount: string | number; unit: "CREDITS" | "DOLLARS" } | undefined;
 }
 export interface SafeError {
   name: string;

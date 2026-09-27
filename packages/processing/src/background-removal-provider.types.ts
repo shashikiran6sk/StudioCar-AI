@@ -7,6 +7,9 @@ import type {
 
 export interface ProcessImageInput {
   bytes: Uint8Array;
+  /** Private source key resolved to a short-lived URL only inside URL-based adapters. */
+  sourceObjectKey?: string;
+  context?: { assetId: string; vehicleId: string; attempt: number };
   contentType: "image/jpeg" | "image/png" | "image/webp";
   idempotencyKey: string;
   shadow: ShadowTreatment;

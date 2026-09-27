@@ -594,5 +594,13 @@
   {
     "source": "apps/web/src/instrumentation.ts",
     "reason": "Next instrumentation hook wires tested exception reporting and initialization; verified by build and browser gates."
+  },
+  {
+    "source": "workers/image-processing/src/providers/leonardo-provider.constants.ts",
+    "reason": "Static Leonardo request constants and safe error messages tested through the adapter."
+  },
+  {
+    "source": "workers/image-processing/src/providers/leonardo-provider.types.ts",
+    "reason": "Type-only adapter options and source URL resolver."
   }
 ]

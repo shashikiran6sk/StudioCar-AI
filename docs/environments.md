@@ -284,3 +284,12 @@ the `studiocar:environment` bucket tag.
 and refuses any database host that is not the developer's machine or the
 compose network unless `--i-understand-this-destroys-data` is passed. It never
 creates sample data; `pnpm db:seed` installs configuration only.
+
+
+## Leonardo provider selection
+
+All profiles retain remove.bg as the default and allow an explicit
+`BACKGROUND_REMOVAL_PROVIDER=leonardo` override. Only the image worker reads
+`LEONARDO_API_KEY` and `LEONARDO_TIMEOUT_MS`; the control plane sees selection
+alone. Real Leonardo runs require an AWS HTTPS source URL, so use Development
+rather than Local MinIO. See [adapter and cost experiment](./leonardo-provider.md).

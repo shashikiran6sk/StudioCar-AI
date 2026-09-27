@@ -23,8 +23,17 @@ Parameters:
   DatabaseSecretArn:
     Type: String
     Description: Secrets Manager ARN containing DATABASE_URL as a JSON property
+  BackgroundRemovalProvider:
+    Type: String
+    Default: removebg
+    AllowedValues: [removebg, leonardo]
+  LeonardoSecretArn:
+    Type: String
+    Default: ""
+    Description: Secrets Manager ARN containing LEONARDO_API_KEY when Leonardo is selected
   RemoveBgSecretArn:
     Type: String
+    Default: ""
     Description: Secrets Manager ARN containing REMOVEBG_API_KEY as a JSON property
   ImageBucketName:
     Type: String
@@ -80,7 +89,16 @@ Parameters:
     Default: 100000
     MinValue: 1000
 
+Rules:
+  SelectedProviderCredential:
+    Assertions:
+      - Assert: !Or
+          - !And [!Equals [!Ref BackgroundRemovalProvider, leonardo], !Not [!Equals [!Ref LeonardoSecretArn, ""]]]
+          - !And [!Equals [!Ref BackgroundRemovalProvider, removebg], !Not [!Equals [!Ref RemoveBgSecretArn, ""]]]
+        AssertDescription: Supply the secret ARN for the selected background-removal provider.
+
 Conditions:
+  UsesLeonardo: !Equals [!Ref BackgroundRemovalProvider, leonardo]
   HasAlarmTopic: !Not [!Equals [!Ref AlarmTopicArn, ""]]
 
 Resources:
@@ -138,7 +156,7 @@ Resources:
           SENTRY_DSN: !Ref SentryDsn
           SENTRY_RELEASE: !Ref SentryRelease
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
-          BACKGROUND_REMOVAL_PROVIDER: removebg
+          BACKGROUND_REMOVAL_PROVIDER: !Ref BackgroundRemovalProvider
           DATABASE_URL: !Sub '{{resolve:secretsmanager:${DatabaseSecretArn}:SecretString:DATABASE_URL}}'
           IMAGE_WORKER_CLAIM_TTL_MS: "120000"
           MAX_PROVIDER_INPUT_BYTES: "23068672"
@@ -147,7 +165,9 @@ Resources:
           PREVIEW_MAX_WIDTH: "720"
           PROCESSING_RETRY_BASE_MS: "5000"
           PROCESSING_RETRY_MAX_MS: "300000"
-          REMOVEBG_API_KEY: !Sub '{{resolve:secretsmanager:${RemoveBgSecretArn}:SecretString:REMOVEBG_API_KEY}}'
+          REMOVEBG_API_KEY: !If [UsesLeonardo, !Ref 'AWS::NoValue', !Sub '{{resolve:secretsmanager:${RemoveBgSecretArn}:SecretString:REMOVEBG_API_KEY}}']
+          LEONARDO_API_KEY: !If [UsesLeonardo, !Sub '{{resolve:secretsmanager:${LeonardoSecretArn}:SecretString:LEONARDO_API_KEY}}', !Ref 'AWS::NoValue']
+          LEONARDO_TIMEOUT_MS: "60000"
           REMOVEBG_TIMEOUT_MS: "60000"
           S3_BUCKET: !Ref ImageBucketName
       Handler: handler.handler

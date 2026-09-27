@@ -129,6 +129,7 @@ const EXAMPLES: Record<string, ExampleCase> = {
       "SQS_SECRET_ACCESS_KEY",
       "BOOTSTRAP_ADMIN_EMAIL",
       "WORKER_DATABASE_URL",
+      "LEONARDO_API_KEY",
     ],
   },
   ".env.example.production": {
@@ -138,6 +139,7 @@ const EXAMPLES: Record<string, ExampleCase> = {
     optional: [
       "BOOTSTRAP_ADMIN_EMAIL",
       "SENTRY_DSN",
+      "LEONARDO_API_KEY",
       "SENTRY_RELEASE",
       "HTTP_CLOUDWATCH_METRICS_ENABLED",
     ],

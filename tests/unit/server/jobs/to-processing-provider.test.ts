@@ -6,6 +6,7 @@ import { toProcessingProvider } from "../../../../apps/web/src/server/jobs/to-pr
 describe("toProcessingProvider", () => {
   it.each([
     ["removebg", "REMOVEBG"],
+    ["leonardo", "LEONARDO"],
     ["fal", "FAL"],
     ["birefnet", "BIREFNET"],
   ] satisfies readonly (readonly [BackgroundRemovalProvider, string])[])("maps %s without leaking provider selection into commands", (input, output) => {

@@ -9,6 +9,7 @@
   "dependencies": {
     "@aws-sdk/client-cloudwatch": "catalog:",
     "@aws-sdk/client-s3": "catalog:",
+    "@aws-sdk/s3-request-presigner": "catalog:",
     "@aws-sdk/client-sqs": "catalog:",
     "@prisma/adapter-pg": "catalog:",
     "@prisma/client": "catalog:",
@@ -22,11 +23,12 @@
     "sharp": "catalog:"
   },
   "scripts": {
-    "build": "tsc --noEmit && esbuild src/handler.ts --bundle --platform=node --target=node24 --format=esm --external:@sentry/node --external:@aws-sdk/client-cloudwatch --external:sharp --external:@aws-sdk/client-s3 --external:@prisma/adapter-pg --external:@prisma/client --external:pg --outfile=dist/handler.mjs",
-    "build:local": "esbuild src/local.ts --bundle --external:@aws-sdk/client-sqs --platform=node --target=node24 --format=esm --external:@sentry/node --external:@aws-sdk/client-cloudwatch --external:sharp --external:@aws-sdk/client-s3 --external:@prisma/adapter-pg --external:@prisma/client --external:pg --outfile=dist/local.mjs",
+    "build": "tsc --noEmit && esbuild src/handler.ts --bundle --platform=node --target=node24 --format=esm --external:@sentry/node --external:@aws-sdk/client-cloudwatch --external:sharp --external:@aws-sdk/s3-request-presigner --external:@aws-sdk/client-s3 --external:@prisma/adapter-pg --external:@prisma/client --external:pg --outfile=dist/handler.mjs",
+    "build:local": "esbuild src/local.ts --bundle --external:@aws-sdk/client-sqs --platform=node --target=node24 --format=esm --external:@sentry/node --external:@aws-sdk/client-cloudwatch --external:sharp --external:@aws-sdk/s3-request-presigner --external:@aws-sdk/client-s3 --external:@prisma/adapter-pg --external:@prisma/client --external:pg --outfile=dist/local.mjs",
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "cost:leonardo": "node --env-file-if-exists=../../.env.local scripts/leonardo-cost.mjs"
   },
   "devDependencies": {
     "@studiocar/local-queue": "workspace:*",

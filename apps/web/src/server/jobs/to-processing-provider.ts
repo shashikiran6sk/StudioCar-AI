@@ -7,6 +7,8 @@ export function toProcessingProvider(
   switch (provider) {
     case "removebg":
       return ProcessingProvider.REMOVEBG;
+    case "leonardo":
+      return ProcessingProvider.LEONARDO;
     case "fal":
       return ProcessingProvider.FAL;
     case "birefnet":

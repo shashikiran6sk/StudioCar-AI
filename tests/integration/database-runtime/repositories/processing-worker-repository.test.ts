@@ -164,6 +164,40 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
     };
   }
 
+  it("claims and completes a Leonardo job without provider-specific lifecycle logic", async () => {
+    const record = await createQueuedJob("leonardo-lifecycle-batch");
+    await database.processingJob.update({
+      where: { id: record.jobId },
+      data: { provider: ProcessingProvider.LEONARDO },
+    });
+    const claim = await workers.claimJob({
+      claimExpiresAt: CLAIM_EXPIRES_AT,
+      jobId: record.jobId,
+      now: NOW,
+      workerId: "leonardo-worker",
+    });
+    expect(claim).toMatchObject({
+      kind: "CLAIMED",
+      job: { provider: "LEONARDO" },
+    });
+    const completion = {
+      ...completionInput(record, 1, "leonardo-worker"),
+      providerRequestId: "leonardo-generation",
+    };
+    expect(await workers.completeJob(completion)).toMatchObject({
+      kind: "COMPLETED",
+    });
+    expect(await workers.completeJob(completion)).toMatchObject({
+      kind: "ALREADY_COMPLETED",
+    });
+    expect(
+      await database.processingAttempt.findFirst({
+        where: { jobId: record.jobId },
+        select: { providerRequestId: true },
+      }),
+    ).toEqual({ providerRequestId: "leonardo-generation" });
+  });
+
   it("reports a job whose message arrived before it was queued, then claims it once queued", async () => {
     const record = await createQueuedJob("worker-early-message-batch");
     // The state a fast worker sees between the queue send and the

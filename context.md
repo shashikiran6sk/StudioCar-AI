@@ -4,7 +4,7 @@
 
 StudioCar AI is a production-oriented automotive image-processing SaaS. Dealers upload vehicle photos directly to private object storage, request asynchronous background removal and image treatments, monitor processing, manage inventory/portfolios, and track plan usage.
 
-The architectural goal is to move from remove.bg to fal.ai BiRefNet v2 and eventually self-hosted BiRefNet v2 without changing the product layer, upload flow, polling contract, vehicle domain, or usage accounting.
+Background removal uses an existing provider port. Leonardo is available beside remove.bg without changing the product layer, upload flow, polling contract, vehicle domain, or usage accounting. Production stays on remove.bg until live cost, shadow-quality, and end-to-end validation justify cutover; fal.ai and self-hosted BiRefNet remain future adapter choices.
 
 ## Sources of truth
 
