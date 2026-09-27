@@ -74,7 +74,7 @@ describe("RemoveBgProvider", () => {
     expect(capturedSize).toBe("auto");
     expect(capturedType).toBe("car");
     expect(capturedFormat).toBe("webp");
-    expect(capturedShadow).toBe("car");
+    expect(capturedShadow).toBe("none");
     expect(capturedTag).toBe("processing-job-1");
   });
 

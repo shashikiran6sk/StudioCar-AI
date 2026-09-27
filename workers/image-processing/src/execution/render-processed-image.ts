@@ -3,11 +3,9 @@ import sharp from "sharp";
 import { createStudioSceneSvg } from "./create-studio-scene-svg";
 import { fitVehicle } from "./fit-vehicle";
 import { isStudioSceneBackground } from "./is-studio-scene-background";
-import { measureSubjectBox } from "./measure-subject-box";
-import {
-  STUDIO_SCENE_PALETTES,
-  STUDIO_SHADOW_OPACITY,
-} from "./studio-scene.constants";
+import { readVehicleAlpha } from "./read-vehicle-alpha";
+import { createVehicleShadow } from "./create-vehicle-shadow";
+import { STUDIO_SCENE_PALETTES } from "./studio-scene.constants";
 import {
   FIT_VEHICLE_MAXIMUM_ENLARGEMENT,
   PREVIEW_WEBP_QUALITY,
@@ -50,9 +48,10 @@ export async function renderProcessedImage(
     input.options.floor === "HORIZON"
       ? input.options.background
       : null;
-  // A studio scene is drawn behind the vehicle afterwards, so everything
-  // around it stays transparent until then.
-  const fill = scene === null ? background : TRANSPARENT;
+  // Studio backdrops and shadows are composed after the final vehicle transform.
+  // Keep both plain and horizon vehicle layers transparent until then.
+  const studio = isStudioSceneBackground(input.options.background);
+  const fill = studio ? TRANSPARENT : background;
   let image = sharp(input.bytes, { failOn: "warning", pages: 1 });
   // Padding has always been measured on the source image, before any crop.
   const source = await image.clone().metadata();
@@ -93,25 +92,43 @@ export async function renderProcessedImage(
     });
   }
 
-  if (scene !== null) {
+  if (studio) {
     const layer = await image.ensureAlpha().png().toBuffer({
       resolveWithObject: true,
     });
-    const subject = await measureSubjectBox(layer.data);
+    const alpha = await readVehicleAlpha(layer.data);
+    const subject = alpha.subject;
     if (subject === null) {
       image = sharp(layer.data).flatten({ background });
     } else {
-      const backdrop = createStudioSceneSvg({
-        canvasWidth: layer.info.width,
-        canvasHeight: layer.info.height,
-        palette: STUDIO_SCENE_PALETTES[scene],
-        shadowOpacity: STUDIO_SHADOW_OPACITY[input.options.shadow],
-        subject,
-      });
+      const backdrop =
+        scene === null
+          ? await sharp({
+              create: {
+                width: layer.info.width,
+                height: layer.info.height,
+                channels: 3,
+                background,
+              },
+            })
+              .png()
+              .toBuffer()
+          : Buffer.from(
+              createStudioSceneSvg({
+                canvasWidth: layer.info.width,
+                canvasHeight: layer.info.height,
+                palette: STUDIO_SCENE_PALETTES[scene],
+                subject,
+              }),
+            );
+      const shadow = await createVehicleShadow(alpha, input.options.shadow);
+      const overlays =
+        shadow === null ? [] : [{ input: shadow, left: 0, top: 0 }];
+      overlays.push({ input: layer.data, left: 0, top: 0 });
       // Composited into a buffer first: sharp applies its operations before
       // overlays, so enhancing afterwards must see the finished picture.
-      const composed = await sharp(Buffer.from(backdrop))
-        .composite([{ input: layer.data, left: 0, top: 0 }])
+      const composed = await sharp(backdrop)
+        .composite(overlays)
         .png()
         .toBuffer();
       image = sharp(composed);
@@ -126,7 +143,10 @@ export async function renderProcessedImage(
   } else if (input.options.outputFormat === "PNG") {
     image = image.png({ compressionLevel: 9 });
   } else {
-    image = image.webp({ quality: input.options.quality, smartSubsample: true });
+    image = image.webp({
+      quality: input.options.quality,
+      smartSubsample: true,
+    });
   }
 
   const rendered = await image.toBuffer({ resolveWithObject: true });
