@@ -1,3 +1,5 @@
+import type { ShadowTreatment } from "@studiocar/contracts";
+
 export const REMOVE_BG_PROVIDER_KEY = "REMOVEBG";
 export const REMOVE_BG_ENDPOINT = "https://api.remove.bg/v1.0/removebg";
 export const REMOVE_BG_API_KEY_HEADER = "x-api-key";
@@ -41,3 +43,10 @@ export const REMOVE_BG_TIMEOUT_MESSAGE =
   "The background-removal provider timed out.";
 export const REMOVE_BG_NETWORK_MESSAGE =
   "The background-removal provider could not be reached.";
+
+// StudioCar owns contact and ambient shadows for every user treatment.
+export const REMOVE_BG_SHADOW_TYPES = {
+  NONE: "none",
+  NATURAL: "none",
+  STUDIO: "none",
+} satisfies Record<ShadowTreatment, string>;
