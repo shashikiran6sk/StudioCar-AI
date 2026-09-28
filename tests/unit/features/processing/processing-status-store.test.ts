@@ -38,4 +38,31 @@ describe("processingStatusStore", () => {
     useProcessingStatusStore.getState().dismiss(JOB_ID);
     expect(useProcessingStatusStore.getState().jobs).toEqual({});
   });
+
+  it("keeps the store object when a payload has no semantic status change", () => {
+    useProcessingStatusStore.getState().register(
+      [{ jobId: JOB_ID, assetId: ASSET_ID, state: "QUEUED" }],
+      1_000,
+    );
+    useProcessingStatusStore.getState().update([{
+      jobId: JOB_ID,
+      assetId: ASSET_ID,
+      vehicleId: "0e879f46-1193-4d77-b785-057fe026d998",
+      vehicleName: "2024 Audi Q5",
+      updatedAt: "2026-09-19T10:00:00.000Z",
+      state: "QUEUED",
+      stage: "QUEUED",
+    }]);
+    const before = useProcessingStatusStore.getState().jobs;
+    useProcessingStatusStore.getState().update([{
+      jobId: JOB_ID,
+      assetId: ASSET_ID,
+      vehicleId: "0e879f46-1193-4d77-b785-057fe026d998",
+      vehicleName: "2024 Audi Q5",
+      updatedAt: "2026-09-19T10:00:00.000Z",
+      state: "QUEUED",
+      stage: "QUEUED",
+    }]);
+    expect(useProcessingStatusStore.getState().jobs).toBe(before);
+  });
 });

@@ -11,19 +11,19 @@ describe("useRefreshWhenJobsSettle", () => {
     expect(refresh).not.toHaveBeenCalled();
   });
 
-  it("refreshes each time a running job reaches a final state", () => {
+  it("refreshes once after the tracked group reaches a final state", () => {
     const refresh = vi.fn();
     const { rerender } = renderHook(
       ({ active }) => useRefreshWhenJobsSettle(active, refresh),
       { initialProps: { active: 3 } },
     );
 
-    // A three-photo batch: the card should move 33% → 67% → 100%.
+    // A three-photo batch is reconciled once all statuses are terminal.
     rerender({ active: 2 });
     rerender({ active: 1 });
     rerender({ active: 0 });
 
-    expect(refresh).toHaveBeenCalledTimes(3);
+    expect(refresh).toHaveBeenCalledTimes(1);
   });
 
   it("does not refresh when new jobs start", () => {

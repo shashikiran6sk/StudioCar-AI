@@ -2,6 +2,22 @@
 
 Last updated: 2026-09-28
 
+## Processing polling and page reconciliation
+
+- Polling now permits one status request at a time. Timer and visibility
+  wakeups coalesce while a request is pending, hidden tabs remain paused, and
+  cleanup still aborts in-flight work.
+- Status updates compare the full authoritative discriminated payload and
+  preserve the existing store object when nothing changed. This avoids
+  downstream renders caused by unchanged polling responses.
+- Server reconciliation waits until the tracked group reaches zero active
+  jobs, so a 20-image batch causes at most one normal `router.refresh()` after
+  settlement while terminal failures remain visible for dismissal.
+- Focused polling/store tests, full unit (1,258), PostgreSQL integration
+  (159), lint, strict types, source mapping, schema validation, webpack build
+  and all 14 browser tests passed. No status API, terminal-state, cancellation
+  or navigation semantics changed.
+
 ## Bounded photo uploads and progress rendering
 
 - Bounded new-photo hashing, presigning, direct S3 PUTs and commit requests to
