@@ -2,6 +2,18 @@
 
 Last updated: 2026-09-28
 
+## Production AWS deployment compatibility
+
+- Corrected the SQS queue-policy template to express the HTTPS-only deny as
+  one resource per statement, which is required by the SQS policy validator.
+- Lambda event-source concurrency remains bounded independently of account-wide
+  reserved concurrency. A new optional `ReservedConcurrency` parameter omits
+  the Lambda reservation when an account quota cannot spare unreserved capacity;
+  the SQS event-source maximum still controls worker fan-out.
+- These are deployment-safety corrections only. Queue durability, DLQ routing,
+  worker idempotency, partial-batch failure reporting and processing behavior
+  remain unchanged.
+
 ## Dashboard recent-vehicle query path
 
 - Dashboard recent cards now use a bounded repository read that selects only

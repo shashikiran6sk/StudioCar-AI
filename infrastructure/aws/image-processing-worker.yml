@@ -58,6 +58,12 @@ Parameters:
     Default: 10
     MinValue: 2
     MaxValue: 1000
+  ReservedConcurrency:
+    Type: Number
+    Default: 0
+    MinValue: 0
+    MaxValue: 1000
+    Description: Optional Lambda reserved concurrency; leave at zero when the account quota cannot spare unreserved capacity
   MemorySize:
     Type: Number
     Default: 2048
@@ -112,6 +118,7 @@ Rules:
 Conditions:
   UsesLeonardo: !Equals [!Ref BackgroundRemovalProvider, leonardo]
   HasAlarmTopic: !Not [!Equals [!Ref AlarmTopicArn, ""]]
+  HasReservedConcurrency: !Not [!Equals [!Ref ReservedConcurrency, 0]]
 
 Resources:
   ImageProcessingWorkerRole:
@@ -184,7 +191,7 @@ Resources:
           S3_BUCKET: !Ref ImageBucketName
       Handler: handler.handler
       MemorySize: !Ref MemorySize
-      ReservedConcurrentExecutions: !Ref MaximumConcurrency
+      ReservedConcurrentExecutions: !If [HasReservedConcurrency, !Ref ReservedConcurrency, !Ref AWS::NoValue]
       Role: !GetAtt ImageProcessingWorkerRole.Arn
       Runtime: nodejs24.x
       Timeout: !Ref TimeoutSeconds
