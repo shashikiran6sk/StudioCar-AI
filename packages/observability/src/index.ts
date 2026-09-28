@@ -18,3 +18,5 @@ export * from "./cloudwatch-http-metrics";
 export * from "./create-cloudwatch-http-metrics";
 export * from "./emit-operational-event";
 export * from "./get-request-id";
+export * from "./performance-stages.constants";
+export * from "./measure-stage";

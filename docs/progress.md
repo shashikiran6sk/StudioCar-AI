@@ -18,6 +18,26 @@ Last updated: 2026-09-27
   restriction; required CI must pass its unchanged normal build. Production
   endpoint/region verification awaits access; no credentials or regions changed.
 
+## Performance timing baseline
+
+- Read the supplied performance/AI-search audit completely and reviewed draft
+  PR #80 against current main (`843b611`). Reuse its durable-acceptance work,
+  with additional quota/deletion/rollback coverage before merge; SEO is excluded.
+- Extended existing correlated HTTP logs with bounded stage totals and request
+  start time. Timings preserve failures and add no per-image telemetry events.
+- Added an isolated PostgreSQL/mock-SQS 1/5/20-image benchmark. Five local
+  samples per size show median response 56/166/530 ms with a 10 ms simulated
+  queue send; 20-image dispatch takes 439 ms. These are not production numbers.
+  Method, PR review, source findings and limitations are in `docs/performance.md`.
+- Live AWS settings remain unverified because the configured CLI session expired.
+  No deployment configuration or provider behavior changed.
+- Validation: lint, strict types, source mapping, all unit suites uncached,
+  155 PostgreSQL integration tests, schema validation, supported webpack
+  production build and all 14 browser tests passed. Browser tests require
+  explicit Local queue settings to avoid root Development overrides. Normal
+  Turbopack remains blocked by local process/port permissions; unchanged CI
+  must pass the normal build before merge.
+
 ## Leonardo background-removal adapter (PR 1)
 
 - Audited the existing binary provider boundary, remove.bg adapter, executor,

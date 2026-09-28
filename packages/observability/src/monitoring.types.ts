@@ -1,3 +1,4 @@
+import type { PerformanceStage } from "./performance-stages.constants";
 import type { OperationalCorrelation } from "./operational-telemetry.types";
 
 export type MonitoringContext = {
@@ -5,12 +6,14 @@ export type MonitoringContext = {
     | OperationalCorrelation[Key]
     | undefined;
 } & {
+  timings?: Partial<Record<PerformanceStage, { durationMs: number; count: number }>>;
   environment?: string;
   route?: string;
   method?: string;
   errorCode?: string | undefined;
 };
 export interface StructuredLogFields extends MonitoringContext {
+  requestStartedAtUnixMs?: number;
   durationMs?: number | undefined;
   statusCode?: number | undefined;
   errorCode?: string | undefined;
