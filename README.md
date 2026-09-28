@@ -73,8 +73,9 @@ pnpm app:up      # Local only: the same, plus the application in a container
 pnpm app:down    # or pnpm infra:down
 ```
 
-`pnpm infra:build` rebuilds the worker and application images after changing
-their code or dependencies; `up` on its own reuses them.
+`pnpm infra:build` rebuilds the worker, MinIO, and application images after
+changing their code or dependencies; `up` builds any image that is missing and
+otherwise reuses it.
 
 | Service | Address | Notes |
 | --- | --- | --- |

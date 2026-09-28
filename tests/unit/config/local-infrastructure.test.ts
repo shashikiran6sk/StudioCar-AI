@@ -65,6 +65,19 @@ describe("LOCAL_INFRASTRUCTURE", () => {
     expect(compose).not.toMatch(/mailpit|email|EMAIL_|RESEND/i);
   });
 
+  it("builds MinIO locally instead of pulling its access-restricted images", () => {
+    const dockerfile = read("infrastructure/local/Dockerfile.minio");
+
+    expect(compose).toContain("dockerfile: infrastructure/local/Dockerfile.minio");
+    expect(compose).not.toMatch(/(?:quay\.io\/)?minio\/(?:minio|mc)/);
+    expect(dockerfile).toContain(
+      "MINIO_VERSION=RELEASE.2025-10-15T17-29-55Z",
+    );
+    expect(dockerfile).toContain(
+      "MINIO_CLIENT_VERSION=RELEASE.2025-08-13T08-35-41Z",
+    );
+  });
+
   it("matches the only queue ElasticMQ creates", () => {
     const queues = read("infrastructure/local/elasticmq.conf");
 
