@@ -17,11 +17,12 @@ Last updated: 2026-09-28
   bucket-level list permission as allowed. CloudFormation template validation,
   focused template tests, all 1,264 uncached unit tests, source mapping, lint,
   typecheck and Prisma validation passed.
-- The failed job rows are terminal and are not automatically replayed. A new
-  processing request is required to verify live remove.bg execution and would
-  consume provider credits; this remains to be authorized. No image bytes,
-  database records or provider secrets were changed. AWS commands and
-  sanitized results are appended in `aws-session-transcript.md`.
+- The earlier failed job rows are terminal and are not automatically replayed.
+  After deployment, a new production job completed in one successful remove.bg
+  attempt and persisted its processed output, confirming the live fix. The user
+  also confirmed processing is working. No failed-job rows were edited and no
+  image bytes or provider secrets were accessed during diagnosis. AWS commands
+  and sanitized results are appended in `aws-session-transcript.md`.
 
 ## Production AWS deployment compatibility
 
