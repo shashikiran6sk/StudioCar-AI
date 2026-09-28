@@ -35,6 +35,12 @@ x-worker-environment: &worker-environment
   SQS_SECRET_ACCESS_KEY: studiocarlocal123
   SQS_IMAGE_QUEUE_URL: http://elasticmq:9324/000000000000/studiocar-images
 
+x-minio-image: &minio-image
+  image: studiocar-local-minio
+  build:
+    context: ../..
+    dockerfile: infrastructure/local/Dockerfile.minio
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -53,9 +59,8 @@ services:
       timeout: 5s
       retries: 20
 
-  # Docker Hub's minio/minio repository is access gated; quay.io is not.
   minio:
-    image: quay.io/minio/minio:latest
+    <<: *minio-image
     profiles: [infra, app]
     command: server /data --console-address ":9001"
     environment:
@@ -78,7 +83,7 @@ services:
   # Creates the private bucket and the browser CORS rule that direct uploads
   # need, then exits. Re-running is harmless.
   minio-init:
-    image: quay.io/minio/mc:latest
+    <<: *minio-image
     profiles: [infra, app]
     depends_on:
       minio:

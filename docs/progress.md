@@ -1,6 +1,20 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-09-28
+Last updated: 2026-09-29
+
+## Reliable local MinIO startup
+
+- Replaced the now access-restricted `quay.io/minio` server and client images
+  with one local multi-stage image built from MinIO's final security-patched
+  community server release and the corresponding client source tag.
+- Both the object-store service and its idempotent bucket initializer share the
+  same image, so a fresh `pnpm infra:up` no longer requires a MinIO registry
+  login. Added a regression check that rejects the retired registry images.
+- Verified a clean Local startup on arm64 through healthy PostgreSQL, MinIO,
+  and ElasticMQ services, successful private-bucket initialization, and a
+  running dispatcher and image worker. Focused tests, the full unit suite,
+  real-PostgreSQL integration suite, lint, strict types, Prisma validation and
+  the webpack production build passed.
 
 ## Production worker missing-object permission
 
