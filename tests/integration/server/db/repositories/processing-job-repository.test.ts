@@ -1,3 +1,4 @@
+import { PrismaStorageDeletionRepository } from "../../../../../apps/web/src/server/db/repositories/storage-deletion-repository";
 import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
@@ -218,6 +219,7 @@ databaseDescribe("PrismaProcessingJobRepository plan limits", () => {
   });
 
   afterEach(async () => {
+    await database.storageDeletionOutboxMessage.deleteMany({ where: { imageAsset: { user: { primaryEmail: limitOwnerEmail } } } });
     await database.user.deleteMany({
       where: { primaryEmail: limitOwnerEmail },
     });
@@ -297,6 +299,88 @@ databaseDescribe("PrismaProcessingJobRepository plan limits", () => {
     maxImagesPerBatch: 5,
     allowanceBillingPeriodKey: null,
   };
+
+  it("serializes quota consumption across different vehicles of one tenant", async () => {
+    const first = await seedVehicle(3);
+    const second = await seedVehicleFor(first.owner.id, 3);
+    const allowance = { ...freeAllowance, imageCapacity: 5 };
+    const results = await Promise.all([
+      repository.reserveBatchOwned(command(first.owner, first.vehicle, first.assetIds, allowance, "quota-race-first")),
+      repository.reserveBatchOwned(command(first.owner, second.vehicle, second.assetIds, allowance, "quota-race-second")),
+    ]);
+    expect(results.map((result) => result.kind).sort()).toEqual(["ALLOWANCE_EXHAUSTED", "CREATED"]);
+    expect(await database.processingJob.count({ where: { userId: first.owner.id } })).toBe(3);
+    expect(await database.usageEvent.count({ where: { userId: first.owner.id } })).toBe(1);
+  });
+
+  it("rolls back jobs, outbox, vehicle state and usage on a late insert failure", async () => {
+    const first = await seedVehicle(1);
+    const firstCommand = command(first.owner, first.vehicle, first.assetIds, freeAllowance, "rollback-first");
+    await repository.reserveBatchOwned(firstCommand);
+    const second = await seedVehicleFor(first.owner.id, 2);
+    const secondCommand = command(first.owner, second.vehicle, second.assetIds, freeAllowance, "rollback-second");
+    await expect(repository.reserveBatchOwned({ ...secondCommand, usageIdempotencyKey: firstCommand.usageIdempotencyKey }))
+      .resolves.toEqual({ kind: "VEHICLE_UNAVAILABLE" });
+    expect(await database.processingJob.count({ where: { vehicleId: second.vehicle.id } })).toBe(0);
+    expect(await database.processingOutboxMessage.count({ where: { job: { userId: first.owner.id } } })).toBe(1);
+    expect(await database.usageEvent.count({ where: { userId: first.owner.id } })).toBe(1);
+    expect(await database.vehicle.findUnique({ where: { id: second.vehicle.id }, select: { status: true } })).toEqual({ status: "DRAFT" });
+  });
+
+  it("rejects duplicate assets and foreign assets without reserving anything", async () => {
+    const first = await seedVehicle(1);
+    const assetId = first.assetIds[0];
+    if (!assetId) throw new Error("Missing fixture asset");
+    const duplicate = command(first.owner, first.vehicle, [assetId, assetId], freeAllowance, "duplicate-assets");
+    expect(await repository.reserveBatchOwned(duplicate)).toEqual({ kind: "ASSETS_NOT_READY" });
+    const other = await database.user.create({ data: {} });
+    try {
+      const foreign = await seedVehicleFor(other.id, 1);
+      expect(await repository.reserveBatchOwned(command(first.owner, first.vehicle, foreign.assetIds, freeAllowance, "foreign-assets")))
+        .toEqual({ kind: "ASSETS_NOT_READY" });
+      expect(await database.processingJob.count({ where: { userId: first.owner.id } })).toBe(0);
+    } finally {
+      await database.user.delete({ where: { id: other.id } });
+    }
+  });
+
+  it("serializes removal with reservation without ever deleting a reserved original", async () => {
+    const first = await seedVehicle(1);
+    const assetId = first.assetIds[0];
+    if (!assetId) throw new Error("Missing fixture asset");
+    const [reserved, removed] = await Promise.all([
+      repository.reserveBatchOwned(command(first.owner, first.vehicle, first.assetIds, freeAllowance, "deletion-race")),
+      new PrismaStorageDeletionRepository(database).reserveUserUploadRemoval({ userId: first.owner.id, assetId, now: new Date() }),
+    ]);
+    if (reserved.kind === "CREATED") {
+      expect(removed.kind).toBe("NOT_REMOVABLE");
+      expect(await database.storageDeletionOutboxMessage.count({ where: { imageAssetId: assetId } })).toBe(0);
+    } else {
+      expect(reserved.kind).toBe("ASSETS_NOT_READY");
+      expect(removed.kind).toBe("RESERVED");
+      expect(await database.processingJob.count({ where: { userId: first.owner.id } })).toBe(0);
+    }
+  });
+
+  it("does not release capacity when completion transfers in-flight work to charged usage", async () => {
+    const first = await seedVehicle(3);
+    const allowance = { ...freeAllowance, imageCapacity: 3 };
+    const accepted = await repository.reserveBatchOwned(command(first.owner, first.vehicle, first.assetIds, allowance, "completion-first"));
+    if (accepted.kind !== "CREATED") throw new Error("Expected accepted fixture");
+    const second = await seedVehicleFor(first.owner.id, 1);
+    const [, result] = await Promise.all([
+      database.$transaction(async (transaction) => {
+        await transaction.usageEvent.createMany({ data: accepted.jobs.map((job) => ({
+          userId: first.owner.id, jobId: job.id, type: "BACKGROUND_REMOVAL_COMPLETED",
+          quantity: 1, billingPeriodKey: "2026-09", idempotencyKey: `completion:${job.id}`,
+        })) });
+        await transaction.processingJob.updateMany({ where: { id: { in: accepted.jobs.map((job) => job.id) } },
+          data: { status: "COMPLETED", completedAt: new Date() } });
+      }),
+      repository.reserveBatchOwned(command(first.owner, second.vehicle, second.assetIds, allowance, "completion-second")),
+    ]);
+    expect(result).toEqual({ kind: "ALLOWANCE_EXHAUSTED", imageCapacity: 3, imagesRemaining: 0 });
+  });
 
   it("refuses a batch larger than the plan's per-batch limit", async () => {
     const { owner, vehicle, assetIds } = await seedVehicle(6);

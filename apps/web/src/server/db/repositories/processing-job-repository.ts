@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { ProcessingOptions } from "@studiocar/contracts";
 
 import type { PrismaClient } from "@studiocar/database-runtime";
@@ -12,6 +13,9 @@ import {
 import { toProcessingOptionsJson } from "./to-processing-options-json";
 import { PROCESSABLE_VEHICLE_STATUSES } from "../../vehicles/vehicle-status-groups.constants";
 import { createImageAssetLockKey } from "./create-image-asset-lock-key";
+
+const ALLOWANCE_LOCK_PREFIX = "processing-allowance:";
+const AllowanceUsageRowsSchema = z.array(z.object({ used: z.coerce.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER) })).length(1);
 
 const MISSING_USAGE_JOB_ERROR =
   "A processing batch must contain a usage-accounting job.";
@@ -148,6 +152,11 @@ export class PrismaProcessingJobRepository {
     transaction: Prisma.TransactionClient,
     command: ReserveProcessingBatchCommand,
   ): Promise<TransactionResult> {
+    // Serialize reservations for the tenant, including different vehicles.
+    // Completion transfers in-flight usage to charged usage atomically; the
+    // single-statement count below observes both from the same snapshot.
+    const allowanceLockKey = `${ALLOWANCE_LOCK_PREFIX}${command.userId}`;
+    await transaction.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${allowanceLockKey}, 0))`;
     const vehicle = await transaction.vehicle.findFirst({
       where: { id: command.vehicleId, userId: command.userId },
       select: { status: true },
@@ -271,36 +280,26 @@ export class PrismaProcessingJobRepository {
     transaction: Prisma.TransactionClient,
     command: ReserveProcessingBatchCommand,
   ): Promise<number> {
-    const period =
-      command.allowance.allowanceBillingPeriodKey === null
-        ? {}
-        : { billingPeriodKey: command.allowance.allowanceBillingPeriodKey };
-
-    const [charged, inFlight] = await Promise.all([
-      transaction.usageEvent.aggregate({
-        where: {
-          ...period,
-          type: UsageEventType.BACKGROUND_REMOVAL_COMPLETED,
-          userId: command.userId,
-        },
-        _sum: { quantity: true },
-      }),
-      transaction.processingJob.count({
-        where: {
-          userId: command.userId,
-          status: {
-            in: [
-              ProcessingJobStatus.CREATED,
-              ProcessingJobStatus.QUEUED,
-              ProcessingJobStatus.PROCESSING,
-              ProcessingJobStatus.RETRYING,
-            ],
-          },
-        },
-      }),
-    ]);
-
-    return (charged._sum.quantity ?? 0) + inFlight;
+    const period = command.allowance.allowanceBillingPeriodKey;
+    const rows = AllowanceUsageRowsSchema.parse(await transaction.$queryRaw`
+      SELECT (
+        (SELECT COALESCE(SUM("quantity"), 0) FROM "UsageEvent"
+          WHERE "userId" = ${command.userId}::uuid
+            AND "type" = ${UsageEventType.BACKGROUND_REMOVAL_COMPLETED}::"UsageEventType"
+            AND (${period}::text IS NULL OR "billingPeriodKey" = ${period}::text))
+        + (SELECT COUNT(*) FROM "ProcessingJob"
+          WHERE "userId" = ${command.userId}::uuid
+            AND "status" IN (
+              ${ProcessingJobStatus.CREATED}::"ProcessingJobStatus",
+              ${ProcessingJobStatus.QUEUED}::"ProcessingJobStatus",
+              ${ProcessingJobStatus.PROCESSING}::"ProcessingJobStatus",
+              ${ProcessingJobStatus.RETRYING}::"ProcessingJobStatus"
+            ))
+      ) AS used
+    `);
+    const row = rows[0];
+    if (!row) throw new Error(MISSING_USAGE_JOB_ERROR);
+    return row.used;
   }
 
   private resolveReplay(

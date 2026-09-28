@@ -2,6 +2,24 @@
 
 Last updated: 2026-09-28
 
+## Processing submission review hardening
+
+- Reviewed draft #80 against main and preserved its bulk reservation, focused
+  entitlement and supported post-response dispatch implementation.
+- Reproduced a pre-existing cross-vehicle quota race: two three-image batches
+  both reserved against five remaining images. Reservations now serialize by
+  tenant, and charged plus in-flight usage is read in one SQL snapshot so a
+  concurrent completion cannot fall between two reads and disappear from usage.
+- Added real PostgreSQL coverage for quota concurrency, completion transfer,
+  rollback after job/outbox insertion, duplicate and foreign assets, deletion
+  racing reservation, and subscription status/source/expiry boundaries.
+- Existing ordered replay, publication lease, duplicate-worker and exactly-once
+  completion regressions remain required. No new infrastructure or migration.
+- Local lint/types/source mapping, all unit suites uncached, 167 PostgreSQL
+  integration tests, schema validation, webpack production build and all 14
+  browser tests passed. Normal local Turbopack still cannot bind its helper
+  port; required CI must verify the unchanged normal build before merge.
+
 ## Processing submission latency
 
 - The processing application now reserves durable jobs/outbox rows before
