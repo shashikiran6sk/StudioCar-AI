@@ -1,3 +1,4 @@
+import { measureStage, PerformanceStage } from "@studiocar/observability";
 import { LOG_EVENTS } from "@studiocar/observability";
 import {
   ApplicationErrorCode,
@@ -35,12 +36,12 @@ export class SqsProcessingQueue implements ProcessingQueuePort {
   ): Promise<ProcessingQueuePublishResult> {
     const startedAt = performance.now();
     try {
-      const response = await this.sendMessage(
+      const response = await measureStage(PerformanceStage.SQS_PUBLICATION, () => this.sendMessage(
         new SendMessageCommand({
           MessageBody: JSON.stringify(message),
           QueueUrl: this.queueUrl,
         }),
-      );
+      ));
       if (!response.MessageId) {
         throw new Error(PROCESSING_QUEUE_MESSAGE_MISSING_ID_ERROR);
       }

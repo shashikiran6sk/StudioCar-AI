@@ -1,3 +1,4 @@
+import { measureStage, PerformanceStage } from "@studiocar/observability";
 import type { ProcessingOptions } from "@studiocar/contracts";
 
 import type { PrismaClient } from "@studiocar/database-runtime";
@@ -114,9 +115,9 @@ export class PrismaProcessingJobRepository {
     if (existing.length > 0) return this.resolveReplay(existing, command);
 
     try {
-      const result = await this.database.$transaction((transaction) =>
+      const result = await measureStage(PerformanceStage.RESERVATION_TRANSACTION, () => this.database.$transaction((transaction) =>
         this.reserveInTransaction(transaction, command),
-      );
+      ));
 
       if (
         result.kind !== "WRITE_RACE" &&
@@ -239,9 +240,9 @@ export class PrismaProcessingJobRepository {
         },
         select: processingJobSelect,
       });
-      await transaction.processingOutboxMessage.create({
+      await measureStage(PerformanceStage.OUTBOX_CREATION, () => transaction.processingOutboxMessage.create({
         data: { jobId: processingJob.id },
-      });
+      }));
       jobs.push(processingJob);
     }
     const usageJob = jobs[0];

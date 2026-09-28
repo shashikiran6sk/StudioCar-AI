@@ -1,3 +1,4 @@
+import { PerformanceStage } from "./performance-stages.constants";
 import { parseObservabilityEnvironment } from "@studiocar/config";
 import { monitoringContext } from "./monitoring-context";
 import {
@@ -30,6 +31,7 @@ const STRING_FIELDS = [
 ] satisfies readonly (keyof StructuredLogFields)[];
 const NUMBER_FIELDS = [
   "durationMs",
+  "requestStartedAtUnixMs",
   "statusCode",
   "creditsCharged",
   "sizeBytes",
@@ -79,6 +81,17 @@ export class StructuredLogger {
         Number(merged.cost.amount) >= 0
       ) {
         payload.cost = { amount: merged.cost.amount, unit: merged.cost.unit };
+      }
+      if (fields.timings) {
+        const timings: Record<string, { durationMs: number; count: number }> = {};
+        for (const stage of Object.values(PerformanceStage)) {
+          const timing = fields.timings[stage];
+          if (timing && Number.isFinite(timing.durationMs) && timing.durationMs >= 0 &&
+              Number.isSafeInteger(timing.count) && timing.count > 0) {
+            timings[stage] = { durationMs: timing.durationMs, count: timing.count };
+          }
+        }
+        payload.timings = timings;
       }
       if (merged.route && SAFE_ROUTE_PATTERN.test(merged.route))
         payload.route = merged.route;

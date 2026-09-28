@@ -23,8 +23,9 @@ export function withRouteMonitoring<Args extends unknown[]>(
     const requestId =
       suppliedId && UUID_PATTERN.test(suppliedId) ? suppliedId : randomUUID();
     return monitoringContext.run(
-      { requestId, route, method: request.method },
+      { requestId, route, method: request.method, timings: {} },
       async () => {
+        const requestStartedAtUnixMs = Date.now();
         const startedAt = performance.now();
         let response: Response;
         try {
@@ -49,7 +50,9 @@ export function withRouteMonitoring<Args extends unknown[]>(
           LOG_EVENTS.HTTP_COMPLETED,
           {
             statusCode: response.status,
+            requestStartedAtUnixMs,
             durationMs,
+            timings: monitoringContext.getStore()?.timings ?? {},
             ...(errorCode ? { errorCode } : {}),
           },
         );
