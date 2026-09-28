@@ -1,10 +1,10 @@
+import { getWebDatabase } from "../../db/web-database";
 import {
   parsePhoneAuthEnvironment,
   parsePhoneOtpWidgetEnvironment,
   type PhoneAuthEnvironment,
 } from "@studiocar/config";
 import type { PhoneOtpWidget } from "@studiocar/contracts";
-import { createDatabaseClient } from "@studiocar/database-runtime";
 
 import { PrismaAuthIdentityLinkRepository } from "../../db/repositories/auth-identity-link-repository";
 import { PrismaPhoneOtpChallengeRepository } from "../../db/repositories/phone-otp-challenge-repository";
@@ -49,9 +49,7 @@ export function getPhoneOtpApplication(): PhoneOtpApplication {
   if (phoneOtpApplication) return phoneOtpApplication;
 
   const environment = parsePhoneAuthEnvironment(process.env);
-  const database = createDatabaseClient({
-    connectionString: environment.DATABASE_URL,
-  });
+  const database = getWebDatabase();
   const sessions = new SessionService(new PrismaSessionRepository(database));
 
   phoneAccountService = new PhoneAccountService(

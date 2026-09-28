@@ -293,3 +293,24 @@ All profiles retain remove.bg as the default and allow an explicit
 `LEONARDO_API_KEY` and `LEONARDO_TIMEOUT_MS`; the control plane sees selection
 alone. Real Leonardo runs require an AWS HTTPS source URL, so use Development
 rather than Local MinIO. See [adapter and cost experiment](./leonardo-provider.md).
+
+## Web database connection budget
+
+Every web composition root uses `getWebDatabase()`: one lazy Prisma/PrismaPg
+client per Next.js process, including development module reloads. Vercel
+instances do not share that client. `WEB_DATABASE_POOL_SIZE` is validated in
+`packages/config`, defaults to 5 and accepts integers 1–20. Restart the process
+after changing its database or pool settings. Repository constructors still
+accept injected clients; isolated tests and the Lambda worker keep independent
+clients. The worker's existing pool of two is unchanged.
+
+For Neon application traffic, use the dashboard's pooled connection string
+(the hostname contains `-pooler`) with TLS. Do not copy a database URL into
+logs or commit it. Keep migration connectivity configured according to Neon
+and Prisma requirements. Sharing removes the previous twenty independent
+web pools; raising a session-mode connection cap does not solve that problem.
+Budget total connections across all live Vercel instances and worker
+concurrency, and measure wait time before increasing the web pool size.
+Production endpoint and region still require live verification.
+
+Reference: [Neon Prisma connection guidance](https://github.com/neondatabase/website/blob/main/content/docs/guides/prisma.md).

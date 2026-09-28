@@ -1,6 +1,7 @@
+import { getWebDatabase } from "../db/web-database";
 import { S3Client } from "@aws-sdk/client-s3";
 import { createS3ClientOptions, parseUploadEnvironment } from "@studiocar/config";
-import { CommandRateLimitScope, createDatabaseClient } from "@studiocar/database-runtime";
+import { CommandRateLimitScope } from "@studiocar/database-runtime";
 import { PrismaCommandRateLimitRepository } from "../db/repositories/command-rate-limit-repository";
 import { PrismaImageAssetRepository } from "../db/repositories/image-asset-repository";
 import { PrismaStorageDeletionRepository } from "../db/repositories/storage-deletion-repository";
@@ -26,9 +27,7 @@ export function getUploadRuntime(): UploadRuntime {
   if (uploadRuntime) return uploadRuntime;
 
   const environment = parseUploadEnvironment(process.env);
-  const database = createDatabaseClient({
-    connectionString: environment.DATABASE_URL,
-  });
+  const database = getWebDatabase();
   const s3 = new S3Client(createS3ClientOptions(environment));
   const assets = new PrismaImageAssetRepository(database);
   const storage = new S3ObjectStorage(

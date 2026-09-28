@@ -1,9 +1,10 @@
+import { getWebDatabase } from "../db/web-database";
 import { SQSClient } from "@aws-sdk/client-sqs";
 import {
   createSqsClientOptions,
   parseProcessingEnvironment,
 } from "@studiocar/config";
-import { CommandRateLimitScope, createDatabaseClient } from "@studiocar/database-runtime";
+import { CommandRateLimitScope } from "@studiocar/database-runtime";
 import { PrismaCommandRateLimitRepository } from "../db/repositories/command-rate-limit-repository";
 import { PrismaProcessingJobRepository } from "../db/repositories/processing-job-repository";
 import { PrismaProcessingJobStatusRepository } from "../db/repositories/processing-job-status-repository";
@@ -32,9 +33,7 @@ export function getProcessingRuntime(): ProcessingRuntime {
   if (processingRuntime) return processingRuntime;
 
   const environment = parseProcessingEnvironment(process.env);
-  const database = createDatabaseClient({
-    connectionString: environment.DATABASE_URL,
-  });
+  const database = getWebDatabase();
   const queue = new SqsProcessingQueue(
     new SQSClient(createSqsClientOptions(environment)),
     environment.SQS_IMAGE_QUEUE_URL,
