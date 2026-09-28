@@ -1,0 +1,26 @@
+import { afterEach, expect, it, vi } from "vitest";
+import { createUploadProgressReporter } from "../../../../apps/web/src/features/vehicle-create/create-upload-progress-reporter";
+afterEach(() => vi.unstubAllGlobals());
+it("coalesces measured values per frame, skips duplicates, and flushes a stage boundary", () => {
+  let frame: FrameRequestCallback | undefined;
+  const schedule = vi.fn((callback: FrameRequestCallback) => { frame = callback; return 1; });
+  vi.stubGlobal("requestAnimationFrame", schedule);
+  vi.stubGlobal("cancelAnimationFrame", vi.fn());
+  const publish = vi.fn();
+  const reporter = createUploadProgressReporter(publish);
+  reporter.report(10); reporter.report(20); reporter.report(20);
+  expect(schedule).toHaveBeenCalledOnce();
+  expect(publish).not.toHaveBeenCalled();
+  if (!frame) throw new Error("Missing animation frame");
+  frame(0);
+  expect(publish).toHaveBeenCalledExactlyOnceWith(20);
+  reporter.report(20);
+  expect(schedule).toHaveBeenCalledOnce();
+  reporter.report(100);
+  reporter.flush();
+  expect(publish.mock.calls).toEqual([[20], [100]]);
+  reporter.report(99);
+  reporter.cancel();
+  frame(1);
+  expect(publish.mock.calls).toEqual([[20], [100]]);
+});

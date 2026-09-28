@@ -2,6 +2,25 @@
 
 Last updated: 2026-09-28
 
+## Bounded photo uploads and progress rendering
+
+- Bounded new-photo hashing, presigning, direct S3 PUTs and commit requests to
+  four active uploads. Queued work can be cancelled without starting; active
+  requests still abort on removal or dialog close, and late callbacks cannot
+  update a replaced or cancelled row.
+- Progress values are coalesced per animation frame, duplicate values are
+  ignored, and stage transitions flush the latest measured value. Photo rows
+  subscribe by stable client ID, so one progress update no longer rerenders
+  every row in the list.
+- Focused coverage verifies scheduler bounds, queued/active cancellation,
+  retries, progress coalescing, stable row actions and unchanged upload
+  semantics. A 20-row profiler fixture changed from 4,000 row commits for
+  200 repeated updates to 100 commits on the changed row only.
+- Full local unit (1,258), PostgreSQL integration (159), lint, strict types,
+  mapping, schema validation and webpack production build passed. Browser
+  verification remains required in CI before merge; no API, S3, checksum,
+  validation or processing behavior changed.
+
 ## Processing submission integration with main
 
 - Integrated merged timing and shared-database PRs #81/#82 into #80. Kept
