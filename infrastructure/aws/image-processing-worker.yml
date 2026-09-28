@@ -41,6 +41,18 @@ Parameters:
   ImageProcessingQueueArn:
     Type: String
     Description: ARN exported by the image-processing queue stack
+  EventSourceBatchSize:
+    Type: Number
+    Default: 1
+    MinValue: 1
+    MaxValue: 10
+    Description: SQS records per Lambda invocation; one isolates expensive image jobs
+  EventSourceMaximumBatchingWindowSeconds:
+    Type: Number
+    Default: 0
+    MinValue: 0
+    MaxValue: 300
+    Description: Maximum wait before invoking the worker with a partial SQS batch
   MaximumConcurrency:
     Type: Number
     Default: 10
@@ -180,12 +192,13 @@ Resources:
   ImageProcessingEventSource:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
-      BatchSize: 5
+      BatchSize: !Ref EventSourceBatchSize
       Enabled: true
       EventSourceArn: !Ref ImageProcessingQueueArn
       FunctionName: !Ref ImageProcessingWorker
       FunctionResponseTypes:
         - ReportBatchItemFailures
+      MaximumBatchingWindowInSeconds: !Ref EventSourceMaximumBatchingWindowSeconds
       ScalingConfig:
         MaximumConcurrency: !Ref MaximumConcurrency
 

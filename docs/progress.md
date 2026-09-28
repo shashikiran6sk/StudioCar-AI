@@ -2,6 +2,20 @@
 
 Last updated: 2026-09-28
 
+## Worker event-source isolation and visibility defaults
+
+- Source-controlled Lambda defaults now use one SQS record per invocation and
+  a zero-second batching window. Larger batches remain explicitly tunable and
+  partial-batch failure reporting is unchanged; maximum concurrency remains
+  ten.
+- The queue template default visibility is 900 seconds, leaving margin above
+  the 120-second Lambda timeout and 120-second application claim lease.
+  Deployed AWS values and regions are still unverified because the read-only
+  AWS session is expired; no live resources were changed.
+- Added template regression checks and documented the required live A/B
+  benchmark and provider-429/queue-age signals before changing production
+  concurrency. No provider, worker result, retry or billing semantics changed.
+
 ## Processing polling and page reconciliation
 
 - Polling now permits one status request at a time. Timer and visibility

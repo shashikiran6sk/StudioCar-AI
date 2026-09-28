@@ -18,9 +18,10 @@ Parameters:
     MaxValue: 1209600
   VisibilityTimeoutSeconds:
     Type: Number
-    Default: 180
+    Default: 900
     MinValue: 30
     MaxValue: 43200
+    Description: Must exceed the Lambda timeout and allow a redelivery safety margin
   MaximumReceiveCount:
     Type: Number
     Default: 5
