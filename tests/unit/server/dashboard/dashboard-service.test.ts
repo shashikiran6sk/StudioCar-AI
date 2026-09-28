@@ -46,17 +46,8 @@ describe("DashboardService", () => {
       }),
     };
     const inventory = {
-      list: vi.fn().mockResolvedValue({
-        counts: {
-          all: 0,
-          archived: 0,
-          completed: 0,
-          needsAttention: 0,
-          processing: 0,
-        },
-        items: [],
-        nextCursor: null,
-      }),
+      list: vi.fn(),
+      listRecent: vi.fn().mockResolvedValue([]),
     };
     const service = new DashboardService(
       repository,
@@ -75,13 +66,7 @@ describe("DashboardService", () => {
       new Date("2026-09-01T00:00:00.000Z"),
     );
     expect(repository.getOwnedAttention).toHaveBeenCalledWith("user-1");
-    expect(inventory.list).toHaveBeenCalledWith("user-1", {
-      filter: "ALL",
-      limit: 3,
-      mode: "BROWSE",
-      sort: "CREATED_DESC",
-      view: "GRID",
-    });
+    expect(inventory.listRecent).toHaveBeenCalledWith("user-1", 3);
     expect(result).toMatchObject({
       attention: {
         vehicleCount: 1,
@@ -115,17 +100,8 @@ describe("DashboardService", () => {
         }),
       },
       {
-        list: vi.fn().mockResolvedValue({
-          counts: {
-            all: 0,
-            archived: 0,
-            completed: 0,
-            needsAttention: 0,
-            processing: 0,
-          },
-          items: [],
-          nextCursor: null,
-        }),
+        list: vi.fn(),
+        listRecent: vi.fn().mockResolvedValue([]),
       },
       planUsage({ imagesUsed: 20 }),
     );

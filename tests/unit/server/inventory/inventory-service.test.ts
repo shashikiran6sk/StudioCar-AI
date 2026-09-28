@@ -25,6 +25,26 @@ function createRecord(): InventoryVehicleRecord {
 }
 
 describe("InventoryService", () => {
+  it("loads recent cards without asking the repository for filter counts", async () => {
+    const repository = {
+      listOwned: vi.fn(),
+      listRecentOwned: vi.fn().mockResolvedValue([createRecord()]),
+      searchOwned: vi.fn(),
+    };
+    const previewSigner = {
+      signPreview: vi.fn().mockResolvedValue("https://signed.example/preview.webp"),
+    };
+    const service = new InventoryService(repository, previewSigner, {
+      previewUrlTtlSeconds: 300,
+    });
+
+    const result = await service.listRecent("user-1", 3);
+
+    expect(repository.listRecentOwned).toHaveBeenCalledWith("user-1", 3);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ id: VEHICLE_ID, previewUrl: "https://signed.example/preview.webp" });
+  });
+
   it("builds aggregate cards and signs only owned repository preview keys", async () => {
     const repository = {
       listOwned: vi.fn().mockResolvedValue({
@@ -38,6 +58,7 @@ describe("InventoryService", () => {
         items: [createRecord()],
         nextCursor: null,
       }),
+      listRecentOwned: vi.fn(),
       searchOwned: vi.fn(),
     };
     const previewSigner = {
@@ -102,6 +123,7 @@ describe("InventoryService", () => {
           items: [record],
           nextCursor: null,
         }),
+        listRecentOwned: vi.fn(),
         searchOwned: vi.fn(),
       },
       previewSigner,
@@ -123,6 +145,7 @@ describe("InventoryService", () => {
   it("uses the dedicated repository search and shared card projection", async () => {
     const repository = {
       listOwned: vi.fn(),
+      listRecentOwned: vi.fn(),
       searchOwned: vi.fn().mockResolvedValue({
         counts: { all: 1, archived: 0, completed: 0, needsAttention: 1, processing: 0 },
         items: [createRecord()],
