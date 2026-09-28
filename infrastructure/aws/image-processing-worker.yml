@@ -151,6 +151,13 @@ Resources:
                   - sqs:GetQueueAttributes
                   - sqs:ReceiveMessage
                 Resource: !Ref ImageProcessingQueueArn
+              # Missing staged provider results must return 404, not 403,
+              # so first attempts can distinguish absence from denied access.
+              - Sid: DetectMissingPrivateImages
+                Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub arn:${AWS::Partition}:s3:::${ImageBucketName}
               - Sid: ReadWritePrivateImages
                 Effect: Allow
                 Action:
