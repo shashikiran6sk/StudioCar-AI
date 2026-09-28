@@ -1,9 +1,9 @@
+import { getWebDatabase } from "../db/web-database";
 import { S3Client } from "@aws-sdk/client-s3";
 import {
   createS3ClientOptions,
   parseStorageCleanupEnvironment,
 } from "@studiocar/config";
-import { createDatabaseClient } from "@studiocar/database-runtime";
 import { PrismaStorageDeletionRepository } from "../db/repositories/storage-deletion-repository";
 
 import { S3ObjectDeletionStorage } from "./s3-object-deletion-storage";
@@ -21,9 +21,7 @@ export function getStorageCleanupRuntime(): StorageCleanupRuntime {
   if (storageCleanupRuntime) return storageCleanupRuntime;
 
   const environment = parseStorageCleanupEnvironment(process.env);
-  const database = createDatabaseClient({
-    connectionString: environment.DATABASE_URL,
-  });
+  const database = getWebDatabase();
   storageCleanupRuntime = {
     cleanupToken: environment.STORAGE_CLEANUP_TOKEN,
     service: new StorageCleanupService(

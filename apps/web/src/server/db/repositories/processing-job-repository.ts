@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { measureStage, PerformanceStage } from "@studiocar/observability";
 import type { ProcessingOptions } from "@studiocar/contracts";
 
 import type { PrismaClient } from "@studiocar/database-runtime";
@@ -118,9 +119,9 @@ export class PrismaProcessingJobRepository {
     if (existing.length > 0) return this.resolveReplay(existing, command);
 
     try {
-      const result = await this.database.$transaction((transaction) =>
+      const result = await measureStage(PerformanceStage.RESERVATION_TRANSACTION, () => this.database.$transaction((transaction) =>
         this.reserveInTransaction(transaction, command),
-      );
+      ));
 
       if (
         result.kind !== "WRITE_RACE" &&
@@ -253,9 +254,9 @@ export class PrismaProcessingJobRepository {
     });
     // RETURNING does not promise input order; the response and replay must agree.
     jobs.sort((left, right) => left.displayOrder - right.displayOrder);
-    await transaction.processingOutboxMessage.createMany({
+    await measureStage(PerformanceStage.OUTBOX_CREATION, () => transaction.processingOutboxMessage.createMany({
       data: jobs.map((job) => ({ jobId: job.id })),
-    });
+    }));
     const usageJob = jobs[0];
     if (!usageJob) throw new Error(MISSING_USAGE_JOB_ERROR);
     await transaction.usageEvent.create({

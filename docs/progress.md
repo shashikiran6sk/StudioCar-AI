@@ -2,6 +2,18 @@
 
 Last updated: 2026-09-28
 
+## Processing submission integration with main
+
+- Integrated merged timing and shared-database PRs #81/#82 into #80. Kept
+  bulk insertion with its outbox timing span and moved dispatch timing into
+  the supported post-response callback, preserving prompt durable acceptance.
+- Updated the isolated benchmark to assert zero sends at acceptance, capture
+  request timings before dispatch, then measure all mock queue acknowledgements.
+- Integrated lint/types, unit suites, 167 PostgreSQL tests, schema validation,
+  the 1/5/20-image mock benchmark, webpack build and 14 browser tests passed.
+  Normal local Turbopack retains its process/port restriction; CI verifies it.
+- Merge is reserved for the repository owner; fresh CI must pass first.
+
 ## Processing submission review hardening
 
 - Reviewed draft #80 against main and preserved its bulk reservation, focused
@@ -44,6 +56,42 @@ Last updated: 2026-09-28
 - No schema migration or deployment-region change. Other audit findings,
   including upload concurrency, polling churn and dispatcher throughput, remain
   separate follow-up work.
+
+## Shared web database runtime
+
+- Replaced twenty feature-specific Prisma factories with one lazy web-process
+  client retained across module reloads. Repository injection and independent
+  worker/test clients remain unchanged; this is not a cross-instance singleton.
+- Added web-only validated pool sizing (default 5, range 1–20), preserving the
+  existing PrismaPg adapter and database environment isolation. Documented
+  Neon pooled endpoints and aggregate serverless connection budgeting.
+- Tests cover lazy creation, module reload reuse, different feature runtimes,
+  independent clients, invalid configuration and failure recovery.
+- Local lint/types/source mapping, all unit suites uncached, 155 PostgreSQL
+  integration tests, schema validation, webpack production build and all 14
+  browser tests passed. Normal Turbopack has the existing local process/port
+  restriction; required CI must pass its unchanged normal build. Production
+  endpoint/region verification awaits access; no credentials or regions changed.
+
+## Performance timing baseline
+
+- Read the supplied performance/AI-search audit completely and reviewed draft
+  PR #80 against current main (`843b611`). Reuse its durable-acceptance work,
+  with additional quota/deletion/rollback coverage before merge; SEO is excluded.
+- Extended existing correlated HTTP logs with bounded stage totals and request
+  start time. Timings preserve failures and add no per-image telemetry events.
+- Added an isolated PostgreSQL/mock-SQS 1/5/20-image benchmark. Five local
+  samples per size show median response 56/166/530 ms with a 10 ms simulated
+  queue send; 20-image dispatch takes 439 ms. These are not production numbers.
+  Method, PR review, source findings and limitations are in `docs/performance.md`.
+- Live AWS settings remain unverified because the configured CLI session expired.
+  No deployment configuration or provider behavior changed.
+- Validation: lint, strict types, source mapping, all unit suites uncached,
+  155 PostgreSQL integration tests, schema validation, supported webpack
+  production build and all 14 browser tests passed. Browser tests require
+  explicit Local queue settings to avoid root Development overrides. Normal
+  Turbopack remains blocked by local process/port permissions; unchanged CI
+  must pass the normal build before merge.
 
 ## Leonardo background-removal adapter (PR 1)
 

@@ -1,3 +1,4 @@
+import { measureStage, PerformanceStage } from "@studiocar/observability";
 import { LOG_EVENTS } from "@studiocar/observability";
 import { logger, monitoringContext } from "@studiocar/observability";
 import type { CreateProcessingBatch } from "@studiocar/contracts";
@@ -34,9 +35,10 @@ export class ProcessingJobService implements ProcessingJobApplication {
     const context = monitoringContext.getStore();
     if (context) context.batchId = idempotencyKey;
     const now = this.now();
-    const reservation = await this.jobs.reserveBatchOwned({
+    const allowance = await measureStage(PerformanceStage.ENTITLEMENTS, () => this.allowances.resolve(userId, now));
+    const reservation = await measureStage(PerformanceStage.RESERVATION, () => this.jobs.reserveBatchOwned({
       ...(context?.requestId ? { requestId: context.requestId } : {}),
-      allowance: await this.allowances.resolve(userId, now),
+      allowance,
       userId,
       vehicleId: command.vehicleId,
       batchIdempotencyKey: idempotencyKey,
@@ -55,7 +57,7 @@ export class ProcessingJobService implements ProcessingJobApplication {
           assetId,
         ),
       })),
-    });
+    }));
     if (reservation.kind === "BATCH_LIMIT_EXCEEDED") {
       return {
         ok: false,

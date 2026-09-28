@@ -1,5 +1,5 @@
 import { after } from "next/server";
-import { ApplicationErrorCode, reportUnexpectedError } from "@studiocar/observability";
+import { ApplicationErrorCode, measureStage, PerformanceStage, reportUnexpectedError } from "@studiocar/observability";
 import type { ProcessingOutboxDispatchRequest } from "@studiocar/processing";
 
 import type { ProcessingDispatchPort } from "./processing-job.types";
@@ -12,7 +12,7 @@ export function scheduleProcessingDispatch(
   try {
     after(async () => {
       try {
-        await dispatcher.dispatch(request);
+        await measureStage(PerformanceStage.DISPATCH, () => dispatcher.dispatch(request));
       } catch (error) {
         reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
       }

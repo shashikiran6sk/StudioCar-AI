@@ -1,5 +1,5 @@
+import { getWebDatabase } from "../db/web-database";
 import { parseLifecycleCleanupEnvironment } from "@studiocar/config";
-import { createDatabaseClient } from "@studiocar/database-runtime";
 import { PrismaLifecycleCleanupRepository } from "../db/repositories/lifecycle-cleanup-repository";
 
 import {
@@ -19,9 +19,7 @@ export function getLifecycleCleanupRuntime(): LifecycleCleanupRuntime {
   if (lifecycleCleanupRuntime) return lifecycleCleanupRuntime;
 
   const environment = parseLifecycleCleanupEnvironment(process.env);
-  const database = createDatabaseClient({
-    connectionString: environment.DATABASE_URL,
-  });
+  const database = getWebDatabase();
   lifecycleCleanupRuntime = {
     cleanupToken: environment.LIFECYCLE_CLEANUP_TOKEN,
     service: new LifecycleCleanupService(
