@@ -2,6 +2,7 @@
 
 import { Button } from "@studiocar/ui";
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -11,7 +12,11 @@ import {
 
 import { createPhotoUploadItem } from "./create-photo-upload-item";
 import { describeBatchLimitRejection } from "./describe-batch-limit-rejection";
-import { PhotoUploadItemRow } from "./photo-upload-item-row";
+import { useShallow } from "zustand/react/shallow";
+import { PhotoUploadStoreRow } from "./photo-upload-store-row";
+import { createUploadProgressReporter } from "./create-upload-progress-reporter";
+import { createUploadScheduler } from "./create-upload-scheduler";
+import { PHOTO_UPLOAD_CONCURRENCY } from "./upload-performance.constants";
 import {
   EXISTING_PHOTO_NONE_SELECTED_ERROR,
   EXISTING_PHOTO_REPLACE_INPUT_LABEL,
@@ -65,21 +70,18 @@ export function PhotoUploadStep({
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const replaceTarget = useRef<string | null>(null);
   const uploadControllers = useRef(new Map<string, AbortController>());
+  const [scheduler] = useState(() => createUploadScheduler(PHOTO_UPLOAD_CONCURRENCY));
   const [dragActive, setDragActive] = useState(false);
   const [batchLimitRejectedCount, setBatchLimitRejectedCount] = useState(0);
   const [rejected, setRejected] = useState<RejectedPhoto[]>([]);
   const [stepError, setStepError] = useState<string | null>(null);
-  const photos = useVehicleCreateStore((state) => state.photos);
+  const photoIds = useVehicleCreateStore(useShallow((state) => state.photos.map((photo) => photo.clientId)));
+  const selectedCount = useVehicleCreateStore((state) => state.photos.filter((photo) => photo.selected).length);
   const mode = useVehicleCreateStore((state) => state.mode);
   const vehicleId = useVehicleCreateStore((state) => state.vehicleId);
   const replacePhoto = useVehicleCreateStore((state) => state.replacePhoto);
-  const togglePhotoSelected = useVehicleCreateStore(
-    (state) => state.togglePhotoSelected,
-  );
   const choosing = mode !== NEW_UPLOAD_MODE;
-  const selectedPhotos = photos.filter((photo) => photo.selected);
   const addPhotos = useVehicleCreateStore((state) => state.addPhotos);
-  const movePhoto = useVehicleCreateStore((state) => state.movePhoto);
   const removePhoto = useVehicleCreateStore((state) => state.removePhoto);
   const updatePhoto = useVehicleCreateStore((state) => state.updatePhoto);
 
@@ -91,7 +93,7 @@ export function PhotoUploadStep({
     [],
   );
 
-  async function startUpload(photo: PhotoUploadItem) {
+  const startUpload = useCallback(async (photo: PhotoUploadItem) => {
     if (!vehicleId) {
       updatePhoto(photo.clientId, {
         error: PHOTO_UPLOAD_GENERIC_ERROR,
@@ -103,12 +105,18 @@ export function PhotoUploadStep({
     const controller = new AbortController();
     uploadControllers.current.set(photo.clientId, controller);
     updatePhoto(photo.clientId, { error: null, progress: 0 });
+    const isCurrent = () => !controller.signal.aborted && uploadControllers.current.get(photo.clientId) === controller;
+    const progress = createUploadProgressReporter((value) => { if (isCurrent()) updatePhoto(photo.clientId, { progress: value }); });
     try {
-      const result = await upload(vehicleId, photo, {
-        onProgress: (progress) => updatePhoto(photo.clientId, { progress }),
-        onStatus: (status) => updatePhoto(photo.clientId, { status }),
+      const result = await scheduler.run(() => upload(vehicleId, photo, {
+        onProgress: (value) => { if (isCurrent()) progress.report(value); },
+        onStatus: (status) => {
+          progress.flush();
+          if (isCurrent()) updatePhoto(photo.clientId, { status });
+        },
         signal: controller.signal,
-      });
+      }), controller.signal);
+      if (!isCurrent()) return;
       updatePhoto(photo.clientId, {
         ...result,
         error: null,
@@ -122,16 +130,17 @@ export function PhotoUploadStep({
         status: PhotoUploadStatus.Failed,
       });
     } finally {
+      progress.cancel();
       if (uploadControllers.current.get(photo.clientId) === controller) {
         uploadControllers.current.delete(photo.clientId);
       }
     }
-  }
+  }, [scheduler, updatePhoto, upload, vehicleId]);
 
-  async function removeSelectedPhoto(clientId: string) {
+  const removeSelectedPhoto = useCallback(async (clientId: string) => {
     uploadControllers.current.get(clientId)?.abort();
     uploadControllers.current.delete(clientId);
-    const photo = photos.find((candidate) => candidate.clientId === clientId);
+    const photo = useVehicleCreateStore.getState().photos.find((candidate) => candidate.clientId === clientId);
     if (
       !photo ||
       photo.source === PhotoSource.Existing ||
@@ -154,13 +163,18 @@ export function PhotoUploadStep({
         status: PhotoUploadStatus.Uploaded,
       });
     }
-  }
+  }, [removePhoto, removeUpload, updatePhoto]);
+
+  const retryPhoto = useCallback((clientId: string) => {
+    const photo = useVehicleCreateStore.getState().photos.find((item) => item.clientId === clientId);
+    if (photo) void startUpload(photo);
+  }, [startUpload]);
 
   function acceptFiles(files: Iterable<File>) {
     setStepError(null);
     const selection = selectPhotoFiles(
       files,
-      selectedPhotos.length,
+      selectedCount,
       maximumPhotos,
     );
     setBatchLimitRejectedCount(selection.batchLimitRejectedCount);
@@ -175,10 +189,10 @@ export function PhotoUploadStep({
     event.target.value = "";
   }
 
-  function chooseReplacement(clientId: string) {
+  const chooseReplacement = useCallback((clientId: string) => {
     replaceTarget.current = clientId;
     replaceInputRef.current?.click();
-  }
+  }, []);
 
   /**
    * The new photo takes the failed photo's place and is uploaded to the same
@@ -211,6 +225,7 @@ export function PhotoUploadStep({
   }
 
   function handleContinue() {
+    const selectedPhotos = useVehicleCreateStore.getState().photos.filter((photo) => photo.selected);
     if (selectedPhotos.length === 0) {
       setStepError(
         choosing ? EXISTING_PHOTO_NONE_SELECTED_ERROR : PHOTO_UPLOAD_EMPTY_ERROR,
@@ -289,24 +304,10 @@ export function PhotoUploadStep({
         </ul>
       ) : null}
       <ol className="photo-upload-list">
-        {photos.map((photo, index) => (
-          <PhotoUploadItemRow
-            canMoveDown={index < photos.length - 1}
-            canMoveUp={index > 0}
-            key={photo.clientId}
-            onMoveDown={() => movePhoto(photo.clientId, 1)}
-            onMoveUp={() => movePhoto(photo.clientId, -1)}
-            onRemove={() => void removeSelectedPhoto(photo.clientId)}
-            onReplace={
-              choosing ? () => chooseReplacement(photo.clientId) : undefined
-            }
-            onRetry={() => void startUpload(photo)}
-            onToggleSelected={
-              choosing ? () => togglePhotoSelected(photo.clientId) : undefined
-            }
-            photo={photo}
-            position={choosing ? index + 1 : undefined}
-          />
+        {photoIds.map((clientId, index) => (
+          <PhotoUploadStoreRow key={clientId} clientId={clientId} index={index}
+            count={photoIds.length} choosing={choosing} onRemove={removeSelectedPhoto}
+            onReplace={chooseReplacement} onRetry={retryPhoto} />
         ))}
       </ol>
       {stepError ? (

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { shallow } from "zustand/shallow";
 import type {
   ProcessingOptions,
   StudioSelectionContext,
@@ -168,9 +169,14 @@ export const useVehicleCreateStore = create<VehicleCreateState>((set) => ({
   setOptions: (options) => set({ options }),
   setStep: (step) => set({ step }),
   updatePhoto: (clientId, update) =>
-    set((state) => ({
-      photos: state.photos.map((photo) =>
-        photo.clientId === clientId ? { ...photo, ...update } : photo,
-      ),
-    })),
+    set((state) => {
+      const index = state.photos.findIndex((photo) => photo.clientId === clientId);
+      const previous = state.photos[index];
+      if (!previous) return state;
+      const next = { ...previous, ...update };
+      if (shallow(previous, next)) return state;
+      const photos = [...state.photos];
+      photos[index] = next;
+      return { photos };
+    }),
 }));
