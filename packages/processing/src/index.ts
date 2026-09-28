@@ -19,3 +19,4 @@ export * from "./processing-worker";
 export * from "./processing-worker.constants";
 export * from "./processing-worker.types";
 export * from "./to-processing-failure-reason";
+export { PROCESSING_QUEUE_BATCH_SIZE } from "./processing-outbox.constants";

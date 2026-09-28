@@ -404,9 +404,12 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
     ).resolves.toBe(0);
   });
 
-  it.each([true, false])(
-    "retains an early retry delivery and completes exactly once (publication during wait: %s)",
-    async (publishDuringWait) => {
+  it.each([
+    { publishDuringWait: true, batch: false }, { publishDuringWait: false, batch: false },
+    { publishDuringWait: true, batch: true }, { publishDuringWait: false, batch: true },
+  ])(
+    "retains early retry delivery and completes once (during wait: $publishDuringWait, batch: $batch)",
+    async ({ publishDuringWait, batch }) => {
       const record = await createQueuedJob(
         `worker-retry-publication-${publishDuringWait}`,
       );
@@ -460,12 +463,12 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       };
       let published = false;
       const publish = async () => {
-        await expect(outbox.markOutboxPublished({
-          claimToken,
-          messageId: message.id,
-          publishedAt: NEXT_ATTEMPT_AT,
-          queueMessageId,
-        })).resolves.toBe(true);
+        const acknowledgement = { claimToken, messageId: message.id, publishedAt: NEXT_ATTEMPT_AT, queueMessageId };
+        if (batch) {
+          await expect(outbox.markOutboxPublishedBatch([acknowledgement])).resolves.toEqual([message.id]);
+        } else {
+          await expect(outbox.markOutboxPublished(acknowledgement)).resolves.toBe(true);
+        }
         published = true;
       };
       let executions = 0;
