@@ -171,6 +171,22 @@ batch size 1/window 0 versus the deployed setting is still required before
 changing production parameters. Provider 429 telemetry and queue age alarms
 remain the authority for tuning maximum concurrency.
 
+## Public and shared-layout reads
+
+The marketing page remains dynamically rendered for its personalized session
+header, but its public plan catalog and enabled footer links now come from
+dedicated tagged data-cache readers. Administrator edits invalidate those tags
+after the database transaction succeeds, so public content stays current
+without querying the same two small tables on every request. The uncached
+catalog reader remains the only reader used by billing and allowance logic.
+
+The authenticated layout still authenticates first and redirects unauthenticated
+requests exactly as before. After that check, its plan catalog, usage summary
+and administrator authorization read are independent and run concurrently;
+React request memoization continues to deduplicate the catalog read when the
+usage service requests it too. No user-specific or authorization data is placed
+in the cross-request cache.
+
 Follow-up PRs: shared web client; rework #80 with race tests and after-response
 measurements; batch outbox/SQS; upload concurrency/rendering; polling and local
 UI reconciliation; worker throughput/lease alignment; public/summary reads.

@@ -5,6 +5,9 @@ export const FALLBACK_PLAN_KEY: PlanKey = "FREE";
 
 export const PLAN_CONFIG_LOCK_KEY = "plan-configuration";
 
+/** Cache tag for the public pricing catalog. Entitlement reads stay uncached. */
+export const PUBLIC_PLAN_CATALOG_CACHE_TAG = "public-plan-catalog";
+
 export const AUDIT_RESOURCE_PLAN_CONFIG = "PlanConfig";
 export const AUDIT_ACTION_PLAN_CONFIG_UPDATED = "PLAN_CONFIG_UPDATED";
 

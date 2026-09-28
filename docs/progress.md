@@ -2,6 +2,20 @@
 
 Last updated: 2026-09-28
 
+## Public query caching and authenticated layout parallelism
+
+- Public pricing and enabled footer links now use dedicated Next data-cache
+  readers tagged for administrator invalidation. Billing, allowance and other
+  private plan reads continue using the uncached request-local catalog.
+- Plan edits and social-link edits invalidate their public tags after the same
+  successful database writes that already refreshed the affected paths.
+- The authenticated shell now resolves the plan catalog, usage summary and
+  administrator check concurrently after authentication, reducing serial
+  navigation latency without changing authorization or billing sources.
+- Focused page, layout, catalog, social-link and action tests plus strict
+  typechecking passed. No session, entitlement, billing or public-page
+  behavior changed.
+
 ## Worker event-source isolation and visibility defaults
 
 - Source-controlled Lambda defaults now use one SQS record per invocation and

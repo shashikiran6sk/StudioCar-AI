@@ -1,17 +1,17 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const getPlanCatalog = vi.fn();
-const getEnabledSocialLinks = vi.fn();
+const getPublicPlanCatalog = vi.fn();
+const getPublicEnabledSocialLinks = vi.fn();
 vi.mock("../../../apps/web/src/server/plans/get-plan-catalog", () => ({
-  getPlanCatalog,
+  getPublicPlanCatalog,
 }));
 const getCurrentSession = vi.fn();
 vi.mock("../../../apps/web/src/server/auth/get-current-session", () => ({
   getCurrentSession,
 }));
 vi.mock("../../../apps/web/src/server/content/get-social-links", () => ({
-  getEnabledSocialLinks,
+  getPublicEnabledSocialLinks,
   getAllSocialLinks: vi.fn(),
 }));
 
@@ -26,8 +26,8 @@ describe("HomePage", () => {
   });
 
   it("assembles the complete screenshot-derived product page", async () => {
-    getPlanCatalog.mockResolvedValue(DEFAULT_PLAN_CATALOG);
-    getEnabledSocialLinks.mockResolvedValue([]);
+    getPublicPlanCatalog.mockResolvedValue(DEFAULT_PLAN_CATALOG);
+    getPublicEnabledSocialLinks.mockResolvedValue([]);
 
     render(await HomePage());
 
@@ -44,8 +44,8 @@ describe("HomePage", () => {
   });
 
   it("quotes the prices an administrator configured", async () => {
-    getEnabledSocialLinks.mockResolvedValue([]);
-    getPlanCatalog.mockResolvedValue(
+    getPublicEnabledSocialLinks.mockResolvedValue([]);
+    getPublicPlanCatalog.mockResolvedValue(
       DEFAULT_PLAN_CATALOG.map((plan) =>
         plan.planKey === "STUDIO_PRO"
           ? { ...plan, priceMinorUnits: 449_900 }
@@ -58,8 +58,8 @@ describe("HomePage", () => {
     expect(screen.getByText("₹4,499")).toBeVisible();
   });
   it("shows the footer links an administrator configured", async () => {
-    getPlanCatalog.mockResolvedValue(DEFAULT_PLAN_CATALOG);
-    getEnabledSocialLinks.mockResolvedValue([
+    getPublicPlanCatalog.mockResolvedValue(DEFAULT_PLAN_CATALOG);
+    getPublicEnabledSocialLinks.mockResolvedValue([
       {
         enabled: true,
         label: "Instagram",
@@ -75,8 +75,8 @@ describe("HomePage", () => {
     ).toBeVisible();
   });
   it("greets a signed-in visitor with their account, not a sign-in prompt", async () => {
-    getPlanCatalog.mockResolvedValue(DEFAULT_PLAN_CATALOG);
-    getEnabledSocialLinks.mockResolvedValue([]);
+    getPublicPlanCatalog.mockResolvedValue(DEFAULT_PLAN_CATALOG);
+    getPublicEnabledSocialLinks.mockResolvedValue([]);
     getCurrentSession.mockResolvedValue({
       id: "session-1",
       userId: "user-1",
