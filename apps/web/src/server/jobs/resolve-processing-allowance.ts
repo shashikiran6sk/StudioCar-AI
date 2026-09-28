@@ -1,7 +1,7 @@
 import { createUsageBillingPeriodKey } from "@studiocar/processing";
 
 import type { ProcessingAllowance } from "../db/repositories/processing-job-repository";
-import { getUsageBillingSummary } from "../billing/get-usage-billing-summary";
+import { getUsageBillingService } from "../billing/usage-billing-runtime";
 
 /**
  * Reads the limits from the tenant's resolved plan. A lifetime allowance is
@@ -12,13 +12,13 @@ export async function resolveProcessingAllowance(
   userId: string,
   now: Date,
 ): Promise<ProcessingAllowance> {
-  const summary = await getUsageBillingSummary(userId);
+  const plan = await getUsageBillingService().getCurrentPlan(userId, now);
 
   return {
-    imageCapacity: summary.currentPlan.imageCapacity,
-    maxImagesPerBatch: summary.currentPlan.maxImagesPerBatch,
+    imageCapacity: plan.imageCapacity,
+    maxImagesPerBatch: plan.maxImagesPerBatch,
     allowanceBillingPeriodKey:
-      summary.currentPlan.allowanceScope === "LIFETIME"
+      plan.allowanceScope === "LIFETIME"
         ? null
         : createUsageBillingPeriodKey(now),
   };

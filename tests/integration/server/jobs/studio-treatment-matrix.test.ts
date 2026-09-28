@@ -67,9 +67,8 @@ databaseDescribe("studio treatment matrix against PostgreSQL", () => {
     const service = new ProcessingJobService(
       new PrismaProcessingJobRepository(database),
       {
-        dispatch: (request) => {
+        schedule: (request) => {
           dispatched.push(...(request?.jobIds ?? []));
-          return Promise.resolve({ claimed: 0, failed: 0, published: 0 });
         },
       },
       ProcessingProvider.REMOVEBG,

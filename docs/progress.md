@@ -2,6 +2,61 @@
 
 Last updated: 2026-09-28
 
+## Processing submission integration with main
+
+- Integrated merged timing and shared-database PRs #81/#82 into #80. Kept
+  bulk insertion with its outbox timing span and moved dispatch timing into
+  the supported post-response callback, preserving prompt durable acceptance.
+- Updated the isolated benchmark to assert zero sends at acceptance, capture
+  request timings before dispatch, then measure all mock queue acknowledgements.
+- Integrated lint/types, unit suites, 167 PostgreSQL tests, schema validation,
+  the 1/5/20-image mock benchmark, webpack build and 14 browser tests passed.
+  Normal local Turbopack retains its process/port restriction; CI verifies it.
+- Merge is reserved for the repository owner; fresh CI must pass first.
+
+## Processing submission review hardening
+
+- Reviewed draft #80 against main and preserved its bulk reservation, focused
+  entitlement and supported post-response dispatch implementation.
+- Reproduced a pre-existing cross-vehicle quota race: two three-image batches
+  both reserved against five remaining images. Reservations now serialize by
+  tenant, and charged plus in-flight usage is read in one SQL snapshot so a
+  concurrent completion cannot fall between two reads and disappear from usage.
+- Added real PostgreSQL coverage for quota concurrency, completion transfer,
+  rollback after job/outbox insertion, duplicate and foreign assets, deletion
+  racing reservation, and subscription status/source/expiry boundaries.
+- Existing ordered replay, publication lease, duplicate-worker and exactly-once
+  completion regressions remain required. No new infrastructure or migration.
+- Local lint/types/source mapping, all unit suites uncached, 167 PostgreSQL
+  integration tests, schema validation, webpack production build and all 14
+  browser tests passed. Normal local Turbopack still cannot bind its helper
+  port; required CI must verify the unchanged normal build before merge.
+
+## Processing submission latency
+
+- The processing application now reserves durable jobs/outbox rows before
+  scheduling queue publication through Next.js `after`. Queue or invocation
+  lifecycle failures are reported and remain recoverable through the existing
+  authenticated EventBridge dispatcher; they do not turn committed acceptance
+  into an HTTP failure. The response continues to report truthful job states.
+- Reservation acquires the existing ordered asset advisory locks in one query
+  and bulk-creates jobs and outbox rows in the same transaction. Returned jobs
+  are explicitly sorted by display order to preserve response/replay ordering.
+- Processing allowance resolution reads current plan configuration without the
+  billing page's usage/storage aggregates. Subscription and catalog reads run
+  concurrently; the authoritative reservation allowance check remains intact.
+- Regression coverage includes deferred dispatch, publication/lifecycle failure,
+  replay scheduling, plan-only reads, and an ordered 20-image database test.
+- Local verification passed: focused regressions, all unit suites uncached,
+  source mapping, lint, strict types, Prisma schema validation and the normal
+  Turbopack production build. PostgreSQL integration and browser verification
+  require the isolated PostgreSQL service in CI; no production database is
+  used for tests. Published as a draft for those checks and review. Required
+  CI must pass before merge; production latency improvements are not measured.
+- No schema migration or deployment-region change. Other audit findings,
+  including upload concurrency, polling churn and dispatcher throughput, remain
+  separate follow-up work.
+
 ## Shared web database runtime
 
 - Replaced twenty feature-specific Prisma factories with one lazy web-process
@@ -39,6 +94,10 @@ Last updated: 2026-09-28
   must pass the normal build before merge.
 
 ## Batch outbox publication
+
+- Integrated #80 after its owner merged it; preserved both timing phases.
+  Combined local 20-image medians are 19 ms acceptance and 48 ms through the
+  last mock SQS acknowledgement. Full local integration checks passed again.
 
 - Added SendMessageBatch through the existing queue port, with at most ten
   entries per call and per-item acknowledgement checks even on HTTP success.

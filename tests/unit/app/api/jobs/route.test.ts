@@ -55,7 +55,7 @@ describe("POST /api/jobs", () => {
     });
     const service = new ProcessingJobService(
       { reserveBatchOwned: vi.fn() },
-      dispatcher,
+      { schedule: vi.fn() },
       ProcessingProvider.REMOVEBG,
       { resolve: vi.fn().mockResolvedValue({ imageCapacity: 100, maxImagesPerBatch: 20, allowanceBillingPeriodKey: null }) },
     );
@@ -141,7 +141,7 @@ describe("POST /api/jobs", () => {
       rateLimiter,
       service: new ProcessingJobService(
         { reserveBatchOwned: vi.fn() },
-        dispatcher,
+        { schedule: vi.fn() },
         ProcessingProvider.REMOVEBG,
         { resolve: vi.fn().mockResolvedValue({ imageCapacity: 100, maxImagesPerBatch: 20, allowanceBillingPeriodKey: null }) },
       ),

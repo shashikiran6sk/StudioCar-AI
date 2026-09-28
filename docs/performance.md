@@ -34,6 +34,22 @@ starts; broad progress subscriptions; unchanged-payload store churn; overlapping
 poll wakeups; per-completion refreshes; sequential worker records and template
 visibility mismatch; dynamic homepage and repeated summary reads.
 
+## Submission changes after the baseline
+
+PR #80 now includes tenant-wide reservation serialization and a single snapshot
+for charged plus in-flight usage. Real PostgreSQL regressions cover concurrent
+quota consumption/completion, deletion, rollback, duplicate/foreign assets and
+subscription boundaries. The shared web client is included from merged #82.
+The benchmark now captures acceptance before running the scheduled callback:
+zero SQS sends must have occurred when the handler returns. It then drains the
+callback and records the last mock SQS acknowledgement separately.
+
+The table below preserves the original baseline. Reproduce that version from
+PR #81 (`6005458`); running the same command on current code measures its current
+implementation. Post-response dispatch timings cannot appear in an HTTP log
+already emitted at acceptance; use correlated publication logs and the local
+benchmark for that later phase.
+
 ## Reproduce the baseline
 
 Use a disposable PostgreSQL 17 database named `studiocar_perf` on localhost.
@@ -97,6 +113,18 @@ failures keep the existing per-item backoff/recovery path. Claims remain
 lease/token guarded, cancelled jobs cannot be resurrected, and queue calls
 hold no database transaction. A timeout can leave an ambiguous successful send;
 redelivery remains safe through the existing worker idempotency protocol.
+
+After integrating #80 (`f8bb6c8`), the same five-sample fixture measures:
+
+| Median milliseconds | 1 image | 5 images | 20 images |
+| --- | ---: | ---: | ---: |
+| Durable acceptance / handler response | 10.81 | 11.48 | 18.63 |
+| Last mock SQS acknowledgement from start | 24.58 | 25.46 | 48.03 |
+| Queue requests after acceptance | 1 | 1 | 2 |
+
+The fixture explicitly drains the captured post-response callback after timing
+the handler; it excludes Next.js lifecycle scheduling delay and real HTTP/SQS
+transport. All fifteen requests assert zero queue sends before acceptance.
 
 ## Correlation and lifecycle interpretation
 
