@@ -2,6 +2,17 @@
 
 Last updated: 2026-09-28
 
+## Dashboard recent-vehicle query path
+
+- Dashboard recent cards now use a bounded repository read that selects only
+  operational vehicles and their latest batch summaries. It skips the full
+  inventory filter-count aggregation and pagination metadata that the
+  dashboard never renders.
+- The full inventory and search paths remain unchanged, including counts,
+  cursors, tenant predicates, ordering and preview signing. Dashboard cards
+  retain the same ordering and status projection.
+- Added service and PostgreSQL repository coverage for the dedicated path.
+
 ## Immediate public-cache invalidation
 
 - Public plan and footer cache entries now use Next `updateTag` from the

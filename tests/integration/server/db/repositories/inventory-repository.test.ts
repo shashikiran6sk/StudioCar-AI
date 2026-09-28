@@ -144,6 +144,10 @@ databaseDescribe("PrismaInventoryRepository", () => {
       [ready.id, processing.id].sort(),
     );
     expect(all.counts.all).toBe(2);
+
+    const recent = await repository.listRecentOwned(owner.id, 1);
+    expect(recent).toHaveLength(1);
+    expect([ready.id, processing.id]).toContain(recent[0]?.id);
   });
 
   it("applies status filters and rejects cursors outside the filtered tenant scope", async () => {

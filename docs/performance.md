@@ -187,6 +187,12 @@ React request memoization continues to deduplicate the catalog read when the
 usage service requests it too. No user-specific or authorization data is placed
 in the cross-request cache.
 
+The dashboard's three recent vehicle cards now use a bounded recent-only
+repository method. The previous full inventory listing also computed every
+status filter count and pagination metadata before the dashboard discarded
+them. The dedicated method keeps the same tenant/status/order predicates and
+batch-summary projection while removing that unused aggregate query.
+
 Follow-up PRs: shared web client; rework #80 with race tests and after-response
 measurements; batch outbox/SQS; upload concurrency/rendering; polling and local
 UI reconciliation; worker throughput/lease alignment; public/summary reads.

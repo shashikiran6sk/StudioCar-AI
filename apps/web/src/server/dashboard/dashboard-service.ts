@@ -34,13 +34,7 @@ export class DashboardService {
         dashboardPeriodStart(now),
       ),
       this.repository.getOwnedAttention(userId),
-      this.inventory.list(userId, {
-        filter: "ALL",
-        mode: "BROWSE",
-        limit: DASHBOARD_RECENT_VEHICLE_LIMIT,
-        sort: "CREATED_DESC",
-        view: "GRID",
-      }),
+      this.inventory.listRecent(userId, DASHBOARD_RECENT_VEHICLE_LIMIT),
     ]);
 
     return DashboardSummarySchema.parse({
@@ -54,7 +48,7 @@ export class DashboardService {
         metrics.completedJobCount,
         metrics.unsuccessfulJobCount,
       ),
-      recentVehicles: recent.items,
+      recentVehicles: recent,
       storageCapacityBytes: plan.storageCapacityBytes ?? 0,
       storageUsedBytes: safeBigIntToNumber(metrics.storageUsedBytes),
       vehiclesProcessed: metrics.vehiclesProcessed,

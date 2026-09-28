@@ -120,6 +120,30 @@ function emptyCounts(): InventoryFilterCounts {
   };
 }
 
+async function addBatchSummaries(
+  database: PrismaClient,
+  userId: string,
+  records: InventoryVehicleBaseRecord[],
+): Promise<InventoryVehicleRecord[]> {
+  const summaries = await findInventoryBatchSummaries(
+    database,
+    userId,
+    records.map((record) => record.id),
+  );
+
+  return records.map((record) => {
+    const summary = summaries.get(record.id);
+    return {
+      ...record,
+      completedImageCount: summary?.completedImageCount ?? 0,
+      failedImageCount: summary?.failedImageCount ?? 0,
+      hasCompletedOutput: summary?.hasCompletedOutput ?? false,
+      imageCount: summary?.imageCount ?? 0,
+      previewObjectKey: summary?.previewObjectKey ?? null,
+    };
+  });
+}
+
 export class PrismaInventoryRepository {
   public constructor(private readonly database: PrismaClient) {}
 
@@ -143,6 +167,23 @@ export class PrismaInventoryRepository {
       sort: query.sort,
       view: "GRID",
     }, "NAME_ONLY");
+  }
+
+  public async listRecentOwned(
+    userId: string,
+    limit: number,
+  ): Promise<InventoryVehicleRecord[]> {
+    const records = await this.database.vehicle.findMany({
+      where: {
+        userId,
+        status: { in: OPERATIONAL_VEHICLE_STATUSES },
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit,
+      select: inventoryVehicleSelect,
+    });
+
+    return addBatchSummaries(this.database, userId, records);
   }
 
   private async readOwned(
@@ -177,25 +218,9 @@ export class PrismaInventoryRepository {
     ]);
     const hasNextPage = records.length > query.limit;
     if (hasNextPage) records.pop();
-    const summaries = await findInventoryBatchSummaries(
-      this.database,
-      userId,
-      records.map((record) => record.id),
-    );
-
     return {
       counts,
-      items: records.map((record) => {
-        const summary = summaries.get(record.id);
-        return {
-          ...record,
-          completedImageCount: summary?.completedImageCount ?? 0,
-          failedImageCount: summary?.failedImageCount ?? 0,
-          hasCompletedOutput: summary?.hasCompletedOutput ?? false,
-          imageCount: summary?.imageCount ?? 0,
-          previewObjectKey: summary?.previewObjectKey ?? null,
-        };
-      }),
+      items: await addBatchSummaries(this.database, userId, records),
       nextCursor: hasNextPage ? (records.at(-1)?.id ?? null) : null,
     };
   }

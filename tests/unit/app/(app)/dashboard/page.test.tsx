@@ -45,7 +45,7 @@ describe("DashboardPage", () => {
     });
     const dashboardService = new DashboardService(
       { getOwnedAttention: vi.fn(), getOwnedMetrics: vi.fn() },
-      { list: vi.fn() },
+      { list: vi.fn(), listRecent: vi.fn() },
       { resolve: vi.fn() },
     );
     const getSummary = vi.spyOn(dashboardService, "getSummary").mockResolvedValue({

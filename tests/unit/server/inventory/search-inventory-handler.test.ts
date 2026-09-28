@@ -25,6 +25,7 @@ describe("handleSearchInventory", () => {
   it("passes a validated term and status to the tenant scoped service", async () => {
     const inventory: InventorySearchApplication = {
       list: vi.fn(),
+      listRecent: vi.fn(),
       search: vi.fn().mockResolvedValue(page),
     };
     const response = await handleSearchInventory(
@@ -46,7 +47,11 @@ describe("handleSearchInventory", () => {
   });
 
   it("rejects an empty search and never calls the service", async () => {
-    const inventory: InventorySearchApplication = { list: vi.fn(), search: vi.fn() };
+    const inventory: InventorySearchApplication = {
+      list: vi.fn(),
+      listRecent: vi.fn(),
+      search: vi.fn(),
+    };
     const response = await handleSearchInventory(
       new Request("https://app.example.test/api/inventory/search?q="),
       session,
@@ -62,7 +67,11 @@ describe("handleSearchInventory", () => {
   });
 
   it("requires a session", async () => {
-    const inventory: InventorySearchApplication = { list: vi.fn(), search: vi.fn() };
+    const inventory: InventorySearchApplication = {
+      list: vi.fn(),
+      listRecent: vi.fn(),
+      search: vi.fn(),
+    };
     const response = await handleSearchInventory(
       new Request("https://app.example.test/api/inventory/search?q=porsche"),
       null,

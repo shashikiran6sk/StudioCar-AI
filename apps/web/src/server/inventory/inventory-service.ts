@@ -30,6 +30,18 @@ export class InventoryService {
     return this.toPage(await this.repository.listOwned(userId, query));
   }
 
+  /** The dashboard only needs recent cards, not full-list filter counts. */
+  public async listRecent(
+    userId: string,
+    limit: number,
+  ): Promise<InventoryItem[]> {
+    return Promise.all(
+      (await this.repository.listRecentOwned(userId, limit)).map((record) =>
+        this.toItem(record),
+      ),
+    );
+  }
+
   public async search(
     userId: string,
     query: InventorySearchQuery,
