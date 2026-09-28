@@ -1,7 +1,7 @@
 "use server";
 
 import { SocialLinkSchema, SocialPlatformSchema } from "@studiocar/contracts";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 import {
   CONTENT_PATH,
@@ -79,7 +79,7 @@ export async function saveSocialLinkAction(
 
   revalidatePath(CONTENT_PATH);
   revalidatePath(HOME_PATH);
-  revalidateTag(PUBLIC_SOCIAL_LINKS_CACHE_TAG, "max");
+  updateTag(PUBLIC_SOCIAL_LINKS_CACHE_TAG);
   return { kind: "success", message: SOCIAL_LINK_SAVED_MESSAGE };
 }
 
@@ -102,7 +102,7 @@ export async function removeSocialLinkAction(
     });
     revalidatePath(CONTENT_PATH);
     revalidatePath(HOME_PATH);
-    revalidateTag(PUBLIC_SOCIAL_LINKS_CACHE_TAG, "max");
+    updateTag(PUBLIC_SOCIAL_LINKS_CACHE_TAG);
     return removed
       ? { kind: "success", message: SOCIAL_LINK_REMOVED_MESSAGE }
       : { kind: "error", message: SOCIAL_LINK_NOT_CONFIGURED_MESSAGE };

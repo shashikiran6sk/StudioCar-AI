@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 import {
   ADMIN_ACTION_FAILED_MESSAGE,
@@ -74,6 +74,6 @@ export async function savePlanConfigurationAction(
   revalidatePath(ADMIN_PRICING_PATH);
   revalidatePath(BILLING_PATH);
   revalidatePath(HOME_PATH);
-  revalidateTag(PUBLIC_PLAN_CATALOG_CACHE_TAG, "max");
+  updateTag(PUBLIC_PLAN_CATALOG_CACHE_TAG);
   return { kind: "success", message: ADMIN_PLAN_SAVED_MESSAGE };
 }
