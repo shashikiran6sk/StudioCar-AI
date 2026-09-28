@@ -1,3 +1,4 @@
+import { measureStage, PerformanceStage } from "@studiocar/observability";
 import {
   ApplicationErrorCode,
   reportUnexpectedError,
@@ -104,7 +105,7 @@ export async function handleCreateProcessingBatch(
   }
 
   try {
-    const rateLimit = await rateLimiter.consume(session.userId);
+    const rateLimit = await measureStage(PerformanceStage.RATE_LIMIT, () => rateLimiter.consume(session.userId));
     if (!rateLimit.allowed) {
       return createApiErrorResponse({
         status: COMMAND_RATE_LIMITED_STATUS,

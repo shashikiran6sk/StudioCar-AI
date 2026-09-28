@@ -1,3 +1,4 @@
+import { measureStage, PerformanceStage } from "@studiocar/observability";
 import type { PrismaClient } from "@studiocar/database-runtime";
 import { type Prisma, ProcessingJobStatus } from "@studiocar/database-runtime";
 
@@ -52,7 +53,11 @@ export interface PublishProcessingOutboxCommand {
 export class PrismaProcessingOutboxRepository {
   public constructor(private readonly database: PrismaClient) {}
 
-  public async claimPendingOutbox(
+  public claimPendingOutbox(command: ClaimProcessingOutboxCommand): Promise<ProcessingOutboxRecord[]> {
+    return measureStage(PerformanceStage.OUTBOX_CLAIM, () => this.claimPending(command));
+  }
+
+  private async claimPending(
     command: ClaimProcessingOutboxCommand,
   ): Promise<ProcessingOutboxRecord[]> {
     if (
@@ -115,7 +120,11 @@ export class PrismaProcessingOutboxRepository {
     return claimed;
   }
 
-  public async markOutboxPublished(
+  public markOutboxPublished(command: PublishProcessingOutboxCommand): Promise<boolean> {
+    return measureStage(PerformanceStage.PUBLICATION_BOOKKEEPING, () => this.markPublished(command));
+  }
+
+  private async markPublished(
     command: PublishProcessingOutboxCommand,
   ): Promise<boolean> {
     try {
