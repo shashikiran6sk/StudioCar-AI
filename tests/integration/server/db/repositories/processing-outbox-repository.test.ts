@@ -38,6 +38,50 @@ databaseDescribe("PrismaProcessingOutboxRepository", () => {
     await database.$disconnect();
   });
 
+  it("claims disjoint bounded batches and acknowledges only current successful leases", async () => {
+    const owner = await database.user.create({ data: { primaryEmail: ownerEmail } });
+    const vehicle = await database.vehicle.create({ data: { userId: owner.id, name: "Batch publication fixture" } });
+    const ids = Array.from({ length: 20 }, () => randomUUID());
+    await database.imageAsset.createMany({ data: ids.map((id) => ({ id, userId: owner.id, vehicleId: vehicle.id,
+      status: "UPLOADED", mimeType: "image/jpeg", originalFilename: "fixture.jpg", originalObjectKey: `users/${owner.id}/${id}`,
+      sizeBytes: 1024, uploadExpiresAt: CLAIM_NOW })) });
+    const created = await database.processingJob.createManyAndReturn({ data: ids.map((id) => ({ userId: owner.id,
+      vehicleId: vehicle.id, imageAssetId: id, provider: "REMOVEBG", options: ProcessingOptionsSchema.parse({}), idempotencyKey: id,
+    })), select: { id: true } });
+    await database.processingOutboxMessage.createMany({ data: created.map((job) => ({ jobId: job.id })) });
+    const jobIds = created.map((job) => job.id);
+    const base = { jobIds, now: CLAIM_NOW, claimExpiresAt: new Date(CLAIM_NOW.getTime() + 1000), limit: 10 };
+    const [first, second] = await Promise.all([
+      outbox.claimPendingOutbox({ ...base, claimToken: "batch-first" }),
+      outbox.claimPendingOutbox({ ...base, claimToken: "batch-second" }),
+    ]);
+    expect(first).toHaveLength(10);
+    expect(second).toHaveLength(10);
+    expect(new Set([...first, ...second].map((message) => message.id)).size).toBe(20);
+    expect(await database.processingJob.count({ where: { userId: owner.id, status: "CREATED" } })).toBe(20);
+    const commands = first.map((message) => ({ messageId: message.id, claimToken: "batch-first", publishedAt: CLAIM_NOW, queueMessageId: randomUUID() }));
+    const successful = commands.slice(0, 9);
+    const stale = commands[9];
+    if (!stale) throw new Error("Missing fixture");
+    expect(await outbox.markOutboxPublishedBatch([...successful, { ...stale, claimToken: "obsolete" }])).toHaveLength(9);
+    expect(await outbox.markOutboxPublishedBatch(successful)).toEqual([]);
+    expect(await database.processingJob.count({ where: { userId: owner.id, status: "QUEUED" } })).toBe(9);
+    // Simulate send success followed by a crash before DB ack: expired leases are
+    // claimable again, and the old publisher cannot acknowledge the replacement.
+    const recovered = await outbox.claimPendingOutbox({ ...base, limit: 20, now: new Date(CLAIM_NOW.getTime() + 2000),
+      claimExpiresAt: new Date(CLAIM_NOW.getTime() + 10_000), claimToken: "batch-recovered" });
+    expect(recovered).toHaveLength(11);
+    expect(await outbox.markOutboxPublishedBatch([stale])).toEqual([]);
+    const cancelled = recovered[0];
+    if (!cancelled) throw new Error("Missing cancellation fixture");
+    await database.processingJob.update({ where: { id: cancelled.jobId }, data: { status: "CANCELLED" } });
+    expect(await outbox.markOutboxPublishedBatch(recovered.map((message) => ({ messageId: message.id,
+      claimToken: "batch-recovered", publishedAt: CLAIM_NOW, queueMessageId: randomUUID() })))).toHaveLength(10);
+    expect(await database.processingJob.count({ where: { userId: owner.id, status: "QUEUED" } })).toBe(19);
+    expect(await database.processingJob.findUniqueOrThrow({ where: { id: cancelled.jobId }, select: { status: true } })).toEqual({ status: "CANCELLED" });
+    expect(await database.usageEvent.count({ where: { userId: owner.id } })).toBe(0);
+  });
+
   it("claims once, schedules retry, and atomically marks the job queued", async () => {
     const owner = await database.user.create({
       data: { primaryEmail: ownerEmail },

@@ -74,6 +74,14 @@ it.each([1, 5, 20])("records %i-image acceptance separately from last queue ackn
       sends += 1;
       publishedAt = performance.now();
       return { MessageId: randomUUID(), $metadata: {} };
+    }, async (command) => {
+      await delay(SQS_DELAY_MS);
+      sends += 1;
+      publishedAt = performance.now();
+      return { Successful: (command.input.Entries ?? []).map((entry) => {
+        if (!entry.Id) throw new Error("Missing mock entry ID");
+        return { Id: entry.Id, MessageId: randomUUID(), MD5OfMessageBody: "mock" };
+      }), Failed: [], $metadata: {} };
     });
     const dispatcher = new ProcessingOutboxDispatcher(new PrismaProcessingOutboxRepository(database), queue, {
       batchSize: 20, claimTtlMilliseconds: 60_000, retryBaseMilliseconds: 1000, retryMaximumMilliseconds: 60_000,
@@ -113,7 +121,7 @@ it.each([1, 5, 20])("records %i-image acceptance separately from last queue ackn
     const acceptanceTimings = structuredClone(completed?.[2]?.timings);
     if (!postResponse) throw new Error("Dispatch was not scheduled");
     await postResponse();
-    expect(sends).toBe(size);
+    expect(sends).toBe(Math.ceil(size / 10));
     process.stdout.write(`${JSON.stringify({ size, sample, responseMs, lastSqsAckMs: publishedAt - start, sends, acceptanceTimings, timings: completed?.[2]?.timings })}\n`);
   }
 }, 30_000);

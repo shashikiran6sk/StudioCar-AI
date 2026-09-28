@@ -89,6 +89,43 @@ Nested stage durations overlap; do not sum all rows. The baseline demonstrates
 linear dispatch work, not a production latency claim. Reservation transaction
 has an additional explicit timing field for subsequent captures.
 
+## Batched queue publication measurement
+
+Measured independently on main after #81/#82 plus the batch-dispatch branch;
+#80 is not included in these numbers, so this handler still awaits dispatch.
+Same local PostgreSQL fixture and five samples with 10 ms mock queue requests:
+
+| Median milliseconds | 1 image | 5 images | 20 images |
+| --- | ---: | ---: | ---: |
+| Handler response | 32.42 | 28.71 | 64.85 |
+| Last mock SQS acknowledgement from start | 29.59 | 26.23 | 61.08 |
+| Dispatch | 16.58 | 15.84 | 32.67 |
+| Claim | 2.68 | 2.31 | 2.91 |
+| Mock SQS publication | 11.11 | 11.10 | 22.33 |
+| Publication bookkeeping | 2.58 | 2.52 | 7.10 |
+| Queue requests / acknowledgement transactions | 1 / 1 | 1 / 1 | 2 / 2 |
+
+The deterministic improvement is bounded queue/database round trips: twenty
+messages use two queue requests and two acknowledgement transactions, with
+one claim transaction. Local wall times vary with host/database conditions;
+these samples do not establish production percentiles or throughput. Partial
+failures keep the existing per-item backoff/recovery path. Claims remain
+lease/token guarded, cancelled jobs cannot be resurrected, and queue calls
+hold no database transaction. A timeout can leave an ambiguous successful send;
+redelivery remains safe through the existing worker idempotency protocol.
+
+After integrating #80 (`f8bb6c8`), the same five-sample fixture measures:
+
+| Median milliseconds | 1 image | 5 images | 20 images |
+| --- | ---: | ---: | ---: |
+| Durable acceptance / handler response | 10.81 | 11.48 | 18.63 |
+| Last mock SQS acknowledgement from start | 24.58 | 25.46 | 48.03 |
+| Queue requests after acceptance | 1 | 1 | 2 |
+
+The fixture explicitly drains the captured post-response callback after timing
+the handler; it excludes Next.js lifecycle scheduling delay and real HTTP/SQS
+transport. All fifteen requests assert zero queue sends before acceptance.
+
 ## Correlation and lifecycle interpretation
 
 `http_request_completed` retains the request ID, route, method, status and total

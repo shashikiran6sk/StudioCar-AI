@@ -34,6 +34,7 @@ export interface ProcessingOutboxRepositoryPort {
   claimPendingOutbox(
     input: ClaimProcessingOutboxInput,
   ): Promise<ProcessingOutboxMessage[]>;
+  markOutboxPublishedBatch?(inputs: MarkProcessingOutboxPublishedInput[]): Promise<string[]>;
   markOutboxPublished(
     input: MarkProcessingOutboxPublishedInput,
   ): Promise<boolean>;
@@ -44,7 +45,12 @@ export interface ProcessingQueuePublishResult {
   messageId: string;
 }
 
+export type ProcessingQueueBatchResult =
+  | { jobId: string; outcome: "PUBLISHED"; messageId: string }
+  | { jobId: string; outcome: "FAILED" };
+
 export interface ProcessingQueuePort {
+  publishBatch?(messages: WorkerMessage[], timeoutMilliseconds: number): Promise<ProcessingQueueBatchResult[]>;
   publish(message: WorkerMessage): Promise<ProcessingQueuePublishResult>;
 }
 

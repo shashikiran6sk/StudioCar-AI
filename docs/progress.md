@@ -93,6 +93,33 @@ Last updated: 2026-09-28
   Turbopack remains blocked by local process/port permissions; unchanged CI
   must pass the normal build before merge.
 
+## Batch outbox publication
+
+- Integrated #80 after its owner merged it; preserved both timing phases.
+  Combined local 20-image medians are 19 ms acceptance and 48 ms through the
+  last mock SQS acknowledgement. Full local integration checks passed again.
+
+- Added SendMessageBatch through the existing queue port, with at most ten
+  entries per call and per-item acknowledgement checks even on HTTP success.
+  Missing/duplicate/conflicting acknowledgements remain retryable.
+- Claims now use a bounded skip-locked transaction and set-based updates.
+  Successful sends use one acknowledgement transaction per batch; jobs remain
+  CREATED/RETRYING until their own SQS acknowledgement. Queue I/O is outside
+  every database transaction, and existing single-message port callers remain
+  supported.
+- New sends stop when the claim budget expires; SDK batch calls receive an
+  abort deadline. Crash/ambiguous-send recovery retains durable outbox intent.
+- Tests cover two sends for twenty jobs, partial failure, database failure after
+  send, lease expiry, disjoint claims, stale tokens and duplicate/retry worker
+  publication races with exactly one output and usage charge.
+- Local lint/types, unit suites, PostgreSQL integration, schema validation,
+  webpack build and all 14 browser tests passed. Normal local Turbopack retains
+  its process/port restriction; required CI verifies the unchanged normal build.
+- Isolated 1/5/20-image mock-SQS benchmark confirms 1/1/2 queue requests;
+  twenty-image dispatch median is 33 ms versus the earlier 439 ms baseline.
+  These are local samples, not production latency claims. No schema or
+  deployment changes. Detailed methodology is in docs/performance.md.
+
 ## Leonardo background-removal adapter (PR 1)
 
 - Audited the existing binary provider boundary, remove.bg adapter, executor,
