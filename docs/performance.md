@@ -176,8 +176,8 @@ remain the authority for tuning maximum concurrency.
 The marketing page remains dynamically rendered for its personalized session
 header, but its public plan catalog and enabled footer links now come from
 dedicated tagged data-cache readers. Administrator edits invalidate those tags
-after the database transaction succeeds, so public content stays current
-without querying the same two small tables on every request. The uncached
+after the database transaction succeeds with immediate Server Action tag
+expiration, so public content stays current without querying the same two small tables on every request. The uncached
 catalog reader remains the only reader used by billing and allowance logic.
 
 The authenticated layout still authenticates first and redirects unauthenticated

@@ -2,6 +2,14 @@
 
 Last updated: 2026-09-28
 
+## Immediate public-cache invalidation
+
+- Public plan and footer cache entries now use Next `updateTag` from the
+  existing administrator Server Actions. Successful edits therefore expire
+  the cached data immediately and preserve the previous read-your-own-writes
+  behavior while retaining cross-request reuse for ordinary visitors.
+- Focused administrator action tests verify the exact tag invalidation calls.
+
 ## Public query caching and authenticated layout parallelism
 
 - Public pricing and enabled footer links now use dedicated Next data-cache
