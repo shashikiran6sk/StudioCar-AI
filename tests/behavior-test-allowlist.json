@@ -602,13 +602,5 @@
   {
     "source": "workers/image-processing/src/providers/leonardo-provider.types.ts",
     "reason": "Type-only adapter options and source URL resolver."
-  },
-  {
-    "source": "workers/image-processing/src/execution/vehicle-alpha.types.ts",
-    "reason": "Types only for validated raster geometry and shadow tuning."
-  },
-  {
-    "source": "workers/image-processing/src/execution/vehicle-shadow.constants.ts",
-    "reason": "Static tuning covered by contact-mask and shadow rendering tests."
   }
 ]

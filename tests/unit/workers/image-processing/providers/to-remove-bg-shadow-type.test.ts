@@ -5,7 +5,7 @@ import { toRemoveBgShadowType } from "../../../../../workers/image-processing/sr
 describe("toRemoveBgShadowType", () => {
   it("maps normalized shadow choices to provider values", () => {
     expect(toRemoveBgShadowType("NONE")).toBe("none");
-    expect(toRemoveBgShadowType("NATURAL")).toBe("none");
-    expect(toRemoveBgShadowType("STUDIO")).toBe("none");
+    expect(toRemoveBgShadowType("NATURAL")).toBe("car");
+    expect(toRemoveBgShadowType("STUDIO")).toBe("3D");
   });
 });

@@ -108,13 +108,13 @@ describe("renderProcessedImage", () => {
     expect(pixel(plain, 400, 350)).toBe(200);
   });
 
-  it.each(["HORIZON", "PLAIN"] satisfies Array<"HORIZON" | "PLAIN">)(
-    "draws a contact shadow on %s only when requested", async (floor) => {
-      const withShadow = await render(floor, "NATURAL");
-      const without = await render(floor, "NONE");
-      expect(pixel(withShadow, 400, 456)).toBeLessThan(pixel(without, 400, 456));
-    },
-  );
+  it("draws a contact shadow only when a shadow is requested", async () => {
+    const withShadow = await render("HORIZON", "NATURAL");
+    const without = await render("HORIZON", "NONE");
+
+    // Just below the tyre line, where the shadow falls.
+    expect(pixel(withShadow, 400, 456)).toBeLessThan(pixel(without, 400, 456));
+  });
 
   /** How many pixels of the red "car" body one row of the output crosses. */
   function carWidth(

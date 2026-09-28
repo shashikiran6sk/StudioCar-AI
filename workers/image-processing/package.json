@@ -28,8 +28,7 @@
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "cost:leonardo": "node --env-file-if-exists=../../.env.local scripts/leonardo-cost.mjs",
-    "shadow:diagnostics": "node scripts/shadow-diagnostics.mjs"
+    "cost:leonardo": "node --env-file-if-exists=../../.env.local scripts/leonardo-cost.mjs"
   },
   "devDependencies": {
     "@studiocar/local-queue": "workspace:*",
