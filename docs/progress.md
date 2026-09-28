@@ -2,6 +2,22 @@
 
 Last updated: 2026-09-27
 
+## Shared web database runtime
+
+- Replaced twenty feature-specific Prisma factories with one lazy web-process
+  client retained across module reloads. Repository injection and independent
+  worker/test clients remain unchanged; this is not a cross-instance singleton.
+- Added web-only validated pool sizing (default 5, range 1–20), preserving the
+  existing PrismaPg adapter and database environment isolation. Documented
+  Neon pooled endpoints and aggregate serverless connection budgeting.
+- Tests cover lazy creation, module reload reuse, different feature runtimes,
+  independent clients, invalid configuration and failure recovery.
+- Local lint/types/source mapping, all unit suites uncached, 155 PostgreSQL
+  integration tests, schema validation, webpack production build and all 14
+  browser tests passed. Normal Turbopack has the existing local process/port
+  restriction; required CI must pass its unchanged normal build. Production
+  endpoint/region verification awaits access; no credentials or regions changed.
+
 ## Leonardo background-removal adapter (PR 1)
 
 - Audited the existing binary provider boundary, remove.bg adapter, executor,

@@ -1,6 +1,6 @@
+import { getWebDatabase } from "../db/web-database";
 import { S3Client } from "@aws-sdk/client-s3";
 import { createS3ClientOptions, parseUploadEnvironment } from "@studiocar/config";
-import { createDatabaseClient } from "@studiocar/database-runtime";
 import { PrismaDashboardRepository } from "../db/repositories/dashboard-repository";
 import { PrismaInventoryRepository } from "../db/repositories/inventory-repository";
 
@@ -16,9 +16,7 @@ export function getDashboardService(): DashboardService {
   if (dashboardService) return dashboardService;
 
   const environment = parseUploadEnvironment(process.env);
-  const database = createDatabaseClient({
-    connectionString: environment.DATABASE_URL,
-  });
+  const database = getWebDatabase();
   const inventory = new InventoryService(
     new PrismaInventoryRepository(database),
     new S3InventoryPreviewSigner(
