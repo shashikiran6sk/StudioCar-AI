@@ -2,6 +2,28 @@
 
 Last updated: 2026-09-28
 
+## Production worker missing-object permission
+
+- Diagnosed repeated production processing failures as S3 `AccessDenied` while
+  checking the optional staged provider result. The worker role could read and
+  write objects under `users/*` but lacked `s3:ListBucket`, so S3 returned 403
+  for an absent staged result instead of the 404 the worker recognizes as
+  absence. The failed jobs exhausted five attempts before reaching remove.bg.
+- Added `s3:ListBucket` scoped to the configured image bucket only; object
+  reads/writes remain scoped to the tenant object prefix. Documented this
+  permission and added a worker-template regression check.
+- Applied the IAM-only CloudFormation change to the production worker stack.
+  Stack status is `UPDATE_COMPLETE`, and IAM policy simulation reports the
+  bucket-level list permission as allowed. CloudFormation template validation,
+  focused template tests, all 1,264 uncached unit tests, source mapping, lint,
+  typecheck and Prisma validation passed.
+- The earlier failed job rows are terminal and are not automatically replayed.
+  After deployment, a new production job completed in one successful remove.bg
+  attempt and persisted its processed output, confirming the live fix. The user
+  also confirmed processing is working. No failed-job rows were edited and no
+  image bytes or provider secrets were accessed during diagnosis. AWS commands
+  and sanitized results are appended in `aws-session-transcript.md`.
+
 ## Production AWS deployment compatibility
 
 - Corrected the SQS queue-policy template to express the HTTPS-only deny as

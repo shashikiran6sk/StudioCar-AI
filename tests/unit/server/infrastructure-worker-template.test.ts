@@ -25,4 +25,20 @@ describe("worker deployment throughput defaults", () => {
     expect(queueTemplate).toContain("Default: 900");
     expect(queueTemplate).toContain("Description: Must exceed the Lambda timeout");
   });
+
+  it("allows missing-object detection on only the image bucket", () => {
+    const detectionPolicy = workerTemplate.split(
+      "- Sid: DetectMissingPrivateImages",
+    )[1]?.split("- Sid: ReadWritePrivateImages")[0];
+    expect(detectionPolicy).toContain("Effect: Allow");
+    expect(detectionPolicy).toContain("- s3:ListBucket");
+    expect(detectionPolicy).toContain(
+      "Resource: !Sub arn:${AWS::Partition}:s3:::${ImageBucketName}",
+    );
+    expect(detectionPolicy).not.toContain("Condition:");
+    expect(detectionPolicy).not.toContain("s3:*");
+    expect(workerTemplate).toContain(
+      "Resource: !Sub arn:${AWS::Partition}:s3:::${ImageBucketName}/users/*",
+    );
+  });
 });

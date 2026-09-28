@@ -54,7 +54,12 @@ binary) at its root. The stack resolves database and remove.bg credentials from
 Secrets Manager, grants only tenant-prefix object access, caps both reserved and
 SQS event-source concurrency, and enables `ReportBatchItemFailures`. Configure
 alarm actions and ensure the queue visibility timeout is longer than the Lambda
-timeout before production deployment. The worker emits structured CloudWatch
+timeout before production deployment. The worker role also needs `s3:ListBucket` on its image bucket so absent staged
+provider results return 404. Without it, S3 returns 403 and the first provider
+attempt fails before removal starts. Object reads/writes remain scoped to
+`users/*`; do not treat arbitrary access-denied responses as missing objects.
+
+The worker emits structured CloudWatch
 Embedded Metric Format events under `StudioCarAI/Operations`, with correlation
 IDs kept out of metric dimensions. The stack applies configurable log retention
 and alarms on duration, terminal failures, retry spikes and end-to-end latency.
