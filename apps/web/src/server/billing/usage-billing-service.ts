@@ -19,41 +19,48 @@ export class UsageBillingService {
     private readonly planCatalog: PlanCatalogPort,
   ) {}
 
+  /** Resolve entitlements without reading usage or storage aggregates. */
+  public async getCurrentPlan(
+    userId: string,
+    now = new Date(),
+  ): Promise<UsageBillingSummary["currentPlan"]> {
+    const [ownedPlanKey, catalog] = await Promise.all([
+      this.repository.findOwnedPlanKey(userId, now),
+      this.planCatalog.list(),
+    ]);
+    const parsedPlanKey = PlanKeySchema.safeParse(ownedPlanKey);
+    const { key, plan } = resolvePlanEntry(
+      catalog,
+      parsedPlanKey.success ? parsedPlanKey.data : FALLBACK_PLAN_KEY,
+    );
+    return {
+      allowanceScope: plan.allowanceScope,
+      description: plan.description,
+      imageCapacity: plan.includedImages,
+      key,
+      maxImagesPerBatch: plan.maxImagesPerBatch,
+      name: plan.displayName,
+      storageCapacityBytes: plan.storageBytes,
+      uploadSessionCapacity: null,
+    };
+  }
+
   public async getSummary(
     userId: string,
     now = new Date(),
   ): Promise<UsageBillingSummary> {
-    /**
-     * The plan is resolved first because it decides how its own allowance is
-     * counted: a lifetime allowance never refills, so it must not be scoped to
-     * the current billing period.
-     */
-    const ownedPlanKey = await this.repository.findOwnedPlanKey(userId, now);
-    const parsedPlanKey = PlanKeySchema.safeParse(ownedPlanKey);
-    const { key, plan } = resolvePlanEntry(
-      await this.planCatalog.list(),
-      parsedPlanKey.success ? parsedPlanKey.data : FALLBACK_PLAN_KEY,
-    );
+    const currentPlan = await this.getCurrentPlan(userId, now);
     const record = await this.repository.getOwnedSummary(
       userId,
-      plan.allowanceScope === "LIFETIME"
+      currentPlan.allowanceScope === "LIFETIME"
         ? null
         : createUsageBillingPeriodKey(now),
       now,
     );
 
     return UsageBillingSummarySchema.parse({
-      currentPlan: {
-        allowanceScope: plan.allowanceScope,
-        description: plan.description,
-        imageCapacity: plan.includedImages,
-        key,
-        maxImagesPerBatch: plan.maxImagesPerBatch,
-        name: plan.displayName,
-        storageCapacityBytes: plan.storageBytes,
-        uploadSessionCapacity: null,
-      },
-      imagesRemaining: Math.max(0, plan.includedImages - record.imageUsage),
+      currentPlan,
+      imagesRemaining: Math.max(0, currentPlan.imageCapacity - record.imageUsage),
       imagesUsed: record.imageUsage,
       storageUsedBytes: safeBigIntToNumber(record.storageUsedBytes),
       uploadSessionsRemaining: null,

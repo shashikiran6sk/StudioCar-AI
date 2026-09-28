@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { measureStage, PerformanceStage } from "@studiocar/observability";
 import type { ProcessingOptions } from "@studiocar/contracts";
 
@@ -13,6 +14,9 @@ import {
 import { toProcessingOptionsJson } from "./to-processing-options-json";
 import { PROCESSABLE_VEHICLE_STATUSES } from "../../vehicles/vehicle-status-groups.constants";
 import { createImageAssetLockKey } from "./create-image-asset-lock-key";
+
+const ALLOWANCE_LOCK_PREFIX = "processing-allowance:";
+const AllowanceUsageRowsSchema = z.array(z.object({ used: z.coerce.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER) })).length(1);
 
 const MISSING_USAGE_JOB_ERROR =
   "A processing batch must contain a usage-accounting job.";
@@ -149,6 +153,11 @@ export class PrismaProcessingJobRepository {
     transaction: Prisma.TransactionClient,
     command: ReserveProcessingBatchCommand,
   ): Promise<TransactionResult> {
+    // Serialize reservations for the tenant, including different vehicles.
+    // Completion transfers in-flight usage to charged usage atomically; the
+    // single-statement count below observes both from the same snapshot.
+    const allowanceLockKey = `${ALLOWANCE_LOCK_PREFIX}${command.userId}`;
+    await transaction.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${allowanceLockKey}, 0))`;
     const vehicle = await transaction.vehicle.findFirst({
       where: { id: command.vehicleId, userId: command.userId },
       select: { status: true },
@@ -188,10 +197,15 @@ export class PrismaProcessingJobRepository {
     if (uniqueAssetIds.size !== command.jobs.length) {
       return { kind: "ASSETS_NOT_READY" };
     }
-    for (const assetId of [...uniqueAssetIds].sort()) {
-      const lockKey = createImageAssetLockKey(assetId);
-      await transaction.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`;
-    }
+    // Preserve the cleanup lock protocol and stable ordering in one round trip.
+    const lockKeys = [...uniqueAssetIds].sort().map(createImageAssetLockKey);
+    await transaction.$executeRaw(Prisma.sql`
+      SELECT pg_advisory_xact_lock(hashtextextended(lock_key, 0))
+      FROM (
+        SELECT unnest(ARRAY[${Prisma.join(lockKeys)}]::text[]) AS lock_key
+        ORDER BY lock_key
+      ) AS ordered_locks
+    `);
     const assets = await transaction.imageAsset.findMany({
       where: {
         id: { in: [...uniqueAssetIds] },
@@ -221,30 +235,28 @@ export class PrismaProcessingJobRepository {
     });
     if (claimedVehicle.count !== 1) return { kind: "WRITE_RACE" };
 
-    const jobs: ProcessingJobRecord[] = [];
-    for (const job of command.jobs) {
-      const processingJob = await transaction.processingJob.create({
-        data: {
-          requestId: command.requestId ?? null,
-          userId: command.userId,
-          vehicleId: command.vehicleId,
-          imageAssetId: job.assetId,
-          status: ProcessingJobStatus.CREATED,
-          provider: command.provider,
-          options: toProcessingOptionsJson(command.options),
-          idempotencyKey: job.idempotencyKey,
-          batchIdempotencyKey: command.batchIdempotencyKey,
-          batchLabel: command.batchLabel,
-          batchRequestHash: command.batchRequestHash,
-          displayOrder: job.displayOrder,
-        },
-        select: processingJobSelect,
-      });
-      await measureStage(PerformanceStage.OUTBOX_CREATION, () => transaction.processingOutboxMessage.create({
-        data: { jobId: processingJob.id },
-      }));
-      jobs.push(processingJob);
-    }
+    const jobs = await transaction.processingJob.createManyAndReturn({
+      data: command.jobs.map((job) => ({
+        requestId: command.requestId ?? null,
+        userId: command.userId,
+        vehicleId: command.vehicleId,
+        imageAssetId: job.assetId,
+        status: ProcessingJobStatus.CREATED,
+        provider: command.provider,
+        options: toProcessingOptionsJson(command.options),
+        idempotencyKey: job.idempotencyKey,
+        batchIdempotencyKey: command.batchIdempotencyKey,
+        batchLabel: command.batchLabel,
+        batchRequestHash: command.batchRequestHash,
+        displayOrder: job.displayOrder,
+      })),
+      select: processingJobSelect,
+    });
+    // RETURNING does not promise input order; the response and replay must agree.
+    jobs.sort((left, right) => left.displayOrder - right.displayOrder);
+    await measureStage(PerformanceStage.OUTBOX_CREATION, () => transaction.processingOutboxMessage.createMany({
+      data: jobs.map((job) => ({ jobId: job.id })),
+    }));
     const usageJob = jobs[0];
     if (!usageJob) throw new Error(MISSING_USAGE_JOB_ERROR);
     await transaction.usageEvent.create({
@@ -269,36 +281,26 @@ export class PrismaProcessingJobRepository {
     transaction: Prisma.TransactionClient,
     command: ReserveProcessingBatchCommand,
   ): Promise<number> {
-    const period =
-      command.allowance.allowanceBillingPeriodKey === null
-        ? {}
-        : { billingPeriodKey: command.allowance.allowanceBillingPeriodKey };
-
-    const [charged, inFlight] = await Promise.all([
-      transaction.usageEvent.aggregate({
-        where: {
-          ...period,
-          type: UsageEventType.BACKGROUND_REMOVAL_COMPLETED,
-          userId: command.userId,
-        },
-        _sum: { quantity: true },
-      }),
-      transaction.processingJob.count({
-        where: {
-          userId: command.userId,
-          status: {
-            in: [
-              ProcessingJobStatus.CREATED,
-              ProcessingJobStatus.QUEUED,
-              ProcessingJobStatus.PROCESSING,
-              ProcessingJobStatus.RETRYING,
-            ],
-          },
-        },
-      }),
-    ]);
-
-    return (charged._sum.quantity ?? 0) + inFlight;
+    const period = command.allowance.allowanceBillingPeriodKey;
+    const rows = AllowanceUsageRowsSchema.parse(await transaction.$queryRaw`
+      SELECT (
+        (SELECT COALESCE(SUM("quantity"), 0) FROM "UsageEvent"
+          WHERE "userId" = ${command.userId}::uuid
+            AND "type" = ${UsageEventType.BACKGROUND_REMOVAL_COMPLETED}::"UsageEventType"
+            AND (${period}::text IS NULL OR "billingPeriodKey" = ${period}::text))
+        + (SELECT COUNT(*) FROM "ProcessingJob"
+          WHERE "userId" = ${command.userId}::uuid
+            AND "status" IN (
+              ${ProcessingJobStatus.CREATED}::"ProcessingJobStatus",
+              ${ProcessingJobStatus.QUEUED}::"ProcessingJobStatus",
+              ${ProcessingJobStatus.PROCESSING}::"ProcessingJobStatus",
+              ${ProcessingJobStatus.RETRYING}::"ProcessingJobStatus"
+            ))
+      ) AS used
+    `);
+    const row = rows[0];
+    if (!row) throw new Error(MISSING_USAGE_JOB_ERROR);
+    return row.used;
   }
 
   private resolveReplay(

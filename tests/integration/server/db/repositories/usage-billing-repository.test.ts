@@ -1,3 +1,6 @@
+import { SubscriptionSource, SubscriptionStatus } from "../../../../../packages/database-runtime/generated/prisma/client";
+import { UsageBillingService } from "../../../../../apps/web/src/server/billing/usage-billing-service";
+import { DEFAULT_PLAN_CATALOG } from "../../../../../apps/web/src/server/plans/default-plan-catalog";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createDatabaseClient } from "../../../../../packages/database-runtime/src/client";
@@ -23,6 +26,25 @@ databaseDescribe("PrismaUsageBillingRepository", () => {
   });
 
   afterAll(async () => database.$disconnect());
+
+  it.each([
+    { planKey: "STUDIO_PLUS", status: SubscriptionStatus.ACTIVE, source: SubscriptionSource.MANUAL_ADMIN, end: "2026-10-01", expected: "STUDIO_PLUS" },
+    { planKey: "STUDIO_PRO", status: SubscriptionStatus.ACTIVE, source: SubscriptionSource.PAYMENT_PROVIDER, end: "2026-10-01", expected: "STUDIO_PRO" },
+    { planKey: "STUDIO_PRO", status: SubscriptionStatus.TRIALING, source: SubscriptionSource.PAYMENT_PROVIDER, end: "2026-10-01", expected: "STUDIO_PRO" },
+    { planKey: "STUDIO_PLUS", status: SubscriptionStatus.CANCELLED, source: SubscriptionSource.MANUAL_ADMIN, end: "2026-10-01", expected: "FREE" },
+    { planKey: "STUDIO_PRO", status: SubscriptionStatus.EXPIRED, source: SubscriptionSource.PAYMENT_PROVIDER, end: "2026-10-01", expected: "FREE" },
+    { planKey: "STUDIO_PRO", status: SubscriptionStatus.ACTIVE, source: SubscriptionSource.PAYMENT_PROVIDER, end: "2026-09-20", expected: "FREE" },
+    { planKey: "STUDIO_PRO", status: SubscriptionStatus.ACTIVE, source: SubscriptionSource.PAYMENT_PROVIDER, end: "2026-09-19", expected: "FREE" },
+  ])("keeps focused entitlement and summary identical for $status / $source / $end", async ({ planKey, status, source, end, expected }) => {
+    const owner = await database.user.create({ data: { primaryEmail: ownerEmail } });
+    const now = new Date("2026-09-20");
+    await database.planSubscription.create({ data: { userId: owner.id, planKey, status, source,
+      currentPeriodStart: new Date("2026-09-01"), currentPeriodEnd: new Date(end) } });
+    const service = new UsageBillingService(repository, { list: () => Promise.resolve(DEFAULT_PLAN_CATALOG) });
+    const entitlement = await service.getCurrentPlan(owner.id, now);
+    expect(entitlement.key).toBe(expected);
+    expect(entitlement).toEqual((await service.getSummary(owner.id, now)).currentPlan);
+  });
 
   it("aggregates only owned immutable period usage, storage, and active plan", async () => {
     const [owner, other] = await Promise.all([

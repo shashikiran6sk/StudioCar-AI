@@ -6,7 +6,7 @@ import { createDatabaseClient } from "../../packages/database-runtime/src/client
 import { CommandRateLimitScope, ProcessingProvider } from "../../packages/database-runtime/generated/prisma/client";
 import { ProcessingOptionsSchema } from "../../packages/contracts/src/processing";
 import { ProcessingOutboxDispatcher } from "../../packages/processing/src/processing-outbox-dispatcher";
-import { measureStage, PerformanceStage, logger } from "../../packages/observability/src/index";
+import { measureStage, PerformanceStage, logger, monitoringContext } from "../../packages/observability/src/index";
 import { PrismaProcessingJobRepository } from "../../apps/web/src/server/db/repositories/processing-job-repository";
 import { PrismaProcessingOutboxRepository } from "../../apps/web/src/server/db/repositories/processing-outbox-repository";
 import { PrismaSessionRepository } from "../../apps/web/src/server/db/repositories/session-repository";
@@ -78,11 +78,20 @@ it.each([1, 5, 20])("records %i-image acceptance separately from last queue ackn
     const dispatcher = new ProcessingOutboxDispatcher(new PrismaProcessingOutboxRepository(database), queue, {
       batchSize: 20, claimTtlMilliseconds: 60_000, retryBaseMilliseconds: 1000, retryMaximumMilliseconds: 60_000,
     });
-    const service = new ProcessingJobService(new PrismaProcessingJobRepository(database), dispatcher, ProcessingProvider.REMOVEBG, {
+    let postResponse: (() => Promise<void>) | undefined;
+    const service = new ProcessingJobService(new PrismaProcessingJobRepository(database), {
+      schedule: (request) => {
+        const context = monitoringContext.getStore();
+        postResponse = async () => {
+          if (!context) throw new Error("Missing request monitoring context");
+          await monitoringContext.run(context, () => measureStage(PerformanceStage.DISPATCH, () => dispatcher.dispatch(request)));
+        };
+      },
+    }, ProcessingProvider.REMOVEBG, {
       resolve: async (userId) => {
-        const summary = await billing.getSummary(userId, now);
-        return { imageCapacity: summary.currentPlan.imageCapacity, maxImagesPerBatch: summary.currentPlan.maxImagesPerBatch,
-          allowanceBillingPeriodKey: summary.currentPlan.allowanceScope === "LIFETIME" ? null : now.toISOString().slice(0, 7) };
+        const plan = await billing.getCurrentPlan(userId, now);
+        return { imageCapacity: plan.imageCapacity, maxImagesPerBatch: plan.maxImagesPerBatch,
+          allowanceBillingPeriodKey: plan.allowanceScope === "LIFETIME" ? null : now.toISOString().slice(0, 7) };
       },
     });
     const limiter = new CommandRateLimiter(new PrismaCommandRateLimitRepository(database), {
@@ -99,8 +108,12 @@ it.each([1, 5, 20])("records %i-image acceptance separately from last queue ackn
     }));
     const responseMs = performance.now() - start;
     expect(response.status).toBe(202);
-    expect(sends).toBe(size);
+    expect(sends).toBe(0);
     const completed = vi.mocked(logger.log).mock.calls.findLast((call) => call[1] === "http_request_completed");
-    process.stdout.write(`${JSON.stringify({ size, sample, responseMs, lastSqsAckMs: publishedAt - start, sends, timings: completed?.[2]?.timings })}\n`);
+    const acceptanceTimings = structuredClone(completed?.[2]?.timings);
+    if (!postResponse) throw new Error("Dispatch was not scheduled");
+    await postResponse();
+    expect(sends).toBe(size);
+    process.stdout.write(`${JSON.stringify({ size, sample, responseMs, lastSqsAckMs: publishedAt - start, sends, acceptanceTimings, timings: completed?.[2]?.timings })}\n`);
   }
 }, 30_000);

@@ -34,6 +34,22 @@ starts; broad progress subscriptions; unchanged-payload store churn; overlapping
 poll wakeups; per-completion refreshes; sequential worker records and template
 visibility mismatch; dynamic homepage and repeated summary reads.
 
+## Submission changes after the baseline
+
+PR #80 now includes tenant-wide reservation serialization and a single snapshot
+for charged plus in-flight usage. Real PostgreSQL regressions cover concurrent
+quota consumption/completion, deletion, rollback, duplicate/foreign assets and
+subscription boundaries. The shared web client is included from merged #82.
+The benchmark now captures acceptance before running the scheduled callback:
+zero SQS sends must have occurred when the handler returns. It then drains the
+callback and records the last mock SQS acknowledgement separately.
+
+The table below preserves the original baseline. Reproduce that version from
+PR #81 (`6005458`); running the same command on current code measures its current
+implementation. Post-response dispatch timings cannot appear in an HTTP log
+already emitted at acceptance; use correlated publication logs and the local
+benchmark for that later phase.
+
 ## Reproduce the baseline
 
 Use a disposable PostgreSQL 17 database named `studiocar_perf` on localhost.

@@ -45,7 +45,7 @@ describe("POST /api/internal/jobs/dispatch", () => {
     });
     const service = new ProcessingJobService(
       { reserveBatchOwned: vi.fn() },
-      dispatcher,
+      { schedule: vi.fn() },
       ProcessingProvider.REMOVEBG,
       { resolve: vi.fn().mockResolvedValue({ imageCapacity: 100, maxImagesPerBatch: 20, allowanceBillingPeriodKey: null }) },
     );
