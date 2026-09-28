@@ -152,9 +152,24 @@ composition-specific timings require the later UI/worker slices.
 - No source-controlled Vercel region setting or linked project was found.
   Reported `bom1` is not deployment evidence; inspect the live function settings.
 - Neon endpoint/pool/region is not verified. Never print connection strings.
-- Template values are batch 5, timeout 120 s, memory 2048 MiB, maximum
-  concurrency 10, worker lease 120 s and queue visibility 180 s. These are
-  configuration risks, not assertions about AWS production.
+- Before this slice, source templates defaulted to batch 5, timeout 120 s,
+  memory 2048 MiB, maximum concurrency 10, worker lease 120 s and queue
+  visibility 180 s. These were configuration risks, not assertions about AWS
+  production.
+
+The worker template now defaults the event source to one SQS record with no
+batching window. The handler still retains partial-batch failure reporting for
+explicitly configured larger batches. The queue template default visibility is
+900 seconds, leaving a safety margin above the 120-second worker timeout and
+the 120-second application claim lease. These are source-controlled defaults;
+the deployed values and regions remain unverified until read-only AWS access is
+restored. No concurrency increase was made: the existing maximum remains ten.
+
+This choice is based on the audit's expensive independent image workload and
+the worker's sequential record loop. A live A/B benchmark of event-source
+batch size 1/window 0 versus the deployed setting is still required before
+changing production parameters. Provider 429 telemetry and queue age alarms
+remain the authority for tuning maximum concurrency.
 
 Follow-up PRs: shared web client; rework #80 with race tests and after-response
 measurements; batch outbox/SQS; upload concurrency/rendering; polling and local
