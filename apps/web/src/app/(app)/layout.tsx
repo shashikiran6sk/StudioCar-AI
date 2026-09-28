@@ -19,11 +19,17 @@ export default async function AuthenticatedLayout({
   const session = await getCurrentSession();
   if (!session) redirect(LOGIN_PATH);
 
+  const [planCatalog, planUsage, showAdmin] = await Promise.all([
+    getPlanCatalog(),
+    getPlanUsageSummary(session.userId),
+    isCurrentUserAdministrator(),
+  ]);
+
   return (
     <AppShell
-      largestAvailableBatch={findLargestBatch(await getPlanCatalog())}
-      planUsage={await getPlanUsageSummary(session.userId)}
-      showAdmin={await isCurrentUserAdministrator()}
+      largestAvailableBatch={findLargestBatch(planCatalog)}
+      planUsage={planUsage}
+      showAdmin={showAdmin}
       user={session.user}
     >
       {children}

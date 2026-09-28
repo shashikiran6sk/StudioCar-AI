@@ -4,8 +4,9 @@ const getCurrentSession = vi.fn();
 const isCurrentUserAdministrator = vi.fn();
 const update = vi.fn();
 const revalidatePath = vi.fn();
+const revalidateTag = vi.fn();
 
-vi.mock("next/cache", () => ({ revalidatePath }));
+vi.mock("next/cache", () => ({ revalidatePath, revalidateTag }));
 vi.mock("../../../../apps/web/src/server/auth/get-current-session", () => ({
   getCurrentSession,
 }));
@@ -77,6 +78,7 @@ describe("savePlanConfigurationAction", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/admin/pricing");
     expect(revalidatePath).toHaveBeenCalledWith("/settings/billing");
     expect(revalidatePath).toHaveBeenCalledWith("/");
+    expect(revalidateTag).toHaveBeenCalledWith("public-plan-catalog", "max");
   });
 
   it("refuses a signed-out caller", async () => {

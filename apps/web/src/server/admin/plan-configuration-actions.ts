@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import {
   ADMIN_ACTION_FAILED_MESSAGE,
@@ -20,6 +20,7 @@ import {
   readPlanConfigurationForm,
 } from "../plans/plan-configuration-form";
 import { getPlanConfigRepository } from "../plans/plan-config-runtime";
+import { PUBLIC_PLAN_CATALOG_CACHE_TAG } from "../plans/plans.constants";
 
 const forbidden: AdminActionMessage = {
   kind: "error",
@@ -73,5 +74,6 @@ export async function savePlanConfigurationAction(
   revalidatePath(ADMIN_PRICING_PATH);
   revalidatePath(BILLING_PATH);
   revalidatePath(HOME_PATH);
+  revalidateTag(PUBLIC_PLAN_CATALOG_CACHE_TAG, "max");
   return { kind: "success", message: ADMIN_PLAN_SAVED_MESSAGE };
 }

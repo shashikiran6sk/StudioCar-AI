@@ -8,8 +8,8 @@ import { MarketingStudioBackgrounds } from "../features/marketing/marketing-stud
 import { MarketingWorkflow } from "../features/marketing/marketing-workflow";
 import { PricingSection } from "../features/pricing/pricing-section";
 import { getCurrentSession } from "../server/auth/get-current-session";
-import { getEnabledSocialLinks } from "../server/content/get-social-links";
-import { getPlanCatalog } from "../server/plans/get-plan-catalog";
+import { getPublicEnabledSocialLinks } from "../server/content/get-social-links";
+import { getPublicPlanCatalog } from "../server/plans/get-plan-catalog";
 import { isPublicSiteIndexable } from "../lib/is-public-site-indexable";
 import { SoftwareApplicationJsonLd } from "../lib/software-application-json-ld";
 import { siteConfig } from "../lib/site-config";
@@ -56,8 +56,8 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const [plans, socialLinks, session] = await Promise.all([
-    getPlanCatalog(),
-    getEnabledSocialLinks(),
+    getPublicPlanCatalog(),
+    getPublicEnabledSocialLinks(),
     getCurrentSession(),
   ]);
 
