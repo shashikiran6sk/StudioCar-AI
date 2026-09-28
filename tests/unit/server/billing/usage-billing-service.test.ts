@@ -23,6 +23,24 @@ function repository(
 }
 
 describe("UsageBillingService", () => {
+  it("resolves processing limits without scanning usage or storage", async () => {
+    const repo = repository("STUDIO_PRO", {
+      imageUsage: 120,
+      storageUsedBytes: 0n,
+      uploadSessionUsage: 8,
+    });
+    const service = new UsageBillingService(repo, catalog);
+
+    await expect(service.getCurrentPlan("user-1", now)).resolves.toMatchObject({
+      key: "STUDIO_PRO",
+      imageCapacity: 500,
+      maxImagesPerBatch: 20,
+      allowanceScope: "BILLING_PERIOD",
+    });
+    expect(repo.findOwnedPlanKey).toHaveBeenCalledWith("user-1", now);
+    expect(repo.getOwnedSummary).not.toHaveBeenCalled();
+  });
+
   it("derives remaining free capacity from immutable usage totals", async () => {
     const repo = repository(null, {
       imageUsage: 4,

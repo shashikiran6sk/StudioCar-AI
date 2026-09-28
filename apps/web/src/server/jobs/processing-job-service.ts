@@ -12,7 +12,7 @@ import {
 import type {
   CreateProcessingJobsResult,
   ProcessingAllowanceResolverPort,
-  ProcessingDispatchPort,
+  ProcessingDispatchSchedulerPort,
   ProcessingJobApplication,
   ProcessingJobRepositoryPort,
 } from "./processing-job.types";
@@ -20,7 +20,7 @@ import type {
 export class ProcessingJobService implements ProcessingJobApplication {
   public constructor(
     private readonly jobs: ProcessingJobRepositoryPort,
-    private readonly dispatcher: ProcessingDispatchPort,
+    private readonly dispatcher: ProcessingDispatchSchedulerPort,
     private readonly provider: ProcessingProvider,
     private readonly allowances: ProcessingAllowanceResolverPort,
     private readonly now: () => Date = () => new Date(),
@@ -81,7 +81,7 @@ export class ProcessingJobService implements ProcessingJobApplication {
         batchId: idempotencyKey,
         requestId: job.requestId ?? context?.requestId,
       });
-    await this.dispatcher.dispatch({
+    this.dispatcher.schedule({
       jobIds: reservation.jobs.map((job) => job.id),
     });
 

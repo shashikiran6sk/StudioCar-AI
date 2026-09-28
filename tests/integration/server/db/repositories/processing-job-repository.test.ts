@@ -35,7 +35,7 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
     await database.$disconnect();
   });
 
-  it("atomically reserves one owned job per uploaded asset and replays the batch", async () => {
+  it("atomically reserves and replays an ordered 20-image batch", async () => {
     const [owner, other] = await Promise.all([
       database.user.create({ data: { primaryEmail: ownerEmail } }),
       database.user.create({ data: { primaryEmail: otherEmail } }),
@@ -43,7 +43,7 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
     const vehicle = await database.vehicle.create({
       data: { userId: owner.id, name: "Processing test vehicle" },
     });
-    const assetIds = [randomUUID(), randomUUID()];
+    const assetIds = Array.from({ length: 20 }, () => randomUUID());
     await Promise.all(
       assetIds.map((assetId, displayOrder) =>
         database.imageAsset.create({
@@ -104,16 +104,22 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
     ]);
 
     expect([first.kind, replay.kind].sort()).toEqual(["CREATED", "EXISTING"]);
+    for (const result of [first, replay]) {
+      if (result.kind !== "CREATED" && result.kind !== "EXISTING") {
+        throw new Error(`Unexpected reservation result: ${result.kind}`);
+      }
+      expect(result.jobs.map((job) => job.imageAssetId)).toEqual(assetIds);
+      expect(result.jobs.map((job) => job.displayOrder)).toEqual(
+        assetIds.map((_, index) => index),
+      );
+    }
     await repository.reserveBatchOwned({ ...command, requestId: randomUUID() });
     expect(
       await database.processingJob.findMany({
         where: { vehicleId: vehicle.id },
         select: { requestId: true },
       }),
-    ).toEqual([
-      { requestId: command.requestId },
-      { requestId: command.requestId },
-    ]);
+    ).toEqual(assetIds.map(() => ({ requestId: command.requestId })));
     await expect(
       repository.reserveBatchOwned({
         ...command,
@@ -131,12 +137,12 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
     ).resolves.toEqual({ status: "PROCESSING" });
     await expect(
       database.processingJob.count({ where: { vehicleId: vehicle.id } }),
-    ).resolves.toBe(2);
+    ).resolves.toBe(20);
     await expect(
       database.processingOutboxMessage.count({
         where: { job: { vehicleId: vehicle.id } },
       }),
-    ).resolves.toBe(2);
+    ).resolves.toBe(20);
     await expect(
       database.usageEvent.findMany({
         where: { userId: owner.id },

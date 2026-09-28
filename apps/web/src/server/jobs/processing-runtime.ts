@@ -12,6 +12,7 @@ import { ProcessingOutboxDispatcher } from "@studiocar/processing";
 
 import { CommandRateLimiter } from "../security/command-rate-limiter";
 import { MILLISECONDS_PER_SECOND } from "../security/command-rate-limiter.constants";
+import { scheduleProcessingDispatch } from "./schedule-processing-dispatch";
 import { ProcessingJobService } from "./processing-job-service";
 import { ProcessingStatusService } from "./processing-status-service";
 import { SqsProcessingQueue } from "./sqs-processing-queue";
@@ -64,7 +65,7 @@ export function getProcessingRuntime(): ProcessingRuntime {
     ),
     service: new ProcessingJobService(
       new PrismaProcessingJobRepository(database),
-      dispatcher,
+      { schedule: (request) => scheduleProcessingDispatch(dispatcher, request) },
       toProcessingProvider(environment.BACKGROUND_REMOVAL_PROVIDER),
       { resolve: resolveProcessingAllowance },
     ),

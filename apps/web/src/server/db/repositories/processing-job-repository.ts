@@ -187,10 +187,15 @@ export class PrismaProcessingJobRepository {
     if (uniqueAssetIds.size !== command.jobs.length) {
       return { kind: "ASSETS_NOT_READY" };
     }
-    for (const assetId of [...uniqueAssetIds].sort()) {
-      const lockKey = createImageAssetLockKey(assetId);
-      await transaction.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`;
-    }
+    // Preserve the cleanup lock protocol and stable ordering in one round trip.
+    const lockKeys = [...uniqueAssetIds].sort().map(createImageAssetLockKey);
+    await transaction.$executeRaw(Prisma.sql`
+      SELECT pg_advisory_xact_lock(hashtextextended(lock_key, 0))
+      FROM (
+        SELECT unnest(ARRAY[${Prisma.join(lockKeys)}]::text[]) AS lock_key
+        ORDER BY lock_key
+      ) AS ordered_locks
+    `);
     const assets = await transaction.imageAsset.findMany({
       where: {
         id: { in: [...uniqueAssetIds] },
@@ -220,30 +225,28 @@ export class PrismaProcessingJobRepository {
     });
     if (claimedVehicle.count !== 1) return { kind: "WRITE_RACE" };
 
-    const jobs: ProcessingJobRecord[] = [];
-    for (const job of command.jobs) {
-      const processingJob = await transaction.processingJob.create({
-        data: {
-          requestId: command.requestId ?? null,
-          userId: command.userId,
-          vehicleId: command.vehicleId,
-          imageAssetId: job.assetId,
-          status: ProcessingJobStatus.CREATED,
-          provider: command.provider,
-          options: toProcessingOptionsJson(command.options),
-          idempotencyKey: job.idempotencyKey,
-          batchIdempotencyKey: command.batchIdempotencyKey,
-          batchLabel: command.batchLabel,
-          batchRequestHash: command.batchRequestHash,
-          displayOrder: job.displayOrder,
-        },
-        select: processingJobSelect,
-      });
-      await transaction.processingOutboxMessage.create({
-        data: { jobId: processingJob.id },
-      });
-      jobs.push(processingJob);
-    }
+    const jobs = await transaction.processingJob.createManyAndReturn({
+      data: command.jobs.map((job) => ({
+        requestId: command.requestId ?? null,
+        userId: command.userId,
+        vehicleId: command.vehicleId,
+        imageAssetId: job.assetId,
+        status: ProcessingJobStatus.CREATED,
+        provider: command.provider,
+        options: toProcessingOptionsJson(command.options),
+        idempotencyKey: job.idempotencyKey,
+        batchIdempotencyKey: command.batchIdempotencyKey,
+        batchLabel: command.batchLabel,
+        batchRequestHash: command.batchRequestHash,
+        displayOrder: job.displayOrder,
+      })),
+      select: processingJobSelect,
+    });
+    // RETURNING does not promise input order; the response and replay must agree.
+    jobs.sort((left, right) => left.displayOrder - right.displayOrder);
+    await transaction.processingOutboxMessage.createMany({
+      data: jobs.map((job) => ({ jobId: job.id })),
+    });
     const usageJob = jobs[0];
     if (!usageJob) throw new Error(MISSING_USAGE_JOB_ERROR);
     await transaction.usageEvent.create({

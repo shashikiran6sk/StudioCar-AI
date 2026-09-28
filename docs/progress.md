@@ -1,6 +1,31 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-09-27
+Last updated: 2026-09-28
+
+## Processing submission latency
+
+- The processing application now reserves durable jobs/outbox rows before
+  scheduling queue publication through Next.js `after`. Queue or invocation
+  lifecycle failures are reported and remain recoverable through the existing
+  authenticated EventBridge dispatcher; they do not turn committed acceptance
+  into an HTTP failure. The response continues to report truthful job states.
+- Reservation acquires the existing ordered asset advisory locks in one query
+  and bulk-creates jobs and outbox rows in the same transaction. Returned jobs
+  are explicitly sorted by display order to preserve response/replay ordering.
+- Processing allowance resolution reads current plan configuration without the
+  billing page's usage/storage aggregates. Subscription and catalog reads run
+  concurrently; the authoritative reservation allowance check remains intact.
+- Regression coverage includes deferred dispatch, publication/lifecycle failure,
+  replay scheduling, plan-only reads, and an ordered 20-image database test.
+- Local verification passed: focused regressions, all unit suites uncached,
+  source mapping, lint, strict types, Prisma schema validation and the normal
+  Turbopack production build. PostgreSQL integration and browser verification
+  require the isolated PostgreSQL service in CI; no production database is
+  used for tests. Published as a draft for those checks and review. Required
+  CI must pass before merge; production latency improvements are not measured.
+- No schema migration or deployment-region change. Other audit findings,
+  including upload concurrency, polling churn and dispatcher throughput, remain
+  separate follow-up work.
 
 ## Leonardo background-removal adapter (PR 1)
 

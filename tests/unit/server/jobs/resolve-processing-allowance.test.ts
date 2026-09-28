@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const getUsageBillingSummary = vi.fn();
+const getCurrentPlan = vi.fn();
 
 vi.mock(
-  "../../../../apps/web/src/server/billing/get-usage-billing-summary",
-  () => ({ getUsageBillingSummary }),
+  "../../../../apps/web/src/server/billing/usage-billing-runtime",
+  () => ({ getUsageBillingService: () => ({ getCurrentPlan }) }),
 );
 
 const { resolveProcessingAllowance } = await import(
@@ -19,17 +19,17 @@ function summary(
   maxImagesPerBatch: number,
 ) {
   return {
-    currentPlan: { allowanceScope, imageCapacity, maxImagesPerBatch },
+    allowanceScope, imageCapacity, maxImagesPerBatch,
   };
 }
 
 afterEach(() => {
-  getUsageBillingSummary.mockReset();
+  getCurrentPlan.mockReset();
 });
 
 describe("resolveProcessingAllowance", () => {
   it("reads the limits from the tenant's resolved plan", async () => {
-    getUsageBillingSummary.mockResolvedValue(summary("LIFETIME", 15, 5));
+    getCurrentPlan.mockResolvedValue(summary("LIFETIME", 15, 5));
 
     await expect(resolveProcessingAllowance("user-1", now)).resolves.toEqual({
       imageCapacity: 15,
@@ -39,7 +39,7 @@ describe("resolveProcessingAllowance", () => {
   });
 
   it("scopes a lifetime allowance to no billing period, so it runs out", async () => {
-    getUsageBillingSummary.mockResolvedValue(summary("LIFETIME", 15, 5));
+    getCurrentPlan.mockResolvedValue(summary("LIFETIME", 15, 5));
 
     await expect(
       resolveProcessingAllowance("user-1", now),
@@ -47,7 +47,7 @@ describe("resolveProcessingAllowance", () => {
   });
 
   it("scopes a billing-period allowance to the current month, so it refills", async () => {
-    getUsageBillingSummary.mockResolvedValue(
+    getCurrentPlan.mockResolvedValue(
       summary("BILLING_PERIOD", 500, 20),
     );
 
@@ -61,10 +61,10 @@ describe("resolveProcessingAllowance", () => {
   });
 
   it("resolves the allowance for the signed-in tenant only", async () => {
-    getUsageBillingSummary.mockResolvedValue(summary("LIFETIME", 15, 5));
+    getCurrentPlan.mockResolvedValue(summary("LIFETIME", 15, 5));
 
     await resolveProcessingAllowance("user-9", now);
 
-    expect(getUsageBillingSummary).toHaveBeenCalledWith("user-9");
+    expect(getCurrentPlan).toHaveBeenCalledWith("user-9", now);
   });
 });

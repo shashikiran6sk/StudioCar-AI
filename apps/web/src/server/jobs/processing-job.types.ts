@@ -18,6 +18,10 @@ export interface ProcessingJobRepositoryPort {
   ): Promise<ReserveProcessingBatchResult>;
 }
 
+export interface ProcessingDispatchSchedulerPort {
+  schedule(request: ProcessingOutboxDispatchRequest): void;
+}
+
 export interface ProcessingDispatchPort {
   dispatch(
     request?: ProcessingOutboxDispatchRequest,
