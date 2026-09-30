@@ -1,5 +1,5 @@
 import {
-  ProcessingOptionsSchema,
+  StoredProcessingOptionsSchema,
   type ExistingVehicleSelectionMode,
   type ProcessingFailureReason,
   type ProcessingOptions,
@@ -49,7 +49,7 @@ function fromBatch(jobs: PortfolioJobRecord[]): StudioSelectionSources | null {
       },
     ];
   });
-  return { options: ProcessingOptionsSchema.parse(first.options), sources };
+  return { options: StoredProcessingOptionsSchema.parse(first.options), sources };
 }
 
 /**

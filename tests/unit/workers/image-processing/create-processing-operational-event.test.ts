@@ -23,7 +23,8 @@ describe("createProcessingOperationalEvent", () => {
           assetId: "asset-1",
           attemptNumber: 1,
           failureKind: null,
-          provider: "REMOVEBG",
+          failureStage: null,
+          provider: "LEONARDO",
           providerLatencyMilliseconds: 850,
           providerRequestId: "provider-request-1",
           userId: "user-1",
@@ -42,7 +43,7 @@ describe("createProcessingOperationalEvent", () => {
         userId: "user-1",
         vehicleId: "vehicle-1",
       },
-      dimensions: { Outcome: "COMPLETED", Provider: "REMOVEBG" },
+      dimensions: { Outcome: "COMPLETED", Provider: "LEONARDO" },
       eventName: "image_processing_message",
       level: "INFO",
       service: "image-processing-worker",
@@ -80,7 +81,8 @@ describe("createProcessingOperationalEvent", () => {
           assetId: "asset-1",
           attemptNumber: 2,
           failureKind: "PROVIDER_429",
-          provider: "REMOVEBG",
+          failureStage: "PROVIDER",
+          provider: "LEONARDO",
           providerLatencyMilliseconds: 100,
           providerRequestId: null,
           userId: "user-1",
@@ -94,10 +96,41 @@ describe("createProcessingOperationalEvent", () => {
     expect(event.metrics).toEqual(
       expect.arrayContaining([
         { name: "ProcessingRetryCount", unit: "Count", value: 1 },
+        { name: "ProcessingProviderFailureCount", unit: "Count", value: 1 },
         { name: "ProviderRateLimitCount", unit: "Count", value: 1 },
       ]),
     );
     expect(JSON.stringify(event)).not.toContain("errorMessage");
+  });
+
+  it.each([
+    ["SOURCE", "ProcessingSourceFailureCount"],
+    ["PROVIDER", "ProcessingProviderFailureCount"],
+    ["COMPOSITION", "ProcessingCompositionFailureCount"],
+    ["STORAGE", "ProcessingStorageFailureCount"],
+  ] as const)("counts a failure at the %s stage under %s", (failureStage, metric) => {
+    const event = createProcessingOperationalEvent({
+      finishedAtMilliseconds: Date.parse("2026-09-21T10:00:01.000Z"),
+      message,
+      queueMessageId: "sqs-message-4",
+      result: {
+        kind: "FAILED",
+        telemetry: {
+          assetId: "asset-1",
+          attemptNumber: 1,
+          failureKind: "INTERNAL",
+          failureStage,
+          provider: "LEONARDO",
+          providerLatencyMilliseconds: null,
+          providerRequestId: null,
+          userId: "user-1",
+          vehicleId: "vehicle-1",
+        },
+      },
+      startedAtMilliseconds: Date.parse("2026-09-21T10:00:00.000Z"),
+    });
+    expect(event.metrics).toContainEqual({ name: metric, unit: "Count", value: 1 });
+    expect(event.metrics.filter(({ name }) => name.endsWith("FailureCount") && name.startsWith("Processing") && name !== "ProcessingTerminalFailureCount")).toHaveLength(1);
   });
 
   it("records the class of an unexpected failure alongside the retry", () => {

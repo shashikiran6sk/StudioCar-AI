@@ -6,7 +6,7 @@ import { canonicalProcessingOptions } from "../../../packages/processing/src/can
 describe("canonicalProcessingOptions", () => {
   it("orders keys the same way whatever order they were supplied in", () => {
     const options = ProcessingOptionsSchema.parse({
-      shadow: "STUDIO",
+      quality: 95,
       background: "DARK_STUDIO",
       floor: "PLAIN",
     });
@@ -16,11 +16,8 @@ describe("canonicalProcessingOptions", () => {
       "crop",
       "enhancement",
       "floor",
-      "outputFormat",
       "paddingPercent",
-      "platePrivacy",
       "quality",
-      "shadow",
     ]);
     expect(canonicalProcessingOptions(options)).toEqual(options);
   });

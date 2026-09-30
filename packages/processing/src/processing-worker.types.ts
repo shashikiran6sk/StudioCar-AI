@@ -1,6 +1,17 @@
 import type { ProcessingOptions } from "@studiocar/contracts";
 
-export type ProcessingProviderKey = "REMOVEBG" | "LEONARDO" | "FAL" | "BIREFNET";
+/**
+ * The provider that executes processing. Historical jobs may name providers
+ * that no longer exist; those values stay in PostgreSQL as history and are
+ * never executed again.
+ */
+export type ProcessingProviderKey = "LEONARDO";
+
+/**
+ * The output resolution a job is processed at, decided by the account's plan.
+ * Provider adapters translate it into their own size parameter.
+ */
+export type ProcessingQualityTier = "STANDARD" | "HIGH";
 
 export interface ClaimedProcessingJob {
   attemptNumber: number;
@@ -10,8 +21,12 @@ export interface ClaimedProcessingJob {
   mimeType: string;
   options: ProcessingOptions;
   originalObjectKey: string;
-  provider: ProcessingProviderKey;
   sizeBytes: bigint;
+  /**
+   * The plan key of the owner's current subscription, read in the claim
+   * transaction, or null without one. Resolution is derived from it.
+   */
+  subscriptionPlanKey: string | null;
   userId: string;
   vehicleId: string;
 }
@@ -36,6 +51,8 @@ export interface ClaimProcessingJobInput {
   claimExpiresAt: Date;
   jobId: string;
   now: Date;
+  /** The provider this attempt runs on, recorded on the attempt row. */
+  provider: ProcessingProviderKey;
   workerId: string;
 }
 
@@ -44,7 +61,7 @@ export interface ProcessingOutput {
   height: number;
   mimeType: string;
   objectKey: string;
-  outputFormat: "JPEG" | "PNG" | "WEBP";
+  outputFormat: "WEBP";
   previewObjectKey: string;
   sizeBytes: bigint;
   width: number;
@@ -95,6 +112,7 @@ export interface ProcessingWorkerRepositoryPort {
 
 export type ProcessingFailureKind =
   | "AUTHORIZATION"
+  | "CONTENT_BLOCKED"
   | "INTERNAL"
   | "INVALID_IMAGE"
   | "INVALID_REQUEST"
@@ -106,12 +124,28 @@ export type ProcessingFailureKind =
   | "TIMEOUT"
   | "UNSUPPORTED_FORMAT";
 
+/** Where in the pipeline a failure happened, for operational metrics. */
+export type ProcessingFailureStage =
+  | "SOURCE"
+  | "PROVIDER"
+  | "COMPOSITION"
+  | "STORAGE";
+
 export interface ProcessingExecutionFailure {
   errorMessage: string;
   kind: ProcessingFailureKind;
   providerLatencyMilliseconds: number | null;
   providerRequestId: string | null;
+  /**
+   * How long the provider asked callers to wait, when it said. The durable
+   * retry never runs sooner than this, within the configured maximum.
+   */
+  retryAfterMilliseconds: number | null;
+  stage: ProcessingFailureStage;
 }
+
+/** A provider's failure, before the executor records its pipeline stage. */
+export type ProviderFailure = Omit<ProcessingExecutionFailure, "stage">;
 
 export type ProcessingExecutionResult =
   | {
@@ -123,6 +157,8 @@ export type ProcessingExecutionResult =
   | { ok: false; failure: ProcessingExecutionFailure };
 
 export interface ProcessingJobExecutorPort {
+  /** The provider every job this executor runs is processed by. */
+  readonly providerKey: ProcessingProviderKey;
   execute(job: ClaimedProcessingJob): Promise<ProcessingExecutionResult>;
 }
 
@@ -136,6 +172,7 @@ export interface ProcessingWorkerTelemetry {
   assetId: string;
   attemptNumber: number;
   failureKind: ProcessingFailureKind | null;
+  failureStage: ProcessingFailureStage | null;
   provider: ProcessingProviderKey;
   providerLatencyMilliseconds: number | null;
   providerRequestId: string | null;

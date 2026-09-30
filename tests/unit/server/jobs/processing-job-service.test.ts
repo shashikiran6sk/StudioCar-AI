@@ -16,11 +16,8 @@ const OPTIONS = {
   floor: "HORIZON",
   crop: "MAINTAIN_COMPOSITION",
   enhancement: true,
-  outputFormat: "JPEG",
   paddingPercent: 8,
-  platePrivacy: true,
   quality: 90,
-  shadow: "NATURAL",
 } satisfies Parameters<ProcessingJobService["createBatch"]>[2]["options"];
 
 /**
@@ -56,7 +53,7 @@ describe("ProcessingJobService", () => {
             vehicleId: VEHICLE_ID,
             imageAssetId: ASSET_ID,
             status: "CREATED",
-            provider: "REMOVEBG",
+            provider: "LEONARDO",
             options: {},
             idempotencyKey: "job-key",
             batchIdempotencyKey: "processing-request-0001",
@@ -74,7 +71,7 @@ describe("ProcessingJobService", () => {
     const service = new ProcessingJobService(
       repository,
       dispatcher,
-      ProcessingProvider.REMOVEBG,
+      ProcessingProvider.LEONARDO,
       allowanceResolver(),
       () => NOW,
     );
@@ -111,7 +108,7 @@ describe("ProcessingJobService", () => {
     const service = new ProcessingJobService(
       repository,
       dispatcher,
-      ProcessingProvider.REMOVEBG,
+      ProcessingProvider.LEONARDO,
       allowanceResolver(),
     );
 
@@ -138,7 +135,7 @@ describe("ProcessingJobService plan limits", () => {
     const service = new ProcessingJobService(
       repository,
       dispatcher,
-      ProcessingProvider.REMOVEBG,
+      ProcessingProvider.LEONARDO,
       allowanceResolver({ maxImagesPerBatch: 5 }),
       () => NOW,
     );
@@ -169,7 +166,7 @@ describe("ProcessingJobService plan limits", () => {
     const service = new ProcessingJobService(
       repository,
       dispatcher,
-      ProcessingProvider.REMOVEBG,
+      ProcessingProvider.LEONARDO,
       allowanceResolver({ imageCapacity: 15 }),
       () => NOW,
     );
@@ -203,7 +200,7 @@ describe("ProcessingJobService plan limits", () => {
     const service = new ProcessingJobService(
       repository,
       { schedule: vi.fn() },
-      ProcessingProvider.REMOVEBG,
+      ProcessingProvider.LEONARDO,
       allowances,
       () => NOW,
     );
@@ -234,7 +231,7 @@ describe("ProcessingJobService plan limits", () => {
     const service = new ProcessingJobService(
       repository,
       { schedule: vi.fn() },
-      ProcessingProvider.REMOVEBG,
+      ProcessingProvider.LEONARDO,
       allowanceResolver(),
       () => NOW,
     );

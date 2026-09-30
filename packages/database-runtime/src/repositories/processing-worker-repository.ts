@@ -1,4 +1,4 @@
-import { ProcessingOptionsSchema } from "@studiocar/contracts";
+import { StoredProcessingOptionsSchema } from "@studiocar/contracts";
 import {
   PROCESSING_FAILURE_CODES,
   USER_ATTENTION_JOB_STATES,
@@ -19,6 +19,7 @@ import {
   UsageEventType,
   VehicleStatus,
 } from "../../generated/prisma/client";
+import { findCurrentSubscriptionPlanKey } from "./find-current-subscription-plan-key";
 import { toOutputFormat } from "./to-output-format";
 
 const VEHICLE_COMPLETION_LOCK_PREFIX = "vehicle-processing-completion:";
@@ -29,7 +30,6 @@ const claimableJobSelect = {
   vehicleId: true,
   imageAssetId: true,
   status: true,
-  provider: true,
   options: true,
   attemptCount: true,
   maxAttempts: true,
@@ -186,15 +186,22 @@ export class PrismaProcessingWorkerRepository
       }
 
       const attemptNumber = job.attemptCount + 1;
+      // The attempt records the provider that actually runs it: a job reserved
+      // before a provider change is executed, and billed, by the current one.
       await transaction.processingAttempt.create({
         data: {
           attemptNumber,
           jobId: job.id,
-          provider: job.provider,
+          provider: input.provider,
           startedAt: input.now,
           status: ProcessingAttemptStatus.STARTED,
         },
       });
+      const subscriptionPlanKey = await findCurrentSubscriptionPlanKey(
+        transaction,
+        job.userId,
+        input.now,
+      );
 
       return {
         kind: "CLAIMED",
@@ -204,10 +211,10 @@ export class PrismaProcessingWorkerRepository
           id: job.id,
           imageAssetId: job.imageAssetId,
           mimeType: job.imageAsset.mimeType,
-          options: ProcessingOptionsSchema.parse(job.options),
+          options: StoredProcessingOptionsSchema.parse(job.options),
           originalObjectKey: job.imageAsset.originalObjectKey,
-          provider: job.provider,
           sizeBytes: job.imageAsset.sizeBytes,
+          subscriptionPlanKey,
           userId: job.userId,
           vehicleId: job.vehicleId,
         },

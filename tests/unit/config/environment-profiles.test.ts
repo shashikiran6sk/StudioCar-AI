@@ -6,11 +6,10 @@ import {
 } from "../../../packages/config/src/environment-profiles";
 
 describe("environment profiles", () => {
-  it("runs Local entirely on the developer's machine except remove.bg", () => {
+  it("runs Local entirely on the developer's machine except Leonardo", () => {
     expect(getEnvironmentProfile("local")).toMatchObject({
       googleAuthDriver: { default: "fake" },
       phoneOtpDriver: { default: "fake" },
-      backgroundRemovalProvider: { default: "removebg" },
       storage: "local-emulator",
       processingQueue: { default: "local-emulator", allowed: ["local-emulator"] },
       workerRuntime: "local",
@@ -21,7 +20,6 @@ describe("environment profiles", () => {
     expect(getEnvironmentProfile("development")).toMatchObject({
       googleAuthDriver: { default: "google", allowed: ["google"] },
       phoneOtpDriver: { default: "msg91", allowed: ["msg91"] },
-      backgroundRemovalProvider: { default: "removebg" },
       storage: "aws-s3",
       processingQueue: { default: "aws-sqs", allowed: ["aws-sqs"] },
       workerRuntime: "local",
@@ -32,10 +30,6 @@ describe("environment profiles", () => {
     expect(getEnvironmentProfile("production")).toEqual({
       googleAuthDriver: { default: "google", allowed: ["google"] },
       phoneOtpDriver: { default: "msg91", allowed: ["msg91"] },
-      backgroundRemovalProvider: {
-        default: "removebg",
-        allowed: ["removebg", "leonardo", "fal", "birefnet"],
-      },
       storage: "aws-s3",
       processingQueue: { default: "aws-sqs", allowed: ["aws-sqs"] },
       workerRuntime: "deployed",
@@ -56,7 +50,6 @@ describe("environment profiles", () => {
       for (const selection of [
         profile.googleAuthDriver,
         profile.phoneOtpDriver,
-        profile.backgroundRemovalProvider,
         profile.processingQueue,
       ]) {
         expect(selection.allowed).toContain(selection.default);

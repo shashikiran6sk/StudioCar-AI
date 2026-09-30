@@ -45,7 +45,7 @@ export const LOCAL_CONSUMER_PARSERS: readonly [string, Parser][] = [
 /** Everything a Local developer writes down: the environment and one key. */
 export const LOCAL_ENVIRONMENT = {
   APP_ENV: "local",
-  REMOVEBG_API_KEY: "remove-bg-key",
+  LEONARDO_API_KEY: "leonardo-key",
 } satisfies EnvironmentValues;
 
 /** A complete Development configuration with placeholder credentials. */
@@ -64,7 +64,7 @@ export const DEVELOPMENT_ENVIRONMENT = {
   S3_BUCKET: "studiocar-dev-images",
   SQS_IMAGE_QUEUE_URL:
     "https://sqs.ap-south-1.amazonaws.com/123456789012/studiocar-dev-image-processing",
-  REMOVEBG_API_KEY: "remove-bg-key",
+  LEONARDO_API_KEY: "leonardo-key",
 } satisfies EnvironmentValues;
 
 /** A complete production configuration with placeholder credentials. */
@@ -83,7 +83,7 @@ export const PRODUCTION_ENVIRONMENT = {
   S3_BUCKET: "studiocar-prod-images",
   SQS_IMAGE_QUEUE_URL:
     "https://sqs.ap-south-1.amazonaws.com/123456789012/studiocar-image-processing",
-  REMOVEBG_API_KEY: "remove-bg-key",
+  LEONARDO_API_KEY: "leonardo-key",
   PROCESSING_DISPATCH_TOKEN: "production-processing-dispatch-token-000000",
   LIFECYCLE_CLEANUP_TOKEN: "production-lifecycle-cleanup-token-000000",
   STORAGE_CLEANUP_TOKEN: "production-storage-cleanup-token-00000000",

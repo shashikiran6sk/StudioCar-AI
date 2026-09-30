@@ -6,12 +6,12 @@ describe("applyEnvironmentProfile", () => {
   it("fills Local defaults under the configured values", () => {
     const resolved = applyEnvironmentProfile({
       APP_ENV: "local",
-      REMOVEBG_API_KEY: "remove-bg-key",
+      LEONARDO_API_KEY: "leonardo-key",
     });
 
     expect(resolved).toMatchObject({
       APP_ENV: "local",
-      REMOVEBG_API_KEY: "remove-bg-key",
+      LEONARDO_API_KEY: "leonardo-key",
       S3_ENDPOINT: "http://localhost:9000",
       PHONE_OTP_DRIVER: "fake",
     });

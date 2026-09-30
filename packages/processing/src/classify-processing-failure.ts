@@ -15,6 +15,7 @@ export function classifyProcessingFailure(
       return { errorCode: PROCESSING_FAILURE_CODES[kind], retryable: true };
     case "PAYMENT_REQUIRED":
     case "AUTHORIZATION":
+    case "CONTENT_BLOCKED":
     case "INTERNAL":
     case "INVALID_IMAGE":
     case "INVALID_REQUEST":

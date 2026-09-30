@@ -5,8 +5,7 @@ import { getProfileDefaults } from "../../../packages/config/src/profile-default
 
 /** Credentials of real external services; no profile may ever supply one. */
 const EXTERNAL_CREDENTIALS = [
-  "REMOVEBG_API_KEY",
-  "FAL_KEY",
+  "LEONARDO_API_KEY",
   "GOOGLE_CLIENT_ID",
   "GOOGLE_CLIENT_SECRET",
   "MSG91_AUTH_KEY",
@@ -48,7 +47,6 @@ describe("getProfileDefaults", () => {
     expect(flatten("local")).toMatchObject({
       GOOGLE_AUTH_DRIVER: "fake",
       PHONE_OTP_DRIVER: "fake",
-      BACKGROUND_REMOVAL_PROVIDER: "removebg",
       DATABASE_URL: "postgresql://studiocar:studiocar@localhost:5432/studiocar",
       S3_ENDPOINT: "http://localhost:9000",
       S3_BUCKET: "studiocar-local",
@@ -84,7 +82,6 @@ describe("getProfileDefaults", () => {
     expect(flatten("production")).toEqual({
       GOOGLE_AUTH_DRIVER: "google",
       PHONE_OTP_DRIVER: "msg91",
-      BACKGROUND_REMOVAL_PROVIDER: "removebg",
     });
   });
 

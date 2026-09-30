@@ -63,7 +63,6 @@ function driverDefaults(profile: EnvironmentProfile): EnvironmentDefaults {
   return {
     GOOGLE_AUTH_DRIVER: profile.googleAuthDriver.default,
     PHONE_OTP_DRIVER: profile.phoneOtpDriver.default,
-    BACKGROUND_REMOVAL_PROVIDER: profile.backgroundRemovalProvider.default,
   };
 }
 
@@ -91,7 +90,7 @@ function queuesAreLocal(profile: EnvironmentProfile): boolean {
  * Every value an environment supplies when the settings file leaves it out.
  *
  * Only repository-owned infrastructure is ever defaulted. External credentials
- * (remove.bg, Google, MSG91, AWS), a Development session secret, and
+ * (Leonardo, Google, MSG91, AWS), a Development session secret, and
  * anything a deployment owns have no default in any environment.
  */
 export function getProfileDefaults(

@@ -4,7 +4,7 @@ import { ApplicationErrorCode } from "../../../packages/observability/src/monito
 it("keeps the original error as cause without including its message", () => {
   const cause = new Error("private provider details");
   const error = new ApplicationError(
-    ApplicationErrorCode.REMOVE_BG_FAILED,
+    ApplicationErrorCode.IMAGE_PROCESSING_FAILED,
     cause,
   );
   expect(error.cause).toBe(cause);

@@ -1,3 +1,8 @@
+import type {
+  ProcessingFailureKind,
+  ProcessingProviderKey,
+} from "./processing-worker.types";
+
 export const PROCESSING_WORKER_MINIMUM_DURATION_MS = 100;
 export const PROCESSING_WORKER_MAXIMUM_DURATION_MS = 3_600_000;
 /**
@@ -13,8 +18,12 @@ export const PROCESSING_ERROR_MESSAGE_MAX_LENGTH = 1_000;
 export const PROCESSING_ERROR_MESSAGE_FALLBACK =
   "Image processing failed without a provider message.";
 
+/** The provider every new job is processed by. */
+export const ACTIVE_PROCESSING_PROVIDER = "LEONARDO" satisfies ProcessingProviderKey;
+
 export const PROCESSING_FAILURE_CODES = {
   AUTHORIZATION: "PROVIDER_AUTHORIZATION_FAILED",
+  CONTENT_BLOCKED: "PROVIDER_CONTENT_BLOCKED",
   INTERNAL: "PROCESSING_INTERNAL_ERROR",
   INVALID_IMAGE: "INVALID_IMAGE",
   INVALID_REQUEST: "PROVIDER_INVALID_REQUEST",
@@ -25,4 +34,4 @@ export const PROCESSING_FAILURE_CODES = {
   PROVIDER_5XX: "PROVIDER_UNAVAILABLE",
   TIMEOUT: "PROVIDER_TIMEOUT",
   UNSUPPORTED_FORMAT: "UNSUPPORTED_IMAGE_FORMAT",
-} satisfies Record<string, string>;
+} satisfies Record<ProcessingFailureKind, string>;

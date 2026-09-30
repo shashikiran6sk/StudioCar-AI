@@ -6,7 +6,7 @@ import {
 import { describe, expect, it, vi } from "vitest";
 
 import { createProcessingOptionsKey } from "../../../../packages/processing/src/create-processing-options-key";
-import { ProcessingOptionsSchema } from "../../../../packages/contracts/src/processing";
+import { StoredProcessingOptionsSchema } from "../../../../packages/contracts/src/processing";
 import { PortfolioService } from "../../../../apps/web/src/server/portfolio/portfolio-service";
 import {
   DARK_OPTIONS,
@@ -17,8 +17,8 @@ import {
   portfolioRecord,
 } from "./portfolio-record-test-data";
 
-const WHITE_KEY = createProcessingOptionsKey(ProcessingOptionsSchema.parse(WHITE_OPTIONS));
-const DARK_KEY = createProcessingOptionsKey(ProcessingOptionsSchema.parse(DARK_OPTIONS));
+const WHITE_KEY = createProcessingOptionsKey(StoredProcessingOptionsSchema.parse(WHITE_OPTIONS));
+const DARK_KEY = createProcessingOptionsKey(StoredProcessingOptionsSchema.parse(DARK_OPTIONS));
 const DAY_ONE = new Date("2026-09-19T10:00:00.000Z");
 const DAY_TWO = new Date("2026-09-20T10:00:00.000Z");
 const DAY_THREE = new Date("2026-09-21T10:00:00.000Z");

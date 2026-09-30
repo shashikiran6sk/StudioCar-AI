@@ -56,13 +56,13 @@ describe("structured logger", () => {
 
 it("logs the actionable credit failure without arbitrary provider messages", () => {
   const write = vi.fn();
-  new StructuredLogger({ write }).log("error", "remove_bg_failed", {
+  new StructuredLogger({ write }).log("error", "provider_request_failed", {
     statusCode: 402,
-    errorCode: "REMOVE_BG_PAYMENT_REQUIRED",
+    errorCode: "PROVIDER_PAYMENT_REQUIRED",
     errorMessage: "secret key=credential",
   });
   expect(write.mock.calls[0]?.[0]).toContain(
-    "remove.bg has insufficient credits (HTTP 402 Payment Required).",
+    "The background-removal provider has insufficient credits.",
   );
   expect(write.mock.calls[0]?.[0]).not.toContain("credential");
 });
@@ -91,4 +91,22 @@ it("logs reported provider cost and dimensions through the safe field allowlist"
     cost: { amount: "secret", unit: "DOLLARS" },
   });
   expect(write.mock.calls[1]?.[0]).not.toContain("secret");
+});
+
+it("can never write a presigned URL, API key or bearer token", () => {
+  const write = vi.fn();
+  const signed =
+    "https://bucket.s3.amazonaws.com/users/u/source.jpg?X-Amz-Signature=abc&X-Amz-Credential=AKIA";
+  new StructuredLogger({ write }).log("error", "provider_request_failed", {
+    provider: signed,
+    providerGenerationId: "Bearer secret-api-key",
+    outcome: signed,
+    errorMessage: signed,
+    error: new Error(`fetch ${signed} failed`),
+  });
+  const line = String(write.mock.calls[0]?.[0]);
+  expect(line).not.toContain("X-Amz-Signature");
+  expect(line).not.toContain("AKIA");
+  expect(line).not.toContain("secret-api-key");
+  expect(line).not.toContain("s3.amazonaws.com");
 });

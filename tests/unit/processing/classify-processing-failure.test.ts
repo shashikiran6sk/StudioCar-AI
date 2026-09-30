@@ -12,6 +12,7 @@ const retryableFailures: ProcessingFailureKind[] = [
 
 const terminalFailures: ProcessingFailureKind[] = [
   "AUTHORIZATION",
+  "CONTENT_BLOCKED",
   "PAYMENT_REQUIRED",
   "INTERNAL",
   "INVALID_IMAGE",

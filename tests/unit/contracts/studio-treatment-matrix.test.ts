@@ -18,35 +18,38 @@ const ASSET_ID = "5cc8fb90-d018-4569-a897-9bbfd3346839";
 describe("studio treatment matrix", () => {
   const cases = createTreatmentMatrix();
 
-  it("generates exactly 96 uniquely identified cases", () => {
+  it("generates exactly 36 uniquely identified cases", () => {
     expect(cases).toHaveLength(TREATMENT_MATRIX_SIZE);
     expect(new Set(cases.map((testCase) => testCase.id)).size).toBe(
       TREATMENT_MATRIX_SIZE,
     );
     expect(cases[0]?.id).toBe("T01-S01");
-    expect(cases.at(-1)?.id).toBe("T16-S06");
+    expect(cases.at(-1)?.id).toBe("T06-S06");
   });
 
-  it("covers every one of the 16 switch combinations once", () => {
+  it("covers every switch combination the Customize step can produce once", () => {
     const combinations = TOGGLE_CONFIGURATIONS.map(({ toggles }) =>
       [
-        toggles.platePrivacy,
         toggles.enhancement,
         toggles.studioBackground,
         toggles.maintainComposition,
       ].join(),
     );
-    expect(new Set(combinations).size).toBe(16);
+    expect(new Set(combinations).size).toBe(6);
+    // Without a studio background the photo keeps its frame.
+    expect(
+      TOGGLE_CONFIGURATIONS.filter(
+        ({ toggles }) => !toggles.studioBackground && !toggles.maintainComposition,
+      ),
+    ).toEqual([]);
     expect(TOGGLE_CONFIGURATIONS.find(({ id }) => id === "T02")?.toggles).toEqual({
-      enhancement: true,
+      enhancement: false,
       maintainComposition: true,
-      platePrivacy: false,
       studioBackground: true,
     });
-    expect(TOGGLE_CONFIGURATIONS.find(({ id }) => id === "T16")?.toggles).toEqual({
+    expect(TOGGLE_CONFIGURATIONS.find(({ id }) => id === "T06")?.toggles).toEqual({
       enhancement: false,
-      maintainComposition: false,
-      platePrivacy: false,
+      maintainComposition: true,
       studioBackground: false,
     });
   });
@@ -66,7 +69,7 @@ describe("studio treatment matrix", () => {
 
   it("describes each case in a label the batch contract accepts", () => {
     expect(cases.find(({ id }) => id === "T02-S04")?.label).toBe(
-      "T02-S04 | Plate OFF | Enhance ON | Studio ON | Composition ON | Dark Studio | Standard Floor",
+      "T02-S04 | Enhance OFF | Studio ON | Composition ON | Dark Studio | Standard Floor",
     );
     for (const testCase of cases) {
       expect(testCase.label.length).toBeLessThanOrEqual(
@@ -86,7 +89,6 @@ describe("studio treatment matrix", () => {
   it("maps every switch to the stored option the worker reads", () => {
     for (const { options, studio, toggles } of cases) {
       expect(ProcessingOptionsSchema.parse(options)).toEqual(options);
-      expect(options.platePrivacy).toBe(toggles.platePrivacy);
       expect(options.enhancement).toBe(toggles.enhancement);
       expect(options.crop).toBe(
         toggles.maintainComposition ? "MAINTAIN_COMPOSITION" : "FIT_VEHICLE",

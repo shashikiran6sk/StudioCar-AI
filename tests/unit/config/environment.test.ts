@@ -29,34 +29,20 @@ const validEnvironment = {
   AWS_REGION: "ap-south-1",
   S3_BUCKET: "studiocar-assets-test",
   SQS_IMAGE_QUEUE_URL: "https://sqs.ap-south-1.amazonaws.com/123/images",
-  BACKGROUND_REMOVAL_PROVIDER: "removebg",
   PROCESSING_DISPATCH_TOKEN: "processing-dispatch-token-at-least-32-characters",
   LIFECYCLE_CLEANUP_TOKEN: "lifecycle-cleanup-token-at-least-32-characters",
   STORAGE_CLEANUP_TOKEN: "storage-cleanup-token-at-least-32-characters",
-  REMOVEBG_API_KEY: "remove-bg-key",
+  LEONARDO_API_KEY: "leonardo-key",
 } satisfies Record<string, string>;
 
 describe("environment validation", () => {
-  it.each([
-    ["fal", "FAL_KEY"],
-    ["leonardo", "LEONARDO_API_KEY"],
-    ["birefnet", "SELF_HOSTED_BIREFNET_ENDPOINT"],
-  ])("requires the configured %s provider credential", (provider, key) => {
-    const result = (() => {
-      try {
-        parseImageWorkerEnvironment({
-          ...validEnvironment,
-          BACKGROUND_REMOVAL_PROVIDER: provider,
-          REMOVEBG_API_KEY: undefined,
-        });
-        return undefined;
-      } catch (error) {
-        return error;
-      }
-    })();
-
-    expect(result).toBeDefined();
-    expect(String(result)).toContain(key);
+  it("requires the Leonardo credential for the image worker", () => {
+    expect(() =>
+      parseImageWorkerEnvironment({
+        ...validEnvironment,
+        LEONARDO_API_KEY: undefined,
+      }),
+    ).toThrow(/LEONARDO_API_KEY/);
   });
 
   it("exposes only explicitly public client values", () => {
@@ -185,7 +171,6 @@ describe("environment validation", () => {
       DATABASE_URL: validEnvironment.DATABASE_URL,
       AWS_REGION: validEnvironment.AWS_REGION,
       SQS_IMAGE_QUEUE_URL: validEnvironment.SQS_IMAGE_QUEUE_URL,
-      BACKGROUND_REMOVAL_PROVIDER: "removebg",
       PROCESSING_DISPATCH_TOKEN: validEnvironment.PROCESSING_DISPATCH_TOKEN,
       PROCESSING_BATCH_RATE_LIMIT_WINDOW_SECONDS: 60,
       PROCESSING_BATCH_MAX_PER_WINDOW: 20,
@@ -198,7 +183,7 @@ describe("environment validation", () => {
 
   it("keeps provider secrets out of web control-plane parsers", () => {
     expect(parseProcessingEnvironment(validEnvironment)).not.toHaveProperty(
-      "REMOVEBG_API_KEY",
+      "LEONARDO_API_KEY",
     );
     expect(parseUploadEnvironment(validEnvironment)).not.toHaveProperty(
       "SESSION_SECRET",
@@ -212,13 +197,11 @@ describe("environment validation", () => {
       AWS_REGION: validEnvironment.AWS_REGION,
       S3_BUCKET: validEnvironment.S3_BUCKET,
       S3_FORCE_PATH_STYLE: false,
-      BACKGROUND_REMOVAL_PROVIDER: "removebg",
-      REMOVEBG_API_KEY: validEnvironment.REMOVEBG_API_KEY,
-      IMAGE_WORKER_CLAIM_TTL_MS: 120_000,
+      LEONARDO_API_KEY: validEnvironment.LEONARDO_API_KEY,
+      LEONARDO_TIMEOUT_MS: 90_000,
+      IMAGE_WORKER_CLAIM_TTL_MS: 180_000,
       PROCESSING_RETRY_BASE_MS: 5_000,
       PROCESSING_RETRY_MAX_MS: 300_000,
-      REMOVEBG_TIMEOUT_MS: 60_000,
-      LEONARDO_TIMEOUT_MS: 60_000,
       MAX_PROVIDER_INPUT_BYTES: 22 * 1024 * 1024,
       MAX_PROVIDER_OUTPUT_BYTES: 100 * 1024 * 1024,
       MAX_WORKER_IMAGE_PIXELS: 50_000_000,

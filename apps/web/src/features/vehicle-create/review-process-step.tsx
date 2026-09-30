@@ -27,7 +27,6 @@ import {
   REVIEW_ENHANCEMENT_LABEL,
   REVIEW_ESTIMATED_USAGE_LABEL,
   REVIEW_IMAGE_LABEL,
-  REVIEW_PLATE_PRIVACY_LABEL,
   REVIEW_PRESERVATION_NOTE,
   REVIEW_PROCESS_ERROR,
   REVIEW_PROCESS_LABEL,
@@ -114,14 +113,6 @@ export function ReviewProcessStep({
             <div>
               <dt>{REVIEW_IMAGE_LABEL}</dt>
               <dd>{formatPhotoCount(selectedPhotos.length)}</dd>
-            </div>
-            <div>
-              <dt>{REVIEW_PLATE_PRIVACY_LABEL}</dt>
-              <dd>
-                {options.platePrivacy
-                  ? REVIEW_ENABLED_LABEL
-                  : REVIEW_DISABLED_LABEL}
-              </dd>
             </div>
             <div>
               <dt>{REVIEW_BACKGROUND_LABEL}</dt>

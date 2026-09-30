@@ -44,7 +44,6 @@ describe("useVehicleCreateStore", () => {
       options: {
         background: "PREMIUM_WHITE",
         enhancement: true,
-        platePrivacy: true,
       },
       step: VehicleCreateStep.Details,
       vehicleId: null,
