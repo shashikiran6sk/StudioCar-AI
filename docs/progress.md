@@ -4,6 +4,13 @@ Last updated: 2026-10-01
 
 ## Leonardo.Ai becomes the only image-processing provider
 
+- Security: upgraded `next` and `eslint-config-next` from 16.3.5 to 16.3.6.
+  This fixes critical advisory GHSA-vcvr-r3jv-pc5j (remote code execution in
+  `next/og` `ImageResponse`), published while this PR was open; the CI
+  production-dependency audit failed on it, and so would `main`. Only Next.js
+  package versions changed in the lockfile. Lint, types, all unit tests, the
+  production build and e2e (14/14) pass on 16.3.6, and the audit reports no
+  known vulnerabilities.
 - **Audit first.** The full audit is in
   `docs/audits/2026-09-30-leonardo-migration-audit.md`. It covers:
   - providers, the processing lifecycle and polling history (#80, #85);
