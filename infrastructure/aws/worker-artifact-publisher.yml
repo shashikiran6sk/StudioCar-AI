@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  StudioCar AI GitHub Actions role that publishes reviewed image-worker
+  Lambda archives to the private artifact bucket after a merge to main
+
+Parameters:
+  GitHubRepository:
+    Type: String
+    Default: shashikiran6sk/StudioCar-AI
+    AllowedPattern: ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$
+    Description: owner/repository allowed to assume the role
+  PublishBranch:
+    Type: String
+    Default: main
+    AllowedPattern: ^[A-Za-z0-9._/-]+$
+    Description: The only branch whose workflow runs may publish archives
+  ArtifactBucket:
+    Type: String
+    AllowedPattern: ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$
+    Description: Private S3 bucket the worker stack reads its ArtifactKey from
+  ArtifactPrefix:
+    Type: String
+    Default: image-processing-worker
+    AllowedPattern: ^[a-z0-9][a-z0-9/-]*[a-z0-9]$
+    Description: Key prefix for worker archives, without a trailing slash
+  GitHubOidcProviderArn:
+    Type: String
+    Default: ""
+    Description: >-
+      Existing token.actions.githubusercontent.com OIDC provider ARN. An account
+      can hold only one; leave empty to create it with this stack.
+  ArtifactKmsKeyArn:
+    Type: String
+    Default: ""
+    Description: Optional customer-managed KMS key that encrypts the artifact bucket
+
+Conditions:
+  CreateOidcProvider: !Equals [!Ref GitHubOidcProviderArn, ""]
+  UsesKmsKey: !Not [!Equals [!Ref ArtifactKmsKeyArn, ""]]
+
+Resources:
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Condition: CreateOidcProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+
+  WorkerArtifactPublisherRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: Publishes immutable image-worker Lambda archives from GitHub Actions
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: GitHubActionsOnPublishBranch
+            Effect: Allow
+            Principal:
+              Federated: !If
+                - CreateOidcProvider
+                - !Ref GitHubOidcProvider
+                - !Ref GitHubOidcProviderArn
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                "token.actions.githubusercontent.com:aud": sts.amazonaws.com
+                "token.actions.githubusercontent.com:sub": !Sub repo:${GitHubRepository}:ref:refs/heads/${PublishBranch}
+      Policies:
+        - PolicyName: PublishWorkerArchives
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: WriteAndVerifyWorkerArchives
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                Resource: !Sub arn:${AWS::Partition}:s3:::${ArtifactBucket}/${ArtifactPrefix}/*
+              # Archives are immutable: a write must be conditional on the key
+              # not existing yet, so a published archive is never replaced.
+              - Sid: NeverReplaceAnArchive
+                Effect: Deny
+                Action: s3:PutObject
+                Resource: !Sub arn:${AWS::Partition}:s3:::${ArtifactBucket}/${ArtifactPrefix}/*
+                Condition:
+                  "Null":
+                    "s3:if-none-match": "true"
+              - !If
+                - UsesKmsKey
+                - Sid: EncryptWorkerArchives
+                  Effect: Allow
+                  Action:
+                    - kms:GenerateDataKey
+                    - kms:Decrypt
+                  Resource: !Ref ArtifactKmsKeyArn
+                - !Ref AWS::NoValue
+
+Outputs:
+  WorkerArtifactPublisherRoleArn:
+    Description: Set as the WORKER_ARTIFACT_ROLE_ARN repository variable
+    Value: !GetAtt WorkerArtifactPublisherRole.Arn
+  WorkerArtifactLocation:
+    Description: Where merged commits publish their archives
+    Value: !Sub s3://${ArtifactBucket}/${ArtifactPrefix}/<short-commit-sha>.zip
