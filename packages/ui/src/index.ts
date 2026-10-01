@@ -7,6 +7,7 @@ export * from "./dialog";
 export * from "./filter-chip";
 export * from "./input";
 export * from "./progress";
+export * from "./sheet";
 export * from "./skeleton";
 export * from "./state-panel";
 export * from "./status-badge";

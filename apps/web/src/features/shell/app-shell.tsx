@@ -5,6 +5,7 @@ import { AccountMenu } from "./account-menu";
 import { BrandHomeLink } from "./brand-home-link";
 import { AppNavigation } from "./app-navigation";
 import { WORKSPACE_LABEL } from "./app-shell.constants";
+import { MobileNavigation } from "./mobile-navigation";
 import { FALLBACK_PLAN_LIMITS, PlanLimitsProvider } from "./plan-limits-context";
 import { SidebarPlanSummary } from "./sidebar-plan-summary";
 import type { PlanUsageSummary } from "../../server/plan-usage/plan-usage.types";
@@ -35,9 +36,12 @@ export function AppShell({
       </aside>
       <div className="app-shell__workspace">
         <header className="app-topbar">
-          <div className="app-topbar__activity">
-            <ProcessingIndicator />
-            <span className="app-topbar__label">{WORKSPACE_LABEL}</span>
+          <div className="app-topbar__start">
+            <MobileNavigation planUsage={planUsage} showAdmin={showAdmin} />
+            <div className="app-topbar__activity">
+              <ProcessingIndicator />
+              <span className="app-topbar__label">{WORKSPACE_LABEL}</span>
+            </div>
           </div>
           <AccountMenu user={user} />
         </header>

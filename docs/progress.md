@@ -2,6 +2,40 @@
 
 Last updated: 2026-10-01
 
+## Mobile responsive experience
+
+- **Problem.** Below 768px the workspace sidebar became a fixed 68px bottom
+  bar whose labels were clipped at the screen edge, and an
+  `nth-child(n + 4)` rule hid Profile and Admin on phones entirely. The
+  homepage, dashboard and billing collapsed every desktop row into one long
+  column while keeping desktop minimum heights and section padding (homepage
+  8,033px tall at 390px). Wizard photo rows wrapped onto two lines with
+  24×20px reorder targets, and fixed-height image stages cropped vehicles.
+- **Navigation drawer.** `packages/ui` gains a `Sheet` primitive on the
+  existing Radix Dialog (focus trap, Escape, backdrop, scroll lock, focus
+  return). Below 768px the top bar shows a menu control and the current
+  section; the drawer holds the same destinations (one
+  `workspaceNavigationItems` list feeds both sidebar and drawer), plan
+  summary and log out, and closes when a destination is chosen. The desktop
+  sidebar is untouched.
+- **Information density.** Phones use 2 × 2 grids for homepage features and
+  workflow steps (one column below 360px), dashboard stats in pairs, quick
+  actions with imagery beside the copy, and swipeable pricing and pack cards
+  with the next card peeking. Image stages use aspect ratios instead of fixed
+  heights. Results at 390px: homepage −37%, dashboard −30%, billing −48%,
+  portfolio −23%.
+- **Copy.** The homepage CTA reads "Process your car" (hero and final CTA).
+- **Unchanged.** No API, schema, auth, processing, worker, routing or
+  infrastructure change. All new rules sit inside existing mobile
+  breakpoints; 1440px screenshots of every main screen match `main` pixel
+  for pixel apart from the CTA copy, and page heights at 768px and above are
+  identical.
+- **Tests.** Unit tests cover the sheet, drawer, shared navigation list,
+  active-section lookup and log-out form. A Playwright spec checks the
+  drawer (open, destinations, Escape with focus return, backdrop, closing on
+  navigation, scroll lock), no horizontal overflow on five pages at 320px
+  and 390px, and that the desktop shell still shows the sidebar.
+
 ## Publish the image-worker archive to S3 on merge
 
 - **What it does.** A new `publish-worker-artifact` CI job runs after every

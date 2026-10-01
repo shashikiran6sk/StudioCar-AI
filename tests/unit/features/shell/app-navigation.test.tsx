@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { usePathname } from "next/navigation";
 import { describe, expect, it, vi } from "vitest";
 
@@ -52,6 +52,16 @@ describe("AppNavigation", () => {
     expect(screen.getByRole("link", { name: /Dashboard/ })).not.toHaveAttribute(
       "aria-current",
     );
+  });
+
+  it("reports a chosen destination, so a drawer can close", () => {
+    vi.mocked(usePathname).mockReturnValue("/dashboard");
+    const onNavigate = vi.fn();
+
+    render(<AppNavigation onNavigate={onNavigate} showAdmin={false} />);
+    fireEvent.click(screen.getByRole("link", { name: /Inventory/ }));
+
+    expect(onNavigate).toHaveBeenCalledTimes(1);
   });
 
   it("keeps inventory current while a vehicle portfolio is open", () => {

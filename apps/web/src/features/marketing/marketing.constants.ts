@@ -25,7 +25,7 @@ export const MARKETING_COPY = {
   cta: {
     body: "Upload the vehicle. Choose the treatment. Let Inventory handle the rest.",
     eyebrow: "Your next vehicle is ready to look its best",
-    primaryAction: "Process your first vehicle",
+    primaryAction: "Process your car",
     secondaryAction: "View Inventory",
     title: "Build a showroom-ready portfolio before the listing goes live.",
   },
@@ -51,7 +51,7 @@ export const MARKETING_COPY = {
   hero: {
     comparisonLabel: "Compare original and studio processed vehicle",
     eyebrow: "Built for vehicle imagery",
-    primaryAction: "Process your first vehicle →",
+    primaryAction: "Process your car →",
     secondaryAction: "Explore the product",
     summary: "Remove distracting backgrounds, ground every car with a natural shadow, enhance every detail, and deliver consistent portfolios—without slowing down your inventory team.",
     treatmentSummary: "✓ Premium White · Enhanced",
