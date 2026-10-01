@@ -1,6 +1,101 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-09-29
+Last updated: 2026-10-01
+
+## Leonardo.Ai becomes the only image-processing provider
+
+- **Audit first.** The full audit is in
+  `docs/audits/2026-09-30-leonardo-migration-audit.md`. It covers:
+  - providers, the processing lifecycle and polling history (#80, #85);
+  - the three treatment features and shadows;
+  - Lambda packaging, risks and the plan.
+
+  The canonical reference is now `docs/image-processing.md`.
+- **Provider.** Leonardo Remove Background through the Sync API sits behind the
+  provider-neutral `ImageProcessingProvider` port. There is no Async API and no
+  webhook.
+  - Request: `remove-bg`, `public=false`, `ephemeral=true`, `type=car`,
+    `format=webp`, `channels=rgba`, `crop=false`, `shadow_type=car`,
+    `semitransparency=true`, with the source passed as a 15-minute presigned S3
+    URL. `background_image_reference` is never sent.
+  - The result is downloaded immediately under one deadline, validated as
+    WebP with alpha at the reported size, and staged privately.
+  - Every failure category maps once onto the durable retry. A 429
+    `Retry-After` can only lengthen the backoff. The adapter has no retry
+    loop of its own.
+- **Resolution follows the plan on the server.** The worker reads the owner's
+  current subscription inside the claim transaction. FREE (or no subscription)
+  gets `preview`; PLUS and PRO get `auto`. The request contract is strict, so a
+  browser-supplied size is rejected with 400.
+- **Removed:**
+  - remove.bg, fal.ai, BiRefNet, provider selection and their env vars;
+  - the CloudFormation provider parameter and webhook enum values;
+  - the local SVG scenes and local shadow code (which caused the double
+    shadow), plus the cost/diagnostic scripts;
+  - Hide Number Plate, which no worker ever applied: 0 pixels changed in all
+    96 QA cases.
+
+  The `ProcessingProvider` enum keeps its historical values for existing rows.
+- **Compositor.**
+  - The six supplied backgrounds are packaged in the worker (PLAIN and FLOOR,
+    each in white, grey and dark). Only Leonardo's shadow is drawn.
+  - Vehicle and content bounds come from alpha. One uniform scale handles
+    Maintain composition, Fit and Square, so nothing is stretched.
+  - Backgrounds use cover placement, with the floor seam 0.30 vehicle heights
+    above the tyre line.
+  - Output is WebP at quality 90 with no metadata.
+- **Image Enhancement: retained and fixed.** It now changes only the vehicle,
+  with 0 background pixels altered. The legacy version shifted the whole
+  background by 6.5 levels.
+- **Maintain Composition: retained and fixed.** With Studio Background off,
+  the UI and contract force Maintain Composition. Evidence is in
+  `docs/evidence/processing-options/`, from `pnpm evidence:processing`, which
+  is deterministic and includes a legacy comparison.
+- **Lambda.**
+  - `pnpm package:worker` builds a byte-reproducible archive: one esbuild
+    bundle, plus sharp's lockfile-pinned arm64 binaries and the backgrounds.
+  - ZIP 62,592,857 → 18,123,601 bytes (−71%); unzipped 199.4 MB → 35.1 MB;
+    14,288 → 120 files.
+  - Verified on arm64 Node 24 under QEMU. CI packages twice, compares the
+    bytes, smoke-tests in the arm64 Lambda image and uploads the archive.
+  - Timeouts: Leonardo 90 s, Lambda 180 s, claim lease 180 s (validated
+    against the Leonardo deadline), duration alarm 150 s. Visibility (900 s)
+    and concurrency are unchanged.
+- **Observability.** New metrics cover provider requests, latency, success,
+  failure categories (429, 5xx, timeout and others), reported cost, and
+  SOURCE/PROVIDER/COMPOSITION/STORAGE stage failures, with no high-cardinality
+  dimensions. Provider alarms and a dashboard section were added.
+- **Unchanged:** polling (#85 coalescing kept as designed), SQS, the outbox,
+  idempotency, inventory, billing, auth, upload limits and storage layout.
+- **Gates (all passed):**
+  - lint, strict types, test mapping;
+  - unit tests: web 1,212, worker 306, config 272, contracts 125,
+    processing 94, observability 40, ui 19, local-queue 13,
+    database-runtime 5;
+  - integration: web 161 (including the new Leonardo lifecycle test against
+    PostgreSQL), database-runtime 25;
+  - Prisma validation, production build, e2e 14/14, `cfn-lint`.
+- **Caveats:**
+  - No Leonardo API key was available, and Leonardo's hosts were unreachable
+    from the build environment. Live calls, real-photo visual checks and
+    measured provider latency/cost remain deployment steps; HTTP behaviour is
+    tested with mocked `fetch`.
+  - The Local profile cannot complete a Leonardo run, because Leonardo cannot
+    fetch MinIO URLs. Use Development storage for real provider tests.
+  - `grey-studio-floor.png` arrived truncated. Its last 125 floor rows were
+    reconstructed; a clean re-export is requested.
+  - Version keys and request hashes changed with the option set. A stale
+    browser tab still sending removed fields receives 400 until it reloads.
+  - The existing `it.fails` floor-on-ORIGINAL version-key defect (from #57)
+    is unchanged.
+- **Deploy order:**
+  1. Create the Leonardo secret.
+  2. Update the worker stack (`LeonardoSecretArn`; the new timeouts take
+     their defaults).
+  3. Upload the CI archive and record its SHA-256.
+  4. Deploy the observability stack.
+
+  No database migration is needed.
 
 ## Reliable local MinIO startup
 

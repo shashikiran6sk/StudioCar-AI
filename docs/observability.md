@@ -224,9 +224,17 @@ Locally leave Sentry and HTTP metric export unset. Run `pnpm test` (uncached for
 changed root tests), lint/typecheck/build, and database integration/E2E gates
 against an isolated local PostgreSQL. The deterministic tests cover log/Sentry
 scrubbing, interleaved contexts, HTTP status counts, credits, provider statuses,
-and outbox correlation. The worker repository's real-PostgreSQL tests check that a terminal
-failure (such as HTTP 402) is recorded once, publishes no retry, charges no
-usage and acknowledges duplicate deliveries. The browser test checks the
+and outbox correlation. `tests/integration/server/jobs/leonardo-processing-lifecycle.test.ts` drives
+the real handler, worker, executor and Leonardo adapter against PostgreSQL. It
+checks three things:
+
+- A completed job charges usage once and acknowledges a duplicate delivery.
+- A terminal failure (HTTP 402) is recorded once, publishes no retry, charges
+  no usage and shows people only a generic reason.
+- A 429 is rescheduled durably, no sooner than its `Retry-After`.
+
+None of these persists or logs the API key, the presigned source URL or the
+temporary result URL. The browser test checks the
 generic error through the real status API. Inspect logs while processing a Local
 batch: the response ID appears on queue/provider/S3 logs, with the existing batch key. A live
 Leonardo smoke consumes a paid generation and needs Development storage;
