@@ -1,12 +1,12 @@
 import type { AuthUser } from "@studiocar/contracts";
 import Link from "next/link";
 
-import { DASHBOARD_PATH, LOGOUT_PATH, PROFILE_PATH } from "../../app/app-routes";
+import { DASHBOARD_PATH, PROFILE_PATH } from "../../app/app-routes";
+import { LogoutForm } from "./logout-form";
 import { userDisplayName } from "./user-display-name";
 import { userInitials } from "./user-initials";
 
 const DASHBOARD_LABEL = "Dashboard";
-const LOGOUT_LABEL = "Log out";
 const PROFILE_LABEL = "Profile & security";
 
 export interface AccountMenuProps {
@@ -33,9 +33,7 @@ export function AccountMenu({ showDashboardLink = false, user }: AccountMenuProp
         <p>{user.primaryEmail ?? user.primaryPhone ?? displayName}</p>
         {showDashboardLink ? <Link href={DASHBOARD_PATH}>{DASHBOARD_LABEL}</Link> : null}
         <Link href={PROFILE_PATH}>{PROFILE_LABEL}</Link>
-        <form action={LOGOUT_PATH} method="post">
-          <button type="submit">{LOGOUT_LABEL}</button>
-        </form>
+        <LogoutForm />
       </div>
     </details>
   );

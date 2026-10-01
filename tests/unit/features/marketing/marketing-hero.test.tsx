@@ -11,7 +11,7 @@ describe("MarketingHero", () => {
     expect(
       screen.getByRole("slider", { name: "Compare original and studio processed vehicle" }),
     ).toBeVisible();
-    expect(screen.getByRole("link", { name: /Process your first vehicle/ }))
+    expect(screen.getByRole("link", { name: /Process your car/ }))
       .toHaveAttribute("href", "/login?returnTo=%2Fdashboard");
     expect(screen.getByText("Originals")).toBeVisible();
   });

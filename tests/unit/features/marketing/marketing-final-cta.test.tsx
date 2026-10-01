@@ -7,7 +7,7 @@ describe("MarketingFinalCta", () => {
   it("routes prospects to sign in and existing users to inventory", () => {
     render(<MarketingFinalCta />);
 
-    expect(screen.getByRole("link", { name: "Process your first vehicle" }))
+    expect(screen.getByRole("link", { name: "Process your car" }))
       .toHaveAttribute("href", "/login?returnTo=%2Fdashboard");
     expect(screen.getByRole("link", { name: "View Inventory" }))
       .toHaveAttribute("href", "/inventory");
