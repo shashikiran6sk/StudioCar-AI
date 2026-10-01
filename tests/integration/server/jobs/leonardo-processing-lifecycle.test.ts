@@ -339,8 +339,17 @@ databaseDescribe("Leonardo processing lifecycle against PostgreSQL", () => {
       ok: true,
       response: { jobs: [{ retryable: false, state: "FAILED" }] },
     });
-    const visible = serialize(statuses);
-    expect(visible).not.toMatch(/leonardo|insufficient|402|secret/i);
+    // The provider's words, its key, its name and the raw HTTP status never
+    // reach the person. Checked as exact strings and field names: the
+    // response carries random UUIDs, so a loose pattern such as /402/ would
+    // match a hex identifier by chance.
+    const visible = serialize(statuses).toLowerCase();
+    for (const leaked of ["insufficient credits", API_KEY, "secret", "leonardo"]) {
+      expect(visible).not.toContain(leaked.toLowerCase());
+    }
+    for (const field of ['"statuscode"', '"errormessage"', '"providerrequestid"']) {
+      expect(visible).not.toContain(field);
+    }
   });
 
   it("fails a paid but unusable response once, so a retry never pays again", async () => {
