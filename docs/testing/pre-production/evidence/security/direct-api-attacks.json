@@ -1,0 +1,319 @@
+[
+  {
+    "id": "API-SEC-001",
+    "label": "anonymous profile denied",
+    "method": "PATCH",
+    "url": "/api/profile",
+    "status": 401,
+    "expected": [
+      401
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"UNAUTHENTICATED\",\"message\":\"Sign in to update your profile.\",\"requestId\":\"d7fc7b9e-cccd-41f7-925f-aba6d7a3c535\"}}"
+  },
+  {
+    "id": "API-SEC-001",
+    "label": "anonymous upload denied",
+    "method": "POST",
+    "url": "/api/uploads/presign",
+    "status": 401,
+    "expected": [
+      401
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"UNAUTHENTICATED\",\"message\":\"Sign in to upload images.\",\"requestId\":\"049e8f17-e2b5-45c2-acab-50d6e919d700\"}}"
+  },
+  {
+    "id": "API-SEC-001",
+    "label": "anonymous process denied",
+    "method": "POST",
+    "url": "/api/jobs",
+    "status": 401,
+    "expected": [
+      401
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"UNAUTHENTICATED\",\"message\":\"Sign in to process vehicle photos.\",\"requestId\":\"5f7038dd-f92e-49e4-bd51-cc279f6fa86b\"}}"
+  },
+  {
+    "id": "API-SEC-001",
+    "label": "anonymous job read denied",
+    "method": "GET",
+    "url": "/api/jobs?ids=08627274-abc1-4ec3-9c6b-57fed89624a7",
+    "status": 401,
+    "expected": [
+      401
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"UNAUTHENTICATED\",\"message\":\"Sign in to view processing status.\",\"requestId\":\"0638ba5c-e218-4f69-8a17-601f1752ea4f\"}}"
+  },
+  {
+    "id": "API-SEC-004",
+    "label": "profile mass assignment plan",
+    "method": "PATCH",
+    "url": "/api/profile",
+    "status": 400,
+    "expected": [
+      400
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Enter a valid profile.\",\"requestId\":\"de81e8d8-2a9b-40de-b3fe-7394a1489c00\",\"fieldErrors\":{}}}"
+  },
+  {
+    "id": "API-SEC-005",
+    "label": "profile mass assignment isAdmin",
+    "method": "PATCH",
+    "url": "/api/profile",
+    "status": 400,
+    "expected": [
+      400
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Enter a valid profile.\",\"requestId\":\"5b69ecdd-7a86-4411-82b8-d6db9e701f63\",\"fieldErrors\":{}}}"
+  },
+  {
+    "id": "API-SEC-006",
+    "label": "profile mass assignment userId",
+    "method": "PATCH",
+    "url": "/api/profile",
+    "status": 400,
+    "expected": [
+      400
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Enter a valid profile.\",\"requestId\":\"46ddac0c-2039-438a-ba40-b6b9e7608c30\",\"fieldErrors\":{}}}"
+  },
+  {
+    "id": "API-SEC-007",
+    "label": "profile mass assignment providerSubject",
+    "method": "PATCH",
+    "url": "/api/profile",
+    "status": 400,
+    "expected": [
+      400
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Enter a valid profile.\",\"requestId\":\"f34ef9dc-41f4-4b5c-8be7-2b843be99fb2\",\"fieldErrors\":{}}}"
+  },
+  {
+    "id": "API-SEC-008",
+    "label": "profile mass assignment phoneVerified",
+    "method": "PATCH",
+    "url": "/api/profile",
+    "status": 400,
+    "expected": [
+      400
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Enter a valid profile.\",\"requestId\":\"f46ef052-dffe-47cc-aff1-46f24f945440\",\"fieldErrors\":{}}}"
+  },
+  {
+    "id": "PROFILE-010",
+    "label": "profile mass assignment primaryEmail",
+    "method": "PATCH",
+    "url": "/api/profile",
+    "status": 400,
+    "expected": [
+      400
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Enter a valid profile.\",\"requestId\":\"f9981a26-462a-40af-911e-f8e7594ff115\",\"fieldErrors\":{}}}"
+  },
+  {
+    "id": "PROFILE-007",
+    "label": "short profile name refused",
+    "method": "PATCH",
+    "url": "/api/profile",
+    "status": 400,
+    "expected": [
+      400
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Enter a valid profile.\",\"requestId\":\"6234ee17-193e-4612-9d01-8528aae6086d\",\"fieldErrors\":{\"displayName\":[\"Display name must contain at least 2 characters.\"]}}}"
+  },
+  {
+    "id": "USER-SEC-001",
+    "label": "foreign vehicle portfolio denied",
+    "method": "GET",
+    "url": "/inventory/9993443a-aac7-41df-a480-30fbf96f3a14",
+    "status": 200,
+    "expected": [
+      200,
+      404
+    ],
+    "pass": true,
+    "responseBody": "<!DOCTYPE html><html lang=\"en\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"/_next/static/chunks/03redw7b_kw1f.css\" data-precedence=\"next\"/><link rel=\"preload\" as=\"script\" fetchPriority=\"low\" href=\"/_next/static/chunks"
+  },
+  {
+    "id": "USER-SEC-002",
+    "label": "foreign vehicle write denied",
+    "method": "PATCH",
+    "url": "/api/vehicles/9993443a-aac7-41df-a480-30fbf96f3a14",
+    "status": 404,
+    "expected": [
+      404
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"The vehicle draft could not be found.\",\"requestId\":\"44ad73a5-5b88-406b-b774-2f1c234942fe\"}}"
+  },
+  {
+    "id": "USER-SEC-003",
+    "label": "foreign vehicle presign denied",
+    "method": "POST",
+    "url": "/api/uploads/presign",
+    "status": 404,
+    "expected": [
+      404
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"The vehicle could not be found.\",\"requestId\":\"17f0672c-ce14-4f22-9667-aa582d03413e\"}}"
+  },
+  {
+    "id": "USER-SEC-004",
+    "label": "foreign image process denied",
+    "method": "POST",
+    "url": "/api/jobs",
+    "status": 404,
+    "expected": [
+      404
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"The vehicle could not be found.\",\"requestId\":\"e1aafa38-6fac-4661-be92-98d1f3723d50\"}}"
+  },
+  {
+    "id": "USER-SEC-005",
+    "label": "foreign job read denied",
+    "method": "GET",
+    "url": "/api/jobs?ids=08627274-abc1-4ec3-9c6b-57fed89624a7",
+    "status": 404,
+    "expected": [
+      404
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"One or more processing jobs could not be found.\",\"requestId\":\"79882100-178f-4251-a39d-f537072afcd3\"}}"
+  },
+  {
+    "id": "USER-SEC-010",
+    "label": "foreign upload removal denied",
+    "method": "DELETE",
+    "url": "/api/uploads/7e57dd02-ee37-46b5-a5cd-0bd9b1a85050",
+    "status": 404,
+    "expected": [
+      404
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"The image upload could not be found.\",\"requestId\":\"dc6aab64-6def-446c-9133-c7c5964206fc\"}}"
+  },
+  {
+    "id": "UPLOAD-029",
+    "label": "upload owner mass assignment refused",
+    "method": "POST",
+    "url": "/api/uploads/presign",
+    "status": 400,
+    "expected": [
+      400
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Enter valid upload details.\",\"requestId\":\"f2bf13ff-b20d-4df8-a271-250876f7b0e7\",\"fieldErrors\":{}}}"
+  },
+  {
+    "id": "API-SEC-009",
+    "label": "job success mass assignment refused",
+    "method": "POST",
+    "url": "/api/jobs",
+    "status": 400,
+    "expected": [
+      400
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Choose valid uploaded photos and processing options.\",\"requestId\":\"557c9e6b-52f3-42fa-bb38-236bd3e6043b\",\"fieldErrors\":{}}}"
+  },
+  {
+    "id": "API-SEC-010",
+    "label": "job output key injection refused",
+    "method": "POST",
+    "url": "/api/jobs",
+    "status": 400,
+    "expected": [
+      400
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Choose valid uploaded photos and processing options.\",\"requestId\":\"e32203dd-621c-45a5-a339-32e353f7b62d\",\"fieldErrors\":{}}}"
+  },
+  {
+    "id": "API-SEC-015",
+    "label": "invalid background enum refused",
+    "method": "POST",
+    "url": "/api/jobs",
+    "status": 400,
+    "expected": [
+      400
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Choose valid uploaded photos and processing options.\",\"requestId\":\"611f6dfa-ee92-4239-8169-b5c042eaa4d5\",\"fieldErrors\":{\"options\":[\"Invalid option: expected one of \\\"ORIGINAL\\\"|\\\"PREMIUM_WHITE\\\"|\\\"DARK_STUDIO\\\"|\\\"GREY_STUDIO\\\"\"]}}}"
+  },
+  {
+    "id": "API-SEC-016",
+    "label": "invalid job id refused",
+    "method": "GET",
+    "url": "/api/jobs?ids=not-a-uuid",
+    "status": 400,
+    "expected": [
+      400
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Provide between 1 and 100 unique job IDs.\",\"requestId\":\"6e9d1e78-db1c-4098-9f9f-9767de12d430\"}}"
+  },
+  {
+    "id": "API-SEC-012",
+    "label": "internal recovery refused without token",
+    "method": "POST",
+    "url": "/api/internal/jobs/dispatch",
+    "status": 403,
+    "expected": [
+      401,
+      403
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"The request is not allowed.\",\"requestId\":\"c45f9213-9088-4489-96b1-414cce8a85f5\"}}"
+  },
+  {
+    "id": "API-SEC-013",
+    "label": "internal recovery refused without token",
+    "method": "POST",
+    "url": "/api/internal/storage/cleanup",
+    "status": 403,
+    "expected": [
+      401,
+      403
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"The request is not allowed.\",\"requestId\":\"6b7ba963-64e7-47eb-b149-fd727db25795\"}}"
+  },
+  {
+    "id": "API-SEC-013",
+    "label": "internal recovery refused without token",
+    "method": "POST",
+    "url": "/api/internal/lifecycle/cleanup",
+    "status": 403,
+    "expected": [
+      401,
+      403
+    ],
+    "pass": true,
+    "responseBody": "{\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"The request is not allowed.\",\"requestId\":\"7626c74c-6e30-4c0b-94f4-011802fa95d8\"}}"
+  },
+  {
+    "id": "API-SEC-022",
+    "label": "cross-origin authenticated profile refused",
+    "status": 403,
+    "pass": true
+  },
+  {
+    "id": "USER-SEC-002",
+    "label": "foreign DB unchanged",
+    "vehicleName": "Foreign certification car",
+    "jobsCount": "1",
+    "pass": true
+  }
+]

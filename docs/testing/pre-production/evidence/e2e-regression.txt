@@ -1,0 +1,25 @@
+$ playwright test --config=/tmp/studiocar-cert-playwright.mts --workers=1 --output=/tmp/studiocar-regression-browser-output
+[WebServer] (node:13723) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 15 tests using 1 worker
+
+(node:13751) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 ../../tests/e2e/admin-authorization.spec.ts:51:1 › keeps the administration area from everybody who is not an administrator (3.1s)
+  ✓   2 ../../tests/e2e/admin-authorization.spec.ts:166:1 › lets an administrator change a plan and shows it to everybody (1.8s)
+  ✓   3 ../../tests/e2e/admin-authorization.spec.ts:261:1 › assigns a paid plan by hand and shows it to the account (2.3s)
+  ✓   4 ../../tests/e2e/admin-authorization.spec.ts:396:1 › configures a footer link and shows it to the public (1.8s)
+  ✓   5 ../../tests/e2e/auth-shell.spec.ts:3:5 › redirects an unauthenticated workspace request to sign in (822ms)
+  ✓   6 ../../tests/e2e/auth-shell.spec.ts:24:5 › keeps the sign-in controls usable on a mobile viewport (713ms)
+  ✓   7 ../../tests/e2e/foundation.spec.ts:3:5 › renders the complete marketing homepage at desktop and mobile widths (1.4s)
+  ✓   8 ../../tests/e2e/inventory.spec.ts:28:1 › renders authenticated inventory states at desktop and mobile widths (12.2s)
+  ✓   9 ../../tests/e2e/mobile-workspace-navigation.spec.ts:33:1 › replaces the sidebar with a navigation drawer on narrow screens (3.9s)
+  ✓  10 ../../tests/e2e/phone-account-resolution.spec.ts:13:1 › verifies a new phone, creates one account, then signs into it (2.3s)
+  ✓  11 ../../tests/e2e/phone-account-resolution.spec.ts:63:1 › keeps a wrong code on the code step as an incorrect code, not an outage (1.3s)
+  ✓  12 ../../tests/e2e/profile-security.spec.ts:23:1 › updates a profile and revokes every active session (1.5s)
+  ✓  13 ../../tests/e2e/seo.spec.ts:3:5 › serves canonical homepage metadata, navigation, and SEO assets (2.9s)
+  ✓  14 ../../tests/e2e/seo.spec.ts:57:5 › keeps sign-in and authentication errors out of search indexes (967ms)
+  ✓  15 ../../tests/e2e/workspace-shell.spec.ts:14:1 › offers exactly the delivered workspace destinations and a plan summary (1.9s)
+
+  15 passed (41.1s)

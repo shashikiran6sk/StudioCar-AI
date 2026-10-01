@@ -1,0 +1,64 @@
+$ playwright test --config=/tmp/studiocar-cert-playwright.mts
+[WebServer] (node:10171) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 15 tests using 2 workers
+
+(node:10210) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10211) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   2 ../../tests/e2e/auth-shell.spec.ts:3:5 › redirects an unauthenticated workspace request to sign in (3.3s)
+  ✓   3 ../../tests/e2e/auth-shell.spec.ts:24:5 › keeps the sign-in controls usable on a mobile viewport (1.8s)
+  ✓   1 ../../tests/e2e/admin-authorization.spec.ts:51:1 › keeps the administration area from everybody who is not an administrator (7.8s)
+  ✓   4 ../../tests/e2e/foundation.spec.ts:3:5 › renders the complete marketing homepage at desktop and mobile widths (4.8s)
+  ✓   5 ../../tests/e2e/admin-authorization.spec.ts:166:1 › lets an administrator change a plan and shows it to everybody (4.8s)
+  ✓   7 ../../tests/e2e/admin-authorization.spec.ts:261:1 › assigns a paid plan by hand and shows it to the account (5.9s)
+  ✓   8 ../../tests/e2e/admin-authorization.spec.ts:396:1 › configures a footer link and shows it to the public (4.9s)
+  ✓   9 ../../tests/e2e/mobile-workspace-navigation.spec.ts:33:1 › replaces the sidebar with a navigation drawer on narrow screens (10.3s)
+  ✓  10 ../../tests/e2e/phone-account-resolution.spec.ts:13:1 › verifies a new phone, creates one account, then signs into it (4.4s)
+  ✓  11 ../../tests/e2e/phone-account-resolution.spec.ts:63:1 › keeps a wrong code on the code step as an incorrect code, not an outage (2.9s)
+  ✘   6 ../../tests/e2e/inventory.spec.ts:28:1 › renders authenticated inventory states at desktop and mobile widths (31.8s)
+  ✓  12 ../../tests/e2e/profile-security.spec.ts:23:1 › updates a profile and revokes every active session (2.5s)
+(node:11108) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  13 ../../tests/e2e/seo.spec.ts:57:5 › keeps sign-in and authentication errors out of search indexes (1.8s)
+  ✓  15 ../../tests/e2e/workspace-shell.spec.ts:14:1 › offers exactly the delivered workspace destinations and a plan summary (5.0s)
+  ✓  14 ../../tests/e2e/seo.spec.ts:3:5 › serves canonical homepage metadata, navigation, and SEO assets (4.8s)
+
+
+  1) ../../tests/e2e/inventory.spec.ts:28:1 › renders authenticated inventory states at desktop and mobile widths
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.goto: Test timeout of 30000ms exceeded.
+    Call log:
+      - navigating to "http://localhost:3100/inventory/476133cf-9f11-4ba6-b754-3469010f1ee6", waiting until "load"
+
+
+      568 |
+      569 |       await page.setViewportSize({ height: 844, width: 390 });
+    > 570 |       await page.goto(`/inventory/${vehicleId}`);
+          |                  ^
+      571 |       await expect(page.getByRole("button", { name: "Enter full screen" }))
+      572 |         .toBeVisible();
+      573 |       await page.screenshot({
+        at /workspace/StudioCar-AI/tests/e2e/inventory.spec.ts:570:18
+
+    Error Context: ../../../../tmp/studiocar-browser-output/inventory-renders-authenti-1a3f3-t-desktop-and-mobile-widths/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../../tmp/studiocar-browser-output/inventory-renders-authenti-1a3f3-t-desktop-and-mobile-widths/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ../../../../tmp/studiocar-browser-output/inventory-renders-authenti-1a3f3-t-desktop-and-mobile-widths/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    ../../tests/e2e/inventory.spec.ts:28:1 › renders authenticated inventory states at desktop and mobile widths
+  14 passed (55.1s)
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in /workspace/StudioCar-AI/apps/web

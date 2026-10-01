@@ -1,0 +1,107 @@
+
+ RUN  v5.0.1 /workspace/StudioCar-AI
+
+{"level":"info","event":"image_processing_started","timestamp":"2026-10-01T18:07:18.690Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"local"}
+stdout | docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > SEC-DISC-001 FREE ORIGINAL processing must cap delivered output to preview dimensions
+{"scenario":"SEC-DISC-001","plan":"FREE","sourceWidth":1920,"outputWidth":1920,"previewCap":320,"providerCalls":0}
+
+{"level":"info","event":"image_processing_started","timestamp":"2026-10-01T18:07:19.208Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"local"}
+ × docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > SEC-DISC-001 FREE ORIGINAL processing must cap delivered output to preview dimensions 532ms
+   → expected 1920 to be less than or equal to 320
+{"level":"error","event":"unexpected_exception","timestamp":"2026-10-01T18:07:19.292Z","environment":"local","errorCode":"S3_UPLOAD_FAILED","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at Object.put (/workspace/StudioCar-AI/docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts:69:110)\n    at ProcessingJobExecutor.obtainCutout (/workspace/StudioCar-AI/workers/image-processing/src/execution/processing-job-executor.ts:225:24)\n    at ProcessingJobExecutor.execute (/workspace/StudioCar-AI/workers/image-processing/src/execution/processing-job-executor.ts:97:26)\n    at /workspace/StudioCar-AI/docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts:96:19","causes":[]}}
+{"level":"info","event":"image_processing_started","timestamp":"2026-10-01T18:07:19.293Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"local"}
+stdout | docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > LEONARDO-DISC-001 staging failure after successful provider call must not pay twice
+{"scenario":"LEONARDO-DISC-001","attempts":2,"successfulProviderCalls":2,"durableCutoutAfterFirst":false}
+
+ × docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > LEONARDO-DISC-001 staging failure after successful provider call must not pay twice 377ms
+   → expected 2 to be 1 // Object.is equality
+stdout | docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > SEC-DISC-002 downgrade must refuse signing historical HQ object
+{"scenario":"SEC-DISC-002","subscriptionStatus":"CANCELLED","hqSigningCalls":2,"deliveredWidth":1920}
+
+stdout | docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > ASYNC-DISC-002 published exhausted job must reach a terminal state without another source-queue delivery
+{"scenario":"ASYNC-DISC-002","simulatedSourceQueueDeliveriesRemaining":0,"ageAfterLeaseHours":24,"attemptCount":5,"status":"PROCESSING","dispatch":{"claimed":0,"failed":0,"published":0},"publications":0}
+
+ × docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > SEC-DISC-002 downgrade must refuse signing historical HQ object 325ms
+   → expected [ …(2) ] to have a length of +0 but got 2
+ × docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > ASYNC-DISC-002 published exhausted job must reach a terminal state without another source-queue delivery 32ms
+   → expected 'PROCESSING' to be 'FAILED' // Object.is equality
+stdout | docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > ASYNC-DISC-001 twenty jobs with two invalid sources complete 18 outputs once and retain partial failure
+{"scenario":"ASYNC-DISC-001","jobs":20,"completed":18,"failed":2,"outputs":18,"usage":18,"providerCalls":18,"duplicateIgnored":20,"vehicleState":"PARTIALLY_FAILED"}
+
+ ✓ docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > ASYNC-DISC-001 twenty jobs with two invalid sources complete 18 outputs once and retain partial failure 338ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > SEC-DISC-001 FREE ORIGINAL processing must cap delivered output to preview dimensions
+AssertionError: expected 1920 to be less than or equal to 320
+ ❯ docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts:90:33
+     88|     if (!result.ok) throw new Error("Expected rendered output");
+     89|     console.info(JSON.stringify({scenario:"SEC-DISC-001",plan:"FREE",s…
+     90|     expect(result.output.width).toBeLessThanOrEqual(320);
+       |                                 ^
+     91|   });
+     92|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > LEONARDO-DISC-001 staging failure after successful provider call must not pay twice
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts:101:23
+     99|     expect(retry.ok).toBe(true);
+    100|     console.info(JSON.stringify({scenario:"LEONARDO-DISC-001",attempts…
+    101|     expect(f.calls()).toBe(1);
+       |                       ^
+    102|   });
+    103|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > SEC-DISC-002 downgrade must refuse signing historical HQ object
+AssertionError: expected [ …(2) ] to have a length of +0 but got 2
+
+- Expected
++ Received
+
+- 0
++ 2
+
+ ❯ docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts:121:57
+    119|     const result = await service.get(f.user.id,f.vehicle.id);
+    120|     console.info(JSON.stringify({scenario:"SEC-DISC-002",subscriptionS…
+    121|     expect(signed.filter(key=>key.endsWith("hq.webp"))).toHaveLength(0…
+       |                                                         ^
+    122|   });
+    123|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > ASYNC-DISC-002 published exhausted job must reach a terminal state without another source-queue delivery
+AssertionError: expected 'PROCESSING' to be 'FAILED' // Object.is equality
+
+Expected: "FAILED"
+Received: "PROCESSING"
+
+ ❯ docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts:139:26
+    137|     const stuck=await database.processingJob.findUniqueOrThrow({where:…
+    138|     console.info(JSON.stringify({scenario:"ASYNC-DISC-002",simulatedSo…
+    139|     expect(stuck.status).toBe("FAILED");
+       |                          ^
+    140|   });
+    141|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  18:07:17
+   Duration  2.70s (tests 62%, import 19%, transform 19%)
+
+JSON report written to /tmp/studiocar-adversarial-final-results.json

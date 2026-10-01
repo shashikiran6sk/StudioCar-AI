@@ -1,0 +1,110 @@
+[
+  {
+    "persona": "FREE-GOOGLE",
+    "userId": "312ddb0c-3a55-48ef-87c4-3a6e3e8c119d",
+    "plan": "FREE",
+    "googleIdentity": true,
+    "phoneIdentity": false,
+    "provisioning": "direct synthetic DB fixture; not real provider verification",
+    "sessionsCreated": 0
+  },
+  {
+    "persona": "FREE-PHONE",
+    "userId": "64cdbbc4-6d9d-45e2-8c55-5d2766910422",
+    "plan": "FREE",
+    "googleIdentity": false,
+    "phoneIdentity": true,
+    "provisioning": "direct synthetic DB fixture; not real provider verification",
+    "sessionsCreated": 0
+  },
+  {
+    "persona": "FREE-LINKED",
+    "userId": "2d913847-ca12-4391-8294-ba8ba0764d67",
+    "plan": "FREE",
+    "googleIdentity": true,
+    "phoneIdentity": true,
+    "provisioning": "direct synthetic DB fixture; not real provider verification",
+    "sessionsCreated": 0
+  },
+  {
+    "persona": "PRO-GOOGLE",
+    "userId": "cb283ae7-6eb1-4837-8d66-2ded62d06d58",
+    "plan": "STUDIO_PRO",
+    "googleIdentity": true,
+    "phoneIdentity": false,
+    "provisioning": "direct synthetic DB fixture; not real provider verification",
+    "sessionsCreated": 0
+  },
+  {
+    "persona": "PRO-PHONE",
+    "userId": "201d45e4-5bdd-46ea-8b67-9040a246c1ee",
+    "plan": "STUDIO_PRO",
+    "googleIdentity": false,
+    "phoneIdentity": true,
+    "provisioning": "direct synthetic DB fixture; not real provider verification",
+    "sessionsCreated": 0
+  },
+  {
+    "persona": "PRO-LINKED",
+    "userId": "0b126b73-0459-4eff-83b5-f0b49551bfed",
+    "plan": "STUDIO_PRO",
+    "googleIdentity": true,
+    "phoneIdentity": true,
+    "provisioning": "direct synthetic DB fixture; not real provider verification",
+    "sessionsCreated": 0
+  },
+  {
+    "persona": "PLUS-GOOGLE",
+    "userId": "08d0dc4e-9de5-4bbb-8bc9-27520627fd53",
+    "plan": "STUDIO_PLUS",
+    "googleIdentity": true,
+    "phoneIdentity": false,
+    "provisioning": "direct synthetic DB fixture; not real provider verification",
+    "sessionsCreated": 0
+  },
+  {
+    "persona": "PLUS-PHONE",
+    "userId": "2b104a3f-c5af-40e5-812b-9de8e7528671",
+    "plan": "STUDIO_PLUS",
+    "googleIdentity": false,
+    "phoneIdentity": true,
+    "provisioning": "direct synthetic DB fixture; not real provider verification",
+    "sessionsCreated": 0
+  },
+  {
+    "persona": "PLUS-LINKED",
+    "userId": "39090883-d891-4737-849c-d1d6fe997d80",
+    "plan": "STUDIO_PLUS",
+    "googleIdentity": true,
+    "phoneIdentity": true,
+    "provisioning": "direct synthetic DB fixture; not real provider verification",
+    "sessionsCreated": 0
+  },
+  {
+    "persona": "ADMIN",
+    "userId": "fccde7d3-48be-4b80-8e5e-0eda8af3a157",
+    "plan": "FREE",
+    "googleIdentity": true,
+    "phoneIdentity": false,
+    "provisioning": "direct synthetic DB fixture; not real provider verification",
+    "sessionsCreated": 0
+  },
+  {
+    "persona": "ACCOUNT-A",
+    "userId": "9f17daaf-556c-49d7-8df4-5a17cae0389c",
+    "plan": "FREE",
+    "googleIdentity": true,
+    "phoneIdentity": false,
+    "provisioning": "direct synthetic DB fixture; not real provider verification",
+    "sessionsCreated": 0
+  },
+  {
+    "persona": "ACCOUNT-B",
+    "userId": "e926d535-ac09-4a80-85fe-2c4c67309f84",
+    "plan": "FREE",
+    "googleIdentity": true,
+    "phoneIdentity": true,
+    "provisioning": "direct synthetic DB fixture; not real provider verification",
+    "sessionsCreated": 0
+  }
+]

@@ -1,0 +1,626 @@
+[
+  {
+    "id": "GOOGLE-003",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/google-identity-repository.test.ts > PrismaGoogleIdentityRepository > resolves repeat authentication by Google subject without duplicate users 461ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "GOOGLE-004",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/google-identity-repository.test.ts > PrismaGoogleIdentityRepository > resolves repeat authentication by Google subject without duplicate users 461ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "GOOGLE-005",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/auth/google/google-oauth-service.test.ts > GoogleOAuthService > stores only a state hash and protected PKCE challenge 1ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "GOOGLE-007",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/auth/google/google-oauth-service.test.ts > GoogleOAuthService > fails closed when a challenge is missing or already consumed 1ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "GOOGLE-015",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/session-repository.test.ts > PrismaSessionRepository > does not return expired sessions 18ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "API-SEC-002",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/session-repository.test.ts > PrismaSessionRepository > does not return expired sessions 18ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "PHONE-003",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/phone-otp-completion-repository.test.ts > PrismaPhoneOtpCompletionRepository > signs in an existing verified phone identity once 125ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "PHONE-016",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/phone-otp-completion-repository.test.ts > PrismaPhoneOtpCompletionRepository > signs in an existing verified phone identity once 125ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "PHONE-017",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/phone-otp-completion-repository.test.ts > PrismaPhoneOtpCompletionRepository > signs in an existing verified phone identity once 125ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "PHONE-018",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/phone-otp-completion-repository.test.ts > PrismaPhoneOtpCompletionRepository > signs in an existing verified phone identity once 125ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "PHONE-004",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/auth/phone/phone-otp-service.test.ts > PhoneOtpService verify > answers a rejected token exactly as it answers a mismatched one 1ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "PHONE-005",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/auth/phone/phone-otp-service.test.ts > PhoneOtpService verify > reports an expired challenge before contacting the provider 8ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "PHONE-006",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/auth/phone/phone-otp-service.test.ts > PhoneOtpService verify > refuses a replayed access token that another challenge already claimed 13ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "PHONE-007",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/auth/phone/phone-otp-service.test.ts > PhoneOtpService verify > stops at the per-challenge attempt cap 1ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "PHONE-009",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/phone-otp-challenge-repository.test.ts > PrismaPhoneOtpChallengeRepository > atomically enforces concurrent send limits per phone 382ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "PHONE-010",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/auth/phone/phone-otp-service.test.ts > PhoneOtpService verify > distinguishes an unreachable provider from a refused token 16ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "PHONE-CREATE-008",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/phone-account-repository.test.ts > PrismaPhoneAccountRepository > creates one named phone account and session despite concurrent replay 473ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "PHONE-CREATE-009",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/auth/phone/create-phone-account-handler.test.ts > handleCreatePhoneAccount > rejects forged phone fields and invalid names 3ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "PHONE-CREATE-010",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/phone-account-repository.test.ts > PrismaPhoneAccountRepository > requires the browser-bound, unexpired verification 8ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "PHONE-CREATE-011",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/phone-account-repository.test.ts > PrismaPhoneAccountRepository > requires the browser-bound, unexpired verification 8ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "LINK-PHONE-003",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/auth-identity-link-repository.test.ts > PrismaAuthIdentityLinkRepository > connects a phone number to a Google-first account 48ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "LINK-PHONE-011",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/auth/phone/link-phone-identity-handler.test.ts > handleLinkPhoneIdentity > reports an already-connected number as success 2ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "LINK-PHONE-012",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/auth-identity-link-repository.test.ts > PrismaAuthIdentityLinkRepository > refuses a phone identity that belongs to another account 63ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "IDENTITY-001",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/auth-identity-link-repository.test.ts > PrismaAuthIdentityLinkRepository > refuses a phone identity that belongs to another account 63ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "LINK-PHONE-013",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/auth/phone/link-phone-identity-handler.test.ts > handleLinkPhoneIdentity > refuses without the browser-binding cookie 7ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "API-SEC-008",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/auth/phone/link-phone-identity-handler.test.ts > handleLinkPhoneIdentity > refuses without the browser-binding cookie 7ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "LINK-PHONE-014",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/auth-identity-link-repository.test.ts > PrismaAuthIdentityLinkRepository > creates one identity when the same link is attempted concurrently 27ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "LINK-PHONE-017",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/auth-identity-link-repository.test.ts > PrismaAuthIdentityLinkRepository > leaves business ownership on the same internal user after linking 64ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "LINK-GOOGLE-015",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/auth-identity-link-repository.test.ts > PrismaAuthIdentityLinkRepository > leaves business ownership on the same internal user after linking 64ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "LINK-GOOGLE-016",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/auth-identity-link-repository.test.ts > PrismaAuthIdentityLinkRepository > leaves business ownership on the same internal user after linking 64ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "LINK-GOOGLE-017",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/auth-identity-link-repository.test.ts > PrismaAuthIdentityLinkRepository > leaves business ownership on the same internal user after linking 64ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "DATA-010",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/auth-identity-link-repository.test.ts > PrismaAuthIdentityLinkRepository > leaves business ownership on the same internal user after linking 64ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "LINK-GOOGLE-002",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/auth-identity-link-repository.test.ts > PrismaAuthIdentityLinkRepository > connects Google to a phone-first account and adopts the verified email 780ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "LINK-GOOGLE-007",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/auth/google/google-oauth-service.test.ts > GoogleOAuthService linking > treats an already-connected identity as a completed link 1ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "LINK-GOOGLE-008",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/auth-identity-link-repository.test.ts > PrismaAuthIdentityLinkRepository > refuses a Google identity that belongs to another account, and transfers nothing 99ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "IDENTITY-002",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/auth-identity-link-repository.test.ts > PrismaAuthIdentityLinkRepository > refuses a Google identity that belongs to another account, and transfers nothing 99ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "IDENTITY-003",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/auth-identity-link-repository.test.ts > PrismaAuthIdentityLinkRepository > refuses a Google identity that belongs to another account, and transfers nothing 99ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "LINK-GOOGLE-009",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/auth/google/google-oauth-service.test.ts > GoogleOAuthService linking > refuses when a different session completes the link 2ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "LINK-GOOGLE-010",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/auth/google/google-oauth-service.test.ts > GoogleOAuthService linking > carries the link intent inside the encrypted challenge, not the URL 0ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "IDENTITY-014",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/auth-identity-link-repository.test.ts > PrismaAuthIdentityLinkRepository > creates one identity when the same link is attempted concurrently 27ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "IDENTITY-018",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/auth/phone/phone-otp-service.test.ts > PhoneOtpService refusals > records why the provider's answer was refused 56ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "PROFILE-006",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/profile/profile-service.test.ts > ProfileService > updates only the requested user's display name 1ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "PLAN-008",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/processing-job-repository.test.ts > PrismaProcessingJobRepository plan limits > refuses a batch larger than the plan's per-batch limit 447ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "PROCESS-016",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/processing-job-repository.test.ts > PrismaProcessingJobRepository plan limits > refuses a batch larger than the plan's per-batch limit 447ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "PROCESS-003",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/processing-job-repository.test.ts > PrismaProcessingJobRepository > atomically reserves and replays an ordered 20-image batch 1438ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "PROCESS-004",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/processing-job-repository.test.ts > PrismaProcessingJobRepository > atomically reserves and replays an ordered 20-image batch 1438ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "PROCESS-011",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/processing-job-repository.test.ts > PrismaProcessingJobRepository > atomically reserves and replays an ordered 20-image batch 1438ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "PROCESS-015",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/processing-job-repository.test.ts > PrismaProcessingJobRepository plan limits > rejects duplicate assets and foreign assets without reserving anything 163ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "USER-SEC-004",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/processing-job-repository.test.ts > PrismaProcessingJobRepository plan limits > rejects duplicate assets and foreign assets without reserving anything 163ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "PROCESS-024",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/processing-job-repository.test.ts > PrismaProcessingJobRepository plan limits > rolls back jobs, outbox, vehicle state and usage on a late insert failure 234ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "UPLOAD-010",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/uploads/create-upload-intent-handler.test.ts > handleCreateUploadIntent > authenticates, validates, and scopes the command to the session user 24ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "UPLOAD-029",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/uploads/create-upload-intent-handler.test.ts > handleCreateUploadIntent > authenticates, validates, and scopes the command to the session user 24ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "UPLOAD-022",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/uploads/commit-upload-service.test.ts > CommitUploadService > is idempotent after completion and rejects missing or invalid objects 1ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "DISPATCH-001",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/processing:test:  \u2713 ../../tests/unit/processing/processing-outbox-dispatcher.test.ts > ProcessingOutboxDispatcher > publishes a claimed canonical worker message and marks the job queued 34ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "DISPATCH-002",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/processing:test:  \u2713 ../../tests/unit/processing/processing-outbox-dispatcher.test.ts > ProcessingOutboxDispatcher > publishes a claimed canonical worker message and marks the job queued 34ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "DISPATCH-004",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/processing:test:  \u2713 ../../tests/unit/processing/processing-outbox-dispatcher.test.ts > ProcessingOutboxDispatcher > publishes a claimed canonical worker message and marks the job queued 34ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "DISPATCH-006",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/processing:test:  \u2713 ../../tests/unit/processing/processing-outbox-dispatcher.test.ts > ProcessingOutboxDispatcher > releases failed publishes with a bounded retry time 1ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "DISPATCH-007",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/processing:test:  \u2713 ../../tests/unit/processing/processing-outbox-dispatcher.test.ts > ProcessingOutboxDispatcher > releases failed publishes with a bounded retry time 1ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "DISPATCH-012",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/processing-outbox-repository.test.ts > PrismaProcessingOutboxRepository > claims disjoint bounded batches and acknowledges only current successful leases 902ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "DISPATCH-020",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/processing:test:  \u2713 ../../tests/unit/processing/processing-outbox-dispatcher.test.ts > uses persisted request and batch IDs during scheduler recovery 1ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "LAMBDA-019",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/database-runtime:test:integration:  \u2713 ../../tests/integration/database-runtime/repositories/processing-worker-repository.test.ts > PrismaProcessingWorkerRepository > republishes retryable work and terminally rejects an invalid image 387ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "JOB-005",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/database-runtime:test:integration:  \u2713 ../../tests/integration/database-runtime/repositories/processing-worker-repository.test.ts > PrismaProcessingWorkerRepository > republishes retryable work and terminally rejects an invalid image 387ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "JOB-006",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/database-runtime:test:integration:  \u2713 ../../tests/integration/database-runtime/repositories/processing-worker-repository.test.ts > PrismaProcessingWorkerRepository > republishes retryable work and terminally rejects an invalid image 387ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "JOB-009",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/processing:test:  \u2713 ../../tests/unit/processing/processing-worker.test.ts > ProcessingWorker > ignores duplicate deliveries for terminal jobs 53ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "JOB-010",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/processing:test:  \u2713 ../../tests/unit/processing/processing-worker.test.ts > ProcessingWorker > ignores duplicate deliveries for terminal jobs 53ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "ASYNC-012",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/processing:test:  \u2713 ../../tests/unit/processing/processing-worker.test.ts > ProcessingWorker > ignores duplicate deliveries for terminal jobs 53ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "ASYNC-014",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/processing:test:  \u2713 ../../tests/unit/processing/processing-worker.test.ts > ProcessingWorker > ignores duplicate deliveries for terminal jobs 53ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "JOB-017",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/jobs/processing-status-service.test.ts > ProcessingStatusService > does not return a partial result when ownership validation fails 1ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "USER-SEC-005",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/jobs/processing-status-service.test.ts > ProcessingStatusService > does not return a partial result when ownership validation fails 1ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "ASYNC-005",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/database-runtime:test:integration:  \u2713 ../../tests/integration/database-runtime/repositories/processing-worker-repository.test.ts > PrismaProcessingWorkerRepository > claims duplicate deliveries once and atomically completes usage 238ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "CONCURRENCY-013",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/database-runtime:test:integration:  \u2713 ../../tests/integration/database-runtime/repositories/processing-worker-repository.test.ts > PrismaProcessingWorkerRepository > claims duplicate deliveries once and atomically completes usage 238ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "DATA-014",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/database-runtime:test:integration:  \u2713 ../../tests/integration/database-runtime/repositories/processing-worker-repository.test.ts > PrismaProcessingWorkerRepository > claims duplicate deliveries once and atomically completes usage 238ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "CONCURRENCY-004",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/processing-job-repository.test.ts > PrismaProcessingJobRepository plan limits > serializes removal with reservation without ever deleting a reserved original 187ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "CONCURRENCY-003",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/repositories/processing-job-repository.test.ts > PrismaProcessingJobRepository studio versions > creates one batch when differently keyed submissions race for a vehicle 173ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "API-SEC-013",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/storage-cleanup/handle-storage-cleanup.test.ts > handleStorageCleanup > rejects invalid credentials without running cleanup 5ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "API-SEC-012",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/jobs/dispatch-processing-outbox-handler.test.ts > handleDispatchProcessingOutbox > protects recovery and returns its bounded dispatch summary 14ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "API-SEC-022",
+    "log": "evidence/unit.txt",
+    "assertion": "@studiocar/web:test:  \u2713 ../../tests/unit/server/jobs/create-processing-batch-handler.test.ts > handleCreateProcessingBatch > rejects cross-origin, unauthenticated, and invalid commands 4ms",
+    "execution_type": "unit or component / mocked external adapters"
+  },
+  {
+    "id": "DATA-002",
+    "log": "evidence/integration.txt",
+    "assertion": "@studiocar/web:test:integration:  \u2713 ../../tests/integration/server/db/schema.test.ts > PostgreSQL schema invariants > enforces identity idempotency and vehicle year constraints 388ms",
+    "execution_type": "real PostgreSQL integration / mocked external adapters"
+  },
+  {
+    "id": "PUBLIC-001",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713   4 ../../tests/e2e/foundation.spec.ts:3:5 \u203a renders the complete marketing homepage at desktop and mobile widths (4.8s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "PUBLIC-010",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713   4 ../../tests/e2e/foundation.spec.ts:3:5 \u203a renders the complete marketing homepage at desktop and mobile widths (4.8s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "PUBLIC-012",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713   4 ../../tests/e2e/foundation.spec.ts:3:5 \u203a renders the complete marketing homepage at desktop and mobile widths (4.8s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "PUBLIC-002",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713  14 ../../tests/e2e/seo.spec.ts:3:5 \u203a serves canonical homepage metadata, navigation, and SEO assets (4.8s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "PUBLIC-013",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713  14 ../../tests/e2e/seo.spec.ts:3:5 \u203a serves canonical homepage metadata, navigation, and SEO assets (4.8s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "PUBLIC-014",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713  14 ../../tests/e2e/seo.spec.ts:3:5 \u203a serves canonical homepage metadata, navigation, and SEO assets (4.8s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "SEO-001",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713  14 ../../tests/e2e/seo.spec.ts:3:5 \u203a serves canonical homepage metadata, navigation, and SEO assets (4.8s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "SEO-002",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713  14 ../../tests/e2e/seo.spec.ts:3:5 \u203a serves canonical homepage metadata, navigation, and SEO assets (4.8s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "SEO-003",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713  14 ../../tests/e2e/seo.spec.ts:3:5 \u203a serves canonical homepage metadata, navigation, and SEO assets (4.8s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "SEO-006",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713  14 ../../tests/e2e/seo.spec.ts:3:5 \u203a serves canonical homepage metadata, navigation, and SEO assets (4.8s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "SEO-007",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713  14 ../../tests/e2e/seo.spec.ts:3:5 \u203a serves canonical homepage metadata, navigation, and SEO assets (4.8s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "BROWSER-009",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713   3 ../../tests/e2e/auth-shell.spec.ts:24:5 \u203a keeps the sign-in controls usable on a mobile viewport (1.8s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "API-SEC-001",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713   2 ../../tests/e2e/auth-shell.spec.ts:3:5 \u203a redirects an unauthenticated workspace request to sign in (3.3s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "PHONE-CREATE-001",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713  10 ../../tests/e2e/phone-account-resolution.spec.ts:13:1 \u203a verifies a new phone, creates one account, then signs into it (4.4s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "PHONE-CREATE-003",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713  10 ../../tests/e2e/phone-account-resolution.spec.ts:13:1 \u203a verifies a new phone, creates one account, then signs into it (4.4s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "PHONE-CREATE-004",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713  10 ../../tests/e2e/phone-account-resolution.spec.ts:13:1 \u203a verifies a new phone, creates one account, then signs into it (4.4s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "PHONE-CREATE-013",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713  10 ../../tests/e2e/phone-account-resolution.spec.ts:13:1 \u203a verifies a new phone, creates one account, then signs into it (4.4s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "PHONE-CREATE-015",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713  10 ../../tests/e2e/phone-account-resolution.spec.ts:13:1 \u203a verifies a new phone, creates one account, then signs into it (4.4s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "GOOGLE-014",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713  12 ../../tests/e2e/profile-security.spec.ts:23:1 \u203a updates a profile and revokes every active session (2.5s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "PROFILE-001",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713  12 ../../tests/e2e/profile-security.spec.ts:23:1 \u203a updates a profile and revokes every active session (2.5s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "PROFILE-003",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713  12 ../../tests/e2e/profile-security.spec.ts:23:1 \u203a updates a profile and revokes every active session (2.5s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "ADMIN-002",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713   1 ../../tests/e2e/admin-authorization.spec.ts:51:1 \u203a keeps the administration area from everybody who is not an administrator (7.8s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "ADMIN-003",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713   1 ../../tests/e2e/admin-authorization.spec.ts:51:1 \u203a keeps the administration area from everybody who is not an administrator (7.8s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "ADMIN-004",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713   1 ../../tests/e2e/admin-authorization.spec.ts:51:1 \u203a keeps the administration area from everybody who is not an administrator (7.8s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "ADMIN-PLAN-003",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713   7 ../../tests/e2e/admin-authorization.spec.ts:261:1 \u203a assigns a paid plan by hand and shows it to the account (5.9s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  },
+  {
+    "id": "PLAN-003",
+    "log": "evidence/e2e-first.txt",
+    "assertion": "  \u2713   5 ../../tests/e2e/admin-authorization.spec.ts:166:1 \u203a lets an administrator change a plan and shows it to everybody (4.8s)",
+    "execution_type": "local Chromium browser / synthetic fixtures"
+  }
+]

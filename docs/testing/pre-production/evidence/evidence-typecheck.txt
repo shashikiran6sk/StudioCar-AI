@@ -1,0 +1,3 @@
+Strict evidence TypeScript check: PASS (exit 0).
+Command: pnpm exec tsc --project /tmp/studiocar-evidence-tsconfig.json --noEmit
+Temporary project extends tsconfig.base.json with strict settings and includes the evidence test and dedicated Vitest configuration. No compiler diagnostics.

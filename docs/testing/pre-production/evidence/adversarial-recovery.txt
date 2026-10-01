@@ -1,0 +1,38 @@
+
+ RUN  v5.0.1 /workspace/StudioCar-AI
+
+ ↓ docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > SEC-DISC-001 FREE NONE processing must cap delivered output to preview dimensions
+ ↓ docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > LEONARDO-DISC-001 staging failure after successful provider call must not pay twice
+ ↓ docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > SEC-DISC-002 downgrade must refuse signing historical HQ object
+stdout | docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > ASYNC-DISC-002 published exhausted job must reach a terminal state without another source-queue delivery
+{"scenario":"ASYNC-DISC-002","simulatedSourceQueueDeliveriesRemaining":0,"ageAfterLeaseHours":24,"attemptCount":5,"status":"PROCESSING","dispatch":{"claimed":0,"failed":0,"published":0},"publications":0}
+
+ × docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > ASYNC-DISC-002 published exhausted job must reach a terminal state without another source-queue delivery 694ms
+   → expected 'PROCESSING' to be 'FAILED' // Object.is equality
+ ↓ docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > ASYNC-DISC-001 twenty jobs with two invalid sources complete 18 outputs once and retain partial failure
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts > Additional adversarial baseline against exact main > ASYNC-DISC-002 published exhausted job must reach a terminal state without another source-queue delivery
+AssertionError: expected 'PROCESSING' to be 'FAILED' // Object.is equality
+
+Expected: "FAILED"
+Received: "PROCESSING"
+
+ ❯ docs/testing/pre-production/evidence/security/adversarial-baseline.test.ts:139:26
+    137|     const stuck=await database.processingJob.findUniqueOrThrow({where:…
+    138|     console.info(JSON.stringify({scenario:"ASYNC-DISC-002",simulatedSo…
+    139|     expect(stuck.status).toBe("FAILED");
+       |                          ^
+    140|   });
+    141|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  17:41:08
+   Duration  3.90s (transform 41%, import 38%, tests 21%)
+
+JSON report written to /tmp/studiocar-adversarial-results.json

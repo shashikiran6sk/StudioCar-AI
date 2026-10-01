@@ -1,0 +1,21 @@
+[
+  {
+    "step": "phone-created-account-google-link",
+    "phoneAndGoogleSameUser": true
+  },
+  {
+    "step": "Google-relogin-after-phone-first-link",
+    "displayNameMatches": true,
+    "phoneShown": true
+  },
+  {
+    "step": "custom-404",
+    "status": 404,
+    "text": "404\nThis page could not be found."
+  },
+  {
+    "step": "marketing-quota-mismatch",
+    "workflowAdvertisesThree": true,
+    "pricingAdvertisesFive": true
+  }
+]

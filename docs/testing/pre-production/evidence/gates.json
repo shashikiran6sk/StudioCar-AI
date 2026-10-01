@@ -1,0 +1,198 @@
+[
+  {
+    "name": "typecheck",
+    "command": [
+      "pnpm",
+      "typecheck"
+    ],
+    "start": "2026-10-01T17:35:22Z",
+    "end": "2026-10-01T17:36:50Z",
+    "exit_code": 0
+  },
+  {
+    "name": "lint",
+    "command": [
+      "pnpm",
+      "lint"
+    ],
+    "start": "2026-10-01T17:35:22Z",
+    "end": "2026-10-01T17:36:45Z",
+    "exit_code": 0
+  },
+  {
+    "name": "schema",
+    "command": [
+      "pnpm",
+      "db:validate"
+    ],
+    "start": "2026-10-01T17:35:22Z",
+    "end": "2026-10-01T17:35:25Z",
+    "exit_code": 0
+  },
+  {
+    "name": "unit",
+    "command": [
+      "pnpm",
+      "test",
+      "--",
+      "--reporter=verbose"
+    ],
+    "start": "2026-10-01T17:35:22Z",
+    "end": "2026-10-01T17:45:28Z",
+    "exit_code": 0
+  },
+  {
+    "name": "migrate",
+    "command": [
+      "pnpm",
+      "db:migrate:deploy"
+    ],
+    "start": "2026-10-01T17:35:50Z",
+    "end": "2026-10-01T17:36:01Z",
+    "exit_code": 0
+  },
+  {
+    "name": "build",
+    "command": [
+      "pnpm",
+      "build"
+    ],
+    "start": "2026-10-01T17:36:07Z",
+    "end": "2026-10-01T17:38:37Z",
+    "exit_code": 0
+  },
+  {
+    "name": "integration",
+    "command": [
+      "pnpm",
+      "test:integration",
+      "--",
+      "--reporter=verbose"
+    ],
+    "start": "2026-10-01T17:37:28Z",
+    "end": "2026-10-01T17:38:44Z",
+    "exit_code": 0
+  },
+  {
+    "name": "adversarial",
+    "command": [
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--config",
+      "/tmp/studiocar-cert-vitest.mts"
+    ],
+    "start": "2026-10-01T17:37:45Z",
+    "end": "2026-10-01T17:37:55Z",
+    "exit_code": 1
+  },
+  {
+    "name": "package",
+    "command": [
+      "pnpm",
+      "package:worker"
+    ],
+    "start": "2026-10-01T17:37:55Z",
+    "end": "2026-10-01T17:38:08Z",
+    "exit_code": 0
+  },
+  {
+    "name": "audit",
+    "command": [
+      "pnpm",
+      "security:audit"
+    ],
+    "start": "2026-10-01T17:38:08Z",
+    "end": "2026-10-01T17:38:08Z",
+    "exit_code": 0
+  },
+  {
+    "name": "migration-status",
+    "command": [
+      "pnpm",
+      "db:migrate:status"
+    ],
+    "start": "2026-10-01T17:38:40Z",
+    "end": "2026-10-01T17:38:42Z",
+    "exit_code": 0
+  },
+  {
+    "name": "adversarial-recovery",
+    "command": [
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--config",
+      "/tmp/studiocar-cert-vitest.mts",
+      "--testNamePattern",
+      "ASYNC-DISC-002"
+    ],
+    "start": "2026-10-01T17:41:06Z",
+    "end": "2026-10-01T17:41:12Z",
+    "exit_code": 1
+  },
+  {
+    "name": "e2e",
+    "command": [
+      "pnpm",
+      "--filter",
+      "@studiocar/web",
+      "e2e",
+      "--config=/tmp/studiocar-cert-playwright.mts"
+    ],
+    "start": "2026-10-01T17:41:48Z",
+    "end": "2026-10-01T17:42:44Z",
+    "exit_code": 1
+  },
+  {
+    "name": "e2e-inventory-retest",
+    "command": [
+      "pnpm",
+      "--filter",
+      "@studiocar/web",
+      "e2e",
+      "--config=/tmp/studiocar-cert-playwright.mts",
+      "--grep",
+      "renders authenticated inventory states",
+      "--workers=1",
+      "--output=/tmp/studiocar-inventory-retest-output"
+    ],
+    "start": "2026-10-01T17:43:12Z",
+    "end": "2026-10-01T17:43:34Z",
+    "exit_code": 0
+  },
+  {
+    "name": "e2e-regression",
+    "command": [
+      "pnpm",
+      "--filter",
+      "@studiocar/web",
+      "e2e",
+      "--config=/tmp/studiocar-cert-playwright.mts",
+      "--workers=1",
+      "--output=/tmp/studiocar-regression-browser-output"
+    ],
+    "start": "2026-10-01T17:47:32Z",
+    "end": "2026-10-01T17:48:14Z",
+    "exit_code": 0
+  },
+  {
+    "name": "adversarial-final",
+    "command": [
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--config",
+      "docs/testing/pre-production/baseline.vitest.config.mts",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/tmp/studiocar-adversarial-final-results.json"
+    ],
+    "start": "2026-10-01T18:07:17Z",
+    "end": "2026-10-01T18:07:20Z",
+    "exit_code": 1
+  }
+]

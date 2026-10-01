@@ -1,0 +1,1 @@
+0e48626eae17e7f53a06ae66a57103e0d072790ad5cba2534512c7583dcc04c5  user-supplied request; canonical region parsed into canonical-scenarios.json

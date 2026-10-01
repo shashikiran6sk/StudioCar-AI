@@ -1,0 +1,20 @@
+{
+  "expected": 776,
+  "parsed": 776,
+  "accounted": 776,
+  "missing": 0,
+  "duplicates": 0,
+  "unclassified": 0,
+  "counts": {
+    "BLOCKED": 637,
+    "FAIL": 7,
+    "NOT_APPLICABLE": 2,
+    "PASS": 130
+  },
+  "additional": {
+    "FAIL": 9,
+    "PASS": 5,
+    "BLOCKED": 4
+  },
+  "additional_total": 18
+}

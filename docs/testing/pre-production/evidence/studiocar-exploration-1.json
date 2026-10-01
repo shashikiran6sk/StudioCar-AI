@@ -1,0 +1,36 @@
+[
+  {
+    "type": "homepage",
+    "device": "desktop",
+    "status": 200,
+    "durationMs": 833,
+    "overflow": {
+      "client": 1440,
+      "scroll": 1440
+    }
+  },
+  {
+    "type": "homepage",
+    "device": "tablet",
+    "status": 200,
+    "durationMs": 362,
+    "overflow": {
+      "client": 768,
+      "scroll": 768
+    }
+  },
+  {
+    "type": "homepage",
+    "device": "mobile",
+    "status": 200,
+    "durationMs": 115,
+    "overflow": {
+      "client": 390,
+      "scroll": 390
+    }
+  },
+  {
+    "type": "profile",
+    "text": "ACCOUNT\n\nProfile & security\n\nManage your account details, sign-in methods, and active sessions.\n\nPersonal details\n\nManage how your account appears across StudioCar AI.\n\nDisplay name *\nSave profile\nEmail\ndeveloper@studiocar.local\nPhone\nNot connected\nSign-in methods\n\nVerified identities that can access this account. Connecting a second method never merges accounts.\n\nGoogle\n\ndeveloper@studiocar.local\n\nLast verified 1 Oct 2026, 5:46 pm\nConnected\nPhone\n\nVerified mobile identity secured through one-time codes.\n\nNot connected\nConnect phone\nSession security\n\nReview active access and revoke sessions when needed.\n\nActive sessions\n1\nCurrent session expires\n31 Oct 2026, 5:46 pm\nLog out this device\n\nThis immediately revokes every active session, including this device.\n\nLog out all devices"
+  }
+]

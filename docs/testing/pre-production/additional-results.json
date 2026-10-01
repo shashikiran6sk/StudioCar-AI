@@ -1,0 +1,528 @@
+[
+  {
+    "id": "SEC-DISC-001",
+    "number": 1,
+    "category": "SEC-DISC",
+    "scenario": "FREE ORIGINAL resolution restriction",
+    "priority": "P0",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "adversarial adapter reproduction",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "FREE ORIGINAL resolution restriction",
+    "actual": "FREE output width1920 vs preview setting320; no provider call.",
+    "result": "FAIL",
+    "evidence": [
+      "evidence/adversarial-final.txt",
+      "evidence/security/adversarial-baseline.test.ts"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": "BUG-001",
+    "agent_qa": "FAIL",
+    "human_verification": "PENDING"
+  },
+  {
+    "id": "SEC-DISC-002",
+    "number": 2,
+    "category": "SEC-DISC",
+    "scenario": "Current FREE historical HQ signing",
+    "priority": "P0",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "real DB plus production service / mocked signer",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "Current FREE historical HQ signing",
+    "actual": "Cancelled PRO subscription still gets two HQ signatures and 1920 width.",
+    "result": "FAIL",
+    "evidence": [
+      "evidence/adversarial-final.txt",
+      "evidence/security/adversarial-baseline.test.ts"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": "BUG-002",
+    "agent_qa": "FAIL",
+    "human_verification": "PENDING"
+  },
+  {
+    "id": "LEONARDO-DISC-001",
+    "number": 3,
+    "category": "LEONARDO-DISC",
+    "scenario": "Successful provider call before durable staging",
+    "priority": "P1",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "adversarial adapter reproduction",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "Successful provider call before durable staging",
+    "actual": "Two successful provider calls across two attempts after one cutout staging failure.",
+    "result": "FAIL",
+    "evidence": [
+      "evidence/adversarial-final.txt",
+      "evidence/security/adversarial-baseline.test.ts"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": "BUG-003",
+    "agent_qa": "FAIL",
+    "human_verification": "PENDING"
+  },
+  {
+    "id": "ASYNC-DISC-001",
+    "number": 4,
+    "category": "ASYNC-DISC",
+    "scenario": "Twenty mixed terminal jobs plus redelivery",
+    "priority": "P1",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "real DB / synthetic executor",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "Twenty mixed terminal jobs plus redelivery",
+    "actual": "18 output/usage records, two invalid failures, 20 duplicates ignored, PARTIALLY_FAILED.",
+    "result": "PASS",
+    "evidence": [
+      "evidence/adversarial-final.txt"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": null,
+    "agent_qa": "PASS",
+    "human_verification": "PENDING"
+  },
+  {
+    "id": "ASYNC-DISC-002",
+    "number": 5,
+    "category": "ASYNC-DISC",
+    "scenario": "Final exhausted published job with no remaining delivery",
+    "priority": "P1",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "real DB plus dispatcher / mocked queue",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "Final exhausted published job with no remaining delivery",
+    "actual": "After24 simulated hours job staysPROCESSING at attempt5; dispatcher claimed0/published0.",
+    "result": "FAIL",
+    "evidence": [
+      "evidence/adversarial-final.txt",
+      "evidence/security/adversarial-baseline.test.ts"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": "BUG-004",
+    "agent_qa": "FAIL",
+    "human_verification": "PENDING"
+  },
+  {
+    "id": "DATA-DISC-001",
+    "number": 6,
+    "category": "DATA-DISC",
+    "scenario": "Equivalent ORIGINAL floor renderings split version keys",
+    "priority": "P2",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "unit expected-failure assertion",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "Equivalent ORIGINAL floor renderings split version keys",
+    "actual": "Existing it.fails expects2keys and observes4. Known expected failure is semantic FAIL.",
+    "result": "FAIL",
+    "evidence": [
+      "evidence/unit.txt"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": "BUG-005",
+    "agent_qa": "FAIL",
+    "human_verification": "PENDING"
+  },
+  {
+    "id": "AWS-DISC-001",
+    "number": 7,
+    "category": "AWS-DISC",
+    "scenario": "Default visibility meets sixfold timeout recommendation",
+    "priority": "P2",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "source parameter comparison",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "Default visibility meets sixfold timeout recommendation",
+    "actual": "Queue900seconds < six times Lambda180seconds =1080seconds. Deployed values unverified.",
+    "result": "FAIL",
+    "evidence": [
+      "AWS-INFRA-QA.md"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": "BUG-006",
+    "agent_qa": "FAIL",
+    "human_verification": "PENDING"
+  },
+  {
+    "id": "UI-DISC-001",
+    "number": 8,
+    "category": "UI-DISC",
+    "scenario": "Inventory browser timing sensitivity",
+    "priority": "P2",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "local browser baseline and retest",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "Inventory browser timing sensitivity",
+    "actual": "First run times out30s; unchanged isolated18.9s and serial12.2s retests pass. Baseline failure retained.",
+    "result": "FAIL",
+    "evidence": [
+      "evidence/e2e-first.txt"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": "BUG-007",
+    "agent_qa": "FAIL",
+    "human_verification": "PENDING"
+  },
+  {
+    "id": "SEC-DISC-003",
+    "number": 9,
+    "category": "SEC-DISC",
+    "scenario": "Provider result arbitrary HTTPS destination/SSRF policy",
+    "priority": "P2",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "source audit / runtime blocked",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "Provider result arbitrary HTTPS destination/SSRF policy",
+    "actual": "Only HTTPS/no credentials enforced; isolated adversarial destination test and trust policy not executed.",
+    "result": "BLOCKED",
+    "evidence": [
+      "LEONARDO-QA.md"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": null,
+    "agent_qa": "FAIL",
+    "human_verification": "PENDING"
+  },
+  {
+    "id": "ASYNC-DISC-003",
+    "number": 10,
+    "category": "ASYNC-DISC",
+    "scenario": "Staged paid cutout reused across plan downgrade",
+    "priority": "P0",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "source audit / runtime blocked",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "Staged paid cutout reused across plan downgrade",
+    "actual": "Staging metadata has no tier; exact downgrade-between-attempts scenario remains unexecuted.",
+    "result": "BLOCKED",
+    "evidence": [
+      "PLAN-ENTITLEMENT-MATRIX.md"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": null,
+    "agent_qa": "FAIL",
+    "human_verification": "PENDING"
+  },
+  {
+    "id": "DATA-DISC-002",
+    "number": 11,
+    "category": "DATA-DISC",
+    "scenario": "Processed/staged/orphan retention reconciliation",
+    "priority": "P1",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "source audit / live storage blocked",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "Processed/staged/orphan retention reconciliation",
+    "actual": "Retention/product policy and isolated bucket orphan test unavailable.",
+    "result": "BLOCKED",
+    "evidence": [
+      "FAILURE-RECOVERY.md"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": null,
+    "agent_qa": "FAIL",
+    "human_verification": "PENDING"
+  },
+  {
+    "id": "AWS-DISC-002",
+    "number": 12,
+    "category": "AWS-DISC",
+    "scenario": "Production trusted recovery scheduler deployed and monitored",
+    "priority": "P1",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "source audit / deployment blocked",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "Production trusted recovery scheduler deployed and monitored",
+    "actual": "No deployed scheduler/configuration supplied; shipped templates do not provision this HTTP schedule.",
+    "result": "BLOCKED",
+    "evidence": [
+      "PRODUCTION-CONFIG-QA.md"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": null,
+    "agent_qa": "FAIL",
+    "human_verification": "PENDING"
+  },
+  {
+    "id": "UI-DISC-002",
+    "number": 13,
+    "category": "UI-DISC",
+    "scenario": "Homepage desktop/tablet/mobile overflow and smoke",
+    "priority": "P2",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "exploratory local Chromium browser",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "Homepage desktop/tablet/mobile overflow and smoke",
+    "actual": "At1440/768/390px document scrollWidth equals clientWidth; screenshot inspection complete.",
+    "result": "PASS",
+    "evidence": [
+      "evidence/studiocar-exploration-1.json"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": null,
+    "agent_qa": "PASS",
+    "human_verification": "PENDING"
+  },
+  {
+    "id": "AUTH-DISC-001",
+    "number": 14,
+    "category": "AUTH-DISC",
+    "scenario": "Local Google\u2192phone link and canonical relogin",
+    "priority": "P0",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "exploratory fake-provider browser / real DB checks",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "Local Google\u2192phone link and canonical relogin",
+    "actual": "Wrong code refused; link+logout+phone login returned sameUser with phoneAccounts1.",
+    "result": "PASS",
+    "evidence": [
+      "evidence/studiocar-exploration-2.json"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": null,
+    "agent_qa": "PASS",
+    "human_verification": "PENDING"
+  },
+  {
+    "id": "AUTH-DISC-002",
+    "number": 15,
+    "category": "AUTH-DISC",
+    "scenario": "Local phone\u2192Google link and canonical relogin",
+    "priority": "P0",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "exploratory fake-provider browser / real DB checks",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "Local phone\u2192Google link and canonical relogin",
+    "actual": "Phone/Google user IDs match; Google login displays expected input name and linked phone.",
+    "result": "PASS",
+    "evidence": [
+      "evidence/studiocar-exploration-3.json"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": null,
+    "agent_qa": "PASS",
+    "human_verification": "PENDING"
+  },
+  {
+    "id": "UI-DISC-003",
+    "number": 16,
+    "category": "UI-DISC",
+    "scenario": "Public workflow limit matches plan catalog",
+    "priority": "P2",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "exploratory browser / source audit",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "Public workflow limit matches plan catalog",
+    "actual": "Workflow three vs pricing/backend five.",
+    "result": "FAIL",
+    "evidence": [
+      "evidence/studiocar-exploration-3.json"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": "BUG-008",
+    "agent_qa": "FAIL",
+    "human_verification": "PENDING"
+  },
+  {
+    "id": "UI-DISC-004",
+    "number": 17,
+    "category": "UI-DISC",
+    "scenario": "Custom StudioCar invalid-route experience",
+    "priority": "P2",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "exploratory browser / source audit",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "Custom StudioCar invalid-route experience",
+    "actual": "Generic Next404 without StudioCar recovery experience.",
+    "result": "FAIL",
+    "evidence": [
+      "evidence/studiocar-exploration-3.json"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": "BUG-009",
+    "agent_qa": "FAIL",
+    "human_verification": "PENDING"
+  },
+  {
+    "id": "SEC-DISC-004",
+    "number": 18,
+    "category": "UI-DISC",
+    "scenario": "Direct HTTP authorization and privileged-field attack matrix",
+    "priority": "P0",
+    "environment": "isolated local certification; production unverified",
+    "commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+    "tester": "Codex",
+    "execution_type": "direct local HTTP / synthetic authenticated browser session / real DB",
+    "date_time": "2026-10-01T23:28:51.422498+05:30",
+    "preconditions": "Synthetic fixtures only; external calls mocked. Source-only and blocked scenarios have no deployed environment.",
+    "steps": [
+      "Run or inspect the exact evidence source named below.",
+      "Compare the recorded observation to the invariant in this scenario."
+    ],
+    "expected": "Direct HTTP authorization and privileged-field attack matrix",
+    "actual": "27/27 safely scoped API checks passed with no real provider calls; streamed missing portfolio page returned200 but did not contain the foreign vehicle name, API ownership endpoints returned404.",
+    "result": "PASS",
+    "evidence": [
+      "evidence/security/direct-api-attacks.json"
+    ],
+    "api_evidence": "Local service/browser observations only where stated",
+    "db_evidence": "Real PostgreSQL where stated; no production DB access",
+    "aws_evidence": "BLOCKED: no deployed AWS configuration",
+    "bug_id": null,
+    "agent_qa": "PASS",
+    "human_verification": "PENDING"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "step": "invalid-code",
+    "visibleError": "Verification code *\n\nThe verification code you entered is incorrect. Please try again.\n\nConnect phone\nCancel"
+  },
+  {
+    "step": "google-phone-link-and-relogin",
+    "sameCanonicalUser": true,
+    "phoneAccounts": "1"
+  },
+  {
+    "step": "empty-vehicle-validation",
+    "dialogText": "NEW VEHICLE BATCH\n\nVehicle details\n\nCreate a vehicle, upload its photos, and choose a studio treatment.\n\nVehicle\nPhotos\nStudio\nReview\n×\nVehicle name / reference *\n\nEnter a name that helps you identify this vehicle.\n\nStock / Inventory ID\n\nYour dealership's existing vehicle reference. Optional.\n\nNotes\nAdd vehicle specifications (optional)\nAdd brand, model, variant and year for better organization and search.\nStep 1 of 4\nContinue to photos"
+  },
+  {
+    "step": "refresh-after-cancel",
+    "path": "/dashboard",
+    "dialogs": 0
+  },
+  {
+    "step": "non-admin-direct-navigation",
+    "status": 404
+  }
+]
