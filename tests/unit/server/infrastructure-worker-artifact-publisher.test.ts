@@ -92,6 +92,7 @@ function publish(workspace: Workspace, overrides: Record<string, string> = {}) {
       COMMIT_SHA: COMMIT,
       FAKE_S3: workspace.fakeS3,
       GITHUB_OUTPUT: output,
+      NODE_ENV: "test",
       PATH: workspace.path,
       ...overrides,
     },
