@@ -22,6 +22,8 @@ export const HTTP_ERROR_MESSAGES: Readonly<Record<string, string>> = {
   PROVIDER_TIMEOUT: "The background-removal provider timed out.",
   PROVIDER_INVALID_REQUEST:
     "The background-removal provider rejected the image request.",
+  PROVIDER_UNUSABLE_RESULT:
+    "The background-removal provider returned a result that could not be used.",
   UNAUTHORIZED: "Authentication required",
   UNAUTHENTICATED: "Authentication required",
   FORBIDDEN: "Request forbidden",

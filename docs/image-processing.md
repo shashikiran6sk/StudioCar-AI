@@ -52,9 +52,20 @@ The retry and idempotency semantics did not change in the migration:
 | Completion | Atomic and idempotent: the output, job, asset, vehicle and usage event commit together once |
 | Paid-result reuse | The staged cutout `provider-cutout.webp` is reused on a later attempt if its checksum matches |
 
-The adapter has **no retry loop of its own**. It classifies each failure once,
-and the worker's durable policy decides what happens next. This avoids a second
-retry mechanism competing with SQS and the outbox.
+The adapter does not retry generations. It classifies each failure once, and
+the worker's durable policy decides what happens next, so no second retry
+mechanism competes with SQS and the outbox.
+
+**Leonardo charges for every Sync call that returns HTTP 200**, whether or not
+StudioCar can use the result. Two rules keep a retry from paying twice:
+
+- A paid response that cannot be read or validated, or an output that fails
+  validation, is terminal (`PROVIDER_UNUSABLE_RESULT`). The same response would
+  fail the same way on every retry.
+- Downloading a paid result is retried inside the attempt, up to three
+  fetches with pauses of 1 s and 2 s, under the same deadline. This applies
+  only to network errors and 408, 429 and 5xx statuses. A brief CDN failure
+  therefore never costs a new generation.
 
 ## Leonardo request
 
@@ -89,9 +100,31 @@ default 90 s) covering both the generation and the result download.
   never persisted, queued, returned or logged. The structured logger accepts
   only allow-listed identifier fields, so a URL cannot be logged even by
   mistake.
+- The response wraps the generation in a `generateSync` envelope. A body
+  without the envelope is read the same way:
+
+  ```json
+  {
+    "generateSync": {
+      "id": "…",
+      "blockedCount": 0,
+      "cost": { "amount": "0.0269", "unit": "DOLLARS" },
+      "results": [
+        { "contentType": "image/webp", "url": "<30-minute presigned URL>", "dataB64": null, "width": 620, "height": 403 }
+      ]
+    }
+  }
+  ```
+
+  Only `results` must be well formed. A missing, `null` or malformed id, cost,
+  moderation count or optional result field reads as absent, so it can never
+  discard a result that has already been paid for. An empty `results` with
+  `blockedCount > 0` is moderated content.
 - The temporary result is downloaded straight away, without the API key. It
   is size-bounded and must be WebP with alpha, at the reported dimensions and
   within the pixel limit. Only then is it staged to StudioCar's private S3.
+  The URL must be fetched exactly as returned: changing its query string
+  breaks the S3 signature (`SignatureDoesNotMatch`).
 
 ### Output resolution is server-side only
 
@@ -122,11 +155,11 @@ integration tests.
 | 429 | RATE_LIMITED | PROVIDER_429 (honours `Retry-After`) | yes |
 | 5xx | SERVER_ERROR | PROVIDER_5XX | yes |
 | Other 4xx | REJECTED | INVALID_REQUEST | no |
-| Invalid JSON, schema mismatch | INVALID_RESPONSE | PROVIDER_5XX | yes |
-| Missing or empty results, missing or non-HTTPS URL | INVALID_RESPONSE | PROVIDER_5XX | yes |
-| Result marked `nsfw` or `blocked` | CONTENT_BLOCKED | CONTENT_BLOCKED | no |
-| Download non-2xx or network failure | DOWNLOAD_FAILED | NETWORK | yes |
-| Wrong content type, not WebP+alpha, wrong size | INVALID_OUTPUT | PROVIDER_5XX | yes |
+| 200 with an unreadable body, invalid JSON or malformed `results` | INVALID_RESPONSE | UNUSABLE_PROVIDER_RESULT | no (already paid) |
+| 200 with no or several results, or a missing or non-HTTPS URL | INVALID_RESPONSE | UNUSABLE_PROVIDER_RESULT | no (already paid) |
+| Result marked `nsfw` or `blocked`, or no results with `blockedCount > 0` | CONTENT_BLOCKED | CONTENT_BLOCKED | no |
+| Download still failing after three fetches (network, 408, 429 or 5xx), or another non-2xx | DOWNLOAD_FAILED | NETWORK | yes |
+| Wrong content type, not WebP+alpha, wrong size | INVALID_OUTPUT | UNUSABLE_PROVIDER_RESULT | no (already paid) |
 | Fetch rejected (DNS, reset) | NETWORK | NETWORK | yes |
 | Presigner failure or invalid URL | SOURCE_UNAVAILABLE | NETWORK | yes |
 | Cutout with no vehicle body | (executor) | NON_CAR_IMAGE | no |
@@ -139,6 +172,17 @@ mints a fresh URL.
 People see only the existing failure reasons, such as "Background removal
 failed". Leonardo status codes, messages and generation IDs stay in
 operator-only fields.
+
+When a response fails validation, `provider_request_failed` names where and
+how, never the value:
+
+- `responseIssuePath`: a field path such as `results` or `results.0`, or
+  `root` for the body as a whole;
+- `responseIssueCode`: an issue code such as `invalid_type`, `invalid_json`
+  or `unreadable_body`.
+
+These are enough to match the adapter to a changed response shape without
+logging a URL or a body.
 
 The generation is logged (`provider_generation_charged`, with the reported
 cost) **before** the download. A result that fails afterwards has still been

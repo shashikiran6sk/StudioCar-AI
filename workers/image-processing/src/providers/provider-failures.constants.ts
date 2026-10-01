@@ -6,8 +6,10 @@ import type { ProviderFailureCategory } from "./provider-failure.types";
  * How each provider failure is retried and recorded. Messages are stored on
  * the job for operators; people see only the mapped failure reason.
  *
- * Output problems (an empty result, an unusable file) are the provider's, so
- * they retry and never mark the person's original as invalid.
+ * Output problems (an unreadable response, an unusable file) are the
+ * provider's, so they never mark the person's original as invalid. They are
+ * also terminal: the provider has already charged for that generation, and a
+ * retry would pay again for the same outcome.
  */
 export const PROVIDER_FAILURES = {
   AUTHORIZATION: {
@@ -23,11 +25,11 @@ export const PROVIDER_FAILURES = {
     message: "The background-removal result could not be downloaded.",
   },
   INVALID_OUTPUT: {
-    kind: "PROVIDER_5XX",
+    kind: "UNUSABLE_PROVIDER_RESULT",
     message: "The background-removal provider returned an unusable image.",
   },
   INVALID_RESPONSE: {
-    kind: "PROVIDER_5XX",
+    kind: "UNUSABLE_PROVIDER_RESULT",
     message: "The background-removal provider returned an invalid response.",
   },
   NETWORK: {

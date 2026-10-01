@@ -204,10 +204,22 @@ databaseDescribe("Leonardo processing lifecycle against PostgreSQL", () => {
           ? new Response(new Uint8Array(cutout), {
               headers: { "content-type": "image/webp" },
             })
-          : Response.json({
-              cost: { amount: "0.0425", unit: "DOLLARS" },
-              id: GENERATION_ID,
-              results: [{ contentType: "image/webp", height: 400, url: RESULT_URL, width: 640 }],
+          : // The Sync API's real shape: the generation inside `generateSync`.
+            Response.json({
+              generateSync: {
+                blockedCount: 0,
+                cost: { amount: "0.0425", unit: "DOLLARS" },
+                id: GENERATION_ID,
+                results: [
+                  {
+                    contentType: "image/webp",
+                    dataB64: null,
+                    height: 400,
+                    url: RESULT_URL,
+                    width: 640,
+                  },
+                ],
+              },
             }),
       ),
     );
@@ -329,6 +341,56 @@ databaseDescribe("Leonardo processing lifecycle against PostgreSQL", () => {
     });
     const visible = serialize(statuses);
     expect(visible).not.toMatch(/leonardo|insufficient|402|secret/i);
+  });
+
+  it("fails a paid but unusable response once, so a retry never pays again", async () => {
+    const { job, objects, owner, run } = await arrange("unusable-result");
+    // A 200 is charged by Leonardo even when its body cannot be used.
+    const fetcher = vi.fn<typeof fetch>(() =>
+      Promise.resolve(Response.json({ generateSync: { id: GENERATION_ID, results: "x" } })),
+    );
+    const log = vi.spyOn(logger, "log");
+
+    expect(await run(fetcher)).toEqual({ batchItemFailures: [] });
+    expect(await run(fetcher)).toEqual({ batchItemFailures: [] });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(objects.size).toBe(1);
+    expect(log).toHaveBeenCalledWith(
+      "error",
+      "provider_request_failed",
+      expect.objectContaining({
+        errorCode: "PROVIDER_UNUSABLE_RESULT",
+        responseIssueCode: "invalid_type",
+        responseIssuePath: "results",
+      }),
+    );
+
+    const failed = await database.processingJob.findUniqueOrThrow({
+      include: { attempts: true, imageAsset: true, outboxMessage: true },
+      where: { id: job.id },
+    });
+    expect(failed).toMatchObject({
+      attemptCount: 1,
+      errorCode: "PROVIDER_UNUSABLE_RESULT",
+      // The person's photo is not blamed for the provider's response.
+      imageAsset: { status: "UPLOADED" },
+      nextAttemptAt: null,
+      status: "FAILED",
+    });
+    expect(failed.attempts).toEqual([
+      expect.objectContaining({ retryable: false, status: "FAILED" }),
+    ]);
+    expect(failed.outboxMessage?.publishedAt).not.toBeNull();
+    expect(
+      await database.usageEvent.count({ where: { userId: owner.id } }),
+    ).toBe(0);
+    const statuses = await new ProcessingStatusService(
+      new PrismaProcessingJobStatusRepository(database),
+    ).getStatuses(owner.id, { ids: [job.id] });
+    expect(statuses).toMatchObject({
+      ok: true,
+      response: { jobs: [{ retryable: false, state: "FAILED" }] },
+    });
   });
 
   it("reschedules a rate-limited request durably, no sooner than Leonardo's Retry-After", async () => {

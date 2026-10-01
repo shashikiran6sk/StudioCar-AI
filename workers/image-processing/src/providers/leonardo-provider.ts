@@ -20,6 +20,11 @@ import { classifyProviderStatus } from "./classify-provider-status";
 import { createLeonardoRequest } from "./create-leonardo-request";
 import { createProviderOperationalEvent } from "./create-provider-operational-event";
 import {
+  describeResponseIssue,
+  type ResponseIssue,
+} from "./describe-response-issue";
+import { downloadProviderResult } from "./download-provider-result";
+import {
   LEONARDO_ACCEPTED_DOWNLOAD_CONTENT_TYPES,
   LEONARDO_JSON_CONTENT_TYPE,
   LEONARDO_LOG_PROVIDER,
@@ -40,7 +45,11 @@ import type {
 } from "./leonardo-provider.types";
 import type { ProviderFailureCategory } from "./provider-failure.types";
 import { PROVIDER_FAILURES } from "./provider-failures.constants";
-import { PROVIDER_LOG_EVENTS } from "./provider-telemetry.constants";
+import {
+  PROVIDER_LOG_EVENTS,
+  PROVIDER_RESPONSE_ISSUES,
+  PROVIDER_RESPONSE_ROOT_PATH,
+} from "./provider-telemetry.constants";
 import { readBoundedResponse } from "./read-bounded-response";
 import { readRetryAfter } from "./read-retry-after";
 import { selectLeonardoResult } from "./select-leonardo-result";
@@ -73,6 +82,12 @@ export class LeonardoProvider implements ImageProcessingProvider {
     private readonly fetcher: typeof fetch = fetch,
     private readonly now: () => number = Date.now,
     private readonly telemetry: OperationalTelemetryPort = new OperationalTelemetry(),
+    private readonly sleep: (milliseconds: number) => Promise<void> = (
+      milliseconds,
+    ) =>
+      new Promise((resolve) => {
+        setTimeout(resolve, milliseconds);
+      }),
   ) {
     if (
       !options.apiKey.trim() ||
@@ -110,10 +125,12 @@ export class LeonardoProvider implements ImageProcessingProvider {
     const fail = (
       category: ProviderFailureCategory,
       retryAfterMilliseconds: number | null = null,
+      issue: ResponseIssue | null = null,
     ): BackgroundRemovalResult => {
       const durationMs = this.finish(state, category);
       logger.log("error", PROVIDER_LOG_EVENTS.failed, {
         ...fields,
+        ...issue,
         durationMs,
         errorCode: classifyProcessingFailure(PROVIDER_FAILURES[category].kind)
           .errorCode,
@@ -176,36 +193,54 @@ export class LeonardoProvider implements ImageProcessingProvider {
         response,
         LEONARDO_MAXIMUM_JSON_BYTES,
       );
+      if (json === null) {
+        return fail("INVALID_RESPONSE", null, {
+          responseIssueCode: PROVIDER_RESPONSE_ISSUES.unreadableBody,
+          responseIssuePath: PROVIDER_RESPONSE_ROOT_PATH,
+        });
+      }
       let payload: unknown;
       try {
-        payload = json === null ? null : JSON.parse(new TextDecoder().decode(json));
+        payload = JSON.parse(new TextDecoder().decode(json));
       } catch {
-        return fail("INVALID_RESPONSE");
+        return fail("INVALID_RESPONSE", null, {
+          responseIssueCode: PROVIDER_RESPONSE_ISSUES.invalidJson,
+          responseIssuePath: PROVIDER_RESPONSE_ROOT_PATH,
+        });
       }
       const parsed = LeonardoResponseSchema.safeParse(payload);
-      if (!parsed.success) return fail("INVALID_RESPONSE");
-      state.generationId = parsed.data.id;
+      if (!parsed.success) {
+        return fail("INVALID_RESPONSE", null, describeResponseIssue(parsed.error));
+      }
+      state.generationId = parsed.data.id ?? null;
       state.cost = parsed.data.cost ?? null;
       // Recorded before the download: a result that later fails to download
       // or validate has still been charged.
       logger.log("info", PROVIDER_LOG_EVENTS.generated, {
         ...fields,
-        cost: parsed.data.cost,
+        cost: state.cost ?? undefined,
         durationMs: this.now() - state.startedAt,
-        providerGenerationId: state.generationId,
+        providerGenerationId: state.generationId ?? undefined,
       });
 
-      const result = selectLeonardoResult(parsed.data.results);
+      const result = selectLeonardoResult(
+        parsed.data.results,
+        parsed.data.blockedCount ?? null,
+      );
       if (!result.ok) return fail(result.category);
 
       downloading = true;
       state.statusCode = undefined;
       // A temporary result carries its own authorization; the API key is
-      // never sent to the result host.
-      const download = await this.fetcher(result.url, {
-        redirect: "error",
-        signal: controller.signal,
-      });
+      // never sent to the result host. The generation is already paid for,
+      // so a transient download failure is retried here, within the same
+      // deadline, rather than by generating (and paying) again.
+      const download = await downloadProviderResult(
+        result.url,
+        this.fetcher,
+        controller.signal,
+        this.sleep,
+      );
       state.statusCode = download.status;
       if (!download.ok) {
         await download.body?.cancel();
@@ -240,7 +275,7 @@ export class LeonardoProvider implements ImageProcessingProvider {
         ...fields,
         durationMs,
         height: cutout.height,
-        providerGenerationId: state.generationId,
+        providerGenerationId: state.generationId ?? undefined,
         sizeBytes: bytes.byteLength,
         width: cutout.width,
       });

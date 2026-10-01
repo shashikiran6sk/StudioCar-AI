@@ -110,3 +110,23 @@ it("can never write a presigned URL, API key or bearer token", () => {
   expect(line).not.toContain("secret-api-key");
   expect(line).not.toContain("s3.amazonaws.com");
 });
+
+it("logs where a provider response failed validation, never its values", () => {
+  const write = vi.fn();
+  const logger = new StructuredLogger({ write });
+  logger.log("error", "provider_request_failed", {
+    responseIssueCode: "invalid_type",
+    responseIssuePath: "generateSync.results.0",
+  });
+  logger.log("error", "provider_request_failed", {
+    responseIssueCode: "https://cdn.example/a?X-Amz-Signature=secret",
+    responseIssuePath: "results.0 secret value",
+  });
+  expect(String(write.mock.calls[0]?.[0])).toContain(
+    '"responseIssuePath":"generateSync.results.0"',
+  );
+  expect(String(write.mock.calls[0]?.[0])).toContain('"responseIssueCode":"invalid_type"');
+  const unsafe = String(write.mock.calls[1]?.[0]);
+  expect(unsafe).not.toContain("responseIssue");
+  expect(unsafe).not.toContain("secret");
+});

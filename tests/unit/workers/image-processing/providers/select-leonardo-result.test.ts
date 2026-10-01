@@ -37,3 +37,17 @@ it.each([
 it("treats explicit false moderation flags as an ordinary result", () => {
   expect(selectLeonardoResult([{ blocked: false, nsfw: false, url: URL }]).ok).toBe(true);
 });
+
+it("reports an empty result list Leonardo counted as blocked as blocked content", () => {
+  expect(selectLeonardoResult([], 1)).toEqual({ ok: false, category: "CONTENT_BLOCKED" });
+  expect(selectLeonardoResult([], 0)).toEqual({ ok: false, category: "INVALID_RESPONSE" });
+  expect(selectLeonardoResult([], null)).toEqual({ ok: false, category: "INVALID_RESPONSE" });
+});
+
+it("selects the result even when the blocked count is positive", () => {
+  expect(selectLeonardoResult([{ url: URL }], 1).ok).toBe(true);
+});
+
+it("ignores a null content type", () => {
+  expect(selectLeonardoResult([{ contentType: null, url: URL }]).ok).toBe(true);
+});

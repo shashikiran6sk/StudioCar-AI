@@ -34,3 +34,13 @@ export const PROVIDER_LOG_EVENTS = {
   completed: "provider_request_completed",
   failed: "provider_request_failed",
 } as const;
+
+/** Response-issue codes for failures that happen before schema validation. */
+export const PROVIDER_RESPONSE_ISSUES = {
+  /** The body was empty, unreadable or over the JSON size limit. */
+  unreadableBody: "unreadable_body",
+  /** The body was not JSON. */
+  invalidJson: "invalid_json",
+} as const;
+/** The path logged for an issue with the response body as a whole. */
+export const PROVIDER_RESPONSE_ROOT_PATH = "root";

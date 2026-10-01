@@ -122,7 +122,13 @@ export type ProcessingFailureKind =
   | "PROVIDER_429"
   | "PROVIDER_5XX"
   | "TIMEOUT"
-  | "UNSUPPORTED_FORMAT";
+  | "UNSUPPORTED_FORMAT"
+  /**
+   * The provider charged for a result that could not be used (an unreadable
+   * response, or an output that fails validation). Retrying would pay again
+   * for the same outcome, so it is terminal.
+   */
+  | "UNUSABLE_PROVIDER_RESULT";
 
 /** Where in the pipeline a failure happened, for operational metrics. */
 export type ProcessingFailureStage =

@@ -62,3 +62,10 @@ export const LEONARDO_SOURCE_TYPE = "URL";
 
 export const LEONARDO_RETRY_AFTER_HEADER = "retry-after";
 export const LEONARDO_OPTIONS_ERROR = "Leonardo provider options are invalid.";
+
+/**
+ * How often an already-paid result is fetched before giving up, and the
+ * pauses between fetches. All of it runs within the exchange's one deadline,
+ * and only for failures that can pass (network errors, 408, 429 and 5xx).
+ */
+export const LEONARDO_DOWNLOAD_RETRY_DELAYS_MS: readonly number[] = [1_000, 2_000];

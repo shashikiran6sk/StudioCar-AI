@@ -27,13 +27,22 @@ const REQUEST: BackgroundRemovalRequest = {
   qualityTier: "HIGH",
   sourceObjectKey: "users/owner/source.jpg",
 };
-const PAYLOAD = {
+const GENERATION = {
   id: "generation-1",
+  blockedCount: 0,
   cost: { amount: "0.0425", unit: "DOLLARS" },
   results: [
-    { url: RESULT_URL, contentType: "image/webp", width: 30, height: 20 },
+    {
+      url: RESULT_URL,
+      contentType: "image/webp",
+      dataB64: null,
+      width: 30,
+      height: 20,
+    },
   ],
 };
+/** A Sync response as Leonardo sends it: the generation in an envelope. */
+const PAYLOAD = { generateSync: GENERATION };
 
 interface Call {
   init: RequestInit | undefined;
@@ -78,6 +87,7 @@ async function run(
   overrides: {
     qualityTier?: ProcessingQualityTier;
     resolver?: () => Promise<string>;
+    sleep?: (milliseconds: number) => Promise<void>;
   } = {},
 ) {
   const calls: Call[] = [];
@@ -93,6 +103,7 @@ async function run(
     fetcher,
     Date.now,
     telemetry,
+    overrides.sleep ?? (() => Promise.resolve()),
   );
   const result = await provider.removeBackground({
     ...REQUEST,
@@ -250,7 +261,8 @@ describe("LeonardoProvider failures", () => {
   it.each([
     ["not JSON", () => new Response("{not json", { status: 200 })],
     ["an empty body", () => new Response(null, { status: 200 })],
-    ["no generation id", () => Response.json({ results: PAYLOAD.results })],
+    ["a body that is not an object", () => Response.json([PAYLOAD])],
+    ["results that are not a list", () => Response.json({ id: "generation-1", results: "x" })],
     ["no results array", () => Response.json({ id: "generation-1" })],
     ["an empty results array", () => Response.json({ id: "generation-1", results: [] })],
     [
@@ -258,7 +270,7 @@ describe("LeonardoProvider failures", () => {
       () =>
         Response.json({
           id: "generation-1",
-          results: [PAYLOAD.results[0], PAYLOAD.results[0]],
+          results: [GENERATION.results[0], GENERATION.results[0]],
         }),
     ],
     [
@@ -285,14 +297,75 @@ describe("LeonardoProvider failures", () => {
       "an oversized JSON body",
       () => new Response("x".repeat(70 * 1024), { status: 200 }),
     ],
-  ])("treats a response with %s as a retryable invalid response", async (_case, respond) => {
-    const { calls, result, telemetry } = await run(respond);
-    expect(calls).toHaveLength(1);
+  ])(
+    "treats a paid response with %s as unusable, without retrying and paying again",
+    async (_case, respond) => {
+      const { calls, result, telemetry } = await run(respond);
+      expect(calls).toHaveLength(1);
+      expect(result).toMatchObject({
+        ok: false,
+        failure: { kind: "UNUSABLE_PROVIDER_RESULT", retryAfterMilliseconds: null },
+      });
+      expect(metricNames(telemetry)).toContain("ProviderInvalidResponseCount");
+    },
+  );
+
+  it.each([
+    ["not JSON", () => new Response("{not json", { status: 200 }), "invalid_json", "root"],
+    ["an empty body", () => new Response(null, { status: 200 }), "unreadable_body", "root"],
+    ["a body that is not an object", () => Response.json([PAYLOAD]), "invalid_type", "root"],
+    [
+      "results that are not a list",
+      () => Response.json({ id: "generation-1", results: "x" }),
+      "invalid_type",
+      "results",
+    ],
+  ])(
+    "logs where a response with %s failed, without any of its values",
+    async (_case, respond, responseIssueCode, responseIssuePath) => {
+      const log = vi.spyOn(logger, "log");
+      await run(respond);
+      expect(log).toHaveBeenCalledWith(
+        "error",
+        "provider_request_failed",
+        expect.objectContaining({ responseIssueCode, responseIssuePath }),
+      );
+    },
+  );
+
+  it("uses a result whose id, cost and optional fields are missing, null or malformed", async () => {
+    const bytes = await cutoutBytes();
+    const { result } = await run((_call, index) =>
+      index === 0
+        ? Response.json({
+            blockedCount: null,
+            cost: { amount: "$0.10", unit: "USD" },
+            id: null,
+            results: [
+              {
+                blocked: null,
+                contentType: null,
+                height: null,
+                nsfw: null,
+                url: RESULT_URL,
+                width: "30",
+              },
+            ],
+          })
+        : new Response(bytes, { headers: { "content-type": "image/webp" } }),
+    );
     expect(result).toMatchObject({
-      ok: false,
-      failure: { kind: "PROVIDER_5XX", retryAfterMilliseconds: null },
+      ok: true,
+      cutout: { height: 20, providerRequestId: null, width: 30 },
     });
-    expect(metricNames(telemetry)).toContain("ProviderInvalidResponseCount");
+  });
+
+  it("reports an output Leonardo counted as blocked as blocked content", async () => {
+    const { calls, result } = await run(() =>
+      Response.json({ blockedCount: 1, id: "generation-1", results: [] }),
+    );
+    expect(calls).toHaveLength(1);
+    expect(result).toMatchObject({ ok: false, failure: { kind: "CONTENT_BLOCKED" } });
   });
 
   it.each([{ nsfw: true }, { blocked: true }])(
@@ -301,7 +374,7 @@ describe("LeonardoProvider failures", () => {
       const { calls, result, telemetry } = await run(() =>
         Response.json({
           id: "generation-1",
-          results: [{ ...PAYLOAD.results[0], ...moderation }],
+          results: [{ ...GENERATION.results[0], ...moderation }],
         }),
       );
       expect(calls).toHaveLength(1);
@@ -317,28 +390,63 @@ describe("LeonardoProvider failures", () => {
     const { calls, result } = await run(() =>
       Response.json({
         id: "generation-1",
-        results: [{ ...PAYLOAD.results[0], contentType: "image/png" }],
+        results: [{ ...GENERATION.results[0], contentType: "image/png" }],
       }),
     );
     expect(calls).toHaveLength(1);
-    expect(result).toMatchObject({ ok: false, failure: { kind: "PROVIDER_5XX" } });
+    expect(result).toMatchObject({
+      ok: false,
+      failure: { kind: "UNUSABLE_PROVIDER_RESULT" },
+    });
   });
 
   it.each([
-    ["an error status", () => Promise.resolve(new Response(null, { status: 404 }))],
-    [
-      "a network failure",
-      () => Promise.reject(new TypeError("fetch failed")),
-    ],
-  ])("classifies a download with %s as a retryable download failure", async (_case, download) => {
-    const { result, telemetry } = await run(
-      await successResponses(download),
+    ["a missing result (404)", () => Promise.resolve(new Response(null, { status: 404 })), 1],
+    ["a persistent server error", () => Promise.resolve(new Response(null, { status: 503 })), 3],
+    ["a persistent network failure", () => Promise.reject(new TypeError("fetch failed")), 3],
+  ])(
+    "classifies a download with %s as a retryable download failure",
+    async (_case, download, downloads) => {
+      const { calls, result, telemetry } = await run(
+        await successResponses(download),
+      );
+      expect(calls).toHaveLength(1 + downloads);
+      expect(result).toMatchObject({
+        ok: false,
+        failure: { kind: "NETWORK", providerRequestId: "generation-1" },
+      });
+      expect(metricNames(telemetry)).toContain("ProviderDownloadFailureCount");
+    },
+  );
+
+  it("fetches a paid result again after a transient failure instead of generating again", async () => {
+    const bytes = await cutoutBytes();
+    const pauses: number[] = [];
+    const { calls, result } = await run(
+      (_call, index) => {
+        if (index === 0) return Response.json(PAYLOAD);
+        if (index === 1) throw new TypeError("fetch failed");
+        if (index === 2) return new Response(null, { status: 503 });
+        return new Response(bytes, { headers: { "content-type": "image/webp" } });
+      },
+      {
+        sleep: (milliseconds) => {
+          pauses.push(milliseconds);
+          return Promise.resolve();
+        },
+      },
     );
-    expect(result).toMatchObject({
-      ok: false,
-      failure: { kind: "NETWORK", providerRequestId: "generation-1" },
-    });
-    expect(metricNames(telemetry)).toContain("ProviderDownloadFailureCount");
+    expect(result.ok).toBe(true);
+    expect(calls.map(({ url }) => url)).toEqual([
+      "https://cloud.leonardo.ai/api/rest/v2/generationssync",
+      RESULT_URL,
+      RESULT_URL,
+      RESULT_URL,
+    ]);
+    expect(pauses).toEqual([1_000, 2_000]);
+    for (const call of calls.slice(1)) {
+      expect(new Headers(call.init?.headers).has("authorization")).toBe(false);
+    }
   });
 
   it.each([
@@ -378,9 +486,12 @@ describe("LeonardoProvider failures", () => {
         }),
     ],
     ["an empty file", async () => new Response(new Uint8Array(0))],
-  ])("refuses %s as an unusable output that retries", async (_case, download) => {
+  ])("refuses %s as an unusable output, without paying again", async (_case, download) => {
     const { result, telemetry } = await run(await successResponses(download));
-    expect(result).toMatchObject({ ok: false, failure: { kind: "PROVIDER_5XX" } });
+    expect(result).toMatchObject({
+      ok: false,
+      failure: { kind: "UNUSABLE_PROVIDER_RESULT" },
+    });
     expect(metricNames(telemetry)).toContain("ProviderInvalidOutputCount");
   });
 
@@ -388,14 +499,17 @@ describe("LeonardoProvider failures", () => {
     const { result } = await run(async (_call, index) =>
       index === 0
         ? Response.json({
-            ...PAYLOAD,
-            results: [{ ...PAYLOAD.results[0], width: 31 }],
+            ...GENERATION,
+            results: [{ ...GENERATION.results[0], width: 31 }],
           })
         : new Response(await cutoutBytes(), {
             headers: { "content-type": "image/webp" },
           }),
     );
-    expect(result).toMatchObject({ ok: false, failure: { kind: "PROVIDER_5XX" } });
+    expect(result).toMatchObject({
+      ok: false,
+      failure: { kind: "UNUSABLE_PROVIDER_RESULT" },
+    });
   });
 
   it("classifies an unreachable provider as a retryable network failure", async () => {
@@ -473,7 +587,7 @@ describe("LeonardoProvider observability", () => {
       "info",
       "provider_generation_charged",
       expect.objectContaining({
-        cost: PAYLOAD.cost,
+        cost: GENERATION.cost,
         provider: "leonardo",
         providerGenerationId: "generation-1",
         size: "auto",

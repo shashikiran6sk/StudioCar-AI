@@ -4,6 +4,26 @@ Last updated: 2026-10-01
 
 ## Leonardo.Ai becomes the only image-processing provider
 
+- **Development test fix: every Leonardo call failed after being charged.**
+  - **Cause.** The real Sync response wraps the generation in a
+    `generateSync` envelope. The adapter expected `id` and `results` at the top
+    level, rejected every reply as an invalid response, and retried. Each
+    retry was a new paid generation ($0.1047 at `auto`).
+  - **Contract.** `LeonardoResponseSchema` now unwraps `generateSync`, and
+    still reads an unwrapped body. Only `results` must be well formed; a
+    missing, `null` or malformed id, cost, `blockedCount` or optional result
+    field reads as absent. An empty `results` with `blockedCount > 0` is
+    reported as blocked content.
+  - **No paying twice.** A paid response or output that cannot be used is now
+    terminal (`PROVIDER_UNUSABLE_RESULT`, shown as "background removal
+    failed"; the photo is not marked invalid). Downloading a paid result is
+    retried up to three times within the same deadline, so a CDN blip never
+    costs a new generation.
+  - **Diagnostics.** `provider_request_failed` now logs `responseIssuePath`
+    and `responseIssueCode` (field path and issue code, never values).
+  - **Tests.** The contract and provider tests use the shape captured from a
+    real preview-size call. The PostgreSQL lifecycle test proves a paid but
+    unusable response is charged once and never republished.
 - Security: upgraded `next` and `eslint-config-next` from 16.3.5 to 16.3.6.
   This fixes critical advisory GHSA-vcvr-r3jv-pc5j (remote code execution in
   `next/og` `ImageResponse`), published while this PR was open; the CI
