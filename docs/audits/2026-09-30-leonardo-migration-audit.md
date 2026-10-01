@@ -143,12 +143,14 @@ the contract (`handler.mjs`, external production dependencies and the Linux
 arm64 Sharp binary at the archive root). Reproducing that contract with
 `pnpm deploy --prod --os=linux --cpu=arm64 --libc=glibc`:
 
-| | Before |
-| --- | --- |
-| ZIP | **62,592,857 bytes (59.7 MiB)** |
-| Uncompressed | **199,428,523 bytes (190.2 MiB)** — 76% of Lambda's 250 MB limit |
-| Files | 14,288 |
-| Largest | `@prisma/client` 71 MB (engines for every database), Sentry build plugins 21 MB + `sentry` CLI 15 MB, libvips 17.9 MB, Babel/oxc-parser/caniuse-lite (pulled by `@sentry/node@11`'s bundler plugins), unused `@aws-sdk/client-sqs` |
+| | Before | After (`pnpm package:worker`) |
+| --- | --- | --- |
+| ZIP | **62,592,857 bytes (59.7 MiB)** | **18,123,601 bytes (17.3 MiB)**, −71% |
+| Uncompressed | **199,428,523 bytes (190.2 MiB)**, 76% of Lambda's 250 MB limit | **35,071,678 bytes (33.4 MiB)**, 13% |
+| Files | 14,288 | 120 |
+| Largest | `@prisma/client` 71 MB (engines for every database), Sentry build plugins 21 MB + `sentry` CLI 15 MB, libvips 17.9 MB, Babel/oxc-parser/caniuse-lite (pulled by `@sentry/node@11`'s bundler plugins), unused `@aws-sdk/client-sqs` | arm64 libvips 18.3 MB; `handler.mjs` 8.5 MB (Prisma's WebAssembly query compiler 4.9 MB, zod 0.7 MB, AWS SDK ≈0.9 MB, Sentry ≈0.8 MB); backgrounds 6.9 MB |
+| Reproducible | No | Byte-identical across builds; verified in CI |
+| Verified on arm64 | No | Handler and packaged libvips run on arm64 Node 24 (QEMU locally; the `public.ecr.aws/lambda/nodejs:24` arm64 image in CI) |
 
 ## 7. Supplied backgrounds
 

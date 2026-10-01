@@ -171,6 +171,52 @@ batch size 1/window 0 versus the deployed setting is still required before
 changing production parameters. Provider 429 telemetry and queue age alarms
 remain the authority for tuning maximum concurrency.
 
+## Leonardo migration: worker timing and package (2026-10-01)
+
+This supersedes the 120-second worker figures above. One synchronous Leonardo
+generation, its download, composition and two S3 writes now share one Lambda
+invocation:
+
+| Budget | Value | Basis |
+| --- | --- | --- |
+| Leonardo deadline (`LEONARDO_TIMEOUT_MS`) | 90 s | One abort signal covers the generation and the result download |
+| Composition and WebP encode | 0.5–0.7 s at 1600×1200; 1.3–1.5 s at 2656×1856 | Measured with `pnpm evidence:processing` (x64 build machine) |
+| Lambda timeout | 180 s (minimum 150) | Deadline + composition + S3 + PostgreSQL headroom |
+| Claim lease | 180 s | Validated to be ≥ Leonardo deadline + 30 s; at least the Lambda timeout |
+| Queue visibility | 900 s (unchanged) | Above the Lambda timeout, with redelivery margin |
+| Duration alarm | 150 s | Fires before the timeout |
+| Concurrency | Unchanged (maximum 10) | No evidence justified a change; use `ProviderRateLimited` and queue age |
+
+Leonardo's real latency could not be measured: no API key was available and
+its hosts were unreachable from the build environment. After the first
+production traffic, compare `ProviderLatency` p99 with the 90 s deadline and
+tighten both values together.
+
+The composition hot path was profiled with the same fixture:
+
+- Sharpening is restricted to the vehicle's content box (720 → 404 ms).
+- The remaining time is mostly the quality-90 WebP encode. Its effort (4) and
+  `smartSubsample` are deliberate: they measured +2.15 dB PSNR in the red
+  channel of a red car.
+
+The Lambda archive is now built by `pnpm package:worker`, reproducibly:
+
+| | Before | After |
+| --- | --- | --- |
+| ZIP | 62,592,857 bytes (59.7 MiB) | 18,123,601 bytes (17.3 MiB), −71% |
+| Unzipped | 199,428,523 bytes (190.2 MiB) | 35,071,678 bytes (33.4 MiB), −82% |
+| Files | 14,288 | 120 |
+
+The largest remaining entries are:
+
+- arm64 libvips: 18.3 MB.
+- `handler.mjs`: 8.5 MB. Within it, `@prisma/client` (its WebAssembly query
+  compiler) takes 4.9 MB, `zod` 0.7 MB, Sentry about 0.8 MB and the AWS SDK
+  about 0.9 MB.
+- The six backgrounds: 6.9 MB.
+
+A smaller archive also means less to download and unpack on a cold start.
+
 ## Public and shared-layout reads
 
 The marketing page remains dynamically rendered for its personalized session

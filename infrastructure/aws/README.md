@@ -48,9 +48,26 @@ deleted or replaced. Removing retained customer data or queued work is an
 explicit operational action.
 
 `image-processing-worker.yml` deploys the Node.js 24 Lambda runtime from an
-immutable, reviewed archive in a private artifact bucket. The archive must place
-`handler.mjs` and its production dependencies (including the Linux arm64 Sharp
-binary) at its root. The stack resolves database and Leonardo.Ai credentials from
+immutable, reviewed archive in a private artifact bucket. Build it with
+`pnpm package:worker`, which writes
+`workers/image-processing/dist/lambda/image-processing-worker.zip` and a manifest
+with its SHA-256, sizes and largest entries. The archive holds one esbuild bundle
+(`handler.mjs`, with Prisma, the AWS SDK and Sentry inlined), `sharp` with its
+Linux arm64 glibc binaries exactly as pinned by `pnpm-lock.yaml`, and the six
+studio backgrounds under `assets/backgrounds/`. Entries are sorted, timestamped
+1980-01-01 and stored with fixed permissions, so the same commit always produces
+the same bytes. CI rebuilds it twice and compares them, smoke-tests it inside
+`public.ecr.aws/lambda/nodejs:24` on arm64, and uploads it as the
+`image-processing-worker-lambda` artifact. Upload that exact file, and record
+its SHA-256 from the manifest.
+
+| Archive | Before | After |
+| --- | --- | --- |
+| ZIP | 62,592,857 bytes | 18,123,601 bytes (−71%) |
+| Unzipped | 199,428,523 bytes (76% of Lambda's limit) | 35,071,678 bytes (13%) |
+| Files | 14,288 | 120 |
+
+The stack resolves database and Leonardo.Ai credentials from
 Secrets Manager, grants only tenant-prefix object access, caps both reserved and
 SQS event-source concurrency, and enables `ReportBatchItemFailures`. Configure
 alarm actions and ensure the queue visibility timeout is longer than the Lambda
