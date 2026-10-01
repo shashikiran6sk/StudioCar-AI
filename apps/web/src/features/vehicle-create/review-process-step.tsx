@@ -11,7 +11,7 @@ import { useRef, useState } from "react";
 import { formatBackgroundTreatment } from "./format-background-treatment";
 import { formatCropMode } from "./format-crop-mode";
 import { formatFloorStyle } from "./format-floor-style";
-import { STUDIO_SCENE_BACKGROUNDS } from "./processing-option.constants";
+import { STUDIO_BACKGROUNDS } from "./processing-option.constants";
 import { formatPhotoCount } from "./format-photo-count";
 import { ProcessingBatchRequestError } from "./processing-batch-request-error";
 import {
@@ -118,7 +118,7 @@ export function ReviewProcessStep({
               <dt>{REVIEW_BACKGROUND_LABEL}</dt>
               <dd>{formatBackgroundTreatment(options.background)}</dd>
             </div>
-            {STUDIO_SCENE_BACKGROUNDS.includes(options.background) ? (
+            {STUDIO_BACKGROUNDS.includes(options.background) ? (
               <div>
                 <dt>{REVIEW_FLOOR_LABEL}</dt>
                 <dd>{formatFloorStyle(options.floor)}</dd>

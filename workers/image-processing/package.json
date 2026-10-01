@@ -27,9 +27,7 @@
     "build:local": "esbuild src/local.ts --bundle --external:@aws-sdk/client-sqs --platform=node --target=node24 --format=esm --external:@sentry/node --external:@aws-sdk/client-cloudwatch --external:sharp --external:@aws-sdk/s3-request-presigner --external:@aws-sdk/client-s3 --external:@prisma/adapter-pg --external:@prisma/client --external:pg --outfile=dist/local.mjs",
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
-    "cost:leonardo": "node --env-file-if-exists=../../.env.local scripts/leonardo-cost.mjs",
-    "shadow:diagnostics": "node scripts/shadow-diagnostics.mjs"
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@studiocar/local-queue": "workspace:*",

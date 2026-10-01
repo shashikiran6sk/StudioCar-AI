@@ -53,6 +53,9 @@ enum ProcessingJobStatus {
   CANCELLED
 }
 
+/// The provider that served a processing attempt. LEONARDO is the only active
+/// provider; REMOVEBG, FAL and BIREFNET remain so historical jobs and attempts
+/// keep their recorded provider. No new row is written with them.
 enum ProcessingProvider {
   REMOVEBG
   LEONARDO

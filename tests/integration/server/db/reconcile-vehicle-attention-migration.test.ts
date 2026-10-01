@@ -61,7 +61,7 @@ databaseDescribe("reconcile_vehicle_attention migration", () => {
           idempotencyKey: `${vehicle.id}-job-${String(index)}`,
           imageAssetId: assetId,
           options: {},
-          provider: "REMOVEBG",
+          provider: "LEONARDO",
           status,
           userId,
           vehicleId: vehicle.id,

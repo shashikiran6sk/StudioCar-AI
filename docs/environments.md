@@ -4,8 +4,8 @@ StudioCar AI runs in exactly three environments, selected by `APP_ENV`:
 
 | `APP_ENV` | Purpose |
 | --- | --- |
-| `local` | Everything on the developer's machine. Needs nothing but a remove.bg key. |
-| `development` | Real Google, MSG91, AWS S3, AWS SQS, remove.bg, and database; the image worker and dispatcher stay local. |
+| `local` | Everything on the developer's machine. Needs nothing but a Leonardo key, and cannot complete a real background removal (see Local). |
+| `development` | Real Google, MSG91, AWS S3, AWS SQS, Leonardo.Ai, and database; the image worker and dispatcher stay local. |
 | `production` | Fully deployed. No local adapter can be selected. |
 
 `NODE_ENV` keeps its ordinary Node.js and Next.js meaning (how the code was
@@ -27,7 +27,7 @@ every runtime; no environment is ever assumed.
 | Original and processed images | MinIO | AWS S3 Development bucket | AWS S3 production bucket |
 | Processing queue | ElasticMQ | AWS SQS Development queue | AWS SQS |
 | Image worker | local container | local container | deployed Lambda |
-| Background removal | remove.bg | remove.bg | configured provider (remove.bg) |
+| Background removal and shadow | Leonardo.Ai (cannot fetch MinIO) | Leonardo.Ai | Leonardo.Ai |
 | Email delivery | none | none | none |
 | Dispatch scheduler | local ticker | local ticker | trusted scheduler |
 | AWS credentials | none | explicit S3 and SQS pairs or AWS default chain | workload identity |
@@ -57,7 +57,7 @@ explicit overrides it tolerates.
    refused. A violation names the setting and fails startup.
 
 Only repository-owned infrastructure is ever defaulted. External credentials
-(remove.bg, Google, MSG91, AWS), a Development session secret, and
+(Leonardo, Google, MSG91, AWS), a Development session secret, and
 anything a deployment owns have no default anywhere.
 
 The Local defaults live in one module,
@@ -94,10 +94,10 @@ environment starts without it.
 
 ## Local
 
-The whole application runs without any external account except remove.bg.
+The whole application runs without any external account except Leonardo.Ai.
 
 ```bash
-cp .env.example.local .env.local   # then fill in REMOVEBG_API_KEY
+cp .env.example.local .env.local   # then fill in LEONARDO_API_KEY
 pnpm install
 pnpm infra:up                      # PostgreSQL, MinIO, ElasticMQ, image worker, dispatcher
 pnpm db:reset                      # Local only: drop and reapply every migration
@@ -119,9 +119,12 @@ pnpm dev                           # http://localhost:3000
   checksum-bound PUT used in production, and the commit endpoint verifies the
   object. The content security policy allows the MinIO origin only under this
   profile.
-- **Processing** follows the real path: reservation and outbox in PostgreSQL,
-  the dispatcher, ElasticMQ, the image worker (the deployed handler driven by a
-  local consumer), MinIO, remove.bg, and completion with its usage event.
+- **Processing** follows the real path — reservation and outbox in PostgreSQL,
+  the dispatcher, ElasticMQ, and the image worker (the deployed handler driven
+  by a local consumer) — up to the provider. Leonardo fetches each source image
+  from a short-lived HTTPS URL and cannot reach MinIO, so a Local job fails at
+  the provider step and shows the ordinary failure state. Process real images
+  under the Development profile, whose bucket Leonardo can read.
 
 | Service | Address |
 | --- | --- |
@@ -134,7 +137,7 @@ pnpm dev                           # http://localhost:3000
 `pnpm infra:build` rebuilds the worker and application images after their code
 or dependencies change.
 
-Automated tests never call remove.bg, Google, or MSG91; they replace
+Automated tests never call Leonardo, Google, or MSG91; they replace
 providers at their ports.
 
 ## Development
@@ -153,7 +156,7 @@ Required: `DATABASE_URL` (the Development database), `SESSION_SECRET`,
 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MSG91_WIDGET_ID`,
 `MSG91_WIDGET_TOKEN`, `MSG91_AUTH_KEY`, `AWS_REGION` (the example sets
 `ap-south-1`), `S3_BUCKET` (the Development bucket), `SQS_IMAGE_QUEUE_URL` (the
-Development queue), and `REMOVEBG_API_KEY`. Optional: the `S3_*` and `SQS_*`
+Development queue), and `LEONARDO_API_KEY`. Optional: the `S3_*` and `SQS_*`
 key pairs (see below), and `WORKER_DATABASE_URL`, for a database the worker
 container cannot reach at `DATABASE_URL` (see below). `pnpm infra:up` refuses to
 start without `SQS_IMAGE_QUEUE_URL`.
@@ -286,13 +289,14 @@ compose network unless `--i-understand-this-destroys-data` is passed. It never
 creates sample data; `pnpm db:seed` installs configuration only.
 
 
-## Leonardo provider selection
+## Image processing provider
 
-All profiles retain remove.bg as the default and allow an explicit
-`BACKGROUND_REMOVAL_PROVIDER=leonardo` override. Only the image worker reads
-`LEONARDO_API_KEY` and `LEONARDO_TIMEOUT_MS`; the control plane sees selection
-alone. Real Leonardo runs require an AWS HTTPS source URL, so use Development
-rather than Local MinIO. See [adapter and cost experiment](./leonardo-provider.md).
+Leonardo.Ai is the only provider, in every profile; there is nothing to
+select. Only the image worker reads `LEONARDO_API_KEY` and
+`LEONARDO_TIMEOUT_MS` (default 90000, range 1000–150000), and
+`IMAGE_WORKER_CLAIM_TTL_MS` must be at least 30 s longer than the timeout.
+The control plane holds no provider setting at all. See
+[image processing](./image-processing.md).
 
 ## Web database connection budget
 

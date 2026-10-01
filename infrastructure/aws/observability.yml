@@ -27,20 +27,24 @@ Parameters:
     Type: Number
     Default: 5
     MinValue: 1
-  RemoveBgRateLimitCount:
+  ProviderRateLimitCount:
     Type: Number
     Default: 5
     MinValue: 1
-  RemoveBgServerErrorCount:
+  ProviderServerErrorCount:
     Type: Number
     Default: 5
     MinValue: 1
-  RemoveBgFailureRatePercent:
+  ProviderTimeoutCount:
+    Type: Number
+    Default: 5
+    MinValue: 1
+  ProviderFailureRatePercent:
     Type: Number
     Default: 20
     MinValue: 1
     MaxValue: 100
-  MinimumRemoveBgRequests:
+  MinimumProviderRequests:
     Type: Number
     Default: 20
     MinValue: 1
@@ -79,11 +83,12 @@ Resources:
           {"type":"metric","x":12,"y":21,"width":12,"height":6,"properties":{"title":"Oldest message age in seconds","region":"${AWS::Region}","period":300,"stat":"Maximum","view":"timeSeries","metrics":[["AWS/SQS","ApproximateAgeOfOldestMessage","QueueName","${QueueName}"]]}},
           {"type":"metric","x":0,"y":27,"width":12,"height":6,"properties":{"title":"Messages sent, received, deleted","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["AWS/SQS","NumberOfMessagesSent","QueueName","${QueueName}"],["AWS/SQS","NumberOfMessagesReceived","QueueName","${QueueName}"],["AWS/SQS","NumberOfMessagesDeleted","QueueName","${QueueName}"]]}},
           {"type":"metric","x":12,"y":27,"width":12,"height":6,"properties":{"title":"Images completed (application success)","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","ImagesProcessed","Service","image-processing-worker"]]}},
-          {"type":"text","x":0,"y":33,"width":24,"height":1,"properties":{"markdown":"## remove.bg \u2014 actual API exchanges only; staged result reuse is excluded"}},
-          {"type":"metric","x":0,"y":34,"width":12,"height":6,"properties":{"title":"Requests, successes, failures","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","removebg.request.count","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.success.count","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.failure.count","Service","image-processing-worker"]]}},
-          {"type":"metric","x":12,"y":34,"width":12,"height":6,"properties":{"title":"HTTP errors","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","removebg.status.4xx","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.status.401","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.status.402","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.status.403","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.status.429","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.status.5xx","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.status.500","Service","image-processing-worker"]]}},
-          {"type":"metric","x":0,"y":40,"width":12,"height":6,"properties":{"title":"Provider duration in milliseconds","region":"${AWS::Region}","period":300,"stat":"Average","view":"timeSeries","metrics":[["StudioCarAI/Operations","removebg.duration","Service","image-processing-worker"]]}},
-          {"type":"metric","x":12,"y":40,"width":12,"height":6,"properties":{"title":"Reported credits charged and successes without credit headers","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","removebg.credits.charged","Service","image-processing-worker"],["StudioCarAI/Operations","removebg.success.unreported_credits.count","Service","image-processing-worker"]]}}
+          {"type":"text","x":0,"y":33,"width":24,"height":1,"properties":{"markdown":"## Leonardo \u2014 actual Sync exchanges only; a staged cutout reused on retry is excluded"}},
+          {"type":"metric","x":0,"y":34,"width":12,"height":6,"properties":{"title":"Requests, successes, failures","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","ProviderRequestCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderSuccessCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderFailureCount","Service","image-processing-worker"]]}},
+          {"type":"metric","x":12,"y":34,"width":12,"height":6,"properties":{"title":"Failures by category","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","ProviderRateLimitedResponseCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderServerErrorResponseCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderTimeoutCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderNetworkErrorCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderDownloadFailureCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderInvalidResponseCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderInvalidOutputCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderContentBlockedCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderRejectedRequestCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderAuthorizationFailureCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderPaymentRequiredCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderSourceUnavailableCount","Service","image-processing-worker"]]}},
+          {"type":"metric","x":0,"y":40,"width":12,"height":6,"properties":{"title":"Exchange duration in milliseconds (p50, p95)","region":"${AWS::Region}","period":300,"view":"timeSeries","metrics":[["StudioCarAI/Operations","ProviderExchangeDurationMilliseconds","Service","image-processing-worker",{"stat":"p50"}],["StudioCarAI/Operations","ProviderExchangeDurationMilliseconds","Service","image-processing-worker",{"stat":"p95"}]]}},
+          {"type":"metric","x":12,"y":40,"width":12,"height":6,"properties":{"title":"Reported provider cost","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","ProviderCostCredits","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderCostDollars","Service","image-processing-worker"]]}},
+          {"type":"metric","x":0,"y":46,"width":24,"height":6,"properties":{"title":"Failed attempts by pipeline stage","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","ProcessingSourceFailureCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProcessingProviderFailureCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProcessingCompositionFailureCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProcessingStorageFailureCount","Service","image-processing-worker"]]}}
         ]}
 
   LambdaErrorRateAlarm:
@@ -141,43 +146,61 @@ Resources:
           Value: !Ref WorkerFunctionName
       Period: 300
       Statistic: Sum
-  RemoveBgRateLimitAlarm:
+  ProviderRateLimitAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmDescription: Sustained remove.bg 429 responses
+      AlarmDescription: Sustained Leonardo 429 responses
       AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
       OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
       ComparisonOperator: GreaterThanOrEqualToThreshold
       EvaluationPeriods: 3
       DatapointsToAlarm: 2
       TreatMissingData: notBreaching
-      Threshold: !Ref RemoveBgRateLimitCount
+      Threshold: !Ref ProviderRateLimitCount
       Namespace: StudioCarAI/Operations
-      MetricName: removebg.status.429
+      MetricName: ProviderRateLimitedResponseCount
       Dimensions:
         - Name: Service
           Value: image-processing-worker
       Period: 300
       Statistic: Sum
-  RemoveBgServerErrorAlarm:
+  ProviderServerErrorAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmDescription: Sustained remove.bg 5xx responses
+      AlarmDescription: Sustained Leonardo 5xx responses
       AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
       OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
       ComparisonOperator: GreaterThanOrEqualToThreshold
       EvaluationPeriods: 3
       DatapointsToAlarm: 2
       TreatMissingData: notBreaching
-      Threshold: !Ref RemoveBgServerErrorCount
+      Threshold: !Ref ProviderServerErrorCount
       Namespace: StudioCarAI/Operations
-      MetricName: removebg.status.5xx
+      MetricName: ProviderServerErrorResponseCount
       Dimensions:
         - Name: Service
           Value: image-processing-worker
       Period: 300
       Statistic: Sum
-  RemoveBgFailureRateAlarm:
+  ProviderTimeoutAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Sustained Leonardo exchanges reaching the worker's deadline
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 2
+      TreatMissingData: notBreaching
+      Threshold: !Ref ProviderTimeoutCount
+      Namespace: StudioCarAI/Operations
+      MetricName: ProviderTimeoutCount
+      Dimensions:
+        - Name: Service
+          Value: image-processing-worker
+      Period: 300
+      Statistic: Sum
+  ProviderFailureRateAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmDescription: Sustained provider failures with a minimum request volume
@@ -187,14 +210,14 @@ Resources:
       EvaluationPeriods: 3
       DatapointsToAlarm: 2
       TreatMissingData: notBreaching
-      Threshold: !Ref RemoveBgFailureRatePercent
+      Threshold: !Ref ProviderFailureRatePercent
       Metrics:
         - Id: req
           ReturnData: false
           MetricStat:
             Metric:
               Namespace: StudioCarAI/Operations
-              MetricName: removebg.request.count
+              MetricName: ProviderRequestCount
               Dimensions:
                 - Name: Service
                   Value: image-processing-worker
@@ -205,14 +228,14 @@ Resources:
           MetricStat:
             Metric:
               Namespace: StudioCarAI/Operations
-              MetricName: removebg.failure.count
+              MetricName: ProviderFailureCount
               Dimensions:
                 - Name: Service
                   Value: image-processing-worker
             Period: 300
             Stat: Sum
         - Id: rate
-          Expression: !Sub 'IF(req >= ${MinimumRemoveBgRequests}, 100*FILL(fail,0)/req, 0)'
+          Expression: !Sub 'IF(req >= ${MinimumProviderRequests}, 100*FILL(fail,0)/req, 0)'
           ReturnData: true
 Outputs:
   DashboardUrl:

@@ -12,7 +12,7 @@ import {
   FIT_VEHICLE_CROP,
   MAINTAIN_COMPOSITION_CROP,
   ORIGINAL_BACKGROUND_TREATMENT,
-  STUDIO_SCENE_BACKGROUNDS,
+  STUDIO_BACKGROUNDS,
 } from "./processing-option.constants";
 import {
   CUSTOMIZE_BACKGROUND_HEADING,
@@ -47,7 +47,7 @@ export function CustomizeTreatmentStep({
   // Only a studio background is drawn with a wall and a floor to choose.
   const floorEnabled =
     studioBackgroundEnabled &&
-    STUDIO_SCENE_BACKGROUNDS.includes(options.background);
+    STUDIO_BACKGROUNDS.includes(options.background);
 
   function selectBackground(background: BackgroundTreatment) {
     setOptions({ ...options, background });

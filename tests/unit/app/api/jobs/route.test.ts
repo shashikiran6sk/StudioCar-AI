@@ -56,7 +56,7 @@ describe("POST /api/jobs", () => {
     const service = new ProcessingJobService(
       { reserveBatchOwned: vi.fn() },
       { schedule: vi.fn() },
-      ProcessingProvider.REMOVEBG,
+      ProcessingProvider.LEONARDO,
       { resolve: vi.fn().mockResolvedValue({ imageCapacity: 100, maxImagesPerBatch: 20, allowanceBillingPeriodKey: null }) },
     );
     const statusService = new ProcessingStatusService({ findOwned: vi.fn() });
@@ -142,7 +142,7 @@ describe("POST /api/jobs", () => {
       service: new ProcessingJobService(
         { reserveBatchOwned: vi.fn() },
         { schedule: vi.fn() },
-        ProcessingProvider.REMOVEBG,
+        ProcessingProvider.LEONARDO,
         { resolve: vi.fn().mockResolvedValue({ imageCapacity: 100, maxImagesPerBatch: 20, allowanceBillingPeriodKey: null }) },
       ),
       statusService,

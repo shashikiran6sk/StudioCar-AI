@@ -8,10 +8,17 @@ describe("MarketingFeatureSelector", () => {
     render(<MarketingFeatureSelector />);
 
     const studio = screen.getByRole("button", { name: /Studio backgrounds/ });
-    const privacy = screen.getByRole("button", { name: /Plate privacy/ });
+    const shadows = screen.getByRole("button", { name: /Natural shadows/ });
     expect(studio).toHaveAttribute("aria-pressed", "true");
-    fireEvent.click(privacy);
-    expect(privacy).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(shadows);
+    expect(shadows).toHaveAttribute("aria-pressed", "true");
     expect(studio).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("advertises no number-plate masking", () => {
+    render(<MarketingFeatureSelector />);
+
+    expect(screen.queryByRole("button", { name: /Plate privacy/ })).toBeNull();
+    expect(document.body.textContent).not.toMatch(/number plate/i);
   });
 });

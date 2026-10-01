@@ -265,7 +265,7 @@ Last updated: 2026-09-29
 - Added sanitized generation/cost/dimension logs and a development-only
   preview/full/50MP measurement command. Live pricing and staging validation
   remain pending because no Leonardo key was available. Cross-job cutout reuse
-  and production cutover remain PR 3 prerequisites; see docs/leonardo-provider.md.
+  and production cutover remain PR 3 prerequisites; see docs/leonardo-provider.md (since superseded by docs/image-processing.md).
 - Tests cover request/auth mapping, parsing, validation, HTTP/network/timeout,
   download boundaries, artifact persistence/reuse, S3 failures, cost logging,
   selection/secret isolation and real-PostgreSQL Leonardo lifecycle completion.
@@ -1506,7 +1506,7 @@ Update this document in every meaningful PR with:
 - Merged Leonardo provider PR #78 after every CI check passed using the authorized admin merge. Production defaults remain remove.bg.
 - Audited provider→staged cutout→crop/resize/padding→scene→vehicle composition. remove.bg previously baked car/3D shadows into its cutout, then the HORIZON scene added a second ellipse. The local renderer did not skew a silhouette, and final vehicle scale was already applied before drawing the scene.
 - Both providers now request no provider shadow. Studio shadows use strong alpha bounds and per-column lower contact geometry at final scale, with configurable contact/ambient layers, symmetric spread, no lateral skew, and edge fading. PLAIN and HORIZON floors share this local treatment; original backgrounds retain their existing behavior.
-- Added alpha/contact geometry and controlled raster pose coverage, and a development diagnostic utility writing the requested seven before/after artifacts. See docs/vehicle-shadows.md for root cause, processing order, tuning, and legacy-artifact limits.
+- Added alpha/contact geometry and controlled raster pose coverage, and a development diagnostic utility writing the requested seven before/after artifacts. See docs/vehicle-shadows.md (since superseded by docs/image-processing.md) for root cause, processing order, tuning, and legacy-artifact limits.
 - Exact supplied 45° image validation remains pending because no fixture path/image was provided. Reviewed the repository marketing sedan as a diagnostic proxy; it contains baked floor alpha, so it is not evidence of a clean live provider result.
 - User confirmed Leonardo credentials are not configured. Live preview/full/50MP cost measurements, staging E2E, production cutover, and later remove.bg cleanup remain gated on those prerequisites. Do not change production provider or assume equal pricing.
 - Local verification: lint, strict typecheck, behavior-source mapping, 2,163 unit passes (five pre-existing expected failures), 155 PostgreSQL integration passes, schema validation, worker build, webpack production web build, and all 14 browser tests passed. Root build/e2e commands attempted Turbopack and hit the existing local process/port EPERM restriction; CI must pass the normal build before merge.

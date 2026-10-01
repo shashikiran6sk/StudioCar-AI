@@ -46,7 +46,7 @@ databaseDescribe("PrismaProcessingOutboxRepository", () => {
       status: "UPLOADED", mimeType: "image/jpeg", originalFilename: "fixture.jpg", originalObjectKey: `users/${owner.id}/${id}`,
       sizeBytes: 1024, uploadExpiresAt: CLAIM_NOW })) });
     const created = await database.processingJob.createManyAndReturn({ data: ids.map((id) => ({ userId: owner.id,
-      vehicleId: vehicle.id, imageAssetId: id, provider: "REMOVEBG", options: ProcessingOptionsSchema.parse({}), idempotencyKey: id,
+      vehicleId: vehicle.id, imageAssetId: id, provider: "LEONARDO", options: ProcessingOptionsSchema.parse({}), idempotencyKey: id,
     })), select: { id: true } });
     await database.processingOutboxMessage.createMany({ data: created.map((job) => ({ jobId: job.id })) });
     const jobIds = created.map((job) => job.id);
@@ -119,7 +119,7 @@ databaseDescribe("PrismaProcessingOutboxRepository", () => {
       batchIdempotencyKey,
       batchLabel: null,
       batchRequestHash: createProcessingBatchRequestHash(request),
-      provider: ProcessingProvider.REMOVEBG,
+      provider: ProcessingProvider.LEONARDO,
       usageBillingPeriodKey: "2026-09",
       usageIdempotencyKey: `usage:upload-session:${batchIdempotencyKey}`,
       options,

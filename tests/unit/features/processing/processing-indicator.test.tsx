@@ -147,7 +147,7 @@ describe("ProcessingIndicator", () => {
       ),
     ).toBeVisible();
     expect(
-      screen.queryByText(/remove.bg|PAYMENT_REQUIRED|credits/i),
+      screen.queryByText(/remove\.bg|leonardo|PAYMENT_REQUIRED|credits/i),
     ).not.toBeInTheDocument();
   });
 

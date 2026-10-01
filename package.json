@@ -28,8 +28,7 @@
     "test": "pnpm db:generate && pnpm test:mapping && turbo run test",
     "test:integration": "pnpm db:generate && turbo run test:integration",
     "test:mapping": "node scripts/check-test-mapping.mjs",
-    "typecheck": "pnpm db:generate && turbo run typecheck",
-    "cost:leonardo": "pnpm --filter @studiocar/image-processing-worker cost:leonardo"
+    "typecheck": "pnpm db:generate && turbo run typecheck"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "catalog:",

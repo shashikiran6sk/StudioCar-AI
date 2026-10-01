@@ -95,7 +95,7 @@ it.each([1, 5, 20])("records %i-image acceptance separately from last queue ackn
           await monitoringContext.run(context, () => measureStage(PerformanceStage.DISPATCH, () => dispatcher.dispatch(request)));
         };
       },
-    }, ProcessingProvider.REMOVEBG, {
+    }, ProcessingProvider.LEONARDO, {
       resolve: async (userId) => {
         const plan = await billing.getCurrentPlan(userId, now);
         return { imageCapacity: plan.imageCapacity, maxImagesPerBatch: plan.maxImagesPerBatch,

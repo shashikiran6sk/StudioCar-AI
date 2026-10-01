@@ -391,18 +391,17 @@ Limit messaging is visible before a limit is reached. Reject unsupported files i
 
 ### 3.7 Upload Vehicle — Step 3, Customize
 
-Four option rows in a two-column grid:
+Three option rows in a two-column grid:
 
-- Hide Number Plate
 - Image Enhancement
 - Studio Background
-- Maintain Original Composition
+- Maintain Original Composition — disabled and on while Studio Background is off, because an original photo always keeps its own frame
 
-Below: three background choices — Premium White, Dark Studio, Grey Studio — then two floor choices for the selected background: Plain background and Standard floor.
+Below: three background choices — Premium White, Dark Studio, Grey Studio — then two floor choices for the selected background: Plain background and Standard floor. Number-plate masking was removed in September 2026: it never changed a pixel, so the dialog no longer offers it.
 
 ### 3.8 Upload Vehicle — Step 4, Review & Process
 
-Two-column review area: 180px vehicle preview left; title, metadata, 2×2 summary, and credit estimate right. Summary includes image count, plate privacy, background, and enhancement. Include the assurance that originals are preserved and processing continues after navigation.
+Two-column review area: 180px vehicle preview left; title, metadata, 2×2 summary, and credit estimate right. Summary includes image count, background, floor, enhancement, and composition. Include the assurance that originals are preserved and processing continues after navigation.
 
 Primary button: Process Photos. On activation, close the modal, return to Inventory, and insert a medium processing card immediately without reload.
 
