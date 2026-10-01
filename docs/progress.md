@@ -2,6 +2,33 @@
 
 Last updated: 2026-10-01
 
+## Publish the image-worker archive to S3 on merge
+
+- **What it does.** A new `publish-worker-artifact` CI job runs after every
+  merge to `main`, once lint/test, packaging and build/e2e have passed. It
+  uploads the exact archive CI built and tested to
+  `s3://<artifact-bucket>/image-processing-worker/<short-sha>.zip`, plus its
+  manifest. `<short-sha>` is the first 5 characters by default
+  (`WORKER_ARTIFACT_SHA_LENGTH`), and the full SHA is stored as object
+  metadata. A short-SHA collision fails the publish instead of overwriting.
+- **Immutability.** Uploads are conditional (`If-None-Match: *`) and
+  checksum-verified by S3. A re-run for the same commit is a no-op if the
+  bytes match and fails otherwise.
+- **Credentials.** The job uses GitHub OIDC, with no stored AWS keys.
+  `infrastructure/aws/worker-artifact-publisher.yml` creates a role that only
+  this repository's `main` branch can assume. It can only put and read objects
+  under the prefix, and is denied any unconditional write.
+- **Main runs complete.** CI runs on `main` are no longer cancelled by a newer
+  push (pull requests still are), so every merged commit publishes.
+- **Inactive until configured.** The job is skipped until `WORKER_ARTIFACT_BUCKET`
+  and `WORKER_ARTIFACT_ROLE_ARN` are set. One-time setup is in
+  `infrastructure/aws/README.md`.
+- **Deploying the Lambda** from the published key is the next CD step.
+- **Tests.** Tests cover the role's trust and permissions and the job's
+  guards. They also run the publish script against a fake AWS CLI for a fresh
+  publish, an idempotent re-run, a refused overwrite, a manifest mismatch and
+  an invalid commit SHA.
+
 ## Leonardo.Ai becomes the only image-processing provider
 
 - **Development test fix: every Leonardo call failed after being charged.**
