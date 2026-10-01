@@ -1,0 +1,10 @@
+{
+  "branch": "docs/production-certification-dd835cad",
+  "baseline_commit": "dd835cad364493038b6c28cd0dd0434c5ded2781",
+  "baseline_documentation_commit": "2add6ba",
+  "push": "PASS: remote branch created and upstream configured",
+  "pull_request": "BLOCKED: gh pr create --draft failed; Post https://api.github.com/graphql: Forbidden",
+  "required_remote_ci": "UNVERIFIED",
+  "merge": "NOT_PERFORMED",
+  "fixture_cleanup": "Disposable studiocar-cert-dd835cad-postgres container removed; owned local Next server stopped"
+}

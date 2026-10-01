@@ -29,7 +29,7 @@ Additional discovered: **18**; PASS5, FAIL9, BLOCKED4. Twelve architecture/secur
 | Additional adversarial suite | Four FAIL, one PASS; valid ORIGINAL processing contract |
 | Direct HTTP attacks | 27/27 scoped checks pass; no real provider/storage traffic |
 | Quality gates | Lint/types/schema/migrations/status/build/dependency audit/package passed locally |
-| Remote CI / deployed runtime | Unverified; GitHub API Forbidden and no isolated production configuration |
+| Remote CI / deployed runtime | Unverified; Branch pushed; PR creation GraphQL Forbidden; no isolated production configuration |
 
 Binary subsystem gates below mean **release verification gates**, including incomplete/blocked verification. They do not claim an observed identity/admin exploit where none was found. Local passes and observed defects are stated separately.
 
