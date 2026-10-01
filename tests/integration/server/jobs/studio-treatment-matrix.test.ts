@@ -24,7 +24,7 @@ const CLAIM_EXPIRES_AT = new Date("2099-09-20T00:05:00.000Z");
  * Every case of the Customize-treatment matrix through the real boundary:
  * the application service, the reservation transaction, the outbox row, the
  * worker's claim, and the portfolio's versions — one vehicle, one photo,
- * 96 batches, as the QA run makes them.
+ * 36 batches, as the QA run makes them.
  */
 databaseDescribe("studio treatment matrix against PostgreSQL", () => {
   let database: ReturnType<typeof createDatabaseClient>;
@@ -71,7 +71,7 @@ databaseDescribe("studio treatment matrix against PostgreSQL", () => {
           dispatched.push(...(request?.jobIds ?? []));
         },
       },
-      ProcessingProvider.REMOVEBG,
+      ProcessingProvider.LEONARDO,
       {
         resolve: () =>
           Promise.resolve({
@@ -116,6 +116,7 @@ databaseDescribe("studio treatment matrix against PostgreSQL", () => {
         claimExpiresAt: CLAIM_EXPIRES_AT,
         jobId,
         now: NOW,
+        provider: "LEONARDO",
         workerId: "treatment-matrix-worker",
       });
       if (claim.kind !== "CLAIMED") throw new Error(`${testCase.id} was not claimed: ${claim.kind}`);
@@ -127,9 +128,9 @@ databaseDescribe("studio treatment matrix against PostgreSQL", () => {
         data: {
           height: 720,
           jobId,
-          mimeType: "image/jpeg",
-          objectKey: `private/${jobId}/processed.jpg`,
-          outputFormat: "JPEG",
+          mimeType: "image/webp",
+          objectKey: `private/${jobId}/processed.webp`,
+          outputFormat: "WEBP",
           previewObjectKey: `private/${jobId}/preview.webp`,
           sizeBytes: 2_048,
           userId: owner.id,

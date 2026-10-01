@@ -500,7 +500,7 @@ inventoryTest(
         "The studio image couldn't be created. Re-process to try again.",
       );
       await expect(processingPanel).not.toContainText("PAYMENT_REQUIRED");
-      await expect(processingPanel).not.toContainText("remove.bg");
+      await expect(processingPanel).not.toContainText(/remove\.bg|leonardo/i);
       await page.screenshot({
         path: testInfo.outputPath("desktop-credit-failure-panel.png"),
         animations: "disabled",

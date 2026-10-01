@@ -9,6 +9,9 @@ const baseCommand = CreateProcessingBatchSchema.parse({
   options: {},
 });
 
+const PINNED_DEFAULT_REQUEST_DIGEST =
+  "c391fc62dc0ab69dbe852899a3879f50a650cfd43634a49a19013fc0f4e34875";
+
 describe("createProcessingBatchRequestHash", () => {
   it("is stable for an exact replay and changes with request semantics", () => {
     const first = createProcessingBatchRequestHash(baseCommand);
@@ -33,11 +36,11 @@ describe("createProcessingBatchRequestHash", () => {
   });
 
   it("keeps an unlabelled request's hash and treats a label as part of the request", () => {
-    // Pinned: the digest every unlabelled batch stored before labels existed.
+    // Pinned: the default unlabelled request's digest. It changed once, on
+    // 30 September 2026, when number-plate masking, the local shadow choice
+    // and the output format left the treatment contract.
     const unlabelled = createProcessingBatchRequestHash(baseCommand);
-    expect(unlabelled).toBe(
-      "76ba328e1a56a1ee3bcb73ada2ba47b9e0896412a2288bc6068bda32c43e30f9",
-    );
+    expect(unlabelled).toBe(PINNED_DEFAULT_REQUEST_DIGEST);
     const labelled = createProcessingBatchRequestHash({
       ...baseCommand,
       label: "T02-S04",

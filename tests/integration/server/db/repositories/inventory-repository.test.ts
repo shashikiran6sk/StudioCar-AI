@@ -93,7 +93,7 @@ databaseDescribe("PrismaInventoryRepository", () => {
           quality: 90,
           shadow: "NATURAL",
         },
-        provider: "REMOVEBG",
+        provider: "LEONARDO",
         status: "COMPLETED",
         userId: owner.id,
         vehicleId: ready.id,

@@ -91,7 +91,6 @@ const LOCAL_ONLY_VARIABLES = [
 const PROFILE_SELECTIONS = [
   "GOOGLE_AUTH_DRIVER",
   "PHONE_OTP_DRIVER",
-  "BACKGROUND_REMOVAL_PROVIDER",
 ];
 
 interface ExampleCase {
@@ -129,7 +128,6 @@ const EXAMPLES: Record<string, ExampleCase> = {
       "SQS_SECRET_ACCESS_KEY",
       "BOOTSTRAP_ADMIN_EMAIL",
       "WORKER_DATABASE_URL",
-      "LEONARDO_API_KEY",
     ],
   },
   ".env.example.production": {
@@ -139,7 +137,6 @@ const EXAMPLES: Record<string, ExampleCase> = {
     optional: [
       "BOOTSTRAP_ADMIN_EMAIL",
       "SENTRY_DSN",
-      "LEONARDO_API_KEY",
       "SENTRY_RELEASE",
       "HTTP_CLOUDWATCH_METRICS_ENABLED",
     ],
@@ -233,10 +230,10 @@ describe("environment example files", () => {
     });
   });
 
-  it("asks a Local developer for nothing but the remove.bg key", () => {
+  it("asks a Local developer for nothing but the Leonardo key", () => {
     expect(Object.keys(readExample(".env.example.local")).sort()).toEqual([
       "APP_ENV",
-      "REMOVEBG_API_KEY",
+      "LEONARDO_API_KEY",
     ]);
   });
 

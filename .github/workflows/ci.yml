@@ -75,6 +75,67 @@ jobs:
       - name: Integration test task
         run: pnpm test:integration
 
+  worker-package:
+    name: Image worker Lambda package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.3.4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Package the Lambda archive
+        run: pnpm package:worker
+
+      - name: Verify the archive is reproducible
+        run: |
+          pnpm --filter @studiocar/image-processing-worker package:lambda "$RUNNER_TEMP/rebuild" > /dev/null
+          sha256sum workers/image-processing/dist/lambda/image-processing-worker.zip "$RUNNER_TEMP/rebuild/image-processing-worker.zip"
+          cmp workers/image-processing/dist/lambda/image-processing-worker.zip "$RUNNER_TEMP/rebuild/image-processing-worker.zip"
+
+      - name: Set up arm64 emulation
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Smoke-test the archive in the arm64 Lambda runtime
+        run: |
+          mkdir -p "$RUNNER_TEMP/task"
+          unzip -q workers/image-processing/dist/lambda/image-processing-worker.zip -d "$RUNNER_TEMP/task"
+          docker run --rm --platform linux/arm64 \
+            --volume "$RUNNER_TEMP/task:/var/task:ro" \
+            --volume "$PWD/workers/image-processing/scripts:/smoke:ro" \
+            --entrypoint /var/lang/bin/node \
+            public.ecr.aws/lambda/nodejs:24 /smoke/smoke-lambda.mjs /var/task
+
+      - name: Summarize the archive
+        run: |
+          {
+            echo '### Image worker Lambda archive'
+            echo '```json'
+            cat workers/image-processing/dist/lambda/image-processing-worker.manifest.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the archive
+        uses: actions/upload-artifact@v5
+        with:
+          name: image-processing-worker-lambda
+          path: workers/image-processing/dist/lambda/
+          if-no-files-found: error
+
   build-and-e2e:
     name: Build and end-to-end smoke test
     runs-on: ubuntu-latest

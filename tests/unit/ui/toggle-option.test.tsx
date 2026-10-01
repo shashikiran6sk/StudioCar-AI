@@ -10,12 +10,12 @@ describe("ToggleOption", () => {
       <ToggleOption
         checked={false}
         description="Automatically mask visible plates"
-        label="Hide number plate"
+        label="Image Enhancement"
         onCheckedChange={onCheckedChange}
       />,
     );
 
-    const toggle = screen.getByRole("switch", { name: "Hide number plate" });
+    const toggle = screen.getByRole("switch", { name: "Image Enhancement" });
     expect(toggle).toHaveAttribute("aria-checked", "false");
     fireEvent.click(toggle);
     expect(onCheckedChange).toHaveBeenCalledWith(true);

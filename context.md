@@ -4,7 +4,7 @@
 
 StudioCar AI is a production-oriented automotive image-processing SaaS. Dealers upload vehicle photos directly to private object storage, request asynchronous background removal and image treatments, monitor processing, manage inventory/portfolios, and track plan usage.
 
-Background removal uses an existing provider port. Leonardo is available beside remove.bg without changing the product layer, upload flow, polling contract, vehicle domain, or usage accounting. Production stays on remove.bg until live cost, shadow-quality, and end-to-end validation justify cutover; fal.ai and self-hosted BiRefNet remain future adapter choices.
+Background removal runs behind the `ImageProcessingProvider` port. Leonardo.Ai Remove Background (Sync API) is the only provider: the queue worker sends it a short-lived presigned source URL, receives a transparent car with Leonardo's own car shadow, downloads it immediately and composites it onto one of six StudioCar studio backgrounds. Output resolution is chosen server-side from the subscription plan. See `/docs/image-processing.md`.
 
 ## Sources of truth
 

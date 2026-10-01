@@ -12,7 +12,7 @@ import {
   FIT_VEHICLE_CROP,
   MAINTAIN_COMPOSITION_CROP,
   ORIGINAL_BACKGROUND_TREATMENT,
-  STUDIO_SCENE_BACKGROUNDS,
+  STUDIO_BACKGROUNDS,
 } from "./processing-option.constants";
 import {
   CUSTOMIZE_BACKGROUND_HEADING,
@@ -24,8 +24,6 @@ import {
   ENHANCEMENT_LABEL,
   MAINTAIN_COMPOSITION_DESCRIPTION,
   MAINTAIN_COMPOSITION_LABEL,
-  PLATE_PRIVACY_DESCRIPTION,
-  PLATE_PRIVACY_LABEL,
   STUDIO_BACKGROUND_DESCRIPTION,
   STUDIO_BACKGROUND_LABEL,
 } from "./vehicle-create.constants";
@@ -49,7 +47,7 @@ export function CustomizeTreatmentStep({
   // Only a studio background is drawn with a wall and a floor to choose.
   const floorEnabled =
     studioBackgroundEnabled &&
-    STUDIO_SCENE_BACKGROUNDS.includes(options.background);
+    STUDIO_BACKGROUNDS.includes(options.background);
 
   function selectBackground(background: BackgroundTreatment) {
     setOptions({ ...options, background });
@@ -63,14 +61,6 @@ export function CustomizeTreatmentStep({
     <section className="customize-treatment-step">
       <div className="customize-treatment-step__toggles">
         <ToggleOption
-          checked={options.platePrivacy}
-          description={PLATE_PRIVACY_DESCRIPTION}
-          label={PLATE_PRIVACY_LABEL}
-          onCheckedChange={(platePrivacy) =>
-            setOptions({ ...options, platePrivacy })
-          }
-        />
-        <ToggleOption
           checked={options.enhancement}
           description={ENHANCEMENT_DESCRIPTION}
           label={ENHANCEMENT_LABEL}
@@ -83,16 +73,23 @@ export function CustomizeTreatmentStep({
           description={STUDIO_BACKGROUND_DESCRIPTION}
           label={STUDIO_BACKGROUND_LABEL}
           onCheckedChange={(enabled) =>
-            selectBackground(
+            setOptions(
               enabled
-                ? DEFAULT_BACKGROUND_TREATMENT
-                : ORIGINAL_BACKGROUND_TREATMENT,
+                ? { ...options, background: DEFAULT_BACKGROUND_TREATMENT }
+                : // The original photo keeps its own frame: there is no
+                  // cutout to re-compose without a studio background.
+                  {
+                    ...options,
+                    background: ORIGINAL_BACKGROUND_TREATMENT,
+                    crop: MAINTAIN_COMPOSITION_CROP,
+                  },
             )
           }
         />
         <ToggleOption
           checked={maintainComposition}
           description={MAINTAIN_COMPOSITION_DESCRIPTION}
+          disabled={!studioBackgroundEnabled}
           label={MAINTAIN_COMPOSITION_LABEL}
           onCheckedChange={(enabled) =>
             setOptions({

@@ -53,7 +53,7 @@ export const MARKETING_COPY = {
     eyebrow: "Built for vehicle imagery",
     primaryAction: "Process your first vehicle →",
     secondaryAction: "Explore the product",
-    summary: "Remove distracting backgrounds, protect number plates, enhance every detail, and deliver consistent portfolios—without slowing down your inventory team.",
+    summary: "Remove distracting backgrounds, ground every car with a natural shadow, enhance every detail, and deliver consistent portfolios—without slowing down your inventory team.",
     treatmentSummary: "✓ Premium White · Enhanced",
     title: "Turn every vehicle photo into showroom material.",
   },
@@ -99,8 +99,8 @@ export const MARKETING_FEATURES = [
     label: "Studio backgrounds",
   },
   {
-    description: "Automatically hide visible number plates while preserving clean, believable vehicle details.",
-    label: "Plate privacy",
+    description: "Every vehicle keeps a realistic ground shadow, so it stands on the studio floor instead of floating.",
+    label: "Natural shadows",
   },
   {
     description: "Refine lighting, colour, clarity, and visual consistency without changing the vehicle.",
@@ -124,7 +124,7 @@ export const MARKETING_WORKFLOW_STEPS = [
     title: "Upload photos",
   },
   {
-    description: "Choose privacy, enhancement, composition, shadow, and a studio treatment.",
+    description: "Choose enhancement, composition, and a studio background and floor.",
     detail: "Preview every treatment before processing",
     title: "Customize",
   },

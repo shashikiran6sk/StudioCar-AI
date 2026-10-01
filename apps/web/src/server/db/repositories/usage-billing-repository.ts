@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@studiocar/database-runtime";
 import {
+  findCurrentSubscriptionPlanKey,
   ImageAssetStatus,
   SubscriptionStatus,
   UsageEventType,
@@ -20,22 +21,8 @@ export class PrismaUsageBillingRepository {
    * plan. Resolved separately because the plan decides how its own allowance
    * is counted.
    */
-  public async findOwnedPlanKey(
-    userId: string,
-    now: Date,
-  ): Promise<string | null> {
-    const subscription = await this.database.planSubscription.findFirst({
-      where: {
-        currentPeriodEnd: { gt: now },
-        status: {
-          in: [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING],
-        },
-        userId,
-      },
-      orderBy: [{ currentPeriodEnd: "desc" }, { id: "desc" }],
-      select: { planKey: true },
-    });
-    return subscription?.planKey ?? null;
+  public findOwnedPlanKey(userId: string, now: Date): Promise<string | null> {
+    return findCurrentSubscriptionPlanKey(this.database, userId, now);
   }
 
   /**

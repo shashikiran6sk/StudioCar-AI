@@ -211,7 +211,7 @@ describe("scripts/local-compose.sh", () => {
   });
 
   it("leaves the Local worker on the compose ElasticMQ defaults", () => {
-    const run = runLocalCompose("APP_ENV=local\nREMOVEBG_API_KEY=key\n");
+    const run = runLocalCompose("APP_ENV=local\nLEONARDO_API_KEY=key\n");
 
     expect(run.status).toBe(0);
     expect(
@@ -241,7 +241,7 @@ describe("scripts/infra-up.sh", () => {
   });
 
   it("starts the Local profile without any queue setting", () => {
-    const run = runInfraUp("APP_ENV=local\nREMOVEBG_API_KEY=key\n");
+    const run = runInfraUp("APP_ENV=local\nLEONARDO_API_KEY=key\n");
 
     expect(run.status).toBe(0);
     expect(run.dockerArguments).toContain("--profile infra up -d");

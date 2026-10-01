@@ -73,9 +73,9 @@ databaseDescribe("PostgreSQL schema invariants", () => {
 
   it("deduplicates provider webhooks by external ID", async () => {
     const event = {
-      provider: "FAL",
+      provider: "BILLING",
       externalId: webhookExternalId,
-      eventType: "job.completed",
+      eventType: "payment.captured",
       payload: { job: "provider-job-1" },
       signatureVerified: true,
     };

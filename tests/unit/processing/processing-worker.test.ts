@@ -10,7 +10,9 @@ import type {
   FailProcessingJobInput,
   FailProcessingJobResult,
   ProcessingExecutionResult,
+  ClaimProcessingJobInput,
   ProcessingJobExecutorPort,
+  ProcessingProviderKey,
   ProcessingWorkerRepositoryPort,
 } from "../../../packages/processing/src/processing-worker.types";
 
@@ -30,14 +32,15 @@ const claimedJob: ClaimProcessingJobResult = {
     mimeType: "image/jpeg",
     options: ProcessingOptionsSchema.parse({}),
     originalObjectKey: "users/user/vehicles/vehicle/assets/asset/original/source.jpg",
-    provider: "REMOVEBG",
     sizeBytes: 1_024n,
+    subscriptionPlanKey: null,
     userId: USER_ID,
     vehicleId: VEHICLE_ID,
   },
 };
 
 class StubRepository implements ProcessingWorkerRepositoryPort {
+  public readonly claimInputs: ClaimProcessingJobInput[] = [];
   public readonly completions: CompleteProcessingJobInput[] = [];
   public readonly failures: FailProcessingJobInput[] = [];
 
@@ -50,7 +53,10 @@ class StubRepository implements ProcessingWorkerRepositoryPort {
     private readonly failure: FailProcessingJobResult = { kind: "FAILED" },
   ) {}
 
-  public claimJob(): Promise<ClaimProcessingJobResult> {
+  public claimJob(
+    input: ClaimProcessingJobInput,
+  ): Promise<ClaimProcessingJobResult> {
+    this.claimInputs.push(input);
     return Promise.resolve(this.claim);
   }
 
@@ -70,6 +76,8 @@ class StubRepository implements ProcessingWorkerRepositoryPort {
 }
 
 class StubExecutor implements ProcessingJobExecutorPort {
+  public readonly providerKey: ProcessingProviderKey = "LEONARDO";
+
   public constructor(
     private readonly result: ProcessingExecutionResult,
     private readonly shouldThrow = false,
@@ -98,9 +106,9 @@ describe("ProcessingWorker", () => {
       output: {
         checksumSha256: "b".repeat(64),
         height: 900,
-        mimeType: "image/png",
-        objectKey: "processed.png",
-        outputFormat: "PNG",
+        mimeType: "image/webp",
+        objectKey: "processed.webp",
+        outputFormat: "WEBP",
         previewObjectKey: "preview.webp",
         sizeBytes: 2_048n,
         width: 1_600,
@@ -127,7 +135,8 @@ describe("ProcessingWorker", () => {
         assetId: ASSET_ID,
         attemptNumber: 1,
         failureKind: null,
-        provider: "REMOVEBG",
+        failureStage: null,
+        provider: "LEONARDO",
         providerLatencyMilliseconds: 850,
         providerRequestId: "provider-request-1",
         userId: USER_ID,
@@ -155,6 +164,8 @@ describe("ProcessingWorker", () => {
         kind: "PROVIDER_429",
         providerLatencyMilliseconds: 50,
         providerRequestId: null,
+        retryAfterMilliseconds: null,
+        stage: "PROVIDER",
       },
     });
     const worker = new ProcessingWorker(
@@ -177,7 +188,8 @@ describe("ProcessingWorker", () => {
         assetId: ASSET_ID,
         attemptNumber: 1,
         failureKind: "PROVIDER_429",
-        provider: "REMOVEBG",
+        failureStage: "PROVIDER",
+        provider: "LEONARDO",
         providerLatencyMilliseconds: 50,
         providerRequestId: null,
         userId: USER_ID,
@@ -201,7 +213,9 @@ describe("ProcessingWorker", () => {
           "The background-removal provider could not detect a car in the image.",
         kind: "NON_CAR_IMAGE",
         providerLatencyMilliseconds: 45,
-        providerRequestId: "remove-bg-non-car",
+        providerRequestId: "generation-non-car",
+        retryAfterMilliseconds: null,
+        stage: "PROVIDER",
       },
     });
     const worker = new ProcessingWorker(
@@ -222,9 +236,10 @@ describe("ProcessingWorker", () => {
         assetId: ASSET_ID,
         attemptNumber: 1,
         failureKind: "NON_CAR_IMAGE",
-        provider: "REMOVEBG",
+        failureStage: "PROVIDER",
+        provider: "LEONARDO",
         providerLatencyMilliseconds: 45,
-        providerRequestId: "remove-bg-non-car",
+        providerRequestId: "generation-non-car",
         userId: USER_ID,
         vehicleId: VEHICLE_ID,
       },
@@ -247,6 +262,8 @@ describe("ProcessingWorker", () => {
           kind: "INTERNAL",
           providerLatencyMilliseconds: null,
           providerRequestId: null,
+          retryAfterMilliseconds: null,
+          stage: "PROVIDER",
         },
       },
       true,
@@ -273,6 +290,8 @@ describe("ProcessingWorker", () => {
         kind: "INTERNAL",
         providerLatencyMilliseconds: null,
         providerRequestId: null,
+        retryAfterMilliseconds: null,
+        stage: "PROVIDER",
       },
     });
     const worker = new ProcessingWorker(repository, executor, {
@@ -316,9 +335,9 @@ describe("ProcessingWorker", () => {
       output: {
         checksumSha256: "b".repeat(64),
         height: 900,
-        mimeType: "image/png",
-        objectKey: "processed.png",
-        outputFormat: "PNG",
+        mimeType: "image/webp",
+        objectKey: "processed.webp",
+        outputFormat: "WEBP",
         previewObjectKey: "preview.webp",
         sizeBytes: 2_048n,
         width: 1_600,
@@ -382,6 +401,8 @@ it("retains a delivery while a live processing claim is busy", async () => {
       errorMessage: "Insufficient credits",
       providerLatencyMilliseconds: 1,
       providerRequestId: null,
+      retryAfterMilliseconds: null,
+      stage: "PROVIDER",
     },
   });
   const worker = new ProcessingWorker(repository, executor, {
@@ -393,4 +414,84 @@ it("retains a delivery while a live processing claim is busy", async () => {
     kind: "RETRY_DELIVERY",
   });
   expect(repository.failures).toHaveLength(0);
+});
+
+it("records the executor's provider on the claim, whatever provider reserved the job", async () => {
+  const repository = new StubRepository({ kind: "NOT_FOUND" });
+  const executor = new StubExecutor({
+    ok: false,
+    failure: {
+      errorMessage: "unused",
+      kind: "INTERNAL",
+      providerLatencyMilliseconds: null,
+      providerRequestId: null,
+      retryAfterMilliseconds: null,
+      stage: "COMPOSITION",
+    },
+  });
+  await new ProcessingWorker(repository, executor, {
+    claimTtlMilliseconds: 30_000,
+    retryBaseMilliseconds: 1_000,
+    retryMaximumMilliseconds: 60_000,
+  }).process(createMessage());
+
+  expect(repository.claimInputs).toHaveLength(1);
+  expect(repository.claimInputs[0]?.provider).toBe("LEONARDO");
+});
+
+describe("provider Retry-After", () => {
+  function workerWith(retryAfterMilliseconds: number | null) {
+    const repository = new StubRepository(claimedJob, undefined, {
+      kind: "RETRY_SCHEDULED",
+      nextAttemptAt: new Date("2026-09-20T00:02:00.000Z"),
+    });
+    const executor = new StubExecutor({
+      ok: false,
+      failure: {
+        errorMessage: "rate limited",
+        kind: "PROVIDER_429",
+        providerLatencyMilliseconds: 20,
+        providerRequestId: null,
+        retryAfterMilliseconds,
+        stage: "PROVIDER",
+      },
+    });
+    const worker = new ProcessingWorker(
+      repository,
+      executor,
+      {
+        claimTtlMilliseconds: 30_000,
+        retryBaseMilliseconds: 1_000,
+        retryMaximumMilliseconds: 60_000,
+      },
+      () => new Date("2026-09-20T00:01:00.000Z"),
+      () => "worker-1",
+      () => 1,
+    );
+    return { repository, worker };
+  }
+
+  it("waits at least as long as the provider asked", async () => {
+    const { repository, worker } = workerWith(20_000);
+    await worker.process(createMessage());
+    expect(repository.failures[0]?.nextAttemptAt.toISOString()).toBe(
+      "2026-09-20T00:01:20.000Z",
+    );
+  });
+
+  it("keeps the worker's own backoff when the provider asks for less", async () => {
+    const { repository, worker } = workerWith(10);
+    await worker.process(createMessage());
+    expect(repository.failures[0]?.nextAttemptAt.toISOString()).toBe(
+      "2026-09-20T00:01:01.000Z",
+    );
+  });
+
+  it("never waits beyond the configured retry maximum", async () => {
+    const { repository, worker } = workerWith(3_600_000);
+    await worker.process(createMessage());
+    expect(repository.failures[0]?.nextAttemptAt.toISOString()).toBe(
+      "2026-09-20T00:02:00.000Z",
+    );
+  });
 });

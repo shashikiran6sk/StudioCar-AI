@@ -11,14 +11,21 @@ describe("PortfolioFacts", () => {
     expect(screen.getByText("Premium White")).toBeVisible();
     expect(screen.getByText("Standard floor")).toBeVisible();
     expect(screen.getByText("Originals preserved")).toBeVisible();
-    expect(screen.getAllByText("Enabled")).toHaveLength(2);
+    expect(screen.getAllByText("Enabled")).toHaveLength(1);
+  });
+
+  it("no longer lists number-plate masking or a shadow choice", () => {
+    render(<PortfolioFacts version={{ label: null, options: PORTFOLIO_OPTIONS }} />);
+
+    expect(screen.queryByText("Plate privacy")).not.toBeInTheDocument();
+    expect(screen.queryByText("Shadow")).not.toBeInTheDocument();
   });
 
   it("names the composition and shows a version's label beside its facts", () => {
     render(
       <PortfolioFacts
         version={{
-          label: "T08-S05 | Plate OFF | Enhance ON | Studio ON | Composition OFF",
+          label: "T03-S05 | Enhance ON | Studio ON | Composition OFF",
           options: { ...PORTFOLIO_OPTIONS, crop: "FIT_VEHICLE" },
         }}
       />,
@@ -26,7 +33,7 @@ describe("PortfolioFacts", () => {
 
     expect(screen.getByText("Reference label")).toBeVisible();
     expect(
-      screen.getByText("T08-S05 | Plate OFF | Enhance ON | Studio ON | Composition OFF"),
+      screen.getByText("T03-S05 | Enhance ON | Studio ON | Composition OFF"),
     ).toBeVisible();
     expect(screen.getByText("Fit to vehicle")).toBeVisible();
   });

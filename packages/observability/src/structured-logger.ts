@@ -19,6 +19,8 @@ const STRING_FIELDS = [
   "queueMessageId",
   "providerRequestId",
   "providerGenerationId",
+  "responseIssuePath",
+  "responseIssueCode",
   "size",
   "format",
   "vehicleId",

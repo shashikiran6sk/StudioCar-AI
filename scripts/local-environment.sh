@@ -20,7 +20,7 @@ refuse() {
 if [ ! -f "$ENVIRONMENT_FILE" ]; then
   refuse "No $ENVIRONMENT_FILE at the repository root. Start from an example:
 
-  cp .env.example.local .env.local        # Local: only REMOVEBG_API_KEY to fill in
+  cp .env.example.local .env.local        # Local: only LEONARDO_API_KEY to fill in
   cp .env.example.development .env.local  # Development: real Google, MSG91, S3
 
 See docs/environments.md."

@@ -36,11 +36,14 @@ describe("ReviewProcessStep", () => {
       options: expect.objectContaining({
         background: "PREMIUM_WHITE",
         enhancement: true,
-        platePrivacy: true,
       }),
       vehicleId: "0e879f46-1193-4d77-b785-057fe026d998",
     });
     expect(screen.getByText("Maintained")).toBeVisible();
+    expect(screen.queryByText("Plate privacy")).not.toBeInTheDocument();
+    for (const removed of ["platePrivacy", "shadow", "outputFormat"]) {
+      expect(JSON.stringify(onProcess.mock.calls)).not.toContain(removed);
+    }
   });
 
   it("announces a processing-command failure without losing the draft", async () => {
@@ -158,11 +161,11 @@ describe("ReviewProcessStep", () => {
     expect(label).toHaveAccessibleDescription(
       "Shown with this version in the portfolio, such as a test ID. It never changes the images.",
     );
-    fireEvent.change(label, { target: { value: "  T02-S04 | Plate OFF  " } });
+    fireEvent.change(label, { target: { value: "  T02-S04 | Enhance OFF  " } });
     fireEvent.click(screen.getByRole("button", { name: "Process Photos" }));
     await waitFor(() => expect(onProcess).toHaveBeenCalledOnce());
     expect(onProcess).toHaveBeenCalledWith(
-      expect.objectContaining({ label: "T02-S04 | Plate OFF" }),
+      expect.objectContaining({ label: "T02-S04 | Enhance OFF" }),
     );
 
     unmount();

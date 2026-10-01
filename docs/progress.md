@@ -1,6 +1,128 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-09-29
+Last updated: 2026-10-01
+
+## Leonardo.Ai becomes the only image-processing provider
+
+- **Development test fix: every Leonardo call failed after being charged.**
+  - **Cause.** The real Sync response wraps the generation in a
+    `generateSync` envelope. The adapter expected `id` and `results` at the top
+    level, rejected every reply as an invalid response, and retried. Each
+    retry was a new paid generation ($0.1047 at `auto`).
+  - **Contract.** `LeonardoResponseSchema` now unwraps `generateSync`, and
+    still reads an unwrapped body. Only `results` must be well formed; a
+    missing, `null` or malformed id, cost, `blockedCount` or optional result
+    field reads as absent. An empty `results` with `blockedCount > 0` is
+    reported as blocked content.
+  - **No paying twice.** A paid response or output that cannot be used is now
+    terminal (`PROVIDER_UNUSABLE_RESULT`, shown as "background removal
+    failed"; the photo is not marked invalid). Downloading a paid result is
+    retried up to three times within the same deadline, so a CDN blip never
+    costs a new generation.
+  - **Diagnostics.** `provider_request_failed` now logs `responseIssuePath`
+    and `responseIssueCode` (field path and issue code, never values).
+  - **Tests.** The contract and provider tests use the shape captured from a
+    real preview-size call. The PostgreSQL lifecycle test proves a paid but
+    unusable response is charged once and never republished.
+- Security: upgraded `next` and `eslint-config-next` from 16.3.5 to 16.3.6.
+  This fixes critical advisory GHSA-vcvr-r3jv-pc5j (remote code execution in
+  `next/og` `ImageResponse`), published while this PR was open; the CI
+  production-dependency audit failed on it, and so would `main`. Only Next.js
+  package versions changed in the lockfile. Lint, types, all unit tests, the
+  production build and e2e (14/14) pass on 16.3.6, and the audit reports no
+  known vulnerabilities.
+- **Audit first.** The full audit is in
+  `docs/audits/2026-09-30-leonardo-migration-audit.md`. It covers:
+  - providers, the processing lifecycle and polling history (#80, #85);
+  - the three treatment features and shadows;
+  - Lambda packaging, risks and the plan.
+
+  The canonical reference is now `docs/image-processing.md`.
+- **Provider.** Leonardo Remove Background through the Sync API sits behind the
+  provider-neutral `ImageProcessingProvider` port. There is no Async API and no
+  webhook.
+  - Request: `remove-bg`, `public=false`, `ephemeral=true`, `type=car`,
+    `format=webp`, `channels=rgba`, `crop=false`, `shadow_type=car`,
+    `semitransparency=true`, with the source passed as a 15-minute presigned S3
+    URL. `background_image_reference` is never sent.
+  - The result is downloaded immediately under one deadline, validated as
+    WebP with alpha at the reported size, and staged privately.
+  - Every failure category maps once onto the durable retry. A 429
+    `Retry-After` can only lengthen the backoff. The adapter has no retry
+    loop of its own.
+- **Resolution follows the plan on the server.** The worker reads the owner's
+  current subscription inside the claim transaction. FREE (or no subscription)
+  gets `preview`; PLUS and PRO get `auto`. The request contract is strict, so a
+  browser-supplied size is rejected with 400.
+- **Removed:**
+  - remove.bg, fal.ai, BiRefNet, provider selection and their env vars;
+  - the CloudFormation provider parameter and webhook enum values;
+  - the local SVG scenes and local shadow code (which caused the double
+    shadow), plus the cost/diagnostic scripts;
+  - Hide Number Plate, which no worker ever applied: 0 pixels changed in all
+    96 QA cases.
+
+  The `ProcessingProvider` enum keeps its historical values for existing rows.
+- **Compositor.**
+  - The six supplied backgrounds are packaged in the worker (PLAIN and FLOOR,
+    each in white, grey and dark). Only Leonardo's shadow is drawn.
+  - Vehicle and content bounds come from alpha. One uniform scale handles
+    Maintain composition, Fit and Square, so nothing is stretched.
+  - Backgrounds use cover placement, with the floor seam 0.30 vehicle heights
+    above the tyre line.
+  - Output is WebP at quality 90 with no metadata.
+- **Image Enhancement: retained and fixed.** It now changes only the vehicle,
+  with 0 background pixels altered. The legacy version shifted the whole
+  background by 6.5 levels.
+- **Maintain Composition: retained and fixed.** With Studio Background off,
+  the UI and contract force Maintain Composition. Evidence is in
+  `docs/evidence/processing-options/`, from `pnpm evidence:processing`, which
+  is deterministic and includes a legacy comparison.
+- **Lambda.**
+  - `pnpm package:worker` builds a byte-reproducible archive: one esbuild
+    bundle, plus sharp's lockfile-pinned arm64 binaries and the backgrounds.
+  - ZIP 62,592,857 → 18,123,601 bytes (−71%); unzipped 199.4 MB → 35.1 MB;
+    14,288 → 120 files.
+  - Verified on arm64 Node 24 under QEMU. CI packages twice, compares the
+    bytes, smoke-tests in the arm64 Lambda image and uploads the archive.
+  - Timeouts: Leonardo 90 s, Lambda 180 s, claim lease 180 s (validated
+    against the Leonardo deadline), duration alarm 150 s. Visibility (900 s)
+    and concurrency are unchanged.
+- **Observability.** New metrics cover provider requests, latency, success,
+  failure categories (429, 5xx, timeout and others), reported cost, and
+  SOURCE/PROVIDER/COMPOSITION/STORAGE stage failures, with no high-cardinality
+  dimensions. Provider alarms and a dashboard section were added.
+- **Unchanged:** polling (#85 coalescing kept as designed), SQS, the outbox,
+  idempotency, inventory, billing, auth, upload limits and storage layout.
+- **Gates (all passed):**
+  - lint, strict types, test mapping;
+  - unit tests: web 1,212, worker 306, config 272, contracts 125,
+    processing 94, observability 40, ui 19, local-queue 13,
+    database-runtime 5;
+  - integration: web 161 (including the new Leonardo lifecycle test against
+    PostgreSQL), database-runtime 25;
+  - Prisma validation, production build, e2e 14/14, `cfn-lint`.
+- **Caveats:**
+  - No Leonardo API key was available, and Leonardo's hosts were unreachable
+    from the build environment. Live calls, real-photo visual checks and
+    measured provider latency/cost remain deployment steps; HTTP behaviour is
+    tested with mocked `fetch`.
+  - The Local profile cannot complete a Leonardo run, because Leonardo cannot
+    fetch MinIO URLs. Use Development storage for real provider tests.
+  - `grey-studio-floor.png` arrived truncated. Its last 125 floor rows were
+    reconstructed; a clean re-export is requested.
+  - Version keys and request hashes changed with the option set. A stale
+    browser tab still sending removed fields receives 400 until it reloads.
+  - The existing `it.fails` floor-on-ORIGINAL version-key defect (from #57)
+    is unchanged.
+- **Deploy order:**
+  1. Create the Leonardo secret.
+  2. Update the worker stack (`LeonardoSecretArn`; the new timeouts take
+     their defaults).
+  3. Upload the CI archive and record its SHA-256.
+  4. Deploy the observability stack.
+
+  No database migration is needed.
 
 ## Reliable local MinIO startup
 
@@ -265,7 +387,7 @@ Last updated: 2026-09-29
 - Added sanitized generation/cost/dimension logs and a development-only
   preview/full/50MP measurement command. Live pricing and staging validation
   remain pending because no Leonardo key was available. Cross-job cutout reuse
-  and production cutover remain PR 3 prerequisites; see docs/leonardo-provider.md.
+  and production cutover remain PR 3 prerequisites; see docs/leonardo-provider.md (since superseded by docs/image-processing.md).
 - Tests cover request/auth mapping, parsing, validation, HTTP/network/timeout,
   download boundaries, artifact persistence/reuse, S3 failures, cost logging,
   selection/secret isolation and real-PostgreSQL Leonardo lifecycle completion.
@@ -1506,7 +1628,7 @@ Update this document in every meaningful PR with:
 - Merged Leonardo provider PR #78 after every CI check passed using the authorized admin merge. Production defaults remain remove.bg.
 - Audited provider→staged cutout→crop/resize/padding→scene→vehicle composition. remove.bg previously baked car/3D shadows into its cutout, then the HORIZON scene added a second ellipse. The local renderer did not skew a silhouette, and final vehicle scale was already applied before drawing the scene.
 - Both providers now request no provider shadow. Studio shadows use strong alpha bounds and per-column lower contact geometry at final scale, with configurable contact/ambient layers, symmetric spread, no lateral skew, and edge fading. PLAIN and HORIZON floors share this local treatment; original backgrounds retain their existing behavior.
-- Added alpha/contact geometry and controlled raster pose coverage, and a development diagnostic utility writing the requested seven before/after artifacts. See docs/vehicle-shadows.md for root cause, processing order, tuning, and legacy-artifact limits.
+- Added alpha/contact geometry and controlled raster pose coverage, and a development diagnostic utility writing the requested seven before/after artifacts. See docs/vehicle-shadows.md (since superseded by docs/image-processing.md) for root cause, processing order, tuning, and legacy-artifact limits.
 - Exact supplied 45° image validation remains pending because no fixture path/image was provided. Reviewed the repository marketing sedan as a diagnostic proxy; it contains baked floor alpha, so it is not evidence of a clean live provider result.
 - User confirmed Leonardo credentials are not configured. Live preview/full/50MP cost measurements, staging E2E, production cutover, and later remove.bg cleanup remain gated on those prerequisites. Do not change production provider or assume equal pricing.
 - Local verification: lint, strict typecheck, behavior-source mapping, 2,163 unit passes (five pre-existing expected failures), 155 PostgreSQL integration passes, schema validation, worker build, webpack production web build, and all 14 browser tests passed. Root build/e2e commands attempted Turbopack and hit the existing local process/port EPERM restriction; CI must pass the normal build before merge.

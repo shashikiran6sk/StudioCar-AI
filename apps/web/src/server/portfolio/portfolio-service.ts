@@ -2,7 +2,7 @@ import {
   MAX_PORTFOLIO_VERSION_IMAGES,
   MAX_PORTFOLIO_VERSIONS,
   MAX_STUDIO_SELECTION_IMAGES,
-  ProcessingOptionsSchema,
+  StoredProcessingOptionsSchema,
   StudioSelectionContextSchema,
   VehiclePortfolioSchema,
   type PortfolioAttention,
@@ -181,7 +181,7 @@ export class PortfolioService implements PortfolioApplication {
     return {
       failedImages,
       imageCount: batch.jobs.length,
-      options: ProcessingOptionsSchema.parse(first.options),
+      options: StoredProcessingOptionsSchema.parse(first.options),
     };
   }
 

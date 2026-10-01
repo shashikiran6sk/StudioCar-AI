@@ -13,6 +13,7 @@ import { createProcessingJobIdempotencyKey } from "../../../../packages/processi
 import { createProcessingUsageIdempotencyKey } from "../../../../packages/processing/src/create-processing-usage-idempotency-key";
 import { ProcessingWorker } from "../../../../packages/processing/src/processing-worker";
 import type {
+  ClaimProcessingJobInput,
   CompleteProcessingJobInput,
   ProcessingJobExecutorPort,
 } from "../../../../packages/processing/src/processing-worker.types";
@@ -96,7 +97,7 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       batchIdempotencyKey: batchKey,
       batchLabel: null,
       batchRequestHash: createProcessingBatchRequestHash(request),
-      provider: ProcessingProvider.REMOVEBG,
+      provider: ProcessingProvider.LEONARDO,
       usageBillingPeriodKey: "2099-09",
       usageIdempotencyKey: `usage:upload-session:${batchKey}`,
       options,
@@ -149,37 +150,38 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       output: {
         checksumSha256: "b".repeat(64),
         height: 900,
-        mimeType: "image/png",
-        objectKey: `${prefix}/processed.png`,
-        outputFormat: "PNG",
+        mimeType: "image/webp",
+        objectKey: `${prefix}/processed.webp`,
+        outputFormat: "WEBP",
         previewObjectKey: `${prefix}/preview.webp`,
         sizeBytes: 2_048n,
         width: 1_600,
       },
       providerLatencyMilliseconds: 900,
-      providerRequestId: `removebg-request-${record.jobId}`,
+      providerRequestId: `leonardo-generation-${record.jobId}`,
       usageBillingPeriodKey: "2099-09",
       usageIdempotencyKey: createProcessingUsageIdempotencyKey(record.jobId),
       workerId,
     };
   }
 
-  it("claims and completes a Leonardo job without provider-specific lifecycle logic", async () => {
-    const record = await createQueuedJob("leonardo-lifecycle-batch");
+  it("records the executing provider on the attempt of a job reserved under a retired one", async () => {
+    // A job reserved before the cutover keeps its historical provider, but the
+    // attempt — and any charge — belongs to the provider that ran it.
+    const record = await createQueuedJob("cutover-lifecycle-batch");
     await database.processingJob.update({
       where: { id: record.jobId },
-      data: { provider: ProcessingProvider.LEONARDO },
+      data: { provider: ProcessingProvider.REMOVEBG },
     });
     const claim = await workers.claimJob({
       claimExpiresAt: CLAIM_EXPIRES_AT,
       jobId: record.jobId,
       now: NOW,
+      provider: "LEONARDO",
       workerId: "leonardo-worker",
     });
-    expect(claim).toMatchObject({
-      kind: "CLAIMED",
-      job: { provider: "LEONARDO" },
-    });
+    expect(claim).toMatchObject({ kind: "CLAIMED" });
+    expect(claim).not.toHaveProperty("job.provider");
     const completion = {
       ...completionInput(record, 1, "leonardo-worker"),
       providerRequestId: "leonardo-generation",
@@ -193,9 +195,125 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
     expect(
       await database.processingAttempt.findFirst({
         where: { jobId: record.jobId },
-        select: { providerRequestId: true },
+        select: { provider: true, providerRequestId: true },
       }),
-    ).toEqual({ providerRequestId: "leonardo-generation" });
+    ).toEqual({
+      provider: ProcessingProvider.LEONARDO,
+      providerRequestId: "leonardo-generation",
+    });
+    expect(
+      await database.processingJob.findUnique({
+        where: { id: record.jobId },
+        select: { provider: true },
+      }),
+    ).toEqual({ provider: ProcessingProvider.REMOVEBG });
+  });
+
+  it("reads legacy stored options as a treatment the worker can execute", async () => {
+    const record = await createQueuedJob("legacy-options-batch");
+    await database.processingJob.update({
+      where: { id: record.jobId },
+      data: {
+        options: {
+          background: "GREY_STUDIO",
+          crop: "FIT_VEHICLE",
+          enhancement: false,
+          floor: "PLAIN",
+          outputFormat: "JPEG",
+          paddingPercent: 8,
+          platePrivacy: true,
+          quality: 90,
+          shadow: "NATURAL",
+        },
+      },
+    });
+    const claim = await workers.claimJob({
+      claimExpiresAt: CLAIM_EXPIRES_AT,
+      jobId: record.jobId,
+      now: NOW,
+      provider: "LEONARDO",
+      workerId: "legacy-options-worker",
+    });
+    if (claim.kind !== "CLAIMED") throw new Error("Expected a processing claim.");
+    expect(claim.job.options).toEqual({
+      background: "GREY_STUDIO",
+      crop: "FIT_VEHICLE",
+      enhancement: false,
+      floor: "PLAIN",
+      paddingPercent: 8,
+      quality: 90,
+    });
+  });
+
+  describe("server-side plan resolution", () => {
+    async function claimWithSubscription(
+      batchKey: string,
+      subscription: {
+        currentPeriodEnd: Date;
+        planKey: string;
+        status: "ACTIVE" | "CANCELLED" | "EXPIRED" | "TRIALING";
+      } | null,
+    ) {
+      const record = await createQueuedJob(batchKey);
+      if (subscription) {
+        await database.planSubscription.create({
+          data: {
+            currentPeriodEnd: subscription.currentPeriodEnd,
+            currentPeriodStart: new Date("2099-01-01T00:00:00.000Z"),
+            planKey: subscription.planKey,
+            source: "MANUAL_ADMIN",
+            status: subscription.status,
+            userId: record.ownerId,
+          },
+        });
+      }
+      const claim = await workers.claimJob({
+        claimExpiresAt: CLAIM_EXPIRES_AT,
+        jobId: record.jobId,
+        now: NOW,
+        provider: "LEONARDO",
+        workerId: `${batchKey}-worker`,
+      });
+      if (claim.kind !== "CLAIMED") throw new Error("Expected a processing claim.");
+      return claim.job.subscriptionPlanKey;
+    }
+
+    it.each([
+      ["STUDIO_PRO", "ACTIVE"],
+      ["STUDIO_PLUS", "TRIALING"],
+    ] as const)(
+      "reads the owner's current %s plan (%s) in the claim transaction",
+      async (planKey, status) => {
+        await expect(
+          claimWithSubscription(`plan-${planKey}-batch`, {
+            currentPeriodEnd: new Date("2099-12-31T00:00:00.000Z"),
+            planKey,
+            status,
+          }),
+        ).resolves.toBe(planKey);
+      },
+    );
+
+    it("gives no paid plan to an account that never subscribed", async () => {
+      await expect(claimWithSubscription("plan-none-batch", null)).resolves.toBeNull();
+    });
+
+    it.each([
+      ["an expired period", "ACTIVE", "2099-09-19T00:00:00.000Z"],
+      ["a cancelled subscription", "CANCELLED", "2099-12-31T00:00:00.000Z"],
+      ["an expired subscription", "EXPIRED", "2099-12-31T00:00:00.000Z"],
+    ] as const)(
+      "gives no paid plan for %s",
+      async (_case, status, currentPeriodEnd) => {
+        await expect(
+          claimWithSubscription(`plan-lapsed-${status}-batch`, {
+            currentPeriodEnd: new Date(currentPeriodEnd),
+            planKey: "STUDIO_PRO",
+            status,
+          }),
+        ).resolves.toBeNull();
+      },
+    );
   });
 
   it("reports a job whose message arrived before it was queued, then claims it once queued", async () => {
@@ -210,8 +328,9 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       claimExpiresAt: CLAIM_EXPIRES_AT,
       jobId: record.jobId,
       now: NOW,
+      provider: "LEONARDO",
       workerId: "worker-early",
-    };
+    } satisfies ClaimProcessingJobInput;
 
     await expect(workers.claimJob(claim)).resolves.toEqual({
       kind: "AWAITING_PUBLICATION",
@@ -239,12 +358,14 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
         claimExpiresAt: CLAIM_EXPIRES_AT,
         jobId: record.jobId,
         now: NOW,
+        provider: "LEONARDO",
         workerId: "worker-completion-1",
       }),
       workers.claimJob({
         claimExpiresAt: CLAIM_EXPIRES_AT,
         jobId: record.jobId,
         now: NOW,
+        provider: "LEONARDO",
         workerId: "worker-completion-2",
       }),
     ]);
@@ -265,15 +386,15 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       output: {
         checksumSha256: "b".repeat(64),
         height: 900,
-        mimeType: "image/png",
-        objectKey: `users/${record.ownerId}/vehicles/${record.vehicleId}/assets/${record.assetId}/jobs/${record.jobId}/processed.png`,
-        outputFormat: "PNG",
+        mimeType: "image/webp",
+        objectKey: `users/${record.ownerId}/vehicles/${record.vehicleId}/assets/${record.assetId}/jobs/${record.jobId}/processed.webp`,
+        outputFormat: "WEBP",
         previewObjectKey: `users/${record.ownerId}/vehicles/${record.vehicleId}/assets/${record.assetId}/jobs/${record.jobId}/preview.webp`,
         sizeBytes: 2_048n,
         width: 1_600,
       },
       providerLatencyMilliseconds: 900,
-      providerRequestId: "removebg-request-complete",
+      providerRequestId: "leonardo-generation-complete",
       usageBillingPeriodKey: "2099-09",
       usageIdempotencyKey: createProcessingUsageIdempotencyKey(record.jobId),
       workerId:
@@ -287,6 +408,7 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
         claimExpiresAt: CLAIM_EXPIRES_AT,
         jobId: record.jobId,
         now: completedAt,
+        provider: "LEONARDO",
         workerId: "worker-duplicate-after-completion",
       }),
     ).resolves.toEqual({ kind: "TERMINAL" });
@@ -315,6 +437,7 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       claimExpiresAt: CLAIM_EXPIRES_AT,
       jobId: record.jobId,
       now: NOW,
+      provider: "LEONARDO",
       workerId: "worker-retry-1",
     });
     if (firstClaim.kind !== "CLAIMED") {
@@ -360,6 +483,7 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       claimExpiresAt: new Date("2099-09-20T00:06:00.000Z"),
       jobId: record.jobId,
       now: NEXT_ATTEMPT_AT,
+      provider: "LEONARDO",
       workerId: "worker-retry-2",
     });
     if (secondClaim.kind !== "CLAIMED") {
@@ -418,6 +542,7 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
         claimExpiresAt: CLAIM_EXPIRES_AT,
         jobId: record.jobId,
         now: NOW,
+        provider: "LEONARDO",
         workerId: firstWorkerId,
       });
       await expect(workers.failJob({
@@ -438,6 +563,7 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
         claimExpiresAt: CLAIM_EXPIRES_AT,
         jobId: record.jobId,
         now: NOW,
+        provider: "LEONARDO",
         workerId: "worker-early-duplicate",
       })).resolves.toEqual({ kind: "AWAITING_PUBLICATION" });
       const claimToken = "retry-publication-publisher";
@@ -474,6 +600,7 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       let executions = 0;
       const completion = completionInput(record, 2, "worker-after-publication");
       const executor: ProcessingJobExecutorPort = {
+        providerKey: "LEONARDO",
         execute: (job) => {
           expect(published).toBe(true);
           expect(job.attemptNumber).toBe(2);
@@ -542,6 +669,7 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       claimExpiresAt: CLAIM_EXPIRES_AT,
       jobId: record.jobId,
       now: NOW,
+      provider: "LEONARDO",
       workerId: "worker-non-car",
     });
     if (claim.kind !== "CLAIMED") {
@@ -558,7 +686,7 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
         jobId: record.jobId,
         nextAttemptAt: NEXT_ATTEMPT_AT,
         providerLatencyMilliseconds: 45,
-        providerRequestId: "remove-bg-non-car",
+        providerRequestId: "leonardo-generation-non-car",
         retryable: false,
         workerId: "worker-non-car",
       }),
@@ -584,6 +712,7 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
         claimExpiresAt: CLAIM_EXPIRES_AT,
         jobId: record.jobId,
         now: NEXT_ATTEMPT_AT,
+        provider: "LEONARDO",
         workerId: "worker-non-car-redelivery",
       }),
     ).resolves.toEqual({ kind: "TERMINAL" });
@@ -611,6 +740,7 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       claimExpiresAt: CLAIM_EXPIRES_AT,
       jobId: record.jobId,
       now: NOW,
+      provider: "LEONARDO",
       workerId: "worker-reprocess",
     });
     if (claim.kind !== "CLAIMED") throw new Error("Expected a processing claim.");
@@ -643,6 +773,7 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       claimExpiresAt: new Date("2099-09-20T00:06:00.000Z"),
       jobId: record.jobId,
       now: NEXT_ATTEMPT_AT,
+      provider: "LEONARDO",
       workerId: "worker-reprocess-2",
     });
     if (retry.kind !== "CLAIMED") throw new Error("Expected the retry claim.");
@@ -653,15 +784,15 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       output: {
         checksumSha256: "c".repeat(64),
         height: 900,
-        mimeType: "image/png",
-        objectKey: `users/${record.ownerId}/vehicles/${record.vehicleId}/reprocess.png`,
-        outputFormat: "PNG",
+        mimeType: "image/webp",
+        objectKey: `users/${record.ownerId}/vehicles/${record.vehicleId}/reprocess.webp`,
+        outputFormat: "WEBP",
         previewObjectKey: `users/${record.ownerId}/vehicles/${record.vehicleId}/reprocess-preview.webp`,
         sizeBytes: 2_048n,
         width: 1_600,
       },
       providerLatencyMilliseconds: 900,
-      providerRequestId: "removebg-request-reprocess",
+      providerRequestId: "leonardo-generation-reprocess",
       usageBillingPeriodKey: "2099-09",
       usageIdempotencyKey: createProcessingUsageIdempotencyKey(record.jobId),
       workerId: "worker-reprocess-2",
@@ -699,6 +830,7 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
           claimExpiresAt: CLAIM_EXPIRES_AT,
           jobId: record.jobId,
           now: NOW,
+          provider: "LEONARDO",
           workerId,
         });
         if (claim.kind !== "CLAIMED") throw new Error("Expected a processing claim.");

@@ -8,16 +8,22 @@ export const METRIC_TIMEOUT_MS = 1000;
 export const SENTRY_FLUSH_TIMEOUT_MS = 2000;
 export const SAFE_ERROR_MESSAGE = "Unexpected application failure";
 export const MAXIMUM_STACK_FRAMES = 30;
-export const REMOVE_BG_PAYMENT_REQUIRED_MESSAGE =
-  "remove.bg has insufficient credits (HTTP 402 Payment Required).";
 export const HTTP_ERROR_MESSAGES: Readonly<Record<string, string>> = {
-  REMOVE_BG_PAYMENT_REQUIRED: REMOVE_BG_PAYMENT_REQUIRED_MESSAGE,
   PROVIDER_PAYMENT_REQUIRED:
     "The background-removal provider has insufficient credits.",
-  REMOVE_BG_UNAUTHORIZED:
-    "remove.bg rejected the server credentials or permissions.",
-  REMOVE_BG_RATE_LIMIT: "remove.bg rate limited the request.",
-  REMOVE_BG_SERVER_ERROR: "remove.bg returned a server error.",
+  PROVIDER_AUTHORIZATION_FAILED:
+    "The background-removal provider rejected the server credentials.",
+  PROVIDER_RATE_LIMITED: "The background-removal provider rate limited the request.",
+  PROVIDER_UNAVAILABLE: "The background-removal provider returned a server error.",
+  PROVIDER_CONTENT_BLOCKED:
+    "The background-removal provider withheld the result for an image.",
+  PROVIDER_NETWORK_ERROR:
+    "The background-removal provider or its result could not be reached.",
+  PROVIDER_TIMEOUT: "The background-removal provider timed out.",
+  PROVIDER_INVALID_REQUEST:
+    "The background-removal provider rejected the image request.",
+  PROVIDER_UNUSABLE_RESULT:
+    "The background-removal provider returned a result that could not be used.",
   UNAUTHORIZED: "Authentication required",
   UNAUTHENTICATED: "Authentication required",
   FORBIDDEN: "Request forbidden",
@@ -31,11 +37,6 @@ export enum ApplicationErrorCode {
   VALIDATION_FAILED = "VALIDATION_FAILED",
   SQS_JOB_FAILED = "SQS_JOB_FAILED",
   IMAGE_PROCESSING_FAILED = "IMAGE_PROCESSING_FAILED",
-  REMOVE_BG_FAILED = "REMOVE_BG_FAILED",
-  REMOVE_BG_UNAUTHORIZED = "REMOVE_BG_UNAUTHORIZED",
-  REMOVE_BG_PAYMENT_REQUIRED = "REMOVE_BG_PAYMENT_REQUIRED",
-  REMOVE_BG_RATE_LIMIT = "REMOVE_BG_RATE_LIMIT",
-  REMOVE_BG_SERVER_ERROR = "REMOVE_BG_SERVER_ERROR",
   S3_UPLOAD_FAILED = "S3_UPLOAD_FAILED",
 }
 
@@ -51,9 +52,6 @@ export const LOG_EVENTS = {
   PROCESSING_COMPLETED: "image_processing_completed",
   PROCESSING_FAILED: "image_processing_failed",
   PROVIDER_REUSED: "provider_result_reused",
-  REMOVE_BG_STARTED: "remove_bg_started",
-  REMOVE_BG_COMPLETED: "remove_bg_completed",
-  REMOVE_BG_FAILED: "remove_bg_failed",
   S3_UPLOAD_COMPLETED: "s3_upload_completed",
   S3_UPLOAD_FAILED: "s3_upload_failed",
   UNEXPECTED_EXCEPTION: "unexpected_exception",

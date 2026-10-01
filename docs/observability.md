@@ -7,7 +7,7 @@ Next.js → Vercel Logs + Sentry
     ↓
  Lambda → structured JSON / CloudWatch Logs + Sentry
     ↓
- remove.bg → CloudWatch custom metrics from actual HTTP exchanges
+ Leonardo → CloudWatch custom metrics from actual Sync exchanges
     ↓
    S3 → private output and native AWS metrics
 
@@ -33,7 +33,8 @@ should remain the browser-generated opaque identifier.
 
 Important events: `http_request_completed`, `processing_job_reserved`,
 `sqs_job_published`, `job_received`, `image_processing_started`,
-`remove_bg_started`, `remove_bg_completed`, `remove_bg_failed`,
+`provider_request_started`, `provider_generation_charged`,
+`provider_request_completed`, `provider_request_failed`, `provider_exchange`,
 `provider_result_reused`, `s3_upload_completed`, `s3_upload_failed`,
 `image_processing_completed`, `image_processing_failed`, `job_ignored`, and
 `unexpected_exception`. JSON logs carry lowercase info/warn/error levels,
@@ -82,7 +83,7 @@ names used by the dashboard. Use isolated production AWS accounts/regions for
 these service aggregate metrics; do not export development traffic into the
 production aggregate.
 
-The dashboard has API, Lambda, SQS, and remove.bg sections. Lambda panels use
+The dashboard has API, Lambda, SQS, and Leonardo sections. Lambda panels use
 `AWS/Lambda` Invocations, Errors, Duration (average/p95/max), Throttles and
 ConcurrentExecutions plus an error-rate expression. SQS panels use `AWS/SQS`
 visible/in-flight depth, oldest age, sent/received/deleted counts and visible DLQ
@@ -108,37 +109,54 @@ application's approved Vercel/AWS workload identity credential bridge according
 to its deployment setup. Existing `S3_*`/`SQS_*` adapter keys are not CloudWatch
 credentials. The region must match the AWS dashboard.
 
-remove.bg EMF metrics, dimension `Service=image-processing-worker`:
+Provider EMF metrics come from one `provider_exchange` event per Leonardo Sync
+exchange, with dimension sets `[Service]` and `[Service, Provider=Leonardo]`.
+Job, request and generation IDs stay in the log body, never in dimensions.
 
-- `removebg.request.count`, `removebg.success.count`, `removebg.failure.count`
-- `removebg.duration` (milliseconds, complete exchange including body read)
-- `removebg.status.400`, `.401`, `.402`, `.403`, `.429`, `.500`
-- `removebg.status.4xx`, `removebg.status.5xx` (all such HTTP responses)
-- `removebg.credits.charged` (sum of valid provider-reported values, including zero
-  and fractional credits)
-- `removebg.success.unreported_credits.count` (successful requests with no valid
-  credit header; an estimate of unreported processing volume, **not credits**)
+- `ProviderRequestCount`, `ProviderSuccessCount`, `ProviderFailureCount`
+- `ProviderExchangeDurationMilliseconds` — the whole exchange: generation plus
+  the immediate download of the temporary result
+- one counter per broad failure category: `ProviderRateLimitedResponseCount`
+  (429), `ProviderServerErrorResponseCount` (5xx), `ProviderTimeoutCount`,
+  `ProviderNetworkErrorCount`, `ProviderDownloadFailureCount`,
+  `ProviderInvalidResponseCount` (malformed JSON, missing or empty results,
+  malformed result URL), `ProviderInvalidOutputCount` (wrong content type, not a
+  transparent single-frame WebP, dimensions or size out of bounds),
+  `ProviderContentBlockedCount` (moderated result), `ProviderRejectedRequestCount`
+  (other 4xx), `ProviderAuthorizationFailureCount`, `ProviderPaymentRequiredCount`,
+  `ProviderSourceUnavailableCount` (the source could not be presigned)
+- `ProviderCostCredits` / `ProviderCostDollars` (unit `None`) — the cost the Sync
+  response reported, when it reported one. Informational only; the provider's
+  invoice stays authoritative, and cost never blocks processing.
 
-The single `RemoveBgProvider` remains the only API caller. ORIGINAL processing
-and staged-provider-result reuse do not emit provider request/credit metrics.
-Successful HTTP responses can consume credits even if image validation later
-fails, so reported charges are captured independently of final application
-success. Timeout/network outcomes have no fabricated status. A process killed
-mid-exchange may have an uncertain charge; metrics are not a replacement for
-the provider's invoice. No account polling or remaining-credit estimate is
-introduced. The official [remove.bg API](https://www.remove.bg/api) documents
-`X-Credits-Charged`; `X-RateLimit-Remaining` is a rate limit, not a credit balance.
+The worker's `image_processing_message` event adds one counter per failed
+pipeline stage: `ProcessingSourceFailureCount` (original missing, tampered or
+undecodable — before any provider charge), `ProcessingProviderFailureCount`,
+`ProcessingCompositionFailureCount` and `ProcessingStorageFailureCount`
+(private S3 reads and writes). `ProcessingDurationMilliseconds`,
+`ProcessingEndToEndLatencyMilliseconds` and `ProviderLatencyMilliseconds`
+remain as before.
+
+Logs: `provider_request_started`, `provider_generation_charged` (written before
+the download, with the reported cost, so a paid generation whose download fails
+is still recorded), `provider_request_completed` and `provider_request_failed`
+(with the broad category as `outcome` and the stored failure code). ORIGINAL
+processing and staged-cutout reuse make no provider exchange. A Lambda killed
+mid-exchange may leave an uncertain charge; metrics do not replace the invoice.
 
 ## Provider failures and queue acknowledgement
 
-remove.bg HTTP 402 is classified as `PAYMENT_REQUIRED`, persisted as
-`PROVIDER_PAYMENT_REQUIRED`, and fails the job immediately. HTTP 401/403 are also
-terminal. After the failed state is committed, Lambda acknowledges their SQS
-records; they do not reopen the outbox or automatically call the provider again.
-Duplicate terminal deliveries are acknowledged without execution. HTTP 429/5xx, network errors and timeouts
-use the existing bounded retry budget and durable outbox.
+Leonardo HTTP 402 is classified as `PAYMENT_REQUIRED`, persisted as
+`PROVIDER_PAYMENT_REQUIRED`, and fails the job immediately. HTTP 401/403, other
+4xx and moderated results are also terminal. After the failed state is
+committed, Lambda acknowledges their SQS records; they do not reopen the outbox
+or call the provider again. Duplicate terminal deliveries are acknowledged
+without execution. HTTP 408/429/5xx, network errors, timeouts, failed downloads
+and unusable responses or outputs use the existing bounded retry budget and
+durable outbox; a 429 `Retry-After` lengthens (never shortens) that backoff.
+There is no second, in-process retry loop.
 
-CloudWatch records `REMOVE_BG_PAYMENT_REQUIRED`, HTTP 402, and an actionable
+CloudWatch records `PROVIDER_PAYMENT_REQUIRED` and an actionable
 insufficient-credit message. The UI uses a generic processing-failure message,
 never provider account details. A busy live claim returns an SQS partial
 failure so a redelivery cannot discard the only remaining message; it becomes
@@ -154,11 +172,12 @@ New alarms use two breaching periods out of three five-minute periods and
 | --- | --- | --- |
 | Lambda error rate | ≥5%, at least 20 invocations per period | `LambdaErrorRatePercent`, `MinimumLambdaInvocations` |
 | Lambda throttles | ≥5 per period | `LambdaThrottleCount` |
-| remove.bg 429 | ≥5 per period | `RemoveBgRateLimitCount` |
-| remove.bg 5xx | ≥5 per period | `RemoveBgServerErrorCount` |
-| remove.bg failure rate | ≥20%, at least 20 requests per period | `RemoveBgFailureRatePercent`, `MinimumRemoveBgRequests` |
+| Leonardo 429 | ≥5 per period | `ProviderRateLimitCount` |
+| Leonardo 5xx | ≥5 per period | `ProviderServerErrorCount` |
+| Leonardo timeouts | ≥5 per period | `ProviderTimeoutCount` |
+| Leonardo failure rate | ≥20%, at least 20 requests per period | `ProviderFailureRatePercent`, `MinimumProviderRequests` |
 
-Existing configurable worker alarms cover p95 duration (100 seconds, two
+Existing configurable worker alarms cover p95 duration (150 seconds, two
 one-minute periods), terminal failures, retry spikes and end-to-end latency.
 Existing queue alarms cover oldest-message age (300 seconds for two minutes),
 queue depth, and any visible DLQ message. The old isolated-invocation error alarm
@@ -185,15 +204,14 @@ Invocation-end flushes are bounded to two seconds.
 | `SENTRY_RELEASE` | Next + worker | Optional commit SHA/version matching deployed artifact |
 | `HTTP_CLOUDWATCH_METRICS_ENABLED` | Next only | `true` enables API metric export; default `false` |
 | `AWS_REGION` | Next + worker | Existing AWS region; required for API metric export |
-| `REMOVEBG_API_KEY` | worker only | Existing repository spelling, unchanged |
+| `LEONARDO_API_KEY` | worker only | Secrets Manager, through `LeonardoSecretArn` |
 
 The Next instrumentation hooks use the standard Node SDK; no Next build plugin,
 Sentry auth token or public DSN is needed. Configure production Sentry projects,
 retention/access and issue notifications. Use the same release for Vercel and the
 worker when deploying the same commit. Deploy worker `SentryDsn` and
-`SentryRelease` stack parameters. Lambda archives must include external
-`@sentry/node` and `@aws-sdk/client-cloudwatch` dependencies alongside existing
-external dependencies. No provider key reaches Vercel.
+`SentryRelease` stack parameters. `pnpm package:worker` bundles Sentry, the AWS SDK, Prisma and
+`pg` into `handler.mjs`; only the native `sharp` package ships beside it. No provider key reaches Vercel.
 
 Deploy the additive database migration before publishing the new web/worker
 artifacts. Existing job IDs and outbox retry/idempotency rules are unchanged.
@@ -206,12 +224,21 @@ Locally leave Sentry and HTTP metric export unset. Run `pnpm test` (uncached for
 changed root tests), lint/typecheck/build, and database integration/E2E gates
 against an isolated local PostgreSQL. The deterministic tests cover log/Sentry
 scrubbing, interleaved contexts, HTTP status counts, credits, provider statuses,
-and outbox correlation. The credit-exhaustion regression uses a mocked HTTP 402
-response with real PostgreSQL: it checks terminal status, no retry publication,
-no success charge and duplicate acknowledgement. The browser test checks the
+and outbox correlation. `tests/integration/server/jobs/leonardo-processing-lifecycle.test.ts` drives
+the real handler, worker, executor and Leonardo adapter against PostgreSQL. It
+checks three things:
+
+- A completed job charges usage once and acknowledges a duplicate delivery.
+- A terminal failure (HTTP 402) is recorded once, publishes no retry, charges
+  no usage and shows people only a generic reason.
+- A 429 is rescheduled durably, no sooner than its `Retry-After`.
+
+None of these persists or logs the API key, the presigned source URL or the
+temporary result URL. The browser test checks the
 generic error through the real status API. Inspect logs while processing a Local
 batch: the response ID appears on queue/provider/S3 logs, with the existing batch key. A live
-remove.bg smoke consumes a provider request; mocked adapter tests require none.
+Leonardo smoke consumes a paid generation and needs Development storage;
+mocked adapter tests require none.
 
 In production:
 
@@ -219,7 +246,7 @@ In production:
    Search both Vercel and CloudWatch for the complete lifecycle; check the final
    S3 upload and processing-completed events.
 2. Repeat/replay delivery and confirm `provider_result_reused` does not increase
-   remove.bg request or credit counts. Confirm tenant usage still charges once.
+   `ProviderRequestCount` or reported cost. Confirm tenant usage still charges once.
 3. Make a controlled unauthenticated request (401) and cross-origin mutation
    (403). Confirm status logs and API counters; validation should create no
    Sentry issue. Check the dashboard after CloudWatch ingestion.
@@ -229,5 +256,5 @@ In production:
    crash endpoint.
 5. Test sustained alarms using isolated test metrics/queues and AWS alarm-state
    testing; confirm SNS notifications. Do not intentionally exhaust production
-   remove.bg credits or flood it to produce 429s. Verify `Errors` versus partial
+   Leonardo credits or flood it to produce 429s. Verify `Errors` versus partial
    failures, native throttling, duration and queue-age panels independently.

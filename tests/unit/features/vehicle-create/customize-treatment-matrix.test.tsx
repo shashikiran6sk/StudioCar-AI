@@ -19,7 +19,6 @@ const ASSET_ID = "331a1e25-b9d8-4b1a-a398-8351a58f8c24";
 const SWITCH_NAMES = {
   enhancement: "Image Enhancement",
   maintainComposition: "Maintain Composition",
-  platePrivacy: "Hide Number Plate",
   studioBackground: "Studio Background",
 } satisfies Record<keyof TreatmentToggles, string>;
 
@@ -44,7 +43,8 @@ function setSwitch(name: string, wanted: boolean) {
 
 /**
  * Chooses a case the way a person would: background and floor first, while
- * they can be chosen, then the four switches.
+ * they can be chosen, then the switches. Composition is chosen before Studio
+ * Background, because it can only be changed while a studio is on.
  */
 function chooseTreatment({ studio, toggles }: TreatmentCase) {
   render(<CustomizeTreatmentStep onBack={vi.fn()} onContinue={vi.fn()} />);
@@ -52,10 +52,15 @@ function chooseTreatment({ studio, toggles }: TreatmentCase) {
     screen.getByRole("button", { name: BACKGROUND_NAMES[studio.background] }),
   );
   fireEvent.click(screen.getByRole("button", { name: FLOOR_NAMES[studio.floor] }));
-  setSwitch(SWITCH_NAMES.platePrivacy, toggles.platePrivacy);
   setSwitch(SWITCH_NAMES.enhancement, toggles.enhancement);
-  setSwitch(SWITCH_NAMES.studioBackground, toggles.studioBackground);
   setSwitch(SWITCH_NAMES.maintainComposition, toggles.maintainComposition);
+  setSwitch(SWITCH_NAMES.studioBackground, toggles.studioBackground);
+  const composition = screen.getByRole("switch", {
+    name: SWITCH_NAMES.maintainComposition,
+  });
+  if (toggles.studioBackground) expect(composition).toBeEnabled();
+  else expect(composition).toBeDisabled();
+  expect(screen.queryByRole("switch", { name: "Hide Number Plate" })).toBeNull();
 
   // Background and floor can only be chosen with a studio background.
   for (const name of [
@@ -84,7 +89,7 @@ async function submitReview(label: string): Promise<CreateProcessingBatch> {
   return command;
 }
 
-describe("Customize treatment across the 96-case matrix", () => {
+describe("Customize treatment across the 36-case matrix", () => {
   afterEach(() => act(() => useVehicleCreateStore.getState().reset()));
 
   const cases = createTreatmentMatrix();

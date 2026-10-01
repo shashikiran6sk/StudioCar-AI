@@ -78,9 +78,15 @@ describe("job contracts", () => {
       options: {
         background: "PREMIUM_WHITE",
         enhancement: true,
-        platePrivacy: true,
       },
     });
+    expect(
+      CreateProcessingBatchSchema.safeParse({
+        vehicleId,
+        assetIds: [assetId],
+        options: { platePrivacy: true },
+      }).success,
+    ).toBe(false);
     expect(
       CreateProcessingBatchSchema.safeParse({
         vehicleId,

@@ -11,11 +11,8 @@ const OPTIONS: ProcessingOptions = {
   floor: "HORIZON",
   crop: "MAINTAIN_COMPOSITION",
   enhancement: true,
-  outputFormat: "JPEG",
   paddingPercent: 8,
-  platePrivacy: true,
   quality: 90,
-  shadow: "NATURAL",
 };
 
 describe("completeProcessingBatch", () => {

@@ -6,6 +6,7 @@ import { classifyProcessingFailure } from "./classify-processing-failure";
 import { createProcessingUsageIdempotencyKey } from "./create-processing-usage-idempotency-key";
 import { createUsageBillingPeriodKey } from "./create-usage-billing-period-key";
 import { normalizeProcessingErrorMessage } from "./normalize-processing-error-message";
+import { respectProviderRetryAfter } from "./respect-provider-retry-after";
 import {
   PROCESSING_PUBLICATION_WAIT_ATTEMPTS,
   PROCESSING_PUBLICATION_WAIT_MS,
@@ -50,7 +51,8 @@ export class ProcessingWorker {
       assetId: claim.job.imageAssetId,
       attemptNumber: claim.job.attemptNumber,
       failureKind: null,
-      provider: claim.job.provider,
+      failureStage: null,
+      provider: this.executor.providerKey,
       providerLatencyMilliseconds: null,
       providerRequestId: null,
       userId: claim.job.userId,
@@ -98,11 +100,15 @@ export class ProcessingWorker {
 
     const classification = classifyProcessingFailure(execution.failure.kind);
     const failedAt = this.now();
-    const retryDelay = calculateProcessingRetryDelay(
-      claim.job.attemptNumber,
-      this.options.retryBaseMilliseconds,
+    const retryDelay = respectProviderRetryAfter(
+      calculateProcessingRetryDelay(
+        claim.job.attemptNumber,
+        this.options.retryBaseMilliseconds,
+        this.options.retryMaximumMilliseconds,
+        this.random(),
+      ),
+      execution.failure.retryAfterMilliseconds,
       this.options.retryMaximumMilliseconds,
-      this.random(),
     );
     const failure = await this.jobs.failJob({
       attemptNumber: claim.job.attemptNumber,
@@ -126,6 +132,7 @@ export class ProcessingWorker {
         telemetry: {
           ...telemetry,
           failureKind: execution.failure.kind,
+          failureStage: execution.failure.stage,
           providerLatencyMilliseconds:
             execution.failure.providerLatencyMilliseconds,
           providerRequestId: execution.failure.providerRequestId,
@@ -138,6 +145,7 @@ export class ProcessingWorker {
         telemetry: {
           ...telemetry,
           failureKind: execution.failure.kind,
+          failureStage: execution.failure.stage,
           providerLatencyMilliseconds:
             execution.failure.providerLatencyMilliseconds,
           providerRequestId: execution.failure.providerRequestId,
@@ -149,6 +157,7 @@ export class ProcessingWorker {
       telemetry: {
         ...telemetry,
         failureKind: execution.failure.kind,
+        failureStage: execution.failure.stage,
         providerLatencyMilliseconds:
           execution.failure.providerLatencyMilliseconds,
         providerRequestId: execution.failure.providerRequestId,
@@ -172,6 +181,7 @@ export class ProcessingWorker {
         ),
         jobId,
         now: claimedAt,
+        provider: this.executor.providerKey,
         workerId,
       });
       if (

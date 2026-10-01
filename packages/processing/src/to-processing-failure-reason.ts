@@ -15,6 +15,16 @@ const SERVICE_UNAVAILABLE_CODES: readonly string[] = [
 ];
 
 /**
+ * The provider could not return a usable vehicle for this photo. A moderation
+ * refusal is reported the same way: its details stay in the logs.
+ */
+const BACKGROUND_REMOVAL_FAILED_CODES: readonly string[] = [
+  PROCESSING_FAILURE_CODES.INVALID_REQUEST,
+  PROCESSING_FAILURE_CODES.CONTENT_BLOCKED,
+  PROCESSING_FAILURE_CODES.UNUSABLE_PROVIDER_RESULT,
+];
+
+/**
  * Maps a stored failure to the reason shown to the person who owns the image.
  * The technical code stays in the database and the logs.
  */
@@ -31,7 +41,7 @@ export function toProcessingFailureReason(
   if (SERVICE_UNAVAILABLE_CODES.includes(errorCode)) {
     return "SERVICE_UNAVAILABLE";
   }
-  if (errorCode === PROCESSING_FAILURE_CODES.INVALID_REQUEST) {
+  if (BACKGROUND_REMOVAL_FAILED_CODES.includes(errorCode)) {
     return "BACKGROUND_REMOVAL_FAILED";
   }
   return "PROCESSING_FAILED";
