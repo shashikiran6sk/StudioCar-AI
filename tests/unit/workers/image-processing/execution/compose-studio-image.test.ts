@@ -153,6 +153,9 @@ describe("composeStudioImage", () => {
     const plain = await composeStudioImage({ ...input, options: MAINTAIN });
     const enhanced = await composeStudioImage({ ...input, options: { ...MAINTAIN, enhancement: true } });
     const alpha = createCutout();
+    // Compare raw channels and assert once: an assertion per pixel would
+    // dominate the run time on a busy CI runner.
+    let backgroundChanged = 0;
     let vehicleChanged = 0;
     for (let y = 0; y < plain.height; y += 1) {
       for (let x = 0; x < plain.width; x += 1) {
@@ -160,11 +163,17 @@ describe("composeStudioImage", () => {
         const cy = y - PADDING;
         const inside = cx >= 0 && cy >= 0 && cx < alpha.width && cy < alpha.height;
         const a = inside ? (alpha.data[(cy * alpha.width + cx) * 4 + 3] ?? 0) : 0;
-        const same = pixel(plain, x, y).join() === pixel(enhanced, x, y).join();
-        if (a === 0) expect(same).toBe(true);
+        const offset = (y * plain.width + x) * plain.channels;
+        let same = true;
+        for (let channel = 0; channel < plain.channels; channel += 1) {
+          if (plain.data[offset + channel] !== enhanced.data[offset + channel]) same = false;
+        }
+        if (a === 0 && !same) backgroundChanged += 1;
         else if (a === 255 && !same) vehicleChanged += 1;
       }
     }
+    expect(enhanced.channels).toBe(plain.channels);
+    expect(backgroundChanged).toBe(0);
     expect(vehicleChanged).toBeGreaterThan(40_000);
   });
 
