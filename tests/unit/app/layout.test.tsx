@@ -9,4 +9,14 @@ describe("root metadata", () => {
     expect(metadata.description).toContain("vehicle photos");
     expect(metadata.robots).toEqual({ index: false, follow: false });
   });
+
+  it("advertises stable square favicon URLs with their actual resolutions", () => {
+    expect(metadata.icons).toEqual({
+      icon: [
+        { url: "/icon.png", type: "image/png", sizes: "192x192" },
+        { url: "/favicon.ico", type: "image/x-icon", sizes: "16x16 32x32 48x48" },
+      ],
+      apple: [{ url: "/apple-icon.png", type: "image/png", sizes: "180x180" }],
+    });
+  });
 });
