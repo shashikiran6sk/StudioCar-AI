@@ -1,6 +1,30 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-10-01
+Last updated: 2026-10-02
+
+## Search-result favicon discovery
+
+- Reproduced Next.js detecting only the 16×16 first frame of the existing
+  16/32/48px ICO. Automatic metadata therefore under-reported its resolutions;
+  the alternate 512px PNG was already present. This is a discovery weakness,
+  not proof that Google rejected the live icon: the environment's outbound
+  policy blocks `studiocarai.com`, and Google's indexed favicon is inaccessible.
+- Moved browser favicons to `public` while preserving `/favicon.ico` and
+  `/icon.png`. Root metadata explicitly declares all ICO sizes and a 192×192
+  PNG (a multiple of 48), using stable URLs without build query strings. The
+  PNG is resized from the existing SC mark; Apple/social assets are preserved.
+  Updated the asset generator to keep these paths and sizes reproducible.
+- Extended metadata/asset checks and browser coverage for Googlebot and
+  Googlebot-Image access, response types, dimensions, and initial HTML links.
+- Local gates passed: lint, strict types, source mapping, all unit suites
+  uncached (web 1,244; one existing expected failure in processing), 187
+  isolated PostgreSQL integration tests, Prisma validation, the normal
+  Turbopack production build, all 16 browser tests (system Chromium through a
+  temporary config), and the production dependency audit. Required PR CI must
+  also pass before merge.
+- Google must recrawl the deployed homepage before its separately cached
+  search icon can update; request indexing in Search Console after deployment.
+  Display and timing remain Google's decision.
 
 ## Mobile responsive experience
 

@@ -4,6 +4,7 @@ import path from "node:path";
 import sharp from "sharp";
 
 const appDirectory = path.resolve("apps/web/src/app");
+const publicDirectory = path.resolve("apps/web/public");
 const vehiclePath = path.resolve("apps/web/public/images/marketing/silver-sedan.png");
 
 function brandIcon(size) {
@@ -47,7 +48,9 @@ const ogBackground = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width=
   <text x="162" y="548" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="19" font-weight="700">studiocarai.com</text>
 </svg>`);
 
-await writeFile(path.join(appDirectory, "icon.png"), await sharp(brandIcon(512)).png().toBuffer());
+// Explicit metadata advertises stable public URLs and every ICO resolution.
+// App Router's automatic ICO metadata reports only the first (16px) frame.
+await writeFile(path.join(publicDirectory, "icon.png"), await sharp(brandIcon(192)).png().toBuffer());
 await writeFile(path.join(appDirectory, "apple-icon.png"), await sharp(brandIcon(180)).png().toBuffer());
 
 const faviconSizes = [16, 32, 48];
@@ -55,7 +58,7 @@ const faviconImages = await Promise.all(faviconSizes.map(async (size) => ({
   size,
   bytes: await sharp(brandIcon(size)).png().toBuffer(),
 })));
-await writeFile(path.join(appDirectory, "favicon.ico"), favicon(faviconImages));
+await writeFile(path.join(publicDirectory, "favicon.ico"), favicon(faviconImages));
 
 const vehicle = await sharp(vehiclePath).resize({ width: 570 }).png().toBuffer();
 await writeFile(
