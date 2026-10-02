@@ -23,7 +23,7 @@ describe("default plan configurations", () => {
   it("states the confirmed Studio Plus configuration", () => {
     expect(plan("STUDIO_PLUS")).toMatchObject({
       displayName: "Studio Plus",
-      priceMinorUnits: 149_900,
+      priceMinorUnits: 199_900,
       currency: "INR",
       billingInterval: "ONE_TIME",
       allowanceScope: "LIFETIME",
@@ -44,11 +44,12 @@ describe("default plan configurations", () => {
     expect(plan("STUDIO_PLUS").allowanceScope).toBe("LIFETIME");
   });
 
-  it("advertises no purchasable plan while checkout is unimplemented", () => {
-    // Offering a checkout that cannot complete would be a lie.
-    expect(
-      DEFAULT_PLAN_CONFIGURATIONS.every((configuration) => !configuration.purchasable),
-    ).toBe(true);
+  it("offers checkout for paid plans only", () => {
+    expect(DEFAULT_PLAN_CONFIGURATIONS.map((configuration) => [configuration.planKey, configuration.purchasable])).toEqual([
+      ["FREE", false],
+      ["STUDIO_PLUS", true],
+      ["STUDIO_PRO", true],
+    ]);
   });
 
   it("keeps every plan within the limits the database enforces", () => {

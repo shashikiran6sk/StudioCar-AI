@@ -4,18 +4,23 @@ import type { ProcessingOptions } from "@studiocar/contracts";
 
 import type { PrismaClient } from "@studiocar/database-runtime";
 import {
+  CreditAllocationSource,
+  CreditAllocationStatus,
+  CreditLedgerType,
   ImageAssetStatus,
   Prisma,
   ProcessingJobStatus,
   type ProcessingProvider,
   UsageEventType,
   VehicleStatus,
+  SubscriptionStatus,
+  SubscriptionSource,
 } from "@studiocar/database-runtime";
 import { toProcessingOptionsJson } from "./to-processing-options-json";
 import { PROCESSABLE_VEHICLE_STATUSES } from "../../vehicles/vehicle-status-groups.constants";
 import { createImageAssetLockKey } from "./create-image-asset-lock-key";
 
-const ALLOWANCE_LOCK_PREFIX = "processing-allowance:";
+const ALLOWANCE_LOCK_PREFIX = "billing-credit:";
 const AllowanceUsageRowsSchema = z.array(z.object({ used: z.coerce.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER) })).length(1);
 
 const MISSING_USAGE_JOB_ERROR =
@@ -169,10 +174,52 @@ export class PrismaProcessingJobRepository {
 
     const uniqueAssetIds = new Set(command.jobs.map((job) => job.assetId));
     if (command.jobs.length === 0) return { kind: "ASSETS_NOT_READY" };
-    if (command.jobs.length > command.allowance.maxImagesPerBatch) {
+    const now = new Date();
+    const providerSubscription = await transaction.planSubscription.findFirst({
+      where: {
+        userId: command.userId,
+        source: SubscriptionSource.PAYMENT_PROVIDER,
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodStart: { lte: now },
+        currentPeriodEnd: { gt: now },
+      },
+      select: { id: true },
+    });
+    const currentAllowance = providerSubscription
+      ? await transaction.subscriptionAllowance.findFirst({
+          where: {
+            userId: command.userId,
+            subscriptionId: providerSubscription.id,
+            periodStart: { lte: now },
+            periodEnd: { gt: now },
+          },
+          select: { id: true, allowance: true, consumed: true },
+        })
+      : null;
+    const purchased = await transaction.creditLedger.aggregate({
+      where: { userId: command.userId },
+      _sum: { amount: true },
+    });
+    const purchasedBalance = purchased._sum.amount ?? 0;
+    const providerHistory = await transaction.planSubscription.findFirst({
+      where: { userId: command.userId, source: SubscriptionSource.PAYMENT_PROVIDER },
+      select: { id: true },
+    });
+    const purchaseHistory = await transaction.creditLedger.findFirst({
+      where: { userId: command.userId, type: CreditLedgerType.PURCHASE_GRANT },
+      select: { id: true },
+    });
+    const hasPaidCredits = providerHistory !== null || purchaseHistory !== null || purchasedBalance > 0;
+    const plusPlan = purchasedBalance > 0
+      ? await transaction.planConfig.findUnique({ where: { planKey: "STUDIO_PLUS" }, select: { maxImagesPerBatch: true } })
+      : null;
+    const maxImagesPerBatch = hasPaidCredits
+      ? Math.max(command.allowance.maxImagesPerBatch, plusPlan?.maxImagesPerBatch ?? 0)
+      : command.allowance.maxImagesPerBatch;
+    if (command.jobs.length > maxImagesPerBatch) {
       return {
         kind: "BATCH_LIMIT_EXCEEDED",
-        maxImagesPerBatch: command.allowance.maxImagesPerBatch,
+        maxImagesPerBatch,
       };
     }
 
@@ -182,15 +229,22 @@ export class PrismaProcessingJobRepository {
      * The allowance therefore counts charged images plus everything already
      * reserved and not yet terminal.
      */
-    const allowanceUsed = await this.countAllowanceUsed(transaction, command);
-    const imagesRemaining = Math.max(
-      0,
-      command.allowance.imageCapacity - allowanceUsed,
-    );
+    const reservedPro = currentAllowance
+      ? await transaction.creditAllocation.count({
+          where: { allowanceId: currentAllowance.id, status: CreditAllocationStatus.RESERVED },
+        })
+      : 0;
+    const proRemaining = currentAllowance
+      ? Math.max(0, currentAllowance.allowance - currentAllowance.consumed - reservedPro)
+      : 0;
+    const allowanceUsed = hasPaidCredits ? 0 : await this.countAllowanceUsed(transaction, command);
+    const imagesRemaining = hasPaidCredits
+      ? proRemaining + purchasedBalance
+      : Math.max(0, command.allowance.imageCapacity - allowanceUsed);
     if (command.jobs.length > imagesRemaining) {
       return {
         kind: "ALLOWANCE_EXHAUSTED",
-        imageCapacity: command.allowance.imageCapacity,
+        imageCapacity: hasPaidCredits ? (currentAllowance?.allowance ?? 0) + purchasedBalance : command.allowance.imageCapacity,
         imagesRemaining,
       };
     }
@@ -257,6 +311,30 @@ export class PrismaProcessingJobRepository {
     await measureStage(PerformanceStage.OUTBOX_CREATION, () => transaction.processingOutboxMessage.createMany({
       data: jobs.map((job) => ({ jobId: job.id })),
     }));
+    if (hasPaidCredits) {
+      await transaction.creditAllocation.createMany({
+        data: jobs.map((job, index) => {
+          const usePro = index < proRemaining && currentAllowance !== null;
+          return {
+            userId: command.userId,
+            jobId: job.id,
+            allowanceId: usePro ? currentAllowance.id : null,
+            source: usePro ? CreditAllocationSource.PRO : CreditAllocationSource.PURCHASED,
+          };
+        }),
+      });
+      const purchasedJobs = jobs.slice(proRemaining);
+      if (purchasedJobs.length > 0) {
+        await transaction.creditLedger.createMany({
+          data: purchasedJobs.map((job) => ({
+            userId: command.userId,
+            amount: -1,
+            type: CreditLedgerType.PROCESSING_DEBIT,
+            referenceId: job.id,
+          })),
+        });
+      }
+    }
     const usageJob = jobs[0];
     if (!usageJob) throw new Error(MISSING_USAGE_JOB_ERROR);
     await transaction.usageEvent.create({

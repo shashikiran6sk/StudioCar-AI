@@ -26,17 +26,21 @@ export const CSP_DEFAULT_SOURCE = "default-src 'self'";
 /**
  * The MSG91 OTP widget runs in the browser: it loads its provider script from
  * verify.msg91.com and talks to control.msg91.com. Those are the only
- * additional browser origins beyond private object storage.
+ * OTP browser origins. Razorpay hosted Checkout has its own script, connection
+ * and frame origins below; neither provider receives a wildcard permission.
  */
 export const MSG91_WIDGET_SCRIPT_ORIGIN = "https://verify.msg91.com";
 export const MSG91_CONTROL_ORIGIN = "https://control.msg91.com";
+export const RAZORPAY_CHECKOUT_ORIGIN = "https://checkout.razorpay.com";
+export const RAZORPAY_API_ORIGIN = "https://api.razorpay.com";
 
-export const CSP_SCRIPT_SOURCE = `script-src 'self' 'unsafe-inline' ${MSG91_WIDGET_SCRIPT_ORIGIN}`;
+export const CSP_SCRIPT_SOURCE = `script-src 'self' 'unsafe-inline' ${MSG91_WIDGET_SCRIPT_ORIGIN} ${RAZORPAY_CHECKOUT_ORIGIN}`;
 export const CSP_DEVELOPMENT_SCRIPT_SOURCE = "'unsafe-eval'";
 export const CSP_STYLE_SOURCE = "style-src 'self' 'unsafe-inline'";
 export const CSP_IMAGE_SOURCE = `img-src 'self' blob: data: https://*.amazonaws.com ${MSG91_WIDGET_SCRIPT_ORIGIN}`;
 export const CSP_FONT_SOURCE = "font-src 'self' data:";
-export const CSP_CONNECT_SOURCE = `connect-src 'self' https://*.amazonaws.com ${MSG91_WIDGET_SCRIPT_ORIGIN} ${MSG91_CONTROL_ORIGIN}`;
+export const CSP_CONNECT_SOURCE = `connect-src 'self' https://*.amazonaws.com ${MSG91_WIDGET_SCRIPT_ORIGIN} ${MSG91_CONTROL_ORIGIN} ${RAZORPAY_CHECKOUT_ORIGIN} ${RAZORPAY_API_ORIGIN}`;
+export const CSP_FRAME_SOURCE = `frame-src ${RAZORPAY_CHECKOUT_ORIGIN} ${RAZORPAY_API_ORIGIN}`;
 export const CSP_DEVELOPMENT_CONNECT_SOURCE = "ws: wss:";
 export const CSP_WORKER_SOURCE = "worker-src 'self' blob:";
 export const CSP_MANIFEST_SOURCE = "manifest-src 'self'";

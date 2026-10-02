@@ -574,6 +574,10 @@ Last updated: 2026-10-02
   stack updates, production metric-export configuration and Sentry DSNs. No
   resources are deployed by this change.
 
+## Razorpay billing integration in progress
+
+The dedicated billing branch adds Test/Live key validation, explicit price-version/Plan mapping, Studio Plus Orders Checkout, Studio Pro Subscription Checkout, signature verification, a raw-body signed webhook inbox, per-payment receipts, separate purchased credits and Pro period allowances, and owner-scoped billing reads. Processing reservations use a per-user PostgreSQL lock, allocate Pro before purchased credits, and settle or release allocations with terminal worker outcomes. The existing processing outbox remains the enqueue recovery path. Manual Studio Plus grants are ledger adjustments; manual Pro grants remain distinct from provider subscriptions. The billing business record is stored in `AppConfig` and receipts snapshot a non-GST sole proprietor identity. See `docs/razorpay-billing.md` for setup and the current GST/refund reconciliation limits. The full unit, PostgreSQL integration, and browser end-to-end suites, lint, typecheck, Prisma validation/status, and production build passed on the billing branch against an isolated database; no actual Razorpay Test or Live transaction has been performed because credentials and Dashboard resources must be supplied by the merchant. Branch review and CI remain before merge.
+
 ## Current status
 
 Every slice in the accepted plan is implemented and merged.
@@ -1717,3 +1721,14 @@ Update this document in every meaningful PR with:
 - Exact supplied 45° image validation remains pending because no fixture path/image was provided. Reviewed the repository marketing sedan as a diagnostic proxy; it contains baked floor alpha, so it is not evidence of a clean live provider result.
 - User confirmed Leonardo credentials are not configured. Live preview/full/50MP cost measurements, staging E2E, production cutover, and later remove.bg cleanup remain gated on those prerequisites. Do not change production provider or assume equal pricing.
 - Local verification: lint, strict typecheck, behavior-source mapping, 2,163 unit passes (five pre-existing expected failures), 155 PostgreSQL integration passes, schema validation, worker build, webpack production web build, and all 14 browser tests passed. Root build/e2e commands attempted Turbopack and hit the existing local process/port EPERM restriction; CI must pass the normal build before merge.
+
+
+## 2026-10-02 — Razorpay PR #73 main integration and certification comparison
+
+Merged main `dd835cad364493038b6c28cd0dd0434c5ded2781` into `feat/razorpay-billing` from `ed26b28e52ba515dc25f495cfb92712dc2143bfa`, resolving seven conflicted files. Preserved billing credit reservations with main's tenant lock, snapshot-safe free allowance count, bulk job/outbox inserts, deterministic ordering and request IDs; preserved shared plan resolution, Leonardo settings, monitoring hooks and billing startup validation. Retained the PR's commercial catalog and provider-owned subscription protections.
+
+Moved the billing startup test into active discovery, reconciled stale Pro/manual-provider test expectations with the PR catalog and main's current-plan resolver, and passed billing configuration through Turborepo. Added a real-browser Checkout wiring regression using synthetic script/frame/API responses. It reproduced the newly integrated CSP block and a second disabled plan button caused by shared Next Script loading; fixed exact Razorpay script/connect/frame origins and shared-script onLoad readiness. Existing embedding restrictions and production eval restrictions remain asserted. This browser test establishes UI/CSP wiring only, not real payments or webhook financial effects.
+
+Local verification: 2,188 unit/component assertions passed plus the existing expected-failure ORIGINAL version-key assertion; 192 real PostgreSQL integration tests passed; final full browser suite passed 16/16 using system Chromium and the original 30-second timeout. Lint, strict types, schema validation, 24 migrations from scratch/status, build, dependency audit and worker packaging passed. Startup/security and changed Checkout checks also passed. Original failures and retests are retained under docs/testing/razorpay-pr73.
+
+The four critical pre-production reproductions remain FAIL on this integrated code: FREE ORIGINAL full-resolution output, historical HQ signing after cancellation (policy conflict remains explicit), duplicate successful provider calls before staging and exhausted published work stranded PROCESSING. The 20-job mixed success/failure control remains PASS. No baseline defect fixes or real financial/provider/AWS mutations were performed. Live payments and deployed runtime verification remain unverified; branch update does not establish production readiness.

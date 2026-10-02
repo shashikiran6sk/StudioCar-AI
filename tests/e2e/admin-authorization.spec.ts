@@ -42,6 +42,7 @@ const AUDITED_ACTIONS = [
   "ADMIN_INVITATION_REVOKED",
   "PLAN_CONFIG_UPDATED",
   "SUBSCRIPTION_ASSIGNED",
+  "ADMIN_CREDIT_GRANTED",
   "SUBSCRIPTION_REVOKED",
   "SOCIAL_LINK_SAVED",
   "SOCIAL_LINK_REMOVED",
@@ -59,6 +60,14 @@ adminTest(
     const adminId = randomUUID();
 
     try {
+      await database.query(
+        'DELETE FROM "CreditLedger" WHERE "userId" IN (SELECT "id" FROM "User" WHERE "primaryEmail" = ANY($1))',
+        [[EDITOR_EMAIL, CUSTOMER_EMAIL]],
+      );
+      await database.query(
+        'DELETE FROM "User" WHERE "primaryEmail" = ANY($1)',
+        [[EDITOR_EMAIL, CUSTOMER_EMAIL]],
+      );
       await database.query(
         'DELETE FROM "User" WHERE "primaryEmail" = ANY($1)',
         [[PLAIN_EMAIL, ADMIN_EMAIL]],
@@ -138,7 +147,7 @@ adminTest(
       await expect(
         page.getByRole("heading", { name: "Administrators", level: 1 }),
       ).toBeVisible();
-      await expect(page.getByRole("button", { name: "Revoke" })).toBeDisabled();
+      await expect(page.getByRole("listitem").filter({ hasText: ADMIN_EMAIL }).getByRole("button", { name: "Revoke" })).toBeDisabled();
       await expect(page.getByText("No invitations are waiting.")).toBeVisible();
       await page.screenshot({
         fullPage: true,
@@ -270,6 +279,10 @@ adminTest(
 
     try {
       await database.query(
+        'DELETE FROM "CreditLedger" WHERE "userId" IN (SELECT "id" FROM "User" WHERE "primaryEmail" = ANY($1))',
+        [[EDITOR_EMAIL, CUSTOMER_EMAIL]],
+      );
+      await database.query(
         'DELETE FROM "User" WHERE "primaryEmail" = ANY($1)',
         [[EDITOR_EMAIL, CUSTOMER_EMAIL]],
       );
@@ -339,7 +352,7 @@ adminTest(
         .getByLabel(/recorded in the audit log/)
         .fill("Pilot migration.");
       await page.getByRole("button", { name: "Assign plan" }).click();
-      await expect(page.getByText("Plan assigned.")).toBeVisible();
+      await expect(page.getByText("Studio Plus credits granted.")).toBeVisible();
       await page.screenshot({
         fullPage: true,
         path: testInfo.outputPath("admin-subscriptions.png"),
@@ -356,7 +369,7 @@ adminTest(
         }),
       });
       await expect(activity.getByRole("listitem").first()).toContainText(
-        "Assigned a plan (STUDIO_PLUS).",
+        "Granted Studio Plus credits",
       );
       await expect(
         page.getByRole("heading", { name: "Accounts by plan", level: 2 }),
@@ -380,6 +393,10 @@ adminTest(
       const refused = await page.goto("/admin/subscriptions");
       expect(refused?.status()).toBe(404);
     } finally {
+      await database.query(
+        'DELETE FROM "CreditLedger" WHERE "userId" IN (SELECT "id" FROM "User" WHERE "primaryEmail" = ANY($1))',
+        [[EDITOR_EMAIL, CUSTOMER_EMAIL]],
+      );
       await database.query(
         'DELETE FROM "User" WHERE "primaryEmail" = ANY($1)',
         [[EDITOR_EMAIL, CUSTOMER_EMAIL]],

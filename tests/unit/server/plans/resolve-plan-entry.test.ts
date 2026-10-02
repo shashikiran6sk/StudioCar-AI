@@ -18,7 +18,7 @@ describe("resolvePlanEntry", () => {
   it("uses the shipped default when a plan is not configured", () => {
     expect(resolvePlanEntry([], "STUDIO_PRO")).toMatchObject({
       key: "STUDIO_PRO",
-      plan: { includedImages: 500 },
+      plan: { includedImages: 400 },
     });
   });
 

@@ -10,7 +10,7 @@ export interface DefaultPlanConfiguration {
   active: boolean;
   purchasable: boolean;
   featured: boolean;
-  /** Minor units, so ₹3,999 is 399900 paise and never a float. */
+  /** Minor units, so ₹5,499 is 549900 paise and never a float. */
   priceMinorUnits: number;
   currency: string;
   billingInterval: PlanBillingInterval;
@@ -61,9 +61,9 @@ const STUDIO_PLUS_PLAN_DEFAULT: DefaultPlanConfiguration = {
     "A flexible credit pack for sellers, photographers, and growing dealerships.",
   segment: "Most popular",
   active: true,
-  purchasable: false,
+  purchasable: true,
   featured: true,
-  priceMinorUnits: 149_900,
+  priceMinorUnits: 199_900,
   currency: "INR",
   billingInterval: "ONE_TIME",
   allowanceScope: "LIFETIME",
@@ -86,17 +86,17 @@ const STUDIO_PRO_PLAN_DEFAULT: DefaultPlanConfiguration = {
     "For high-volume teams that need dependable image-processing throughput.",
   segment: "Teams",
   active: true,
-  purchasable: false,
+  purchasable: true,
   featured: false,
-  priceMinorUnits: 399_900,
+  priceMinorUnits: 549_900,
   currency: "INR",
   billingInterval: "MONTHLY",
   allowanceScope: "BILLING_PERIOD",
-  includedImages: 500,
+  includedImages: 400,
   maxImagesPerBatch: 20,
   storageBytes: null,
   features: [
-    "500 images each month",
+    "400 images each month",
     "Priority batch processing",
     "Increased storage",
     "Team-ready inventory workflow",
@@ -112,8 +112,7 @@ const STUDIO_PRO_PLAN_DEFAULT: DefaultPlanConfiguration = {
  * remain here so a missing row can never take the application down, and so a
  * fresh database has something correct to start from.
  *
- * No plan is purchasable while `BillingPort` is unimplemented. Advertising a
- * checkout that cannot complete would be a lie.
+ * Paid plans are purchasable through the server-side Razorpay billing service.
  */
 export const DEFAULT_PLAN_CONFIGURATIONS: readonly DefaultPlanConfiguration[] =
   [

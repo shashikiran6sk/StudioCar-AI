@@ -33,7 +33,7 @@ describe("UsageBillingService", () => {
 
     await expect(service.getCurrentPlan("user-1", now)).resolves.toMatchObject({
       key: "STUDIO_PRO",
-      imageCapacity: 500,
+      imageCapacity: 400,
       maxImagesPerBatch: 20,
       allowanceScope: "BILLING_PERIOD",
     });
@@ -96,9 +96,9 @@ describe("UsageBillingService", () => {
     expect(summary.currentPlan).toMatchObject({
       key: "STUDIO_PRO",
       allowanceScope: "BILLING_PERIOD",
-      imageCapacity: 500,
+      imageCapacity: 400,
     });
-    expect(summary.imagesRemaining).toBe(380);
+    expect(summary.imagesRemaining).toBe(280);
   });
 
   it("never reports negative remaining capacity", async () => {
@@ -165,7 +165,7 @@ describe("UsageBillingService", () => {
 
     expect(summary.currentPlan).toMatchObject({
       key: "STUDIO_PRO",
-      imageCapacity: 500,
+      imageCapacity: 400,
     });
   });
 

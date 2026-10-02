@@ -29,7 +29,11 @@ describe("DEFAULT_PLAN_CATALOG", () => {
     }
   });
 
-  it("advertises no checkout while the billing provider is unimplemented", () => {
-    expect(DEFAULT_PLAN_CATALOG.every((plan) => !plan.purchasable)).toBe(true);
+  it("offers checkout for paid plans only", () => {
+    expect(DEFAULT_PLAN_CATALOG.map((plan) => [plan.planKey, plan.purchasable])).toEqual([
+      ["FREE", false],
+      ["STUDIO_PLUS", true],
+      ["STUDIO_PRO", true],
+    ]);
   });
 });

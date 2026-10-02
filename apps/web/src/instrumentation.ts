@@ -1,6 +1,10 @@
+import { parseRazorpayEnvironment } from "@studiocar/config";
 import type { Instrumentation } from "next";
 
 export async function register(): Promise<void> {
+  if (process.env.APP_ENV === "development" || process.env.APP_ENV === "production") {
+    parseRazorpayEnvironment(process.env);
+  }
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { initializeErrorTracking } = await import(
       "@studiocar/observability"

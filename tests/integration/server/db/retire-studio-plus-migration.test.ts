@@ -66,7 +66,7 @@ databaseDescribe("retire_studio_plus_rename_studio_pack migration", () => {
         });
         await transaction.planConfig.createMany({
           data: [
-            planRow("STUDIO_PACK", "Studio Pack", 149_900),
+            planRow("STUDIO_PACK", "Studio Pack", 199_900),
             { ...planRow("STUDIO_PLUS", "Studio Plus", 799_900), displayOrder: 3 },
           ],
         });
@@ -98,7 +98,7 @@ databaseDescribe("retire_studio_plus_rename_studio_pack migration", () => {
           select: { displayName: true, planKey: true, priceMinorUnits: true },
         });
         expect(plans).toEqual([
-          { displayName: "Studio Plus", planKey: "STUDIO_PLUS", priceMinorUnits: 149_900 },
+          { displayName: "Studio Plus", planKey: "STUDIO_PLUS", priceMinorUnits: 199_900 },
         ]);
 
         // The retired plan's subscriber returns to Free instead of inheriting
@@ -128,7 +128,7 @@ databaseDescribe("retire_studio_plus_rename_studio_pack migration", () => {
           where: { planKey: { in: ["STUDIO_PACK", "STUDIO_PLUS"] } },
         });
         await transaction.planConfig.create({
-          data: planRow("STUDIO_PACK", "Starter Credits", 149_900),
+          data: planRow("STUDIO_PACK", "Starter Credits", 199_900),
         });
 
         for (const statement of MIGRATION_STATEMENTS) {
