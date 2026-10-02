@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   applicationName: siteConfig.name,
   creator: siteConfig.name,
   publisher: siteConfig.name,
+  icons: siteConfig.icons,
   robots: privateRobots,
 };
 

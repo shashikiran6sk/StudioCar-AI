@@ -17,7 +17,9 @@ test("serves canonical homepage metadata, navigation, and SEO assets", async ({ 
   await expect(page.locator('meta[property="og:image"]').first()).toHaveAttribute("content", "https://studiocarai.com/opengraph-image.png");
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute("content", "summary_large_image");
   await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute("content", "https://studiocarai.com/opengraph-image.png");
-  await expect(page.locator('link[rel="icon"]').first()).toHaveAttribute("href", /favicon\.ico|icon\.png/);
+  await expect(page.locator('link[rel="icon"]').first()).toHaveAttribute("href", "/icon.png");
+  await expect(page.locator('link[rel="icon"]').first()).toHaveAttribute("sizes", "192x192");
+  await expect(page.locator('link[rel="icon"][href="/favicon.ico"]')).toHaveAttribute("sizes", "16x16 32x32 48x48");
   expect(await page.locator("h1").count()).toBe(1);
 
   const structuredData = page.locator('script[type="application/ld+json"]');
@@ -52,6 +54,32 @@ test("serves canonical homepage metadata, navigation, and SEO assets", async ({ 
 
   const head = await page.locator("head").innerHTML();
   expect(head).not.toMatch(/localhost|vercel\.app|studiocar\.ai/);
+});
+
+test("serves declared favicon files to Google crawlers without authentication", async ({ request }) => {
+  const googlebot = {
+    "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+  };
+  const homepage = await request.get("/", { headers: googlebot });
+  expect(homepage.status()).toBe(200);
+  const document = await homepage.text();
+  const head = document.slice(0, document.indexOf("</head>"));
+  expect(head).toContain('rel="icon" href="/icon.png" type="image/png" sizes="192x192"');
+  expect(head).toContain('rel="icon" href="/favicon.ico" type="image/x-icon" sizes="16x16 32x32 48x48"');
+
+  for (const userAgent of [googlebot["User-Agent"], "Googlebot-Image/1.0"]) {
+    const icon = await request.get("/icon.png", { headers: { "User-Agent": userAgent } });
+    expect(icon.status()).toBe(200);
+    expect(icon.headers()["content-type"]).toContain("image/png");
+    const image = await icon.body();
+    expect(image.readUInt32BE(16)).toBe(192);
+    expect(image.readUInt32BE(20)).toBe(192);
+
+    const favicon = await request.get("/favicon.ico", { headers: { "User-Agent": userAgent } });
+    expect(favicon.status()).toBe(200);
+    expect(favicon.headers()["content-type"]).toMatch(/image\/(?:x-icon|vnd\.microsoft\.icon)/);
+    expect((await favicon.body()).readUInt16LE(2)).toBe(1);
+  }
 });
 
 test("keeps sign-in and authentication errors out of search indexes", async ({ page }) => {
