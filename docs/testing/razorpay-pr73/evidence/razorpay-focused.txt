@@ -1,0 +1,104 @@
+
+ RUN  v5.0.1 /workspace/StudioCar-AI/apps/web
+
+ × ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > resolves processing limits without scanning usage or storage 61ms
+   → expected { …(8) } to match object { key: 'STUDIO_PRO', …(3) }
+(4 matching properties omitted from actual)
+ ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > derives remaining free capacity from immutable usage totals 10ms
+ ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > counts a lifetime allowance across every billing period 3ms
+ ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > scopes a billing-period allowance to the current month 1ms
+ ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > never reports negative remaining capacity 1ms
+ ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > falls back safely when a persisted plan is not in the approved catalog 4ms
+ ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > reports the allowance an administrator configured, not the shipped one 0ms
+ ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > falls back to the shipped plan when the catalog is empty 0ms
+ ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > keeps a deactivated plan's allowance from the shipped default 0ms
+ ✓ ../../tests/unit/app/api/webhooks/razorpay/route.test.ts > POST Razorpay webhook > rejects a bad signature before event processing 41ms
+ ✓ ../../tests/unit/app/api/webhooks/razorpay/route.test.ts > POST Razorpay webhook > verifies the exact raw body before parsing and dispatching 72ms
+ ✓ ../../tests/unit/app/api/billing/receipts/[receiptId]/route.test.ts > receipt owner route > returns 404 when the tenant-scoped lookup finds no receipt 91ms
+ ✓ ../../tests/unit/server/billing/providers/razorpay/razorpay-client.test.ts > Razorpay client > creates an order with server-selected amount and no partial payment 83ms
+ ✓ ../../tests/unit/server/billing/providers/razorpay/razorpay-client.test.ts > Razorpay client > uses the environment-specific provider plan for a 120-cycle subscription 30ms
+ ✓ ../../tests/unit/server/billing/get-usage-billing-summary.test.ts > getUsageBillingSummary > resolves the tenant's own usage summary 7ms
+ ✓ ../../tests/unit/server/billing/get-usage-billing-summary.test.ts > getUsageBillingSummary > propagates a failure so callers can decide how to degrade 2ms
+ ✓ ../../tests/unit/app/instrumentation.test.ts > billing runtime startup > fails startup with a Test key in production 18ms
+ ✓ ../../tests/unit/app/instrumentation.test.ts > billing runtime startup > accepts a Live key in production 1ms
+ × ../../tests/unit/app/instrumentation.test.ts > billing runtime startup > initializes monitoring in the Node runtime after validating billing 1765ms
+   → expected "vi.fn()" to be called once, but got 0 times
+ ✓ ../../tests/unit/app/api/billing/subscriptions/route.test.ts > POST billing subscriptions > requires a signed-in user 10ms
+ ✓ ../../tests/unit/app/api/billing/subscriptions/route.test.ts > POST billing subscriptions > refuses browser-controlled amounts 3ms
+ ✓ ../../tests/unit/app/api/billing/orders/route.test.ts > POST billing orders > rejects an unauthenticated request 25ms
+ ✓ ../../tests/unit/app/api/billing/orders/route.test.ts > POST billing orders > rejects a client price override before calling billing 11ms
+ ✓ ../../tests/unit/features/billing/billing-account-details.test.tsx > BillingAccountDetails > shows Pro allowance and purchased credits separately with one receipt per payment 461ms
+ ✓ ../../tests/unit/features/billing/billing-plan-grid.test.tsx > BillingPlanGrid > shows every configured plan and marks the one in use 415ms
+ ✓ ../../tests/unit/features/billing/billing-plan-grid.test.tsx > BillingPlanGrid > offers nothing when no plan is configured 3ms
+ ✓ ../../tests/unit/features/billing/billing-plan-card.test.tsx > BillingPlanCard > disables the active plan action 500ms
+ ✓ ../../tests/unit/features/billing/billing-plan-card.test.tsx > BillingPlanCard > offers a plan that is not in use 29ms
+ ✓ ../../tests/unit/features/billing/billing-plan-card.test.tsx > BillingPlanCard > states the renewal cadence on Studio Pro 55ms
+ ✓ ../../tests/unit/features/billing/usage-current-plan-card.test.tsx > UsageCurrentPlanCard > shows image usage and remaining capacity 514ms
+ ✓ ../../tests/unit/app/api/billing/subscriptions/cancel/route.test.ts > POST subscription cancellation > requires authentication and same-origin intent 6ms
+ ✓ ../../tests/unit/features/billing/cancel-subscription-action.test.tsx > CancelSubscriptionAction > requests the signed-in subscription without sending a provider ID 276ms
+ ✓ ../../tests/unit/server/billing/billing-business.test.ts > billing business configuration > requires legal merchant identity and explicit non-GST state 36ms
+ ✓ ../../tests/unit/server/billing/billing-business.test.ts > billing business configuration > rejects a GSTIN on a non-registered merchant 1ms
+ ✓ ../../tests/unit/server/billing/providers/razorpay/verify-signature.test.ts > Razorpay signature > accepts an authentic order or webhook digest 2ms
+ ✓ ../../tests/unit/server/billing/providers/razorpay/verify-signature.test.ts > Razorpay signature > rejects a wrong message or malformed digest 0ms
+ ✓ ../../tests/unit/features/billing/usage-overview.test.tsx > UsageOverview > shows session and storage quotas beside the current plan 38ms
+ ✓ ../../tests/unit/app/api/billing/subscriptions/verify/route.test.ts > POST subscription verification > requires authentication before accepting Checkout data 5ms
+ ✓ ../../tests/unit/app/api/billing/orders/verify/route.test.ts > POST order verification > requires authentication before accepting Checkout data 5ms
+ ✓ ../../tests/unit/features/billing/billing-checkout-action.test.tsx > BillingCheckoutAction > does not open checkout until the provider script is ready 112ms
+ ✓ ../../tests/unit/app/api/billing/status/route.test.ts > GET billing status > does not reveal usage without a session 4ms
+ ✓ ../../tests/unit/features/billing/billing-unavailable-action.test.tsx > BillingUnavailableAction > explicitly confirms that checkout made no payment 136ms
+ ✓ ../../tests/unit/app/api/billing/receipts/route.test.ts > GET billing receipts > does not reveal a receipt list without a session 3ms
+ ✓ ../../tests/unit/features/billing/print-receipt-action.test.tsx > PrintReceiptAction > uses browser printing for PDF saving 106ms
+ ✓ ../../tests/unit/features/billing/usage-quota-card.test.tsx > UsageQuotaCard > renders a truthful bounded quota 97ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../tests/unit/app/instrumentation.test.ts > billing runtime startup > initializes monitoring in the Node runtime after validating billing
+AssertionError: expected "vi.fn()" to be called once, but got 0 times
+ ❯ ../../tests/unit/app/instrumentation.test.ts:39:37
+     37|     await register();
+     38|
+     39|     expect(initializeErrorTracking).toHaveBeenCalledOnce();
+       |                                     ^
+     40|     expect(initializeErrorTracking).toHaveBeenCalledWith(process.env);
+     41|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > resolves processing limits without scanning usage or storage
+AssertionError: expected { …(8) } to match object { key: 'STUDIO_PRO', …(3) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "allowanceScope": "BILLING_PERIOD",
+-   "imageCapacity": 500,
++   "imageCapacity": 400,
+    "key": "STUDIO_PRO",
+    "maxImagesPerBatch": 20,
+  }
+
+ ❯ ../../tests/unit/server/billing/usage-billing-service.test.ts:34:56
+     32|     const service = new UsageBillingService(repo, catalog);
+     33|
+     34|     await expect(service.getCurrentPlan("user-1", now)).resolves.toMat…
+       |                                                        ^
+     35|       key: "STUDIO_PRO",
+     36|       imageCapacity: 500,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 23 passed (25)
+      Tests  2 failed | 43 passed (45)
+   Start at  00:04:21
+   Duration  72.73s (environment 58%, setup 13%, import 12%, transform 8%, tests 8%)
+
+Environment  jsdom was created 25 times · 38.22s total, 58% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in /workspace/StudioCar-AI/apps/web

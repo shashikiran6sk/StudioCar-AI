@@ -1,0 +1,158 @@
+{
+  "config": {
+    "argv": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "/workspace/StudioCar-AI/node_modules/@playwright/test/cli.js",
+      "test",
+      "--config",
+      "/tmp/studiocar-razorpay-playwright.mts",
+      "billing-checkout.spec.ts"
+    ],
+    "configFile": "/tmp/studiocar-razorpay-playwright.mts",
+    "rootDir": "/workspace/StudioCar-AI/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": true,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/tmp/studiocar-razorpay-browser-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/workspace/StudioCar-AI/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/tmp/studiocar-razorpay-e2e-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "pnpm exec next start --hostname 127.0.0.1 --port 3100",
+      "url": "http://127.0.0.1:3100",
+      "timeout": 120000,
+      "cwd": "/workspace/StudioCar-AI/apps/web",
+      "reuseExistingServer": false
+    }
+  },
+  "suites": [
+    {
+      "title": "billing-checkout.spec.ts",
+      "file": "billing-checkout.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "loads Plus and Pro Checkout through the browser security policy",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 6621,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  getByRole('button', { name: 'Choose Studio Plus' })\nExpected: enabled\nReceived: disabled\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" getByRole('button', { name: 'Choose Studio Plus' }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: 'Choose Studio Plus' })\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled type=\"button\" class=\"sc-button sc-button--secondary sc-button--default\">Choose Studio Plus</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  getByRole('button', { name: 'Choose Studio Plus' })\nExpected: enabled\nReceived: disabled\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" getByRole('button', { name: 'Choose Studio Plus' }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: 'Choose Studio Plus' })\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled type=\"button\" class=\"sc-button sc-button--secondary sc-button--default\">Choose Studio Plus</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n    at /workspace/StudioCar-AI/tests/e2e/billing-checkout.spec.ts:100:76",
+                    "location": {
+                      "file": "/workspace/StudioCar-AI/tests/e2e/billing-checkout.spec.ts",
+                      "column": 76,
+                      "line": 100
+                    },
+                    "snippet": "   98 |     const response = await page.goto(\"/settings/billing\");\n   99 |     expect(response?.status()).toBe(200);\n> 100 |     await expect(page.getByRole(\"button\", { name: \"Choose Studio Plus\" })).toBeEnabled();\n      |                                                                            ^\n  101 |     expect(scriptsLoaded).toBeGreaterThan(0);\n  102 |     await page.getByRole(\"button\", { name: \"Choose Studio Plus\" }).click();\n  103 |     await expect(page.frameLocator('iframe[title=\"Synthetic Razorpay Checkout\"]').getByText(\"Synthetic hosted Checkout\")).toBeVisible();"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/workspace/StudioCar-AI/tests/e2e/billing-checkout.spec.ts",
+                        "column": 76,
+                        "line": 100
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  getByRole('button', { name: 'Choose Studio Plus' })\nExpected: enabled\nReceived: disabled\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" getByRole('button', { name: 'Choose Studio Plus' }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: 'Choose Studio Plus' })\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled type=\"button\" class=\"sc-button sc-button--secondary sc-button--default\">Choose Studio Plus</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n\n   98 |     const response = await page.goto(\"/settings/billing\");\n   99 |     expect(response?.status()).toBe(200);\n> 100 |     await expect(page.getByRole(\"button\", { name: \"Choose Studio Plus\" })).toBeEnabled();\n      |                                                                            ^\n  101 |     expect(scriptsLoaded).toBeGreaterThan(0);\n  102 |     await page.getByRole(\"button\", { name: \"Choose Studio Plus\" }).click();\n  103 |     await expect(page.frameLocator('iframe[title=\"Synthetic Razorpay Checkout\"]').getByText(\"Synthetic hosted Checkout\")).toBeVisible();\n    at /workspace/StudioCar-AI/tests/e2e/billing-checkout.spec.ts:100:76"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T00:10:40.356Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/studiocar-razorpay-browser-output/billing-checkout-loads-Plu-e55fa-the-browser-security-policy/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/workspace/StudioCar-AI/tests/e2e/billing-checkout.spec.ts",
+                    "column": 76,
+                    "line": 100
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "cb3edf752550362af440-26a585fae90198c42852",
+          "file": "billing-checkout.spec.ts",
+          "line": 38,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-02T00:10:38.566Z",
+    "duration": 9372.628999999999,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

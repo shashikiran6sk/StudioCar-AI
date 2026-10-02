@@ -1,0 +1,8 @@
+import { defineConfig } from '/workspace/StudioCar-AI/node_modules/@playwright/test/index.mjs';
+export default defineConfig({
+  testDir: '/workspace/StudioCar-AI/tests/e2e',fullyParallel:true,forbidOnly:true,
+  outputDir: '/tmp/studiocar-razorpay-browser-output',workers:1,retries:0,
+  reporter: [['list'],['json',{outputFile:'/tmp/studiocar-razorpay-e2e-final-results.json'}]],
+  use: {baseURL:'http://localhost:3100',viewport:{height:960,width:1440},launchOptions:{executablePath:'/usr/bin/chromium',args:['--no-sandbox']},trace:'off'},
+  webServer:{command:'pnpm exec next start --hostname 127.0.0.1 --port 3100',url:'http://127.0.0.1:3100',timeout:120000,cwd:'/workspace/StudioCar-AI/apps/web',reuseExistingServer:false},
+});

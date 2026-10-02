@@ -1,0 +1,38 @@
+$ pnpm db:generate && turbo run lint --force
+$ pnpm --filter @studiocar/web db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (7.10.0) to ./../../packages/database-runtime/generated/prisma in 617ms
+
+
+   • Packages in scope: @studiocar/config, @studiocar/contracts, @studiocar/database-runtime, @studiocar/image-processing-worker, @studiocar/local-queue, @studiocar/observability, @studiocar/processing, @studiocar/testing, @studiocar/ui, @studiocar/web
+   • Running lint in 10 packages
+   • Remote caching disabled
+
+@studiocar/config:lint: cache bypass, force executing 5f7a3bfbf3d18f80
+@studiocar/config:lint: $ eslint . --max-warnings=0
+@studiocar/testing:lint: cache bypass, force executing 58747f5236381d0c
+@studiocar/observability:lint: cache bypass, force executing cb973b14e06d0582
+@studiocar/contracts:lint: cache bypass, force executing e9944cccd8ffb076
+@studiocar/ui:lint: cache bypass, force executing adf9b9b24543cd3d
+@studiocar/ui:lint: $ eslint . --max-warnings=0
+@studiocar/testing:lint: $ eslint . --max-warnings=0
+@studiocar/contracts:lint: $ eslint . --max-warnings=0
+@studiocar/observability:lint: $ eslint . --max-warnings=0
+@studiocar/processing:lint: cache bypass, force executing 064114c9b4ffead1
+@studiocar/local-queue:lint: cache bypass, force executing a2a1ca7fdcd12985
+@studiocar/processing:lint: $ eslint . --max-warnings=0
+@studiocar/local-queue:lint: $ eslint . --max-warnings=0
+@studiocar/database-runtime:lint: cache bypass, force executing afc4b8f61bd0c771
+@studiocar/database-runtime:lint: $ eslint . --max-warnings=0
+@studiocar/web:lint: cache bypass, force executing 51da9f8f9541d5eb
+@studiocar/image-processing-worker:lint: cache bypass, force executing e7c0d522dfd8fbba
+@studiocar/image-processing-worker:lint: $ eslint . --max-warnings=0
+@studiocar/web:lint: $ eslint . --max-warnings=0
+
+ Tasks:    10 successful, 10 total
+Cached:    0 cached, 10 total
+  Time:    49.086s
