@@ -1,8 +1,10 @@
-import { randomUUID } from "node:crypto";
 import {
-  GoogleAuthStartSchema,
-  type ApiError,
-} from "@studiocar/contracts";
+  ApplicationErrorCode,
+  getRequestId,
+  reportUnexpectedError,
+} from "@studiocar/observability";
+import { createApiErrorResponse } from "../create-api-error-response";
+import { GoogleAuthStartSchema, type ApiError } from "@studiocar/contracts";
 
 import {
   API_BAD_REQUEST_CODE,
@@ -40,7 +42,7 @@ export async function handleGoogleAuthStart(
   application: GoogleOAuthApplication,
   isProduction: boolean,
   sessionUserId: string | null = null,
-  createRequestId: () => string = randomUUID,
+  createRequestId: () => string = getRequestId,
 ): Promise<Response> {
   const requestUrl = new URL(request.url);
   const linking =
@@ -62,7 +64,15 @@ export async function handleGoogleAuthStart(
         requestId: createRequestId(),
       },
     };
-    return Response.json(body, { status: UNAUTHENTICATED_STATUS });
+    return createApiErrorResponse({
+      status: UNAUTHENTICATED_STATUS,
+      code: body.error.code,
+      message: body.error.message,
+      requestId: body.error.requestId,
+      ...(body.error.fieldErrors
+        ? { fieldErrors: body.error.fieldErrors }
+        : {}),
+    });
   }
   const challengeId = linkingVerifiedPhone
     ? readVerifiedPhoneChallengeId(
@@ -85,7 +95,15 @@ export async function handleGoogleAuthStart(
         requestId: createRequestId(),
       },
     };
-    return Response.json(body, { status: UNAUTHENTICATED_STATUS });
+    return createApiErrorResponse({
+      status: UNAUTHENTICATED_STATUS,
+      code: body.error.code,
+      message: body.error.message,
+      requestId: body.error.requestId,
+      ...(body.error.fieldErrors
+        ? { fieldErrors: body.error.fieldErrors }
+        : {}),
+    });
   }
   const result = GoogleAuthStartSchema.safeParse({
     returnTo:
@@ -101,7 +119,15 @@ export async function handleGoogleAuthStart(
         fieldErrors: result.error.flatten().fieldErrors,
       },
     };
-    return Response.json(body, { status: BAD_REQUEST_STATUS });
+    return createApiErrorResponse({
+      status: BAD_REQUEST_STATUS,
+      code: body.error.code,
+      message: body.error.message,
+      requestId: body.error.requestId,
+      ...(body.error.fieldErrors
+        ? { fieldErrors: body.error.fieldErrors }
+        : {}),
+    });
   }
 
   try {
@@ -137,8 +163,17 @@ export async function handleGoogleAuthStart(
           requestId: createRequestId(),
         },
       };
-      return Response.json(body, { status: UNAUTHENTICATED_STATUS });
+      return createApiErrorResponse({
+        status: UNAUTHENTICATED_STATUS,
+        code: body.error.code,
+        message: body.error.message,
+        requestId: body.error.requestId,
+        ...(body.error.fieldErrors
+          ? { fieldErrors: body.error.fieldErrors }
+          : {}),
+      });
     }
+    reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
     const body: ApiError = {
       error: {
         code: API_SERVICE_UNAVAILABLE_CODE,
@@ -146,6 +181,14 @@ export async function handleGoogleAuthStart(
         requestId: createRequestId(),
       },
     };
-    return Response.json(body, { status: SERVICE_UNAVAILABLE_STATUS });
+    return createApiErrorResponse({
+      status: SERVICE_UNAVAILABLE_STATUS,
+      code: body.error.code,
+      message: body.error.message,
+      requestId: body.error.requestId,
+      ...(body.error.fieldErrors
+        ? { fieldErrors: body.error.fieldErrors }
+        : {}),
+    });
   }
 }

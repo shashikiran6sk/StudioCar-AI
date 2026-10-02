@@ -1,3 +1,7 @@
+import {
+  ApplicationErrorCode,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import { randomUUID } from "node:crypto";
 import type { CreateUploadIntent } from "@studiocar/contracts";
 
@@ -114,7 +118,8 @@ export class CreateUploadIntentService {
           expiresAt: asset.uploadExpiresAt.toISOString(),
         },
       };
-    } catch {
+    } catch (error) {
+      reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
       return { ok: false, reason: "STORAGE_UNAVAILABLE" };
     }
   }

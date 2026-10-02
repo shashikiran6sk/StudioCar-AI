@@ -11,7 +11,9 @@ permissions:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # A newer push supersedes a pull request's run, but every commit merged to
+  # main runs to completion, so each one publishes its worker archive.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   quality:
@@ -74,6 +76,116 @@ jobs:
 
       - name: Integration test task
         run: pnpm test:integration
+
+  worker-package:
+    name: Image worker Lambda package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.3.4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Package the Lambda archive
+        run: pnpm package:worker
+
+      - name: Verify the archive is reproducible
+        run: |
+          pnpm --filter @studiocar/image-processing-worker package:lambda "$RUNNER_TEMP/rebuild" > /dev/null
+          sha256sum workers/image-processing/dist/lambda/image-processing-worker.zip "$RUNNER_TEMP/rebuild/image-processing-worker.zip"
+          cmp workers/image-processing/dist/lambda/image-processing-worker.zip "$RUNNER_TEMP/rebuild/image-processing-worker.zip"
+
+      - name: Set up arm64 emulation
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Smoke-test the archive in the arm64 Lambda runtime
+        run: |
+          mkdir -p "$RUNNER_TEMP/task"
+          unzip -q workers/image-processing/dist/lambda/image-processing-worker.zip -d "$RUNNER_TEMP/task"
+          docker run --rm --platform linux/arm64 \
+            --volume "$RUNNER_TEMP/task:/var/task:ro" \
+            --volume "$PWD/workers/image-processing/scripts:/smoke:ro" \
+            --entrypoint /var/lang/bin/node \
+            public.ecr.aws/lambda/nodejs:24 /smoke/smoke-lambda.mjs /var/task
+
+      - name: Summarize the archive
+        run: |
+          {
+            echo '### Image worker Lambda archive'
+            echo '```json'
+            cat workers/image-processing/dist/lambda/image-processing-worker.manifest.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the archive
+        uses: actions/upload-artifact@v5
+        with:
+          name: image-processing-worker-lambda
+          path: workers/image-processing/dist/lambda/
+          if-no-files-found: error
+
+  publish-worker-artifact:
+    name: Publish image worker archive
+    # Only merged commits, only after every check passed, and only once the
+    # AWS role and bucket are configured as repository variables.
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      vars.WORKER_ARTIFACT_BUCKET != '' &&
+      vars.WORKER_ARTIFACT_ROLE_ARN != ''
+    needs:
+      - quality
+      - worker-package
+      - build-and-e2e
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      artifact-key: ${{ steps.publish.outputs.artifact-key }}
+      sha256: ${{ steps.publish.outputs.sha256 }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Download the tested archive
+        uses: actions/download-artifact@v5
+        with:
+          name: image-processing-worker-lambda
+          path: ${{ runner.temp }}/worker-archive
+
+      - name: Assume the artifact publisher role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.WORKER_ARTIFACT_ROLE_ARN }}
+          role-session-name: worker-artifact-${{ github.run_id }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Publish the archive to S3
+        id: publish
+        env:
+          ARTIFACT_BUCKET: ${{ vars.WORKER_ARTIFACT_BUCKET }}
+          ARTIFACT_PREFIX: ${{ vars.WORKER_ARTIFACT_PREFIX || 'image-processing-worker' }}
+          # Characters of the commit SHA in the key; raise it if two merges
+          # ever share a prefix (the publish then fails rather than overwrite).
+          ARTIFACT_SHA_LENGTH: ${{ vars.WORKER_ARTIFACT_SHA_LENGTH || '5' }}
+          ARCHIVE_DIRECTORY: ${{ runner.temp }}/worker-archive
+          COMMIT_SHA: ${{ github.sha }}
+        run: scripts/publish-worker-artifact.sh
 
   build-and-e2e:
     name: Build and end-to-end smoke test

@@ -1,3 +1,7 @@
+import {
+  ApplicationErrorCode,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import { randomUUID } from "node:crypto";
 
 import { createApiErrorResponse } from "../auth/create-api-error-response";
@@ -28,7 +32,8 @@ export async function handleDispatchProcessingOutbox(
   }
   try {
     return Response.json(await dispatcher.dispatch());
-  } catch {
+  } catch (error) {
+    reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
     return createApiErrorResponse({
       status: PROCESSING_UNAVAILABLE_STATUS,
       code: PROCESSING_UNAVAILABLE_CODE,

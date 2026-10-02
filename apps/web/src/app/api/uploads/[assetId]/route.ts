@@ -1,3 +1,4 @@
+import { withRouteMonitoring } from "../../../../server/observability/with-route-monitoring";
 import { getCurrentSession } from "../../../../server/auth/get-current-session";
 import { handleRemoveUpload } from "../../../../server/uploads/remove-upload-handler";
 import { getUploadRemovalService } from "../../../../server/uploads/upload-runtime";
@@ -8,7 +9,7 @@ interface UploadRouteContext {
   params: Promise<{ assetId: string }>;
 }
 
-export async function DELETE(
+async function handleDELETE(
   request: Request,
   context: UploadRouteContext,
 ): Promise<Response> {
@@ -16,10 +17,10 @@ export async function DELETE(
     getCurrentSession(),
     context.params,
   ]);
-  return handleRemoveUpload(
-    request,
-    path,
-    session,
-    getUploadRemovalService(),
-  );
+  return handleRemoveUpload(request, path, session, getUploadRemovalService());
 }
+
+export const DELETE = withRouteMonitoring(
+  "/api/uploads/[assetId]",
+  handleDELETE,
+);

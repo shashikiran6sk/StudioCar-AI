@@ -5,8 +5,9 @@ const isCurrentUserAdministrator = vi.fn();
 const save = vi.fn();
 const remove = vi.fn();
 const revalidatePath = vi.fn();
+const updateTag = vi.fn();
 
-vi.mock("next/cache", () => ({ revalidatePath }));
+vi.mock("next/cache", () => ({ revalidatePath, updateTag }));
 vi.mock("../../../../apps/web/src/server/auth/get-current-session", () => ({
   getCurrentSession,
 }));
@@ -64,6 +65,7 @@ describe("saveSocialLinkAction", () => {
       },
     });
     expect(revalidatePath).toHaveBeenCalledWith("/");
+    expect(updateTag).toHaveBeenCalledWith("public-social-links");
   });
 
   it("takes the footer position from the catalog, not the submission", async () => {

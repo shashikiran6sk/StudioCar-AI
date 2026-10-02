@@ -1,5 +1,6 @@
 import type { AuthUser } from "@studiocar/contracts";
 import { BrandMark, ButtonLink } from "@studiocar/ui";
+import Link from "next/link";
 
 import { LOGIN_PATH } from "../../app/app-routes";
 import { AccountMenu } from "../shell/account-menu";
@@ -21,9 +22,9 @@ export interface MarketingHeaderProps {
 export function MarketingHeader({ user }: MarketingHeaderProps) {
   return (
     <header className="marketing-header">
-      <a aria-label={MARKETING_COPY.header.homeLabel} className="marketing-header__brand" href="#top">
+      <Link aria-label={MARKETING_COPY.header.homeLabel} className="marketing-header__brand" href="/#top">
         <BrandMark withName />
-      </a>
+      </Link>
       <nav aria-label={MARKETING_COPY.header.navigationLabel} className="marketing-header__navigation">
         {MARKETING_NAVIGATION.map((item) => (
           <a href={item.href} key={item.href}>{item.label}</a>

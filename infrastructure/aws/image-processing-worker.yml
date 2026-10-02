@@ -2,6 +2,18 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: StudioCar AI bounded image-processing Lambda worker and SQS event source
 
 Parameters:
+  AlarmTopicArn:
+    Type: String
+    Default: ""
+    Description: Optional existing SNS topic for operational notifications
+  SentryDsn:
+    Type: String
+    Default: ""
+    Description: Optional worker Sentry project DSN
+  SentryRelease:
+    Type: String
+    Default: ""
+    Description: Reviewed deployment commit SHA or version
   ArtifactBucket:
     Type: String
     Description: Private S3 bucket containing the reviewed worker deployment archive
@@ -11,20 +23,39 @@ Parameters:
   DatabaseSecretArn:
     Type: String
     Description: Secrets Manager ARN containing DATABASE_URL as a JSON property
-  RemoveBgSecretArn:
+  LeonardoSecretArn:
     Type: String
-    Description: Secrets Manager ARN containing REMOVEBG_API_KEY as a JSON property
+    AllowedPattern: ^arn:aws[a-z-]*:secretsmanager:.+$
+    Description: Secrets Manager ARN containing LEONARDO_API_KEY as a JSON property
   ImageBucketName:
     Type: String
     Description: Private StudioCar image bucket name
   ImageProcessingQueueArn:
     Type: String
     Description: ARN exported by the image-processing queue stack
+  EventSourceBatchSize:
+    Type: Number
+    Default: 1
+    MinValue: 1
+    MaxValue: 10
+    Description: SQS records per Lambda invocation; one isolates expensive image jobs
+  EventSourceMaximumBatchingWindowSeconds:
+    Type: Number
+    Default: 0
+    MinValue: 0
+    MaxValue: 300
+    Description: Maximum wait before invoking the worker with a partial SQS batch
   MaximumConcurrency:
     Type: Number
     Default: 10
     MinValue: 2
     MaxValue: 1000
+  ReservedConcurrency:
+    Type: Number
+    Default: 0
+    MinValue: 0
+    MaxValue: 1000
+    Description: Optional Lambda reserved concurrency; leave at zero when the account quota cannot spare unreserved capacity
   MemorySize:
     Type: Number
     Default: 2048
@@ -32,9 +63,23 @@ Parameters:
     MaxValue: 10240
   TimeoutSeconds:
     Type: Number
-    Default: 120
-    MinValue: 30
+    # Leonardo's 90 s deadline, plus composition, S3 and PostgreSQL headroom.
+    # Must not exceed the claim lease or the queue visibility timeout.
+    Default: 180
+    MinValue: 150
     MaxValue: 900
+  LeonardoTimeoutMilliseconds:
+    Type: Number
+    Default: 90000
+    MinValue: 1000
+    MaxValue: 150000
+    Description: One deadline for a Leonardo Sync generation and its result download
+  ClaimLeaseMilliseconds:
+    Type: Number
+    Default: 180000
+    MinValue: 150000
+    MaxValue: 900000
+    Description: Worker claim lease; at least the Lambda timeout and 30 s beyond the Leonardo deadline
   MaximumImagePixels:
     Type: Number
     Default: 50000000
@@ -59,18 +104,18 @@ Parameters:
     Type: Number
     Default: 20
     MinValue: 1
-  ProviderRateLimitAlarmThreshold:
-    Type: Number
-    Default: 5
-    MinValue: 1
   EndToEndLatencyAlarmMilliseconds:
     Type: Number
     Default: 300000
     MinValue: 1000
   WorkerDurationAlarmMilliseconds:
     Type: Number
-    Default: 100000
+    Default: 150000
     MinValue: 1000
+
+Conditions:
+  HasAlarmTopic: !Not [!Equals [!Ref AlarmTopicArn, ""]]
+  HasReservedConcurrency: !Not [!Equals [!Ref ReservedConcurrency, 0]]
 
 Resources:
   ImageProcessingWorkerRole:
@@ -103,6 +148,13 @@ Resources:
                   - sqs:GetQueueAttributes
                   - sqs:ReceiveMessage
                 Resource: !Ref ImageProcessingQueueArn
+              # Missing staged provider results must return 404, not 403,
+              # so first attempts can distinguish absence from denied access.
+              - Sid: DetectMissingPrivateImages
+                Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub arn:${AWS::Partition}:s3:::${ImageBucketName}
               - Sid: ReadWritePrivateImages
                 Effect: Allow
                 Action:
@@ -124,22 +176,23 @@ Resources:
           # The deployed workers are production's; environment validation
           # refuses every local adapter under this profile.
           APP_ENV: production
+          SENTRY_DSN: !Ref SentryDsn
+          SENTRY_RELEASE: !Ref SentryRelease
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
-          BACKGROUND_REMOVAL_PROVIDER: removebg
           DATABASE_URL: !Sub '{{resolve:secretsmanager:${DatabaseSecretArn}:SecretString:DATABASE_URL}}'
-          IMAGE_WORKER_CLAIM_TTL_MS: "120000"
+          IMAGE_WORKER_CLAIM_TTL_MS: !Ref ClaimLeaseMilliseconds
           MAX_PROVIDER_INPUT_BYTES: "23068672"
           MAX_PROVIDER_OUTPUT_BYTES: "104857600"
           MAX_WORKER_IMAGE_PIXELS: !Ref MaximumImagePixels
           PREVIEW_MAX_WIDTH: "720"
           PROCESSING_RETRY_BASE_MS: "5000"
           PROCESSING_RETRY_MAX_MS: "300000"
-          REMOVEBG_API_KEY: !Sub '{{resolve:secretsmanager:${RemoveBgSecretArn}:SecretString:REMOVEBG_API_KEY}}'
-          REMOVEBG_TIMEOUT_MS: "60000"
+          LEONARDO_API_KEY: !Sub '{{resolve:secretsmanager:${LeonardoSecretArn}:SecretString:LEONARDO_API_KEY}}'
+          LEONARDO_TIMEOUT_MS: !Ref LeonardoTimeoutMilliseconds
           S3_BUCKET: !Ref ImageBucketName
       Handler: handler.handler
       MemorySize: !Ref MemorySize
-      ReservedConcurrentExecutions: !Ref MaximumConcurrency
+      ReservedConcurrentExecutions: !If [HasReservedConcurrency, !Ref ReservedConcurrency, !Ref AWS::NoValue]
       Role: !GetAtt ImageProcessingWorkerRole.Arn
       Runtime: nodejs24.x
       Timeout: !Ref TimeoutSeconds
@@ -147,12 +200,13 @@ Resources:
   ImageProcessingEventSource:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
-      BatchSize: 5
+      BatchSize: !Ref EventSourceBatchSize
       Enabled: true
       EventSourceArn: !Ref ImageProcessingQueueArn
       FunctionName: !Ref ImageProcessingWorker
       FunctionResponseTypes:
         - ReportBatchItemFailures
+      MaximumBatchingWindowInSeconds: !Ref EventSourceMaximumBatchingWindowSeconds
       ScalingConfig:
         MaximumConcurrency: !Ref MaximumConcurrency
 
@@ -164,25 +218,11 @@ Resources:
       LogGroupName: !Sub /aws/lambda/${ImageProcessingWorker}
       RetentionInDays: !Ref LogRetentionDays
 
-  ImageProcessingWorkerErrorAlarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmDescription: Image-processing Lambda has invocation errors
-      ComparisonOperator: GreaterThanThreshold
-      Dimensions:
-        - Name: FunctionName
-          Value: !Ref ImageProcessingWorker
-      EvaluationPeriods: 1
-      MetricName: Errors
-      Namespace: AWS/Lambda
-      Period: 60
-      Statistic: Sum
-      Threshold: 0
-      TreatMissingData: notBreaching
-
   ImageProcessingWorkerDurationAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
       AlarmDescription: Image-processing Lambda duration is approaching its configured timeout
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
@@ -199,6 +239,8 @@ Resources:
   ImageProcessingTerminalFailureAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
       AlarmDescription: Image-processing terminal failures exceed the configured threshold
       ComparisonOperator: GreaterThanOrEqualToThreshold
       Dimensions:
@@ -215,6 +257,8 @@ Resources:
   ImageProcessingRetryAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
       AlarmDescription: Image-processing retries exceed the configured threshold
       ComparisonOperator: GreaterThanOrEqualToThreshold
       Dimensions:
@@ -228,25 +272,11 @@ Resources:
       Threshold: !Ref RetryAlarmThreshold
       TreatMissingData: notBreaching
 
-  ImageProcessingProviderRateLimitAlarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmDescription: Background-removal provider rate limits exceed the configured threshold
-      ComparisonOperator: GreaterThanOrEqualToThreshold
-      Dimensions:
-        - Name: Service
-          Value: image-processing-worker
-      EvaluationPeriods: 1
-      MetricName: ProviderRateLimitCount
-      Namespace: StudioCarAI/Operations
-      Period: 300
-      Statistic: Sum
-      Threshold: !Ref ProviderRateLimitAlarmThreshold
-      TreatMissingData: notBreaching
-
   ImageProcessingEndToEndLatencyAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
       AlarmDescription: Image-processing end-to-end latency exceeds the configured threshold
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
@@ -265,3 +295,5 @@ Outputs:
     Value: !GetAtt ImageProcessingWorker.Arn
   ImageProcessingWorkerRoleArn:
     Value: !GetAtt ImageProcessingWorkerRole.Arn
+  ImageProcessingWorkerName:
+    Value: !Ref ImageProcessingWorker

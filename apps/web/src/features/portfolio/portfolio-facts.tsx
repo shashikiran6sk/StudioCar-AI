@@ -45,16 +45,8 @@ export function PortfolioFacts({ version }: PortfolioFactsProps) {
           <dd>{formatCropMode(options.crop)}</dd>
         </div>
         <div>
-          <dt>Shadow</dt>
-          <dd>{options.shadow.toLowerCase()}</dd>
-        </div>
-        <div>
           <dt>Enhancement</dt>
           <dd>{options.enhancement ? ENABLED_LABEL : DISABLED_LABEL}</dd>
-        </div>
-        <div>
-          <dt>Plate privacy</dt>
-          <dd>{options.platePrivacy ? ENABLED_LABEL : DISABLED_LABEL}</dd>
         </div>
         <div>
           <dt>Source files</dt>

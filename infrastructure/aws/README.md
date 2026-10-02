@@ -48,17 +48,105 @@ deleted or replaced. Removing retained customer data or queued work is an
 explicit operational action.
 
 `image-processing-worker.yml` deploys the Node.js 24 Lambda runtime from an
-immutable, reviewed archive in a private artifact bucket. The archive must place
-`handler.mjs` and its production dependencies (including the Linux arm64 Sharp
-binary) at its root. The stack resolves database and remove.bg credentials from
+immutable, reviewed archive in a private artifact bucket. Build it with
+`pnpm package:worker`, which writes
+`workers/image-processing/dist/lambda/image-processing-worker.zip` and a manifest
+with its SHA-256, sizes and largest entries. The archive holds one esbuild bundle
+(`handler.mjs`, with Prisma, the AWS SDK and Sentry inlined), `sharp` with its
+Linux arm64 glibc binaries exactly as pinned by `pnpm-lock.yaml`, and the six
+studio backgrounds under `assets/backgrounds/`. Entries are sorted, timestamped
+1980-01-01 and stored with fixed permissions, so the same commit always produces
+the same bytes. CI rebuilds it twice and compares them, smoke-tests it inside
+`public.ecr.aws/lambda/nodejs:24` on arm64, and uploads it as the
+`image-processing-worker-lambda` artifact. After a merge to `main`, CI also
+publishes that exact file to the artifact bucket (see below).
+
+| Archive | Before | After |
+| --- | --- | --- |
+| ZIP | 62,592,857 bytes | 18,123,601 bytes (−71%) |
+| Unzipped | 199,428,523 bytes (76% of Lambda's limit) | 35,071,678 bytes (13%) |
+| Files | 14,288 | 120 |
+
+### Publishing worker archives on merge
+
+Every commit merged to `main` publishes the archive CI built and tested to the
+private artifact bucket. The `publish-worker-artifact` job in `.github/workflows/ci.yml`
+runs only after the lint/test, package and build/e2e jobs pass. It writes:
+
+```
+s3://<artifact-bucket>/image-processing-worker/<short-sha>.zip
+s3://<artifact-bucket>/image-processing-worker/<short-sha>.manifest.json
+```
+
+`<short-sha>` is the first 5 characters of the merged commit's SHA. Set
+`WORKER_ARTIFACT_SHA_LENGTH` to change it (5–40). The full SHA is stored on each
+object as `commit-sha` metadata. Five characters can collide: with about 1,000
+merges there is roughly a 38% chance that two share a prefix. A collision never
+overwrites anything; that merge's publish fails, and raising the length (7–12
+is plenty) fixes it from the next merge.
+
+**Immutable writes.** Keys are named after the commit and never overwritten:
+
+- every upload is conditional on the key not existing (`If-None-Match: *`);
+- S3 verifies each upload's SHA-256;
+- the role is denied any write without that condition;
+- re-running the job for the same commit succeeds only if the stored bytes
+  are identical.
+
+**Credentials.** The job signs in through GitHub's OIDC provider, so no AWS
+access keys are stored in GitHub. `worker-artifact-publisher.yml` creates a
+role that only this repository's `main` branch can assume. It can only put and
+read objects under the archive prefix: it cannot list, delete or replace them.
+
+One-time setup:
+
+1. Deploy the publisher stack. If the account already has a
+   `token.actions.githubusercontent.com` OIDC provider, pass its ARN as
+   `GitHubOidcProviderArn`, because an account can hold only one. If the
+   bucket uses a customer-managed KMS key, pass it as `ArtifactKmsKeyArn`.
+
+   ```sh
+   aws cloudformation deploy \
+     --stack-name studiocar-worker-artifact-publisher \
+     --template-file infrastructure/aws/worker-artifact-publisher.yml \
+     --capabilities CAPABILITY_IAM \
+     --parameter-overrides ArtifactBucket=<artifact-bucket>
+   ```
+
+2. Add these GitHub repository variables (Settings → Secrets and variables →
+   Actions → Variables). None of them is a secret:
+
+   | Variable | Value |
+   | --- | --- |
+   | `AWS_REGION` | Region of the artifact bucket |
+   | `WORKER_ARTIFACT_BUCKET` | The artifact bucket name |
+   | `WORKER_ARTIFACT_ROLE_ARN` | The stack's `WorkerArtifactPublisherRoleArn` output |
+   | `WORKER_ARTIFACT_PREFIX` | Optional; defaults to `image-processing-worker` |
+   | `WORKER_ARTIFACT_SHA_LENGTH` | Optional; SHA characters in the key, defaults to `5` |
+
+   Until the bucket and role variables exist, the job is skipped, so `main`
+   stays green.
+3. The next merge publishes. The run summary shows the key and SHA-256.
+   Deploy it by updating the worker stack's `ArtifactKey` to that key.
+
+CI runs on `main` are never cancelled by a newer push, so every merged commit
+publishes its archive. Turn on bucket versioning and a lifecycle rule for old
+archives as retention requires; the role never deletes them.
+
+The stack resolves database and Leonardo.Ai credentials from
 Secrets Manager, grants only tenant-prefix object access, caps both reserved and
 SQS event-source concurrency, and enables `ReportBatchItemFailures`. Configure
 alarm actions and ensure the queue visibility timeout is longer than the Lambda
-timeout before production deployment. The worker emits structured CloudWatch
+timeout before production deployment. The worker role also needs `s3:ListBucket` on its image bucket so absent staged
+provider results return 404. Without it, S3 returns 403 and the first provider
+attempt fails before removal starts. Object reads/writes remain scoped to
+`users/*`; do not treat arbitrary access-denied responses as missing objects.
+
+The worker emits structured CloudWatch
 Embedded Metric Format events under `StudioCarAI/Operations`, with correlation
 IDs kept out of metric dimensions. The stack applies configurable log retention
-and alarms on Lambda errors/duration, terminal failures, retry spikes, provider
-rate limits, and end-to-end latency.
+and alarms on duration, terminal failures, retry spikes and end-to-end latency.
+The observability stack adds sustained Lambda/provider failure and throttle alarms.
 
 Configure a second trusted scheduler to invoke
 `POST /api/internal/lifecycle/cleanup` with
@@ -79,3 +167,12 @@ object keys before attempting a bounded number of S3 deletes. Repeat while
 or `claimConflicts`; failed rows retain retry authority for an explicit replay
 procedure. The configured grace period begins after the upload intent expires,
 and committed `UPLOADED` assets are never eligible.
+
+## Production observability
+
+Deploy `observability.yml` with worker/queue/DLQ names from the existing stack
+outputs. Attach its HTTP metric policy to the Vercel application workload role.
+Pass a confirmed existing SNS `AlarmTopicArn` to all three stacks to receive
+notifications. Configure worker `SentryDsn`/`SentryRelease` and the corresponding
+Vercel server variables. See [the operational guide](../../docs/observability.md)
+for thresholds, packaging, deployment order, queries and smoke verification.

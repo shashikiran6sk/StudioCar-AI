@@ -15,7 +15,7 @@ infrastructure or a provider.
 | Runtime | Secret/config access | Explicitly excluded |
 | --- | --- | --- |
 | Next.js session and read models | `DATABASE_URL` | Provider and scheduler secrets |
-| Google OAuth routes | `DATABASE_URL`, `SESSION_SECRET`, `GOOGLE_AUTH_DRIVER` (profile default), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, optional `BOOTSTRAP_ADMIN_EMAIL` | MSG91, remove.bg, fal.ai |
+| Google OAuth routes | `DATABASE_URL`, `SESSION_SECRET`, `GOOGLE_AUTH_DRIVER` (profile default), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, optional `BOOTSTRAP_ADMIN_EMAIL` | MSG91, Leonardo |
 | Administration pages and mutations | `DATABASE_URL` | Every provider and scheduler secret; authorization is read from the database |
 | Phone OTP start and verify routes | `DATABASE_URL`, `SESSION_SECRET`, `PHONE_OTP_DRIVER`, `MSG91_AUTH_KEY`, `MSG91_WIDGET_ID`, `MSG91_WIDGET_TOKEN` | Google, image-provider keys |
 | Phone OTP widget route | `PHONE_OTP_DRIVER`, `PHONE_OTP_DEV_CODE`, `MSG91_WIDGET_ID`, `MSG91_WIDGET_TOKEN` | `SESSION_SECRET`, `DATABASE_URL`, `MSG91_AUTH_KEY`, every other secret |
@@ -233,3 +233,16 @@ The repository includes a raw-body HMAC-SHA256 verifier with bounded timestamp
 tolerance and two-secret rotation support. It may be used only when a provider's
 official protocol matches its signing payload and header semantics. Providers
 using another scheme require a separate adapter behind the same verifier port.
+
+
+Leonardo's key belongs only to the image-processing worker; no browser,
+Vercel function or control-plane parser can read it, and the Lambda template
+injects it from Secrets Manager. The worker validates the job's ownership
+and original (size, checksum, full decode) before signing that private original
+for 15 minutes — ten times the provider deadline, and minted afresh on every
+attempt. Generations are private and ephemeral; the result is downloaded
+immediately without forwarding Bearer credentials and copied into StudioCar's
+own private S3. The output resolution comes from the owner's subscription in
+PostgreSQL, never from a request. The structured logger accepts only
+identifier-shaped strings and never error messages, so signed source/result
+URLs, the API key and tokens cannot reach logs; tests pin this.

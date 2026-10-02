@@ -21,7 +21,7 @@ export function MarketingHero() {
           <ButtonLink href={MARKETING_START_PATH} size="marketing" variant="primary">
             {MARKETING_COPY.hero.primaryAction}
           </ButtonLink>
-          <ButtonLink href={`#${MARKETING_FEATURES_ID}`} size="marketing">
+          <ButtonLink href={`/#${MARKETING_FEATURES_ID}`} size="marketing">
             {MARKETING_COPY.hero.secondaryAction}
           </ButtonLink>
         </div>

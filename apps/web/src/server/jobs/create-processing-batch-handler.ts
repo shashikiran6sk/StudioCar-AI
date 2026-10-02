@@ -1,3 +1,8 @@
+import { measureStage, PerformanceStage } from "@studiocar/observability";
+import {
+  ApplicationErrorCode,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import { randomUUID } from "node:crypto";
 import {
   CreateProcessingBatchSchema,
@@ -100,7 +105,7 @@ export async function handleCreateProcessingBatch(
   }
 
   try {
-    const rateLimit = await rateLimiter.consume(session.userId);
+    const rateLimit = await measureStage(PerformanceStage.RATE_LIMIT, () => rateLimiter.consume(session.userId));
     if (!rateLimit.allowed) {
       return createApiErrorResponse({
         status: COMMAND_RATE_LIMITED_STATUS,
@@ -163,7 +168,8 @@ export async function handleCreateProcessingBatch(
             : PROCESSING_VEHICLE_UNAVAILABLE_MESSAGE,
       requestId: createRequestId(),
     });
-  } catch {
+  } catch (error) {
+    reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
     return createApiErrorResponse({
       status: PROCESSING_UNAVAILABLE_STATUS,
       code: PROCESSING_UNAVAILABLE_CODE,

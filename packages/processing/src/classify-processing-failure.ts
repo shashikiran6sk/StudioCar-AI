@@ -13,12 +13,15 @@ export function classifyProcessingFailure(
     case "PROVIDER_5XX":
     case "TIMEOUT":
       return { errorCode: PROCESSING_FAILURE_CODES[kind], retryable: true };
+    case "PAYMENT_REQUIRED":
     case "AUTHORIZATION":
+    case "CONTENT_BLOCKED":
     case "INTERNAL":
     case "INVALID_IMAGE":
     case "INVALID_REQUEST":
     case "NON_CAR_IMAGE":
     case "UNSUPPORTED_FORMAT":
+    case "UNUSABLE_PROVIDER_RESULT":
       return { errorCode: PROCESSING_FAILURE_CODES[kind], retryable: false };
   }
 }

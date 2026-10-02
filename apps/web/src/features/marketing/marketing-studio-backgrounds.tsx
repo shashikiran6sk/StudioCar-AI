@@ -1,6 +1,8 @@
 import { MarketingCarStage } from "./marketing-car-stage";
 import {
   MARKETING_BACKGROUNDS_ID,
+  MARKETING_CAR_GALLERY_MAIN_SIZES,
+  MARKETING_CAR_GALLERY_SMALL_SIZES,
   MARKETING_COPY,
   MARKETING_STUDIO_BENEFITS,
 } from "./marketing.constants";
@@ -19,9 +21,9 @@ export function MarketingStudioBackgrounds() {
         </ul>
       </div>
       <div className="marketing-backgrounds__gallery">
-        <MarketingCarStage label="Premium White" treatment="premium" />
-        <MarketingCarStage label="Dark Studio" treatment="dark" />
-        <MarketingCarStage label="Grey Studio" treatment="grey" />
+        <MarketingCarStage label="Premium White" sizes={MARKETING_CAR_GALLERY_MAIN_SIZES} treatment="premium" />
+        <MarketingCarStage label="Dark Studio" sizes={MARKETING_CAR_GALLERY_SMALL_SIZES} treatment="dark" />
+        <MarketingCarStage label="Grey Studio" sizes={MARKETING_CAR_GALLERY_SMALL_SIZES} treatment="grey" />
       </div>
     </section>
   );

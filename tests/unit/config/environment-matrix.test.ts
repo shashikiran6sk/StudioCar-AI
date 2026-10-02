@@ -26,13 +26,13 @@ const EVERY_LOCAL_PROCESS = [
 
 describe("Local environment", () => {
   it.each(EVERY_LOCAL_PROCESS)(
-    "starts the %s from APP_ENV and a remove.bg key alone",
+    "starts the %s from APP_ENV and a Leonardo key alone",
     (_name, parser) => {
       expect(parseError(parser, LOCAL_ENVIRONMENT)).toBeUndefined();
     },
   );
 
-  it("selects fake Google, fake OTP, MinIO, ElasticMQ, and remove.bg", () => {
+  it("selects fake Google, fake OTP, MinIO, ElasticMQ, and Leonardo", () => {
     expect(parseGoogleAuthEnvironment(LOCAL_ENVIRONMENT).GOOGLE_AUTH_DRIVER).toBe("fake");
     expect(parsePhoneAuthEnvironment(LOCAL_ENVIRONMENT).PHONE_OTP_DRIVER).toBe("fake");
     expect(parseUploadEnvironment(LOCAL_ENVIRONMENT)).toMatchObject({
@@ -44,15 +44,15 @@ describe("Local environment", () => {
       SQS_ENDPOINT: "http://localhost:9324",
       SQS_IMAGE_QUEUE_URL: "http://localhost:9324/000000000000/studiocar-images",
     });
-    expect(
-      parseImageWorkerEnvironment(LOCAL_ENVIRONMENT).BACKGROUND_REMOVAL_PROVIDER,
-    ).toBe("removebg");
+    expect(parseImageWorkerEnvironment(LOCAL_ENVIRONMENT).LEONARDO_API_KEY).toBe(
+      "leonardo-key",
+    );
   });
 
-  it("requires the remove.bg key for the image worker", () => {
+  it("requires the Leonardo key for the image worker", () => {
     expect(
       parseError(parseImageWorkerEnvironment, { APP_ENV: "local" }),
-    ).toMatch(/REMOVEBG_API_KEY is required/);
+    ).toMatch(/LEONARDO_API_KEY/);
   });
 });
 
@@ -187,7 +187,7 @@ describe("Production environment", () => {
     );
   });
 
-  it("selects real Google, MSG91, and remove.bg with nothing local", () => {
+  it("selects real Google, MSG91, and Leonardo with nothing local", () => {
     expect(parseGoogleAuthEnvironment(PRODUCTION_ENVIRONMENT).GOOGLE_AUTH_DRIVER).toBe(
       "google",
     );
@@ -198,6 +198,9 @@ describe("Production environment", () => {
     expect(
       parseProcessingEnvironment(PRODUCTION_ENVIRONMENT).SQS_ENDPOINT,
     ).toBeUndefined();
+    expect(parseImageWorkerEnvironment(PRODUCTION_ENVIRONMENT).LEONARDO_API_KEY).toBe(
+      "leonardo-key",
+    );
   });
 
   it.each([

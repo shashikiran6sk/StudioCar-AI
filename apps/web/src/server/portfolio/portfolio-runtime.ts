@@ -1,6 +1,6 @@
+import { getWebDatabase } from "../db/web-database";
 import { S3Client } from "@aws-sdk/client-s3";
 import { createS3ClientOptions, parseUploadEnvironment } from "@studiocar/config";
-import { createDatabaseClient } from "@studiocar/database-runtime";
 import { PrismaPortfolioRepository } from "../db/repositories/portfolio-repository";
 
 import { PortfolioService } from "./portfolio-service";
@@ -14,7 +14,7 @@ export function getPortfolioService(): PortfolioService {
   const environment = parseUploadEnvironment(process.env);
   portfolioService = new PortfolioService(
     new PrismaPortfolioRepository(
-      createDatabaseClient({ connectionString: environment.DATABASE_URL }),
+      getWebDatabase(),
     ),
     new S3PortfolioAssetSigner(
       new S3Client(createS3ClientOptions(environment)),

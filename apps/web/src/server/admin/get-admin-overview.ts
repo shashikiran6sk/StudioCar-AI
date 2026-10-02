@@ -1,5 +1,4 @@
-import { parseSessionEnvironment } from "@studiocar/config";
-import { createDatabaseClient } from "@studiocar/database-runtime";
+import { getWebDatabase } from "../db/web-database";
 import { cache } from "react";
 
 import type { AdminOverview, PlanAccountCount } from "./admin-overview.types";
@@ -9,9 +8,7 @@ let repository: PrismaAdminOverviewRepository | undefined;
 
 function getRepository(): PrismaAdminOverviewRepository {
   repository ??= new PrismaAdminOverviewRepository(
-    createDatabaseClient({
-      connectionString: parseSessionEnvironment(process.env).DATABASE_URL,
-    }),
+    getWebDatabase(),
   );
   return repository;
 }

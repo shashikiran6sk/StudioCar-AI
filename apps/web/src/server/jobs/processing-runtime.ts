@@ -1,17 +1,22 @@
+import { getWebDatabase } from "../db/web-database";
 import { SQSClient } from "@aws-sdk/client-sqs";
 import {
   createSqsClientOptions,
   parseProcessingEnvironment,
 } from "@studiocar/config";
-import { CommandRateLimitScope, createDatabaseClient } from "@studiocar/database-runtime";
+import { CommandRateLimitScope } from "@studiocar/database-runtime";
 import { PrismaCommandRateLimitRepository } from "../db/repositories/command-rate-limit-repository";
 import { PrismaProcessingJobRepository } from "../db/repositories/processing-job-repository";
 import { PrismaProcessingJobStatusRepository } from "../db/repositories/processing-job-status-repository";
 import { PrismaProcessingOutboxRepository } from "../db/repositories/processing-outbox-repository";
-import { ProcessingOutboxDispatcher } from "@studiocar/processing";
+import {
+  ACTIVE_PROCESSING_PROVIDER,
+  ProcessingOutboxDispatcher,
+} from "@studiocar/processing";
 
 import { CommandRateLimiter } from "../security/command-rate-limiter";
 import { MILLISECONDS_PER_SECOND } from "../security/command-rate-limiter.constants";
+import { scheduleProcessingDispatch } from "./schedule-processing-dispatch";
 import { ProcessingJobService } from "./processing-job-service";
 import { ProcessingStatusService } from "./processing-status-service";
 import { SqsProcessingQueue } from "./sqs-processing-queue";
@@ -32,9 +37,7 @@ export function getProcessingRuntime(): ProcessingRuntime {
   if (processingRuntime) return processingRuntime;
 
   const environment = parseProcessingEnvironment(process.env);
-  const database = createDatabaseClient({
-    connectionString: environment.DATABASE_URL,
-  });
+  const database = getWebDatabase();
   const queue = new SqsProcessingQueue(
     new SQSClient(createSqsClientOptions(environment)),
     environment.SQS_IMAGE_QUEUE_URL,
@@ -64,8 +67,8 @@ export function getProcessingRuntime(): ProcessingRuntime {
     ),
     service: new ProcessingJobService(
       new PrismaProcessingJobRepository(database),
-      dispatcher,
-      toProcessingProvider(environment.BACKGROUND_REMOVAL_PROVIDER),
+      { schedule: (request) => scheduleProcessingDispatch(dispatcher, request) },
+      toProcessingProvider(ACTIVE_PROCESSING_PROVIDER),
       { resolve: resolveProcessingAllowance },
     ),
     statusService: new ProcessingStatusService(

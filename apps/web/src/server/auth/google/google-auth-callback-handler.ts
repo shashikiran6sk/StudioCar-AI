@@ -1,8 +1,15 @@
+import {
+  ApplicationErrorCode,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import { GoogleOAuthCallbackSchema } from "@studiocar/contracts";
 import { NextResponse } from "next/server";
 
 import { readRequestCookie } from "../read-request-cookie";
-import { clearPhoneOtpCookie, phoneOtpCookieName } from "../phone/phone-otp-cookie";
+import {
+  clearPhoneOtpCookie,
+  phoneOtpCookieName,
+} from "../phone/phone-otp-cookie";
 import {
   clearVerifiedPhoneCookie,
   readVerifiedPhoneChallengeId,
@@ -39,15 +46,19 @@ export async function handleGoogleAuthCallback(
   sessionUserId: string | null = null,
 ): Promise<Response> {
   const requestUrl = new URL(request.url);
-  const providerError = requestUrl.searchParams.get(GOOGLE_OAUTH_ERROR_QUERY_KEY);
+  const providerError = requestUrl.searchParams.get(
+    GOOGLE_OAUTH_ERROR_QUERY_KEY,
+  );
   const candidate = providerError
     ? {
         error: providerError,
         error_description:
-          requestUrl.searchParams.get(GOOGLE_OAUTH_ERROR_DESCRIPTION_QUERY_KEY) ??
-          undefined,
+          requestUrl.searchParams.get(
+            GOOGLE_OAUTH_ERROR_DESCRIPTION_QUERY_KEY,
+          ) ?? undefined,
         state:
-          requestUrl.searchParams.get(GOOGLE_OAUTH_STATE_QUERY_KEY) ?? undefined,
+          requestUrl.searchParams.get(GOOGLE_OAUTH_STATE_QUERY_KEY) ??
+          undefined,
       }
     : {
         code: requestUrl.searchParams.get(GOOGLE_OAUTH_CODE_QUERY_KEY) ?? undefined,
@@ -88,9 +99,16 @@ export async function handleGoogleAuthCallback(
         GOOGLE_PHONE_SETUP_QUERY_KEY,
         GOOGLE_PHONE_SETUP_CANCELLED_VALUE,
       );
-      const response = NextResponse.redirect(destination, OAUTH_REDIRECT_STATUS);
+      const response = NextResponse.redirect(
+        destination,
+        OAUTH_REDIRECT_STATUS,
+      );
       const oauthCookie = clearGoogleOAuthCookie(isProduction);
-      response.cookies.set(oauthCookie.name, oauthCookie.value, oauthCookie.options);
+      response.cookies.set(
+        oauthCookie.name,
+        oauthCookie.value,
+        oauthCookie.options,
+      );
       return response;
     }
     return createGoogleAuthErrorRedirect(
@@ -105,10 +123,8 @@ export async function handleGoogleAuthCallback(
       callbackUrl: requestUrl,
       state: parsed.data.state,
       sessionUserId,
-      phoneBrowserBinding: readRequestCookie(
-        request,
-        phoneOtpCookieName(isProduction),
-      ) ?? null,
+      phoneBrowserBinding:
+        readRequestCookie(request, phoneOtpCookieName(isProduction)) ?? null,
     });
     const destination = new URL(completed.returnTo, requestUrl.origin);
     const oauthCookie = clearGoogleOAuthCookie(isProduction);
@@ -123,7 +139,11 @@ export async function handleGoogleAuthCallback(
         GOOGLE_AUTH_LINKED_VALUE,
       );
       const linked = NextResponse.redirect(destination, OAUTH_REDIRECT_STATUS);
-      linked.cookies.set(oauthCookie.name, oauthCookie.value, oauthCookie.options);
+      linked.cookies.set(
+        oauthCookie.name,
+        oauthCookie.value,
+        oauthCookie.options,
+      );
       return linked;
     }
 
@@ -134,7 +154,11 @@ export async function handleGoogleAuthCallback(
       isProduction,
     );
     response.cookies.set(cookie.name, cookie.value, cookie.options);
-    response.cookies.set(oauthCookie.name, oauthCookie.value, oauthCookie.options);
+    response.cookies.set(
+      oauthCookie.name,
+      oauthCookie.value,
+      oauthCookie.options,
+    );
     if (completed.kind === "PHONE_LINKED_SIGNED_IN") {
       const otpCookie = clearPhoneOtpCookie(isProduction);
       const verifiedCookie = clearVerifiedPhoneCookie(isProduction);
@@ -155,6 +179,7 @@ export async function handleGoogleAuthCallback(
       );
     }
 
+    reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
     return createGoogleAuthErrorRedirect(
       requestUrl,
       GoogleAuthRedirectErrorCode.InternalError,

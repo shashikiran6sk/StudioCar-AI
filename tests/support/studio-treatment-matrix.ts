@@ -5,20 +5,22 @@ import type {
 } from "../../packages/contracts/src/processing";
 
 /**
- * The exhaustive "Customize treatment" test matrix: every combination of the
- * four switches (16) with every studio background and floor (6), 96 cases.
+ * The exhaustive "Customize treatment" test matrix: every switch combination
+ * the Customize step can produce (6) with every studio background and floor
+ * (6), 36 cases.
  *
- * The order and numbering follow the QA plan exactly, so `T02-S04` means the
- * same configuration in tests, in stored batch labels, and in the report.
+ * Three switches remain: Image Enhancement, Studio Background and Maintain
+ * Composition. Hide Number Plate was removed, and with Studio Background off
+ * the photo keeps its own frame, so Maintain Composition is fixed on: 2 × 2
+ * studio combinations plus 2 original-photo ones.
  */
 
-export const TREATMENT_MATRIX_SIZE = 96;
+export const TREATMENT_MATRIX_SIZE = 36;
 
-/** The four switches as the Customize step shows them. */
+/** The switches as the Customize step shows them. */
 export interface TreatmentToggles {
   enhancement: boolean;
   maintainComposition: boolean;
-  platePrivacy: boolean;
   studioBackground: boolean;
 }
 
@@ -48,33 +50,21 @@ export interface TreatmentCase {
   toggleId: string;
 }
 
-/** NP, EN, BG, MC — the order the QA plan writes each configuration in. */
-const TOGGLE_ROWS: readonly (readonly [boolean, boolean, boolean, boolean])[] = [
-  [true, true, true, true],
-  [false, true, true, true],
-  [true, false, true, true],
-  [true, true, false, true],
-  [true, true, true, false],
-  [false, false, true, true],
-  [false, true, false, true],
-  [false, true, true, false],
-  [true, false, false, true],
-  [true, false, true, false],
-  [true, true, false, false],
-  [false, false, false, true],
-  [false, false, true, false],
-  [false, true, false, false],
-  [true, false, false, false],
-  [false, false, false, false],
+/** EN, BG, MC — the order each configuration is written in. */
+const TOGGLE_ROWS: readonly (readonly [boolean, boolean, boolean])[] = [
+  [true, true, true],
+  [false, true, true],
+  [true, true, false],
+  [false, true, false],
+  [true, false, true],
+  [false, false, true],
 ];
 
 export const TOGGLE_CONFIGURATIONS: readonly ToggleConfiguration[] =
-  TOGGLE_ROWS.map(
-    ([platePrivacy, enhancement, studioBackground, maintainComposition], index) => ({
-      id: `T${String(index + 1).padStart(2, "0")}`,
-      toggles: { enhancement, maintainComposition, platePrivacy, studioBackground },
-    }),
-  );
+  TOGGLE_ROWS.map(([enhancement, studioBackground, maintainComposition], index) => ({
+    id: `T${String(index + 1).padStart(2, "0")}`,
+    toggles: { enhancement, maintainComposition, studioBackground },
+  }));
 
 export const STUDIO_CONFIGURATIONS: readonly StudioConfiguration[] = [
   { background: "PREMIUM_WHITE", floor: "PLAIN", id: "S01" },
@@ -98,10 +88,8 @@ const FLOOR_NAMES = {
 
 /** Options the Customize step never exposes, at their contract defaults. */
 const FIXED_OPTIONS = {
-  outputFormat: "JPEG",
   paddingPercent: 8,
   quality: 90,
-  shadow: "NATURAL",
 } satisfies Partial<ProcessingOptions>;
 
 function onOff(value: boolean): string {
@@ -115,7 +103,6 @@ export function describeTreatmentCase(
 ): string {
   return [
     id,
-    `Plate ${onOff(toggles.platePrivacy)}`,
     `Enhance ${onOff(toggles.enhancement)}`,
     `Studio ${onOff(toggles.studioBackground)}`,
     `Composition ${onOff(toggles.maintainComposition)}`,
@@ -134,11 +121,10 @@ export function expectedTreatmentOptions(
     crop: toggles.maintainComposition ? "MAINTAIN_COMPOSITION" : "FIT_VEHICLE",
     enhancement: toggles.enhancement,
     floor: studio.floor,
-    platePrivacy: toggles.platePrivacy,
   };
 }
 
-/** toggleConfigurations × backgrounds × floors, in QA-plan order. */
+/** toggleConfigurations × backgrounds × floors, in plan order. */
 export function createTreatmentMatrix(): TreatmentCase[] {
   return TOGGLE_CONFIGURATIONS.flatMap(({ id: toggleId, toggles }) =>
     STUDIO_CONFIGURATIONS.map((studio) => {

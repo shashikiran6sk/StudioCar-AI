@@ -13,7 +13,7 @@ export const DEFAULT_FLOOR_STYLE: FloorStyle = "HORIZON";
  * The studio backgrounds, which offer a plain background or a standard floor.
  * The original photo keeps its own surroundings, so a floor means nothing there.
  */
-export const STUDIO_SCENE_BACKGROUNDS: readonly BackgroundTreatment[] = [
+export const STUDIO_BACKGROUNDS: readonly BackgroundTreatment[] = [
   "PREMIUM_WHITE",
   "GREY_STUDIO",
   "DARK_STUDIO",

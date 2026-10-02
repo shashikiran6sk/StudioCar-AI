@@ -14,7 +14,7 @@ describe("createCloudWatchEmbeddedMetricPayload", () => {
         providerRequestId: "provider-request-1",
         userId: "user-1",
       },
-      dimensions: { Outcome: "COMPLETED", Provider: "REMOVEBG" },
+      dimensions: { Outcome: "COMPLETED", Provider: "LEONARDO" },
       eventName: "image_processing_completed",
       level: OperationalLogLevel.INFO,
       metrics: [
@@ -37,10 +37,7 @@ describe("createCloudWatchEmbeddedMetricPayload", () => {
       _aws: {
         CloudWatchMetrics: [
           {
-            Dimensions: [
-              ["Service"],
-              ["Service", "Outcome", "Provider"],
-            ],
+            Dimensions: [["Service"], ["Service", "Outcome", "Provider"]],
             Metrics: [
               { Name: "ImagesProcessed", Unit: "Count" },
               {
@@ -58,11 +55,12 @@ describe("createCloudWatchEmbeddedMetricPayload", () => {
         providerRequestId: "provider-request-1",
         userId: "user-1",
       },
+      event: "image_processing_completed",
       eventName: "image_processing_completed",
       ImagesProcessed: 1,
       level: "INFO",
       Outcome: "COMPLETED",
-      Provider: "REMOVEBG",
+      Provider: "LEONARDO",
       ProviderLatencyMilliseconds: 850,
       Service: "image-processing-worker",
     });

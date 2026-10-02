@@ -1,6 +1,554 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-09-25
+Last updated: 2026-10-01
+
+## Mobile responsive experience
+
+- **Problem.** Below 768px the workspace sidebar became a fixed 68px bottom
+  bar whose labels were clipped at the screen edge, and an
+  `nth-child(n + 4)` rule hid Profile and Admin on phones entirely. The
+  homepage, dashboard and billing collapsed every desktop row into one long
+  column while keeping desktop minimum heights and section padding (homepage
+  8,033px tall at 390px). Wizard photo rows wrapped onto two lines with
+  24×20px reorder targets, and fixed-height image stages cropped vehicles.
+- **Navigation drawer.** `packages/ui` gains a `Sheet` primitive on the
+  existing Radix Dialog (focus trap, Escape, backdrop, scroll lock, focus
+  return). Below 768px the top bar shows a menu control and the current
+  section; the drawer holds the same destinations (one
+  `workspaceNavigationItems` list feeds both sidebar and drawer), plan
+  summary and log out, and closes when a destination is chosen. The desktop
+  sidebar is untouched.
+- **Information density.** Phones use 2 × 2 grids for homepage features and
+  workflow steps (one column below 360px), dashboard stats in pairs, quick
+  actions with imagery beside the copy, and swipeable pricing and pack cards
+  with the next card peeking. Image stages use aspect ratios instead of fixed
+  heights. Results at 390px: homepage −37%, dashboard −30%, billing −48%,
+  portfolio −23%.
+- **Copy.** The homepage CTA reads "Process your car" (hero and final CTA).
+- **Unchanged.** No API, schema, auth, processing, worker, routing or
+  infrastructure change. All new rules sit inside existing mobile
+  breakpoints; 1440px screenshots of every main screen match `main` pixel
+  for pixel apart from the CTA copy, and page heights at 768px and above are
+  identical.
+- **Tests.** Unit tests cover the sheet, drawer, shared navigation list,
+  active-section lookup and log-out form. A Playwright spec checks the
+  drawer (open, destinations, Escape with focus return, backdrop, closing on
+  navigation, scroll lock), no horizontal overflow on five pages at 320px
+  and 390px, and that the desktop shell still shows the sidebar.
+
+## Publish the image-worker archive to S3 on merge
+
+- **What it does.** A new `publish-worker-artifact` CI job runs after every
+  merge to `main`, once lint/test, packaging and build/e2e have passed. It
+  uploads the exact archive CI built and tested to
+  `s3://<artifact-bucket>/image-processing-worker/<short-sha>.zip`, plus its
+  manifest. `<short-sha>` is the first 5 characters by default
+  (`WORKER_ARTIFACT_SHA_LENGTH`), and the full SHA is stored as object
+  metadata. A short-SHA collision fails the publish instead of overwriting.
+- **Immutability.** Uploads are conditional (`If-None-Match: *`) and
+  checksum-verified by S3. A re-run for the same commit is a no-op if the
+  bytes match and fails otherwise.
+- **Credentials.** The job uses GitHub OIDC, with no stored AWS keys.
+  `infrastructure/aws/worker-artifact-publisher.yml` creates a role that only
+  this repository's `main` branch can assume. It can only put and read objects
+  under the prefix, and is denied any unconditional write.
+- **Main runs complete.** CI runs on `main` are no longer cancelled by a newer
+  push (pull requests still are), so every merged commit publishes.
+- **Inactive until configured.** The job is skipped until `WORKER_ARTIFACT_BUCKET`
+  and `WORKER_ARTIFACT_ROLE_ARN` are set. One-time setup is in
+  `infrastructure/aws/README.md`.
+- **Deploying the Lambda** from the published key is the next CD step.
+- **Tests.** Tests cover the role's trust and permissions and the job's
+  guards. They also run the publish script against a fake AWS CLI for a fresh
+  publish, an idempotent re-run, a refused overwrite, a manifest mismatch and
+  an invalid commit SHA.
+
+## Leonardo.Ai becomes the only image-processing provider
+
+- **Development test fix: every Leonardo call failed after being charged.**
+  - **Cause.** The real Sync response wraps the generation in a
+    `generateSync` envelope. The adapter expected `id` and `results` at the top
+    level, rejected every reply as an invalid response, and retried. Each
+    retry was a new paid generation ($0.1047 at `auto`).
+  - **Contract.** `LeonardoResponseSchema` now unwraps `generateSync`, and
+    still reads an unwrapped body. Only `results` must be well formed; a
+    missing, `null` or malformed id, cost, `blockedCount` or optional result
+    field reads as absent. An empty `results` with `blockedCount > 0` is
+    reported as blocked content.
+  - **No paying twice.** A paid response or output that cannot be used is now
+    terminal (`PROVIDER_UNUSABLE_RESULT`, shown as "background removal
+    failed"; the photo is not marked invalid). Downloading a paid result is
+    retried up to three times within the same deadline, so a CDN blip never
+    costs a new generation.
+  - **Diagnostics.** `provider_request_failed` now logs `responseIssuePath`
+    and `responseIssueCode` (field path and issue code, never values).
+  - **Tests.** The contract and provider tests use the shape captured from a
+    real preview-size call. The PostgreSQL lifecycle test proves a paid but
+    unusable response is charged once and never republished.
+- Security: upgraded `next` and `eslint-config-next` from 16.3.5 to 16.3.6.
+  This fixes critical advisory GHSA-vcvr-r3jv-pc5j (remote code execution in
+  `next/og` `ImageResponse`), published while this PR was open; the CI
+  production-dependency audit failed on it, and so would `main`. Only Next.js
+  package versions changed in the lockfile. Lint, types, all unit tests, the
+  production build and e2e (14/14) pass on 16.3.6, and the audit reports no
+  known vulnerabilities.
+- **Audit first.** The full audit is in
+  `docs/audits/2026-09-30-leonardo-migration-audit.md`. It covers:
+  - providers, the processing lifecycle and polling history (#80, #85);
+  - the three treatment features and shadows;
+  - Lambda packaging, risks and the plan.
+
+  The canonical reference is now `docs/image-processing.md`.
+- **Provider.** Leonardo Remove Background through the Sync API sits behind the
+  provider-neutral `ImageProcessingProvider` port. There is no Async API and no
+  webhook.
+  - Request: `remove-bg`, `public=false`, `ephemeral=true`, `type=car`,
+    `format=webp`, `channels=rgba`, `crop=false`, `shadow_type=car`,
+    `semitransparency=true`, with the source passed as a 15-minute presigned S3
+    URL. `background_image_reference` is never sent.
+  - The result is downloaded immediately under one deadline, validated as
+    WebP with alpha at the reported size, and staged privately.
+  - Every failure category maps once onto the durable retry. A 429
+    `Retry-After` can only lengthen the backoff. The adapter has no retry
+    loop of its own.
+- **Resolution follows the plan on the server.** The worker reads the owner's
+  current subscription inside the claim transaction. FREE (or no subscription)
+  gets `preview`; PLUS and PRO get `auto`. The request contract is strict, so a
+  browser-supplied size is rejected with 400.
+- **Removed:**
+  - remove.bg, fal.ai, BiRefNet, provider selection and their env vars;
+  - the CloudFormation provider parameter and webhook enum values;
+  - the local SVG scenes and local shadow code (which caused the double
+    shadow), plus the cost/diagnostic scripts;
+  - Hide Number Plate, which no worker ever applied: 0 pixels changed in all
+    96 QA cases.
+
+  The `ProcessingProvider` enum keeps its historical values for existing rows.
+- **Compositor.**
+  - The six supplied backgrounds are packaged in the worker (PLAIN and FLOOR,
+    each in white, grey and dark). Only Leonardo's shadow is drawn.
+  - Vehicle and content bounds come from alpha. One uniform scale handles
+    Maintain composition, Fit and Square, so nothing is stretched.
+  - Backgrounds use cover placement, with the floor seam 0.30 vehicle heights
+    above the tyre line.
+  - Output is WebP at quality 90 with no metadata.
+- **Image Enhancement: retained and fixed.** It now changes only the vehicle,
+  with 0 background pixels altered. The legacy version shifted the whole
+  background by 6.5 levels.
+- **Maintain Composition: retained and fixed.** With Studio Background off,
+  the UI and contract force Maintain Composition. Evidence is in
+  `docs/evidence/processing-options/`, from `pnpm evidence:processing`, which
+  is deterministic and includes a legacy comparison.
+- **Lambda.**
+  - `pnpm package:worker` builds a byte-reproducible archive: one esbuild
+    bundle, plus sharp's lockfile-pinned arm64 binaries and the backgrounds.
+  - ZIP 62,592,857 → 18,123,601 bytes (−71%); unzipped 199.4 MB → 35.1 MB;
+    14,288 → 120 files.
+  - Verified on arm64 Node 24 under QEMU. CI packages twice, compares the
+    bytes, smoke-tests in the arm64 Lambda image and uploads the archive.
+  - Timeouts: Leonardo 90 s, Lambda 180 s, claim lease 180 s (validated
+    against the Leonardo deadline), duration alarm 150 s. Visibility (900 s)
+    and concurrency are unchanged.
+- **Observability.** New metrics cover provider requests, latency, success,
+  failure categories (429, 5xx, timeout and others), reported cost, and
+  SOURCE/PROVIDER/COMPOSITION/STORAGE stage failures, with no high-cardinality
+  dimensions. Provider alarms and a dashboard section were added.
+- **Unchanged:** polling (#85 coalescing kept as designed), SQS, the outbox,
+  idempotency, inventory, billing, auth, upload limits and storage layout.
+- **Gates (all passed):**
+  - lint, strict types, test mapping;
+  - unit tests: web 1,212, worker 306, config 272, contracts 125,
+    processing 94, observability 40, ui 19, local-queue 13,
+    database-runtime 5;
+  - integration: web 161 (including the new Leonardo lifecycle test against
+    PostgreSQL), database-runtime 25;
+  - Prisma validation, production build, e2e 14/14, `cfn-lint`.
+- **Caveats:**
+  - No Leonardo API key was available, and Leonardo's hosts were unreachable
+    from the build environment. Live calls, real-photo visual checks and
+    measured provider latency/cost remain deployment steps; HTTP behaviour is
+    tested with mocked `fetch`.
+  - The Local profile cannot complete a Leonardo run, because Leonardo cannot
+    fetch MinIO URLs. Use Development storage for real provider tests.
+  - `grey-studio-floor.png` arrived truncated. Its last 125 floor rows were
+    reconstructed; a clean re-export is requested.
+  - Version keys and request hashes changed with the option set. A stale
+    browser tab still sending removed fields receives 400 until it reloads.
+  - The existing `it.fails` floor-on-ORIGINAL version-key defect (from #57)
+    is unchanged.
+- **Deploy order:**
+  1. Create the Leonardo secret.
+  2. Update the worker stack (`LeonardoSecretArn`; the new timeouts take
+     their defaults).
+  3. Upload the CI archive and record its SHA-256.
+  4. Deploy the observability stack.
+
+  No database migration is needed.
+
+## Reliable local MinIO startup
+
+- Replaced the now access-restricted `quay.io/minio` server and client images
+  with one local multi-stage image built from MinIO's final security-patched
+  community server release and the corresponding client source tag.
+- Both the object-store service and its idempotent bucket initializer share the
+  same image, so a fresh `pnpm infra:up` no longer requires a MinIO registry
+  login. Added a regression check that rejects the retired registry images.
+- Verified a clean Local startup on arm64 through healthy PostgreSQL, MinIO,
+  and ElasticMQ services, successful private-bucket initialization, and a
+  running dispatcher and image worker. Focused tests, the full unit suite,
+  real-PostgreSQL integration suite, lint, strict types, Prisma validation and
+  the webpack production build passed.
+
+## Production worker missing-object permission
+
+- Diagnosed repeated production processing failures as S3 `AccessDenied` while
+  checking the optional staged provider result. The worker role could read and
+  write objects under `users/*` but lacked `s3:ListBucket`, so S3 returned 403
+  for an absent staged result instead of the 404 the worker recognizes as
+  absence. The failed jobs exhausted five attempts before reaching remove.bg.
+- Added `s3:ListBucket` scoped to the configured image bucket only; object
+  reads/writes remain scoped to the tenant object prefix. Documented this
+  permission and added a worker-template regression check.
+- Applied the IAM-only CloudFormation change to the production worker stack.
+  Stack status is `UPDATE_COMPLETE`, and IAM policy simulation reports the
+  bucket-level list permission as allowed. CloudFormation template validation,
+  focused template tests, all 1,264 uncached unit tests, source mapping, lint,
+  typecheck and Prisma validation passed.
+- The earlier failed job rows are terminal and are not automatically replayed.
+  After deployment, a new production job completed in one successful remove.bg
+  attempt and persisted its processed output, confirming the live fix. The user
+  also confirmed processing is working. No failed-job rows were edited and no
+  image bytes or provider secrets were accessed during diagnosis. AWS commands
+  and sanitized results are appended in `aws-session-transcript.md`.
+
+## Production AWS deployment compatibility
+
+- Corrected the SQS queue-policy template to express the HTTPS-only deny as
+  one resource per statement, which is required by the SQS policy validator.
+- Lambda event-source concurrency remains bounded independently of account-wide
+  reserved concurrency. A new optional `ReservedConcurrency` parameter omits
+  the Lambda reservation when an account quota cannot spare unreserved capacity;
+  the SQS event-source maximum still controls worker fan-out.
+- These are deployment-safety corrections only. Queue durability, DLQ routing,
+  worker idempotency, partial-batch failure reporting and processing behavior
+  remain unchanged.
+
+## Dashboard recent-vehicle query path
+
+- Dashboard recent cards now use a bounded repository read that selects only
+  operational vehicles and their latest batch summaries. It skips the full
+  inventory filter-count aggregation and pagination metadata that the
+  dashboard never renders.
+- The full inventory and search paths remain unchanged, including counts,
+  cursors, tenant predicates, ordering and preview signing. Dashboard cards
+  retain the same ordering and status projection.
+- Added service and PostgreSQL repository coverage for the dedicated path.
+
+## Immediate public-cache invalidation
+
+- Public plan and footer cache entries now use Next `updateTag` from the
+  existing administrator Server Actions. Successful edits therefore expire
+  the cached data immediately and preserve the previous read-your-own-writes
+  behavior while retaining cross-request reuse for ordinary visitors.
+- Focused administrator action tests verify the exact tag invalidation calls.
+
+## Public query caching and authenticated layout parallelism
+
+- Public pricing and enabled footer links now use dedicated Next data-cache
+  readers tagged for administrator invalidation. Billing, allowance and other
+  private plan reads continue using the uncached request-local catalog.
+- Plan edits and social-link edits invalidate their public tags after the same
+  successful database writes that already refreshed the affected paths.
+- The authenticated shell now resolves the plan catalog, usage summary and
+  administrator check concurrently after authentication, reducing serial
+  navigation latency without changing authorization or billing sources.
+- Focused page, layout, catalog, social-link and action tests plus strict
+  typechecking passed. No session, entitlement, billing or public-page
+  behavior changed.
+
+## Worker event-source isolation and visibility defaults
+
+- Source-controlled Lambda defaults now use one SQS record per invocation and
+  a zero-second batching window. Larger batches remain explicitly tunable and
+  partial-batch failure reporting is unchanged; maximum concurrency remains
+  ten.
+- The queue template default visibility is 900 seconds, leaving margin above
+  the 120-second Lambda timeout and 120-second application claim lease.
+  Deployed AWS values and regions are still unverified because the read-only
+  AWS session is expired; no live resources were changed.
+- Added template regression checks and documented the required live A/B
+  benchmark and provider-429/queue-age signals before changing production
+  concurrency. No provider, worker result, retry or billing semantics changed.
+
+## Processing polling and page reconciliation
+
+- Polling now permits one status request at a time. Timer and visibility
+  wakeups coalesce while a request is pending, hidden tabs remain paused, and
+  cleanup still aborts in-flight work.
+- Status updates compare the full authoritative discriminated payload and
+  preserve the existing store object when nothing changed. This avoids
+  downstream renders caused by unchanged polling responses.
+- Server reconciliation waits until the tracked group reaches zero active
+  jobs, so a 20-image batch causes at most one normal `router.refresh()` after
+  settlement while terminal failures remain visible for dismissal.
+- Focused polling/store tests, full unit (1,258), PostgreSQL integration
+  (159), lint, strict types, source mapping, schema validation, webpack build
+  and all 14 browser tests passed. No status API, terminal-state, cancellation
+  or navigation semantics changed.
+
+## Bounded photo uploads and progress rendering
+
+- Bounded new-photo hashing, presigning, direct S3 PUTs and commit requests to
+  four active uploads. Queued work can be cancelled without starting; active
+  requests still abort on removal or dialog close, and late callbacks cannot
+  update a replaced or cancelled row.
+- Progress values are coalesced per animation frame, duplicate values are
+  ignored, and stage transitions flush the latest measured value. Photo rows
+  subscribe by stable client ID, so one progress update no longer rerenders
+  every row in the list.
+- Focused coverage verifies scheduler bounds, queued/active cancellation,
+  retries, progress coalescing, stable row actions and unchanged upload
+  semantics. A 20-row profiler fixture changed from 4,000 row commits for
+  200 repeated updates to 100 commits on the changed row only.
+- Full local unit (1,258), PostgreSQL integration (159), lint, strict types,
+  mapping, schema validation and webpack production build passed. Browser
+  verification remains required in CI before merge; no API, S3, checksum,
+  validation or processing behavior changed.
+
+## Processing submission integration with main
+
+- Integrated merged timing and shared-database PRs #81/#82 into #80. Kept
+  bulk insertion with its outbox timing span and moved dispatch timing into
+  the supported post-response callback, preserving prompt durable acceptance.
+- Updated the isolated benchmark to assert zero sends at acceptance, capture
+  request timings before dispatch, then measure all mock queue acknowledgements.
+- Integrated lint/types, unit suites, 167 PostgreSQL tests, schema validation,
+  the 1/5/20-image mock benchmark, webpack build and 14 browser tests passed.
+  Normal local Turbopack retains its process/port restriction; CI verifies it.
+- Merge is reserved for the repository owner; fresh CI must pass first.
+
+## Processing submission review hardening
+
+- Reviewed draft #80 against main and preserved its bulk reservation, focused
+  entitlement and supported post-response dispatch implementation.
+- Reproduced a pre-existing cross-vehicle quota race: two three-image batches
+  both reserved against five remaining images. Reservations now serialize by
+  tenant, and charged plus in-flight usage is read in one SQL snapshot so a
+  concurrent completion cannot fall between two reads and disappear from usage.
+- Added real PostgreSQL coverage for quota concurrency, completion transfer,
+  rollback after job/outbox insertion, duplicate and foreign assets, deletion
+  racing reservation, and subscription status/source/expiry boundaries.
+- Existing ordered replay, publication lease, duplicate-worker and exactly-once
+  completion regressions remain required. No new infrastructure or migration.
+- Local lint/types/source mapping, all unit suites uncached, 167 PostgreSQL
+  integration tests, schema validation, webpack production build and all 14
+  browser tests passed. Normal local Turbopack still cannot bind its helper
+  port; required CI must verify the unchanged normal build before merge.
+
+## Processing submission latency
+
+- The processing application now reserves durable jobs/outbox rows before
+  scheduling queue publication through Next.js `after`. Queue or invocation
+  lifecycle failures are reported and remain recoverable through the existing
+  authenticated EventBridge dispatcher; they do not turn committed acceptance
+  into an HTTP failure. The response continues to report truthful job states.
+- Reservation acquires the existing ordered asset advisory locks in one query
+  and bulk-creates jobs and outbox rows in the same transaction. Returned jobs
+  are explicitly sorted by display order to preserve response/replay ordering.
+- Processing allowance resolution reads current plan configuration without the
+  billing page's usage/storage aggregates. Subscription and catalog reads run
+  concurrently; the authoritative reservation allowance check remains intact.
+- Regression coverage includes deferred dispatch, publication/lifecycle failure,
+  replay scheduling, plan-only reads, and an ordered 20-image database test.
+- Local verification passed: focused regressions, all unit suites uncached,
+  source mapping, lint, strict types, Prisma schema validation and the normal
+  Turbopack production build. PostgreSQL integration and browser verification
+  require the isolated PostgreSQL service in CI; no production database is
+  used for tests. Published as a draft for those checks and review. Required
+  CI must pass before merge; production latency improvements are not measured.
+- No schema migration or deployment-region change. Other audit findings,
+  including upload concurrency, polling churn and dispatcher throughput, remain
+  separate follow-up work.
+
+## Shared web database runtime
+
+- Replaced twenty feature-specific Prisma factories with one lazy web-process
+  client retained across module reloads. Repository injection and independent
+  worker/test clients remain unchanged; this is not a cross-instance singleton.
+- Added web-only validated pool sizing (default 5, range 1–20), preserving the
+  existing PrismaPg adapter and database environment isolation. Documented
+  Neon pooled endpoints and aggregate serverless connection budgeting.
+- Tests cover lazy creation, module reload reuse, different feature runtimes,
+  independent clients, invalid configuration and failure recovery.
+- Local lint/types/source mapping, all unit suites uncached, 155 PostgreSQL
+  integration tests, schema validation, webpack production build and all 14
+  browser tests passed. Normal Turbopack has the existing local process/port
+  restriction; required CI must pass its unchanged normal build. Production
+  endpoint/region verification awaits access; no credentials or regions changed.
+
+## Performance timing baseline
+
+- Read the supplied performance/AI-search audit completely and reviewed draft
+  PR #80 against current main (`843b611`). Reuse its durable-acceptance work,
+  with additional quota/deletion/rollback coverage before merge; SEO is excluded.
+- Extended existing correlated HTTP logs with bounded stage totals and request
+  start time. Timings preserve failures and add no per-image telemetry events.
+- Added an isolated PostgreSQL/mock-SQS 1/5/20-image benchmark. Five local
+  samples per size show median response 56/166/530 ms with a 10 ms simulated
+  queue send; 20-image dispatch takes 439 ms. These are not production numbers.
+  Method, PR review, source findings and limitations are in `docs/performance.md`.
+- Live AWS settings remain unverified because the configured CLI session expired.
+  No deployment configuration or provider behavior changed.
+- Validation: lint, strict types, source mapping, all unit suites uncached,
+  155 PostgreSQL integration tests, schema validation, supported webpack
+  production build and all 14 browser tests passed. Browser tests require
+  explicit Local queue settings to avoid root Development overrides. Normal
+  Turbopack remains blocked by local process/port permissions; unchanged CI
+  must pass the normal build before merge.
+
+## Batch outbox publication
+
+- Integrated #80 after its owner merged it; preserved both timing phases.
+  Combined local 20-image medians are 19 ms acceptance and 48 ms through the
+  last mock SQS acknowledgement. Full local integration checks passed again.
+
+- Added SendMessageBatch through the existing queue port, with at most ten
+  entries per call and per-item acknowledgement checks even on HTTP success.
+  Missing/duplicate/conflicting acknowledgements remain retryable.
+- Claims now use a bounded skip-locked transaction and set-based updates.
+  Successful sends use one acknowledgement transaction per batch; jobs remain
+  CREATED/RETRYING until their own SQS acknowledgement. Queue I/O is outside
+  every database transaction, and existing single-message port callers remain
+  supported.
+- New sends stop when the claim budget expires; SDK batch calls receive an
+  abort deadline. Crash/ambiguous-send recovery retains durable outbox intent.
+- Tests cover two sends for twenty jobs, partial failure, database failure after
+  send, lease expiry, disjoint claims, stale tokens and duplicate/retry worker
+  publication races with exactly one output and usage charge.
+- Local lint/types, unit suites, PostgreSQL integration, schema validation,
+  webpack build and all 14 browser tests passed. Normal local Turbopack retains
+  its process/port restriction; required CI verifies the unchanged normal build.
+- Isolated 1/5/20-image mock-SQS benchmark confirms 1/1/2 queue requests;
+  twenty-image dispatch median is 33 ms versus the earlier 439 ms baseline.
+  These are local samples, not production latency claims. No schema or
+  deployment changes. Detailed methodology is in docs/performance.md.
+
+## Leonardo background-removal adapter (PR 1)
+
+- Audited the existing binary provider boundary, remove.bg adapter, executor,
+  retry classification and official Leonardo/remove.bg documentation. Added
+  Leonardo beside remove.bg; no replacement abstraction or pipeline redesign.
+- Added worker-only selection/key/timeout configuration and a signed private
+  source-key resolver. Requests use car/WebP/RGBA, semitransparency, no provider
+  shadow, private ephemeral output, and full resolution. Temporary results are
+  bounded, decoded and copied through the existing private-S3 staging path.
+- Added the LEONARDO PostgreSQL provider enum via an additive migration,
+  selection mapping, local compose configuration, and conditional Lambda secret
+  wiring. Production defaults and remove.bg rollback remain unchanged.
+- Added sanitized generation/cost/dimension logs and a development-only
+  preview/full/50MP measurement command. Live pricing and staging validation
+  remain pending because no Leonardo key was available. Cross-job cutout reuse
+  and production cutover remain PR 3 prerequisites; see docs/leonardo-provider.md (since superseded by docs/image-processing.md).
+- Tests cover request/auth mapping, parsing, validation, HTTP/network/timeout,
+  download boundaries, artifact persistence/reuse, S3 failures, cost logging,
+  selection/secret isolation and real-PostgreSQL Leonardo lifecycle completion.
+- Verification: lint, strict typecheck, source mapping, 2,140 uncached unit
+  passes plus five existing expected failures, 155 isolated PostgreSQL
+  integration tests, schema validation, migration status, worker build and all
+  14 Playwright tests passed. Local Turbopack cannot bind its socket, even with
+  escalation; the supported webpack production build passed instead. Browser
+  verification explicitly used Local queue defaults. Required CI must verify
+  the normal production build before merge.
+- Next slice: independently remove the doubled provider/local shadow and
+  derive studio grounding from the lower vehicle region at final scale.
+
+## Portfolio thumbnail overflow
+
+- Versions with more than eight images now show seven selectable thumbnails
+  and an eighth dark `+n / View all` tile. The count includes every image
+  omitted from the grid; eighteen images show `+11`. Eight or fewer keep
+  every thumbnail visible.
+- The count tile opens the full-screen viewer at the first omitted image.
+  A horizontally scrolling thumbnail rail makes every image selectable;
+  comparison, navigation, image downloads and full-version ZIPs remain available.
+- The viewer uses a native modal, locks background scrolling, contains the
+  full image on narrow screens, wraps keyboard focus and restores the trigger
+  on close or Escape. No API, contract, migration or infrastructure change.
+- Added component checks for empty, seven-, eight-, nine-, thirteen- and
+  eighteen-image versions, plus real-database browser checks for grid height,
+  all-image selection, navigation, focus and desktop/mobile layouts.
+- Verification: source mapping, lint, strict typecheck, all unit suites
+  uncached (2,104 passes plus five existing expected failures), all 154 isolated
+  PostgreSQL integration tests, Prisma validation, production build and all
+  fourteen Playwright tests. Screenshots compared with the portfolio reference.
+  Required PR CI must pass before merge.
+
+## Processing retry publication race
+
+- Production batch diagnosis found remove.bg HTTP 429 responses followed by
+  stalled retry publications. EventBridge recovery is now scheduled every
+  minute; both affected 14-image batches completed after recovery.
+- Extended the existing publication-wait claim result to `RETRYING` jobs.
+  A retry message arriving before the dispatcher commits `QUEUED` now waits
+  briefly, then remains on SQS for redelivery if publication is still pending.
+  Only `QUEUED` jobs execute; retry timing and attempt budgets stay authoritative.
+- Added real-PostgreSQL regressions through the queue handler for publication
+  during the wait and after SQS redelivery, including early duplicates, no
+  execution before publication, and exactly one output and usage charge.
+  Both regressions reproduced the original failure before the fix.
+- No schema, migration, public contract, UI, or AWS configuration change.
+  Deploy a rebuilt image-worker artifact after merge to activate this fix.
+  Provider request pacing remains a separate follow-up.
+- Verification: focused worker regressions, source/test mapping, lint, strict
+  typecheck, all unit suites uncached (2,097 passes plus five existing expected
+  failures), 154 isolated real-PostgreSQL integration tests, Prisma validation,
+  production build, dependency audit, and all 14 Playwright tests passed.
+  Browser verification used the Local queue settings to avoid inheriting the
+  Development queue from the settings file. Required PR CI must pass before merge.
+
+## SEO foundation
+
+- Added one canonical, indexable production marketing document at `https://studiocarai.com/`, with native App Router metadata, Open Graph/Twitter previews, a branded favicon/icon set, and a 1200×630 social image composed from the existing brand mark and owned vehicle asset.
+- Added `robots.txt` and a one-entry production sitemap. Local, Development, Vercel preview, and noncanonical hosts disallow indexing; the sitemap is empty there. The root, authenticated, admin, and authentication layouts default to `noindex, nofollow`; only the canonical Production homepage opts in.
+- Added factual SoftwareApplication JSON-LD without prices. Homepage prices remain database-owned and are deliberately absent from structured data. Existing homepage hierarchy and hash sections are preserved; navigation now uses independent `/#section` links, the footer's existing brand description supplies the `#about` target, and vehicle images describe their displayed treatments. Gallery images now advertise smaller responsive widths while the LCP comparison retains priority loading.
+- Added unit and browser checks for metadata, robots, sitemap, structured data, icons, indexability, and fragment navigation. Search Console verification is optional through `GOOGLE_SITE_VERIFICATION`; the owner must supply the real token in Vercel after verifying the domain.
+- Preview SEO output fails closed when `APP_ENV` is absent, since Vercel evaluates metadata routes during the build. This does not relax the required `APP_ENV` validation used by application runtimes.
+
+## Production observability
+
+- Extended the existing observability package, provider boundary, durable outbox
+  and AWS stacks without changing processing, ownership or retry rules. API
+  routes now produce status/duration logs and response request IDs; optional
+  post-response CloudWatch API metrics cover requests, 2xx, 401, 403, 4xx and 5xx.
+- Added one nullable job request-ID column. Outbox publication/recovery carries
+  the original request and existing batch key to Lambda, provider and S3 logs.
+- Added actual remove.bg request/outcome/status/latency EMF metrics and reported
+  fractional credits; staged-output reuse never counts as another API call.
+- Added server-only Sentry with sanitized exception frames, no automatic PII or
+  payload collection, and bounded flush. Expected validation/provider refusals
+  remain structured logs.
+- Added a four-section CloudWatch dashboard, sustained Lambda/provider alarms,
+  namespace-scoped HTTP metric publisher IAM policy, and optional SNS actions
+  on existing queue/worker alarms. Deployment/runbook: `docs/observability.md`.
+- Verification: production dependency audit, source/test mapping, lint, strict
+  typecheck, all unit suites (1233 web and 359 worker tests plus the existing
+  four expected worker failures), 152 real-PostgreSQL integration tests, Prisma
+  schema/migration checks, production build, all 14 Playwright tests, and
+  CloudFormation lint passed. Required PR CI must pass before merge.
+- Follow-up audit in the same PR: remove.bg 402 now has a distinct terminal
+  payment-required classification and an actionable Lambda log. The existing
+  generic failure message is now shown in the activity panel; no
+  automatic queue/outbox retry or successful-processing usage charge follows
+  credit exhaustion. Added a real-provider-adapter/real-PostgreSQL regression
+  covering duplicate delivery and no publication, plus browser/UI checks.
+- Active worker claims have a distinct busy result and retain SQS delivery for
+  later recovery; unexpected executor errors now reach the logging boundary
+  instead of being silently swallowed. The same local gates passed after the
+  fix, including all 14 browser tests and the real database/provider-adapter
+  credit-exhaustion regression. The rendered activity panel was visually checked.
+- Deployment requires the additive migration, reviewed worker artifact, AWS
+  stack updates, production metric-export configuration and Sentry DSNs. No
+  resources are deployed by this change.
 
 ## Razorpay billing integration in progress
 
@@ -1055,7 +1603,7 @@ Tracked explicitly so the gap between the plan and the repository stays visible.
 - **An assignment does not expire by itself.** The period is honoured on read, so an expired assignment stops applying, but nothing sweeps the row back to `EXPIRED`. That belongs with the scheduled lifecycle jobs.
 - **No social link is seeded.** The footer shows what an administrator configures and nothing otherwise, which is deliberate — but it means a fresh deployment's footer has no social section until somebody adds one.
 - **New plans cannot be created from the interface.** `/admin/pricing` edits the three plans the deployment ships; adding a fourth still needs a code change, because `planKey` is the closed set that subscriptions and the usage contract are keyed by.
-- **A plan-catalog read failure is not observable.** The web application has no logger yet, so a failed `PlanConfig` query surfaces as an error page rather than as a recorded event. This belongs with the control-plane telemetry slice.
+- Plan-catalog read exceptions are captured by the Next server instrumentation hook when Sentry is configured; graceful fallback reads still require explicit caller telemetry where appropriate.
 - **The activity trail is not searchable or paged.** The overview shows the most recent 25 administrative changes and nothing older. Filtering by actor, action or date needs a dedicated page.
 - **There is no command to redrive a dead-lettered job.** A message that fails five times is parked and its job shows "Processing" with no failure state, so it never reaches Attention needed; recovery is the manual `aws sqs` sequence in the README. This belongs with the recovery-operations slice.
 - **Attention cannot be dismissed.** A vehicle keeps needing attention until a later batch succeeds. There is no "ignore these failures" action.
@@ -1139,3 +1687,24 @@ Update this document in every meaningful PR with:
 - verification performed;
 - operational caveats or follow-up work;
 - the next reviewable slice.
+
+## 2026-09-27 — Independent vehicle shadow correction
+
+- Merged Leonardo provider PR #78 after every CI check passed using the authorized admin merge. Production defaults remain remove.bg.
+- Audited provider→staged cutout→crop/resize/padding→scene→vehicle composition. remove.bg previously baked car/3D shadows into its cutout, then the HORIZON scene added a second ellipse. The local renderer did not skew a silhouette, and final vehicle scale was already applied before drawing the scene.
+- Both providers now request no provider shadow. Studio shadows use strong alpha bounds and per-column lower contact geometry at final scale, with configurable contact/ambient layers, symmetric spread, no lateral skew, and edge fading. PLAIN and HORIZON floors share this local treatment; original backgrounds retain their existing behavior.
+- Added alpha/contact geometry and controlled raster pose coverage, and a development diagnostic utility writing the requested seven before/after artifacts. See docs/vehicle-shadows.md (since superseded by docs/image-processing.md) for root cause, processing order, tuning, and legacy-artifact limits.
+- Exact supplied 45° image validation remains pending because no fixture path/image was provided. Reviewed the repository marketing sedan as a diagnostic proxy; it contains baked floor alpha, so it is not evidence of a clean live provider result.
+- User confirmed Leonardo credentials are not configured. Live preview/full/50MP cost measurements, staging E2E, production cutover, and later remove.bg cleanup remain gated on those prerequisites. Do not change production provider or assume equal pricing.
+- Local verification: lint, strict typecheck, behavior-source mapping, 2,163 unit passes (five pre-existing expected failures), 155 PostgreSQL integration passes, schema validation, worker build, webpack production web build, and all 14 browser tests passed. Root build/e2e commands attempted Turbopack and hit the existing local process/port EPERM restriction; CI must pass the normal build before merge.
+
+
+## 2026-10-02 — Razorpay PR #73 main integration and certification comparison
+
+Merged main `dd835cad364493038b6c28cd0dd0434c5ded2781` into `feat/razorpay-billing` from `ed26b28e52ba515dc25f495cfb92712dc2143bfa`, resolving seven conflicted files. Preserved billing credit reservations with main's tenant lock, snapshot-safe free allowance count, bulk job/outbox inserts, deterministic ordering and request IDs; preserved shared plan resolution, Leonardo settings, monitoring hooks and billing startup validation. Retained the PR's commercial catalog and provider-owned subscription protections.
+
+Moved the billing startup test into active discovery, reconciled stale Pro/manual-provider test expectations with the PR catalog and main's current-plan resolver, and passed billing configuration through Turborepo. Added a real-browser Checkout wiring regression using synthetic script/frame/API responses. It reproduced the newly integrated CSP block and a second disabled plan button caused by shared Next Script loading; fixed exact Razorpay script/connect/frame origins and shared-script onLoad readiness. Existing embedding restrictions and production eval restrictions remain asserted. This browser test establishes UI/CSP wiring only, not real payments or webhook financial effects.
+
+Local verification: 2,188 unit/component assertions passed plus the existing expected-failure ORIGINAL version-key assertion; 192 real PostgreSQL integration tests passed; final full browser suite passed 16/16 using system Chromium and the original 30-second timeout. Lint, strict types, schema validation, 24 migrations from scratch/status, build, dependency audit and worker packaging passed. Startup/security and changed Checkout checks also passed. Original failures and retests are retained under docs/testing/razorpay-pr73.
+
+The four critical pre-production reproductions remain FAIL on this integrated code: FREE ORIGINAL full-resolution output, historical HQ signing after cancellation (policy conflict remains explicit), duplicate successful provider calls before staging and exhausted published work stranded PROCESSING. The 20-job mixed success/failure control remains PASS. No baseline defect fixes or real financial/provider/AWS mutations were performed. Live payments and deployed runtime verification remain unverified; branch update does not establish production readiness.

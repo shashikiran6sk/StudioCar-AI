@@ -1,3 +1,4 @@
+import { withRouteMonitoring } from "../../../../../server/observability/with-route-monitoring";
 import { handleGoogleAuthCallback } from "@/server/auth/google/google-auth-callback-handler";
 import { getGoogleOAuthApplication } from "@/server/auth/google/google-auth-runtime";
 import { getCurrentSession } from "@/server/auth/get-current-session";
@@ -5,7 +6,7 @@ import { getCurrentSession } from "@/server/auth/get-current-session";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request): Promise<Response> {
+async function handleGET(request: Request): Promise<Response> {
   const session = await getCurrentSession();
 
   return handleGoogleAuthCallback(
@@ -15,3 +16,5 @@ export async function GET(request: Request): Promise<Response> {
     session?.userId ?? null,
   );
 }
+
+export const GET = withRouteMonitoring("/api/auth/google/callback", handleGET);

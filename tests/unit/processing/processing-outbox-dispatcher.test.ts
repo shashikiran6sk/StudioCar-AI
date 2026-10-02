@@ -56,6 +56,7 @@ describe("ProcessingOutboxDispatcher", () => {
       version: 1,
       type: "PROCESS_IMAGE",
       jobId: JOB_ID,
+      requestId: JOB_ID,
       enqueuedAt: NOW.toISOString(),
     });
     expect(repository.markOutboxPublished).toHaveBeenCalledWith({
@@ -92,4 +93,33 @@ describe("ProcessingOutboxDispatcher", () => {
       nextAttemptAt: new Date("2026-09-19T12:00:00.500Z"),
     });
   });
+});
+
+it("uses persisted request and batch IDs during scheduler recovery", async () => {
+  const repository = createRepository();
+  repository.claimPendingOutbox = vi.fn().mockResolvedValue([
+    {
+      id: MESSAGE_ID,
+      jobId: JOB_ID,
+      attemptCount: 2,
+      createdAt: NOW,
+      job: { requestId: MESSAGE_ID, batchIdempotencyKey: "batch-1234567890" },
+    },
+  ]);
+  const queue = {
+    publish: vi.fn().mockResolvedValue({ messageId: "sqs-123" }),
+  };
+  await new ProcessingOutboxDispatcher(
+    repository,
+    queue,
+    options,
+    () => NOW,
+  ).dispatch();
+  expect(queue.publish).toHaveBeenCalledWith(
+    expect.objectContaining({
+      requestId: MESSAGE_ID,
+      batchId: "batch-1234567890",
+      jobId: JOB_ID,
+    }),
+  );
 });

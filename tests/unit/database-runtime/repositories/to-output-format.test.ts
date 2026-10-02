@@ -4,9 +4,11 @@ import { OutputFormat } from "../../../../packages/database-runtime/generated/pr
 import { toOutputFormat } from "../../../../packages/database-runtime/src/repositories/to-output-format";
 
 describe("toOutputFormat", () => {
-  it("maps every processing output format", () => {
-    expect(toOutputFormat("JPEG")).toBe(OutputFormat.JPEG);
-    expect(toOutputFormat("PNG")).toBe(OutputFormat.PNG);
+  it("records every processed image as WebP", () => {
     expect(toOutputFormat("WEBP")).toBe(OutputFormat.WEBP);
+  });
+
+  it("keeps the historical formats readable in the column", () => {
+    expect(Object.values(OutputFormat)).toEqual(["JPEG", "PNG", "WEBP"]);
   });
 });

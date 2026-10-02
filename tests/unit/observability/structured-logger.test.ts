@@ -1,0 +1,132 @@
+import { describe, expect, it, vi } from "vitest";
+import { StructuredLogger } from "../../../packages/observability/src/structured-logger";
+import { monitoringContext } from "../../../packages/observability/src/monitoring-context";
+
+describe("structured logger", () => {
+  it("serializes only allowed fields and sanitized errors with correlation", () => {
+    const write = vi.fn();
+    const logger = new StructuredLogger({ write });
+    const error = new Error(
+      "password=very-secret https://s3.test/image?X-Amz-Signature=secret",
+    );
+    const fields = {
+      statusCode: 403,
+      errorCode: "FORBIDDEN",
+      error,
+      authorization: "Bearer token",
+      payload: { image: "private-bytes" },
+      errorMessage: "secret",
+    };
+    monitoringContext.run(
+      {
+        requestId: "request-1234",
+        batchId: "batch-1234567890",
+        route: "/api/jobs",
+        environment: "production",
+      },
+      () => logger.log("error", "request_failed", fields),
+    );
+    const serialized: unknown = write.mock.calls[0]?.[0];
+    expect(typeof serialized).toBe("string");
+    expect(serialized).toContain('"errorMessage":"Request forbidden"');
+    expect(serialized).toContain('"batchId":"batch-1234567890"');
+    expect(serialized).not.toContain("very-secret");
+    expect(serialized).not.toContain("Bearer");
+    expect(serialized).not.toContain("private-bytes");
+    expect(serialized).not.toContain("X-Amz");
+  });
+  it("drops invalid identifiers and URL paths, and isolates sink failures", () => {
+    const write = vi.fn();
+    const logger = new StructuredLogger({ write });
+    logger.log("info", "safe", {
+      route: "/api/jobs?token=secret",
+      requestId: "forged\nsecret",
+      durationMs: Number.NaN,
+    });
+    expect(write.mock.calls[0]?.[0]).not.toContain("secret");
+    expect(
+      new StructuredLogger({
+        write: () => {
+          throw new Error("sink failed");
+        },
+      }).log("info", "safe"),
+    ).toBe(false);
+  });
+});
+
+it("logs the actionable credit failure without arbitrary provider messages", () => {
+  const write = vi.fn();
+  new StructuredLogger({ write }).log("error", "provider_request_failed", {
+    statusCode: 402,
+    errorCode: "PROVIDER_PAYMENT_REQUIRED",
+    errorMessage: "secret key=credential",
+  });
+  expect(write.mock.calls[0]?.[0]).toContain(
+    "The background-removal provider has insufficient credits.",
+  );
+  expect(write.mock.calls[0]?.[0]).not.toContain("credential");
+});
+
+it("logs reported provider cost and dimensions through the safe field allowlist", () => {
+  const write = vi.fn();
+  const logger = new StructuredLogger({ write });
+  logger.log("info", "leonardo_generated", {
+    provider: "leonardo",
+    providerGenerationId: "generation-1",
+    size: "50MP",
+    format: "webp",
+    width: 4000,
+    height: 3000,
+    attempt: 2,
+    cost: { amount: "0.1047", unit: "DOLLARS" },
+  });
+  expect(write.mock.calls[0]?.[0]).toContain(
+    '"cost":{"amount":"0.1047","unit":"DOLLARS"}',
+  );
+  expect(write.mock.calls[0]?.[0]).toContain(
+    '"providerGenerationId":"generation-1"',
+  );
+  expect(write.mock.calls[0]?.[0]).toContain('"width":4000');
+  logger.log("info", "invalid_cost", {
+    cost: { amount: "secret", unit: "DOLLARS" },
+  });
+  expect(write.mock.calls[1]?.[0]).not.toContain("secret");
+});
+
+it("can never write a presigned URL, API key or bearer token", () => {
+  const write = vi.fn();
+  const signed =
+    "https://bucket.s3.amazonaws.com/users/u/source.jpg?X-Amz-Signature=abc&X-Amz-Credential=AKIA";
+  new StructuredLogger({ write }).log("error", "provider_request_failed", {
+    provider: signed,
+    providerGenerationId: "Bearer secret-api-key",
+    outcome: signed,
+    errorMessage: signed,
+    error: new Error(`fetch ${signed} failed`),
+  });
+  const line = String(write.mock.calls[0]?.[0]);
+  expect(line).not.toContain("X-Amz-Signature");
+  expect(line).not.toContain("AKIA");
+  expect(line).not.toContain("secret-api-key");
+  expect(line).not.toContain("s3.amazonaws.com");
+});
+
+it("logs where a provider response failed validation, never its values", () => {
+  const write = vi.fn();
+  const logger = new StructuredLogger({ write });
+  logger.log("error", "provider_request_failed", {
+    responseIssueCode: "invalid_type",
+    responseIssuePath: "generateSync.results.0",
+  });
+  logger.log("error", "provider_request_failed", {
+    responseIssueCode: "https://cdn.example/a?X-Amz-Signature=secret",
+    responseIssuePath: "results.0 secret value",
+  });
+  expect(String(write.mock.calls[0]?.[0])).toContain(
+    '"responseIssuePath":"generateSync.results.0"',
+  );
+  expect(String(write.mock.calls[0]?.[0])).toContain('"responseIssueCode":"invalid_type"');
+  const unsafe = String(write.mock.calls[1]?.[0]);
+  expect(unsafe).not.toContain("responseIssue");
+  expect(unsafe).not.toContain("secret");
+});

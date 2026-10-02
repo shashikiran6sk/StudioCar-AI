@@ -61,12 +61,13 @@ databaseDescribe("paid credit reservations", () => {
         return id;
       }));
       return {
+        requestId: randomUUID(),
         allowance: { imageCapacity: 400, maxImagesPerBatch: 20, allowanceBillingPeriodKey: "2026-09" },
         batchIdempotencyKey: `paid-batch-${suffix}-${String(number)}`,
         batchLabel: null,
         batchRequestHash: "a".repeat(64),
         jobs: assetIds.map((assetId, displayOrder) => ({ assetId, displayOrder, idempotencyKey: `paid-job-${suffix}-${String(number)}-${String(displayOrder)}` })),
-        options, provider: ProcessingProvider.REMOVEBG,
+        options, provider: ProcessingProvider.LEONARDO,
         usageBillingPeriodKey: "2026-09",
         usageIdempotencyKey: `paid-usage-${suffix}-${String(number)}`,
         userId, vehicleId: vehicle.id,
@@ -74,6 +75,15 @@ databaseDescribe("paid credit reservations", () => {
     }));
     const results = await Promise.all(commands.map((command) => repository.reserveBatchOwned(command)));
     expect(results.map((result) => result.kind).sort()).toEqual(["ALLOWANCE_EXHAUSTED", "CREATED"]);
+    const accepted = results.find((result) => result.kind === "CREATED");
+    if (!accepted) throw new Error("Expected one accepted paid batch.");
+    const acceptedCommand = commands.find((command) => command.vehicleId === accepted.jobs[0]?.vehicleId);
+    if (!acceptedCommand) throw new Error("Expected the accepted batch command.");
+    expect(accepted.jobs.map((job) => job.imageAssetId)).toEqual(acceptedCommand.jobs.map((job) => job.assetId));
+    expect(accepted.jobs.map((job) => job.requestId)).toEqual(acceptedCommand.jobs.map(() => acceptedCommand.requestId));
+    const replay = await repository.reserveBatchOwned(acceptedCommand);
+    if (replay.kind !== "EXISTING") throw new Error("Expected an idempotent paid batch replay.");
+    expect(replay.jobs.map((job) => job.id)).toEqual(accepted.jobs.map((job) => job.id));
     expect(await database.creditAllocation.count({ where: { userId, source: "PRO" } })).toBe(3);
     expect(await database.creditAllocation.count({ where: { userId, source: "PURCHASED" } })).toBe(2);
     const ledger = await database.creditLedger.aggregate({ where: { userId }, _sum: { amount: true } });

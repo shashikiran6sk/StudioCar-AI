@@ -1,8 +1,8 @@
+import { getWebDatabase } from "../../db/web-database";
 import {
   parseAdminBootstrapEnvironment,
   parseGoogleAuthEnvironment,
 } from "@studiocar/config";
-import { createDatabaseClient } from "@studiocar/database-runtime";
 import { PrismaAdminBootstrapRepository } from "../../db/repositories/admin-bootstrap-repository";
 import { PrismaAdminManagementRepository } from "../../db/repositories/admin-management-repository";
 import { PrismaAuthIdentityLinkRepository } from "../../db/repositories/auth-identity-link-repository";
@@ -25,9 +25,7 @@ export function getGoogleOAuthApplication(): GoogleOAuthApplication {
   if (googleOAuthApplication) return googleOAuthApplication;
 
   const environment = parseGoogleAuthEnvironment(process.env);
-  const database = createDatabaseClient({
-    connectionString: environment.DATABASE_URL,
-  });
+  const database = getWebDatabase();
   const challenges = new PrismaGoogleOAuthChallengeRepository(database);
   const identities = new PrismaGoogleIdentityRepository(database);
   const provider = createGoogleIdentityProvider(environment);

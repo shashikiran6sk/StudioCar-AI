@@ -13,10 +13,10 @@ StudioCar runs in three environments selected by `APP_ENV` — `local`,
 `development`, and `production`. See [`docs/environments.md`](./docs/environments.md)
 for what each one runs and requires.
 
-### Local (no external accounts except remove.bg)
+### Local (no external accounts except Leonardo.Ai)
 
 ```bash
-cp .env.example.local .env.local   # then fill in REMOVEBG_API_KEY
+cp .env.example.local .env.local   # then fill in LEONARDO_API_KEY
 pnpm install --frozen-lockfile
 pnpm infra:up                      # PostgreSQL, MinIO, ElasticMQ, image worker, dispatcher
 pnpm db:reset                      # Local only: drop and reapply every migration
@@ -28,7 +28,7 @@ pnpm dev                           # http://localhost:3000
 contacting Google, and phone sign-in accepts the code `1234` without sending a
 message. Both run the ordinary challenge, identity, and session flow. Uploads go
 to MinIO, and processing goes through ElasticMQ and the real image worker to
-remove.bg. Results appear through the application's ordinary status polling;
+Leonardo.Ai Remove Background. Results appear through the application's ordinary status polling;
 StudioCar sends no email.
 
 ### Development (real Google, MSG91, AWS S3, AWS SQS, and database)
@@ -73,8 +73,9 @@ pnpm app:up      # Local only: the same, plus the application in a container
 pnpm app:down    # or pnpm infra:down
 ```
 
-`pnpm infra:build` rebuilds the worker and application images after changing
-their code or dependencies; `up` on its own reuses them.
+`pnpm infra:build` rebuilds the worker, MinIO, and application images after
+changing their code or dependencies; `up` builds any image that is missing and
+otherwise reuses it.
 
 | Service | Address | Notes |
 | --- | --- | --- |
@@ -198,3 +199,10 @@ authorization model.
 
 Product and architecture requirements live in [`docs/`](./docs/).
 
+
+## Observability
+
+Next.js uses Vercel JSON logs and server-side Sentry; image workers use CloudWatch
+logs/metrics and Sentry. Request and existing batch IDs follow durable SQS
+publication, the Leonardo.Ai provider call and private S3 output. See [the observability guide](docs/observability.md)
+for metrics, dashboards, alarms, deployment variables and correlation queries.

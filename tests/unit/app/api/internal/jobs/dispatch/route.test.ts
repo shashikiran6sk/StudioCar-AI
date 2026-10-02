@@ -45,8 +45,8 @@ describe("POST /api/internal/jobs/dispatch", () => {
     });
     const service = new ProcessingJobService(
       { reserveBatchOwned: vi.fn() },
-      dispatcher,
-      ProcessingProvider.REMOVEBG,
+      { schedule: vi.fn() },
+      ProcessingProvider.LEONARDO,
       { resolve: vi.fn().mockResolvedValue({ imageCapacity: 100, maxImagesPerBatch: 20, allowanceBillingPeriodKey: null }) },
     );
     const dispatchToken = "processing-dispatch-token-at-least-32-characters";

@@ -1,7 +1,15 @@
 [
   {
-    "source": "apps/web/src/app/layout.tsx",
-    "reason": "Static Next.js root layout and metadata only."
+    "source": "apps/web/src/lib/private-robots.ts",
+    "reason": "Static noindex policy asserted through the authenticated, admin, and auth layout tests."
+  },
+  {
+    "source": "apps/web/src/lib/seo-routes.ts",
+    "reason": "Static route list asserted through the robots route test."
+  },
+  {
+    "source": "apps/web/src/lib/site-config.ts",
+    "reason": "Static site identity asserted through root, homepage, sitemap, and JSON-LD tests."
   },
   {
     "source": "apps/web/src/app/app-routes.ts",
@@ -228,8 +236,8 @@
     "reason": "Type-only structured telemetry, metric, correlation, and sink definitions."
   },
   {
-    "source": "packages/processing/src/background-removal-provider.types.ts",
-    "reason": "Type-only background-removal provider boundary with no runtime behavior."
+    "source": "packages/processing/src/image-processing-provider.types.ts",
+    "reason": "Type-only image-processing provider port; exercised through the Leonardo adapter, executor and worker tests."
   },
   {
     "source": "packages/processing/src/index.ts",
@@ -272,14 +280,6 @@
     "reason": "Static image-worker service, dimension, event, and metric names only."
   },
   {
-    "source": "workers/image-processing/src/providers/remove-bg-provider.constants.ts",
-    "reason": "Static remove.bg endpoint, field, limit, and message constants only."
-  },
-  {
-    "source": "workers/image-processing/src/providers/remove-bg-provider.types.ts",
-    "reason": "Type-only remove.bg provider configuration with no runtime behavior."
-  },
-  {
     "source": "workers/image-processing/src/execution/image-execution.constants.ts",
     "reason": "Static image execution messages, metadata keys, and bounded dimensions only."
   },
@@ -302,10 +302,6 @@
   {
     "source": "workers/image-processing/src/storage/missing-processing-object-error.ts",
     "reason": "Named storage error class with no branching application behavior."
-  },
-  {
-    "source": "workers/image-processing/src/runtime/image-worker-runtime.constants.ts",
-    "reason": "Static worker provider configuration errors only."
   },
   {
     "source": "workers/image-processing/src/runtime/create-image-processing-worker.ts",
@@ -386,10 +382,6 @@
   {
     "source": "apps/web/src/features/marketing/marketing.constants.ts",
     "reason": "Static marketing routes, anchors, labels, feature content, workflow content, and asset paths only."
-  },
-  {
-    "source": "apps/web/src/features/pricing/pricing-plans.ts",
-    "reason": "Canonical static pricing presentation shared by marketing and future billing surfaces."
   },
   {
     "source": "apps/web/src/features/dashboard/dashboard.constants.ts",
@@ -520,10 +512,6 @@
     "reason": "Static floor labels and visual configuration only."
   },
   {
-    "source": "workers/image-processing/src/execution/studio-scene.constants.ts",
-    "reason": "Static studio scene palettes, shadow strengths and proportions only; exercised through the scene and renderer tests."
-  },
-  {
     "source": "apps/web/src/features/processing/processing-failure-messages.constants.ts",
     "reason": "Static user-facing failure copy keyed by the canonical failure reason only."
   },
@@ -570,6 +558,74 @@
   {
     "source": "apps/web/src/features/auth/msg91-widget/msg91-otp-error.constants.ts",
     "reason": "Static table of observed MSG91 widget refusal codes; exercised through normalize-msg91-otp-error tests."
+  },
+  {
+    "source": "packages/observability/src/monitoring.constants.ts",
+    "reason": "Static log, metric and error-code constants verified by logger and metric tests."
+  },
+  {
+    "source": "packages/observability/src/monitoring.types.ts",
+    "reason": "Type-only monitoring context definitions."
+  },
+  {
+    "source": "apps/web/src/instrumentation.ts",
+    "reason": "Next instrumentation hook wires tested exception reporting and initialization; verified by build and browser gates."
+  },
+  {
+    "source": "workers/image-processing/src/providers/leonardo-provider.constants.ts",
+    "reason": "Static Leonardo request constants and safe error messages tested through the adapter."
+  },
+  {
+    "source": "workers/image-processing/src/providers/leonardo-provider.types.ts",
+    "reason": "Type-only adapter options and source URL resolver."
+  },
+  {
+    "source": "workers/image-processing/src/execution/vehicle-alpha.types.ts",
+    "reason": "Types only for validated raster geometry and shadow tuning."
+  },
+  {
+    "source": "packages/processing/src/processing-quality-tier.constants.ts",
+    "reason": "Static plan-to-resolution table asserted through the processing quality tier resolver test."
+  },
+  {
+    "source": "workers/image-processing/src/providers/provider-failure.types.ts",
+    "reason": "Type-only provider failure category union."
+  },
+  {
+    "source": "workers/image-processing/src/providers/provider-failures.constants.ts",
+    "reason": "Static failure classification table asserted through the Leonardo provider and classification tests."
+  },
+  {
+    "source": "workers/image-processing/src/providers/provider-telemetry.constants.ts",
+    "reason": "Static provider metric names asserted through the provider operational event test."
+  },
+  {
+    "source": "workers/image-processing/src/providers/provider-exchange.types.ts",
+    "reason": "Type-only provider exchange observation."
+  },
+  {
+    "source": "workers/image-processing/src/execution/studio-background.types.ts",
+    "reason": "Type-only studio background asset definitions."
+  },
+  {
+    "source": "workers/image-processing/src/execution/studio-background.constants.ts",
+    "reason": "Static background asset table; the packaged files and seams are asserted by the studio background asset test."
+  },
+  {
+    "source": "workers/image-processing/src/execution/placed-layer.types.ts",
+    "reason": "Type-only positioned layer definition."
+  },
+  {
+    "source": "workers/image-processing/src/execution/vehicle-framing.types.ts",
+    "reason": "Type-only framing definition."
+  },
+  {
+    "source": "workers/image-processing/src/execution/processing-stage-failure.ts",
+    "reason": "Error carrier asserted through the processing job executor tests."
+  },
+  {
+    "source": "workers/image-processing/src/execution/no-vehicle-detected-error.ts",
+    "reason": "Error carrier asserted through the compose studio image and executor tests."
   },
   {
     "source": "apps/web/src/server/billing/billing-runtime.ts",

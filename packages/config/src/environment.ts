@@ -13,7 +13,6 @@ import {
 } from "./aws-connection";
 import { getEnvironmentProfile } from "./environment-profiles";
 import {
-  BackgroundRemovalProviderSchema,
   GoogleAuthDriverSchema,
   PhoneOtpDriverSchema,
   WorkerRuntime,
@@ -22,10 +21,8 @@ import { refineDriverSelection } from "./refine-driver-selection";
 import { refineEnvironmentIsolation } from "./refine-environment-isolation";
 
 export {
-  BackgroundRemovalProviderSchema,
   GoogleAuthDriverSchema,
   PhoneOtpDriverSchema,
-  type BackgroundRemovalProvider,
   type GoogleAuthDriver,
   type PhoneOtpDriver,
 } from "./provider-drivers";
@@ -44,10 +41,24 @@ const DEFAULT_PROCESSING_OUTBOX_BATCH_SIZE = 20;
 const DEFAULT_PROCESSING_OUTBOX_CLAIM_TTL_MS = 30_000;
 const DEFAULT_PROCESSING_OUTBOX_RETRY_BASE_MS = 1_000;
 const DEFAULT_PROCESSING_OUTBOX_RETRY_MAX_MS = 60_000;
-const DEFAULT_IMAGE_WORKER_CLAIM_TTL_MS = 120_000;
+const DEFAULT_IMAGE_WORKER_CLAIM_TTL_MS = 180_000;
 const DEFAULT_IMAGE_WORKER_RETRY_BASE_MS = 5_000;
 const DEFAULT_IMAGE_WORKER_RETRY_MAX_MS = 300_000;
-const DEFAULT_REMOVEBG_TIMEOUT_MS = 60_000;
+/**
+ * One deadline for a Leonardo Sync exchange: generation plus result download.
+ * Long enough for a full-resolution generation, short enough to leave the
+ * attempt time to compose, store and record its result inside the lease.
+ */
+const DEFAULT_LEONARDO_TIMEOUT_MS = 90_000;
+const MINIMUM_LEONARDO_TIMEOUT_MS = 1_000;
+const MAXIMUM_LEONARDO_TIMEOUT_MS = 150_000;
+/**
+ * What an attempt still needs after the provider answers: decode, compose,
+ * encode, two S3 writes and the completion transaction. The claim lease must
+ * cover the provider deadline plus this, or a slow attempt could lose its
+ * lease while it is still working.
+ */
+const IMAGE_WORKER_POST_PROVIDER_BUDGET_MS = 30_000;
 const DEFAULT_PROVIDER_INPUT_BYTES = 22 * 1024 * 1024;
 const DEFAULT_PROVIDER_OUTPUT_BYTES = 100 * 1024 * 1024;
 const DEFAULT_WORKER_IMAGE_PIXELS = 50_000_000;
@@ -474,32 +485,12 @@ export const StorageCleanupEnvironmentSchema = z
     }
   });
 
-function refineBackgroundRemovalProvider(
-  value: {
-    APP_ENV: AppEnvironment;
-    BACKGROUND_REMOVAL_PROVIDER: z.infer<typeof BackgroundRemovalProviderSchema>;
-  },
-  context: z.RefinementCtx,
-): void {
-  refineDriverSelection(
-    {
-      appEnvironment: value.APP_ENV,
-      variable: "BACKGROUND_REMOVAL_PROVIDER",
-      driver: value.BACKGROUND_REMOVAL_PROVIDER,
-      allowed: getEnvironmentProfile(value.APP_ENV).backgroundRemovalProvider
-        .allowed,
-    },
-    context,
-  );
-}
-
 export const ProcessingEnvironmentSchema = z
   .object({
     APP_ENV: AppEnvironmentSchema,
     DATABASE_URL: PostgresUrlSchema,
     ...SqsConnectionSchema.shape,
     SQS_IMAGE_QUEUE_URL: z.url(),
-    BACKGROUND_REMOVAL_PROVIDER: BackgroundRemovalProviderSchema,
     PROCESSING_DISPATCH_TOKEN: z.string().min(32),
     PROCESSING_BATCH_RATE_LIMIT_WINDOW_SECONDS: CommandRateLimitWindowSchema,
     PROCESSING_BATCH_MAX_PER_WINDOW: CommandRateLimitMaximumSchema.default(
@@ -534,7 +525,6 @@ export const ProcessingEnvironmentSchema = z
   .superRefine((value, context) => {
     refineSqsConnection(value, context);
     refineEnvironmentIsolation(value, context);
-    refineBackgroundRemovalProvider(value, context);
     if (
       value.PROCESSING_OUTBOX_RETRY_MAX_MS <
       value.PROCESSING_OUTBOX_RETRY_BASE_MS
@@ -571,10 +561,14 @@ export const ImageWorkerEnvironmentSchema = z
     DATABASE_URL: PostgresUrlSchema,
     ...S3ConnectionSchema.shape,
     S3_BUCKET: z.string().trim().min(3).max(63),
-    BACKGROUND_REMOVAL_PROVIDER: BackgroundRemovalProviderSchema,
-    REMOVEBG_API_KEY: emptyAsUnset(z.string().trim().min(1)),
-    FAL_KEY: emptyAsUnset(z.string().trim().min(1)),
-    SELF_HOSTED_BIREFNET_ENDPOINT: emptyAsUnset(z.url()),
+    LEONARDO_API_KEY: z.string().trim().min(1),
+    LEONARDO_TIMEOUT_MS: emptyAsUnset(
+      z.coerce
+        .number()
+        .int()
+        .min(MINIMUM_LEONARDO_TIMEOUT_MS)
+        .max(MAXIMUM_LEONARDO_TIMEOUT_MS),
+    ).transform((value) => value ?? DEFAULT_LEONARDO_TIMEOUT_MS),
     IMAGE_WORKER_CLAIM_TTL_MS: z.coerce
       .number()
       .int()
@@ -593,12 +587,6 @@ export const ImageWorkerEnvironmentSchema = z
       .min(100)
       .max(3_600_000)
       .default(DEFAULT_IMAGE_WORKER_RETRY_MAX_MS),
-    REMOVEBG_TIMEOUT_MS: z.coerce
-      .number()
-      .int()
-      .min(1_000)
-      .max(300_000)
-      .default(DEFAULT_REMOVEBG_TIMEOUT_MS),
     MAX_PROVIDER_INPUT_BYTES: z.coerce
       .number()
       .int()
@@ -628,7 +616,6 @@ export const ImageWorkerEnvironmentSchema = z
   .superRefine((value, context) => {
     refineS3Connection(value, context);
     refineEnvironmentIsolation(value, context);
-    refineBackgroundRemovalProvider(value, context);
     if (value.PROCESSING_RETRY_MAX_MS < value.PROCESSING_RETRY_BASE_MS) {
       context.addIssue({
         code: "custom",
@@ -636,21 +623,15 @@ export const ImageWorkerEnvironmentSchema = z
         path: ["PROCESSING_RETRY_MAX_MS"],
       });
     }
-
-    const providerKey: Record<
-      z.infer<typeof BackgroundRemovalProviderSchema>,
-      keyof typeof value
-    > = {
-      removebg: "REMOVEBG_API_KEY",
-      fal: "FAL_KEY",
-      birefnet: "SELF_HOSTED_BIREFNET_ENDPOINT",
-    };
-    const requiredKey = providerKey[value.BACKGROUND_REMOVAL_PROVIDER];
-    if (!value[requiredKey]) {
+    if (
+      value.IMAGE_WORKER_CLAIM_TTL_MS <
+      value.LEONARDO_TIMEOUT_MS + IMAGE_WORKER_POST_PROVIDER_BUDGET_MS
+    ) {
       context.addIssue({
         code: "custom",
-        message: `${requiredKey} is required for ${value.BACKGROUND_REMOVAL_PROVIDER}.`,
-        path: [requiredKey],
+        message:
+          "IMAGE_WORKER_CLAIM_TTL_MS must cover LEONARDO_TIMEOUT_MS plus the time to compose and store the result.",
+        path: ["IMAGE_WORKER_CLAIM_TTL_MS"],
       });
     }
   });

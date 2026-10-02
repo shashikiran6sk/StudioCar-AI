@@ -6,6 +6,7 @@ export * from "./common";
 export * from "./dashboard";
 export * from "./inventory";
 export * from "./jobs";
+export * from "./leonardo";
 export * from "./processing";
 export * from "./phone-number";
 export * from "./plans";

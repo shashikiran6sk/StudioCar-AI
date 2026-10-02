@@ -1,5 +1,5 @@
 import {
-  ProcessingOptionsSchema,
+  StoredProcessingOptionsSchema,
   type ProcessingOptions,
 } from "@studiocar/contracts";
 import { ProcessingJobStatus } from "@studiocar/database-runtime";
@@ -40,7 +40,7 @@ export function groupStudioVersions(
     ) {
       continue;
     }
-    const options = ProcessingOptionsSchema.parse(job.options);
+    const options = StoredProcessingOptionsSchema.parse(job.options);
     const id = createStudioVersionKey(options, job.batchLabel);
     const assets = seenAssets.get(id) ?? new Set<string>();
     if (assets.has(job.imageAsset.id)) continue;

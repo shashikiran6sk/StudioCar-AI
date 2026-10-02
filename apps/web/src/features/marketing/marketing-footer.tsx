@@ -1,5 +1,6 @@
 import type { SocialLink } from "@studiocar/contracts";
 import { BrandMark } from "@studiocar/ui";
+import Link from "next/link";
 
 import {
   BILLING_PATH,
@@ -8,6 +9,7 @@ import {
   PROFILE_PATH,
 } from "../../app/app-routes";
 import {
+  MARKETING_ABOUT_ID,
   MARKETING_COMPANY_LINKS,
   MARKETING_COPY,
   MARKETING_NAVIGATION,
@@ -25,13 +27,14 @@ export function MarketingFooter({ socialLinks }: MarketingFooterProps) {
         socialLinks.length === 0 ? "" : " marketing-footer--with-social"
       }`}
     >
-      <div className="marketing-footer__brand">
+      <section className="marketing-footer__brand" id={MARKETING_ABOUT_ID}>
+        <h2 className="sc-visually-hidden">About StudioCar AI</h2>
         <BrandMark inverted withName />
         <p>{MARKETING_COPY.footer.description}</p>
-      </div>
+      </section>
       <nav aria-label="Product footer links">
         <strong>{MARKETING_COPY.footer.productLabel}</strong>
-        <a href="#top">Home</a>
+        <Link href="/#top">Home</Link>
         {MARKETING_NAVIGATION.map((item) => (
           <a href={item.href} key={item.href}>
             {item.label}
@@ -47,6 +50,7 @@ export function MarketingFooter({ socialLinks }: MarketingFooterProps) {
       </nav>
       <nav aria-label="Company footer links">
         <strong>{MARKETING_COPY.footer.companyLabel}</strong>
+        <a href={`/#${MARKETING_ABOUT_ID}`}>About</a>
         {MARKETING_COMPANY_LINKS.map((label) => (
           <span aria-disabled="true" key={label}>
             {label}

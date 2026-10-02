@@ -672,6 +672,7 @@ html {
 }
 
 .marketing-footer__brand {
+  scroll-margin-top: 78px;
   display: grid;
   align-content: start;
   justify-items: start;
@@ -830,13 +831,32 @@ html {
 }
 
 @media (max-width: 639px) {
+  .marketing-hero {
+    gap: 28px;
+    padding-top: 28px;
+    padding-bottom: 36px;
+  }
+
+  .marketing-hero__copy {
+    gap: 18px;
+  }
+
   .marketing-hero h1 {
-    font-size: 42px;
+    font-size: clamp(34px, 10vw, 42px);
+  }
+
+  .marketing-hero__summary {
+    font-size: 14px;
+    line-height: 1.6;
   }
 
   .marketing-hero__actions,
   .marketing-hero__actions .sc-button {
     width: 100%;
+  }
+
+  .marketing-hero__actions {
+    gap: 8px;
   }
 
   .marketing-proof {
@@ -849,21 +869,90 @@ html {
     border-right: 0;
   }
 
+  /* The comparison keeps the photograph's proportions instead of a tall crop. */
   .marketing-hero__visual .sc-comparison {
-    height: 320px;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 4 / 3;
   }
 
+  .marketing-features {
+    gap: 16px;
+    padding-bottom: 40px;
+  }
+
+  .marketing-section-heading,
+  .marketing-section-heading--compact {
+    gap: 10px;
+  }
+
+  .marketing-section-heading h2,
+  .marketing-backgrounds h2,
+  .pricing-section h2,
+  .marketing-final-cta h2 {
+    font-size: clamp(26px, 7.6vw, 30px);
+  }
+
+  .marketing-section-heading--compact h2 {
+    font-size: clamp(24px, 6.8vw, 26px);
+  }
+
+  .marketing-section-heading > p {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* Compact cards stay readable in pairs, so the four sit in a 2 × 2 grid. */
   .marketing-features__grid,
   .marketing-workflow__steps {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .marketing-feature-card {
-    min-height: 118px;
+    min-height: 0;
+    gap: 7px;
+    padding: 14px;
+  }
+
+  .marketing-feature-card[aria-pressed="true"] {
+    transform: none;
+  }
+
+  .marketing-feature-card small {
+    font-size: 11px;
+  }
+
+  .marketing-audience-strip {
+    gap: 10px;
+    padding-block: 14px;
+  }
+
+  .marketing-workflow,
+  .marketing-backgrounds {
+    gap: 24px;
+    padding-top: 48px;
+    padding-bottom: 48px;
   }
 
   .marketing-workflow__steps li {
-    min-height: 230px;
+    min-height: 0;
+    gap: 8px;
+    padding: 14px;
+  }
+
+  .marketing-workflow__steps li > span {
+    width: 32px;
+    height: 32px;
+  }
+
+  .marketing-workflow__steps h3 {
+    margin-top: 6px;
+    font-size: 14px;
+  }
+
+  .marketing-workflow__steps strong {
+    padding-top: 10px;
   }
 
   .marketing-workflow__note,
@@ -872,20 +961,88 @@ html {
     flex-direction: column;
   }
 
+  .marketing-workflow__note {
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .marketing-backgrounds__copy {
+    gap: 16px;
+  }
+
+  .marketing-backgrounds__copy > p:not(.eyebrow) {
+    font-size: 13px;
+  }
+
   .marketing-backgrounds__gallery {
     height: auto;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: 300px 180px;
+    grid-template-rows: auto auto;
+    gap: 10px;
+  }
+
+  .marketing-backgrounds__gallery .marketing-car-stage {
+    aspect-ratio: 4 / 3;
   }
 
   .marketing-backgrounds__gallery .marketing-car-stage:first-child {
     grid-column: 1 / -1;
     grid-row: auto;
+    aspect-ratio: 16 / 10;
+  }
+
+  .marketing-backgrounds__gallery .marketing-car-stage__label {
+    bottom: 10px;
+    left: 10px;
+  }
+
+  .pricing-section {
+    gap: 24px;
+    padding-top: 48px;
+    padding-bottom: 48px;
+  }
+
+  .pricing-section__heading {
+    gap: 12px;
+  }
+
+  /* Pricing cards swipe, the next one peeking, rather than stacking. */
+  .pricing-section__grid {
+    grid-template-columns: none;
+    grid-auto-columns: min(82%, 320px);
+    grid-auto-flow: column;
+    gap: 12px;
+    margin-inline: -20px;
+    overflow-x: auto;
+    padding: 2px 20px 10px;
+    scroll-padding-inline: 20px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
   }
 
   .pricing-card {
-    min-height: 480px;
-    padding: 24px;
+    min-height: 0;
+    gap: 16px;
+    padding: 22px;
+    scroll-snap-align: start;
+  }
+
+  .pricing-card__description {
+    min-height: 0;
+  }
+
+  .pricing-card li {
+    padding: 10px 0;
+  }
+
+  .marketing-final-cta {
+    gap: 24px;
+    margin-bottom: 48px;
+    padding: 32px 22px;
+  }
+
+  .marketing-footer {
+    padding-top: 40px;
   }
 
   .marketing-final-cta__actions .sc-button {
@@ -900,6 +1057,12 @@ html {
     align-items: start;
     flex-direction: column;
     gap: 8px;
+  }
+}
+
+@media (max-width: 359px) {
+  .marketing-workflow__steps {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1379,6 +1542,69 @@ body {
   gap: 12px;
 }
 
+.app-topbar__start {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Shown only below the desktop sidebar breakpoint. */
+.mobile-navigation {
+  display: none;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.mobile-navigation__trigger {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  place-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--sc-radius-control);
+  background: transparent;
+  color: var(--sc-neutral-900);
+  cursor: pointer;
+}
+
+.mobile-navigation__trigger svg {
+  width: 22px;
+  height: 22px;
+}
+
+.mobile-navigation__trigger:hover {
+  background: var(--sc-neutral-100);
+}
+
+.mobile-navigation__trigger:focus-visible,
+.mobile-navigation__logout button:focus-visible {
+  outline: 3px solid var(--sc-focus);
+  outline-offset: 2px;
+}
+
+.mobile-navigation__section {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-navigation__logout button {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--sc-neutral-300);
+  border-radius: var(--sc-radius-control);
+  background: var(--sc-neutral-0);
+  color: var(--sc-neutral-900);
+  cursor: pointer;
+  font: 800 12px/1 var(--sc-font-sans);
+}
+
 .processing-indicator {
   position: relative;
 }
@@ -1806,15 +2032,78 @@ body {
 }
 
 @media (max-width: 767px) {
-  .dashboard-stats,
+  .dashboard-page {
+    gap: 24px;
+  }
+
+  /* Compact figures read well in pairs; the fifth spans the row. */
+  .dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .dashboard-stat {
+    min-height: 0;
+    gap: 6px;
+    padding: 14px;
+  }
+
+  .dashboard-stat strong {
+    font-size: 23px;
+  }
+
+  .dashboard-stat span {
+    font-size: 10px;
+  }
+
+  .dashboard-stat:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
   .dashboard-actions,
   .dashboard-recent__grid,
   .dashboard-loading__cards {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
-  .dashboard-stat {
-    min-height: 118px;
+  /* Quick actions keep their imagery beside the copy, like vehicle cards. */
+  .dashboard-action-card {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+  }
+
+  .dashboard-action-card__media {
+    height: 100%;
+    min-height: 128px;
+  }
+
+  .dashboard-action-card__media > span {
+    top: 8px;
+    left: 8px;
+  }
+
+  .dashboard-action-card__body {
+    align-content: space-between;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .dashboard-action-card__body h3 {
+    font-size: 13px;
+  }
+
+  .dashboard-action-card__body p {
+    font-size: 11px;
+  }
+
+  .dashboard-action-card__footer {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .dashboard-action-card__footer .sc-button--ghost {
+    padding-inline: 4px;
   }
 
   .dashboard-recent__grid .inventory-card {
@@ -2466,72 +2755,129 @@ body {
     letter-spacing: -0.4px;
   }
 
+  /*
+   * The sidebar becomes the navigation drawer: the same destinations, plan
+   * summary, and log out, opened from the top bar's menu control.
+   */
   .app-shell {
     display: block;
-    padding-bottom: 68px;
   }
 
   .app-sidebar {
-    position: fixed;
-    z-index: 20;
-    top: auto;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    display: block;
-    width: auto;
-    height: 68px;
-    padding: 7px 10px;
-    border-top: 1px solid var(--sc-neutral-300);
-    border-right: 0;
-  }
-
-  .app-sidebar__brand,
-  .app-sidebar__plan {
     display: none;
   }
 
-  .app-navigation {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
+  .mobile-navigation {
+    display: flex;
   }
 
-  .app-navigation__item {
-    min-height: 54px;
-    flex-direction: column;
-    justify-content: center;
-    gap: 2px;
-    padding: 5px 4px;
-    font-size: 9px;
-    text-align: center;
+  .sc-sheet__body .app-navigation__item {
+    min-height: 46px;
+    font-size: 14px;
   }
 
-  .app-navigation__item:nth-child(n + 4) {
-    display: none;
+  .sc-sheet__body .app-sidebar__plan {
+    margin-top: auto;
   }
 
   .app-topbar {
     height: 64px;
-    padding: 0 16px;
+    gap: 12px;
+    padding: 0 16px 0 10px;
   }
 
+  .app-topbar__start {
+    flex: 1 1 auto;
+    gap: 8px;
+  }
+
+  .app-topbar__activity {
+    min-width: 0;
+  }
+
+  /* The current section, shown beside the menu, says where you are. */
   .app-topbar__label {
-    font-size: 11px;
-    font-weight: 800;
+    display: none;
   }
 
   .account-menu__name {
     display: none;
   }
 
+  .account-menu__avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .account-menu__panel {
+    width: min(260px, calc(100vw - 32px));
+  }
+
+  .account-menu__panel a {
+    display: flex;
+    min-height: 40px;
+    align-items: center;
+  }
+
+  .account-menu__panel button {
+    height: 44px;
+  }
+
+  /* Anchored to the viewport, the panel cannot run off the right edge. */
+  .processing-panel {
+    position: fixed;
+    top: 72px;
+    right: 16px;
+    left: 16px;
+    width: auto;
+    max-height: calc(100dvh - 96px);
+  }
+
+  .processing-panel li > button {
+    min-height: 40px;
+  }
+
+  /* Compact enough to share the bar with the section name and account. */
+  .processing-indicator__trigger {
+    max-width: 100%;
+    min-height: 36px;
+    overflow: hidden;
+    padding: 0 10px;
+    font: 800 11px/1 var(--sc-font-sans);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .processing-indicator__dot {
+    flex: 0 0 auto;
+  }
+
   .app-content {
     padding: 19px 16px 24px;
+  }
+
+  .app-page-header {
+    align-items: start;
+    gap: 14px;
+  }
+
+  .app-page-header > div {
+    min-width: 0;
+  }
+
+  .app-page-header > .sc-button {
+    flex: 0 0 auto;
+    padding-inline: 12px;
+    white-space: nowrap;
   }
 
   .app-page-header h1 {
     font-size: 25px;
     letter-spacing: -0.4px;
+  }
+
+  .app-page-header > div > p:last-child {
+    font-size: 12px;
   }
 
   .profile-grid,
@@ -2540,12 +2886,72 @@ body {
     grid-template-columns: 1fr;
   }
 
+  /*
+   * One compact row per photo: the status sits under the filename instead of
+   * pushing the row onto a second line. Empty columns (no checkbox) collapse,
+   * so spacing comes from margins rather than the grid gap.
+   */
   .photo-upload-item {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: auto auto 56px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px 0;
+    padding: 6px 6px 6px 10px;
+  }
+
+  .photo-upload-item__select {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    width: 22px;
+    height: 22px;
+    margin-right: 6px;
+  }
+
+  .photo-upload-item__reorder {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    margin-right: 6px;
+  }
+
+  .photo-upload-item__reorder button {
+    width: 32px;
+    height: 22px;
+    font-size: 15px;
+  }
+
+  .photo-upload-item__thumbnail {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    width: 56px;
+    height: 40px;
   }
 
   .photo-upload-item__copy {
-    flex-basis: calc(100% - 130px);
+    grid-column: 4;
+    grid-row: 1;
+    align-self: end;
+    margin-left: 10px;
+  }
+
+  .photo-upload-item__status {
+    grid-column: 4;
+    grid-row: 2;
+    align-self: start;
+    justify-self: start;
+    margin-left: 10px;
+  }
+
+  .photo-upload-item > .sc-button {
+    grid-column: 4;
+    justify-self: start;
+    margin-left: 10px;
+  }
+
+  .photo-upload-item > .sc-button:last-child {
+    grid-column: 5;
+    grid-row: 1 / span 2;
+    width: 44px;
+    margin-left: 6px;
   }
 
   .customize-treatment-step__toggles,
@@ -2553,12 +2959,32 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .background-treatment-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .review-process-step__summary {
+    gap: 14px;
   }
 
+  /* Swatches are small, so all three choices stay on one row. */
+  .background-treatment-grid {
+    gap: 8px;
+  }
+
+  .background-treatment-card {
+    min-height: 44px;
+  }
+
+  .background-treatment-card__visual {
+    height: 52px;
+  }
+
+  /* The vehicle keeps its photographic proportions rather than a thin strip. */
   .review-process-step__image {
     width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 10;
+  }
+
+  .review-process-step__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .profile-section-card {
@@ -3112,6 +3538,19 @@ body {
   .inventory-page__next {
     width: 100%;
   }
+
+  .inventory-filter {
+    height: 38px;
+  }
+}
+
+/* The narrowest phones give the vehicle copy more of the card. */
+@media (max-width: 359px) {
+  .inventory-card,
+  .inventory-grid--list .inventory-card,
+  .dashboard-recent__grid .inventory-card {
+    grid-template-columns: 112px minmax(0, 1fr);
+  }
 }
 
 .portfolio-page {
@@ -3202,6 +3641,24 @@ body {
 
 .portfolio-gallery__thumbnail img {
   object-fit: cover;
+}
+
+.portfolio-gallery__overflow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--sc-neutral-950);
+  color: var(--sc-neutral-0);
+}
+
+.portfolio-gallery__overflow strong {
+  font-size: 24px;
+}
+
+.portfolio-gallery__overflow span {
+  font-size: 12px;
 }
 
 .portfolio-gallery__footer {
@@ -3308,7 +3765,7 @@ body {
   z-index: 80;
   display: grid;
   inset: 0;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
   gap: 18px;
   width: auto;
   max-width: none;
@@ -3357,8 +3814,30 @@ body {
   height: 100%;
 }
 
+.portfolio-viewer__image .sc-comparison img {
+  object-fit: contain;
+}
+
 .portfolio-viewer__navigation {
   justify-content: center;
+}
+
+.portfolio-viewer__thumbnails {
+  display: flex;
+  min-width: 0;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 5px;
+}
+
+.portfolio-viewer__thumbnails .portfolio-gallery__thumbnail {
+  width: 88px;
+  height: 72px;
+  flex: 0 0 auto;
+}
+
+.portfolio-viewer__thumbnails .portfolio-gallery__thumbnail[aria-pressed="true"] {
+  border-color: var(--sc-neutral-0);
 }
 
 .portfolio-loading__header {
@@ -3423,9 +3902,15 @@ body {
 }
 
 @media (max-width: 639px) {
+  /* The comparison keeps the photograph's proportions instead of a tall crop. */
   .portfolio-gallery__stage,
   .portfolio-loading__stage {
-    height: 360px;
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+
+  .portfolio-gallery__stage .sc-comparison {
+    min-height: 0;
   }
 
   .portfolio-gallery__thumbnail,
@@ -3454,12 +3939,22 @@ body {
     width: 100%;
   }
 
-  .portfolio-facts {
-    grid-template-columns: 1fr;
+  .portfolio-facts > div {
+    padding: 13px 14px;
   }
 
-  .portfolio-facts > div {
+  .portfolio-facts > div:nth-child(2n) {
     border-right: 0;
+  }
+
+  .portfolio-facts > div:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    border-right: 0;
+  }
+
+  .portfolio-facts > div:last-child,
+  .portfolio-facts > div:nth-last-child(2):nth-child(odd) {
+    border-bottom: 0;
   }
 
   .portfolio-viewer {
@@ -3779,13 +4274,49 @@ body {
     text-align: left;
   }
 
-  .billing-packs__grid {
-    grid-template-columns: 1fr;
+  .usage-current-plan {
+    min-height: 0;
+    gap: 8px;
+    padding: 20px;
   }
 
-  .usage-current-plan {
-    min-height: 260px;
-    padding: 20px;
+  .usage-current-plan .sc-progress {
+    margin-top: 10px;
+  }
+
+  .usage-overview__quotas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .usage-quota-card {
+    padding: 14px;
+  }
+
+  .usage-quota-card > strong {
+    font-size: 19px;
+  }
+
+  /*
+   * Packs are full pricing cards: side by side they would be cramped, and
+   * stacked they triple the page. They swipe instead, the next card peeking.
+   */
+  .billing-packs__grid {
+    grid-template-columns: none;
+    grid-auto-columns: min(80%, 300px);
+    grid-auto-flow: column;
+    gap: 12px;
+    margin-inline: -16px;
+    overflow-x: auto;
+    padding: 2px 16px 10px;
+    scroll-padding-inline: 16px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .billing-plan-card {
+    min-height: 0;
+    scroll-snap-align: start;
   }
 }
 

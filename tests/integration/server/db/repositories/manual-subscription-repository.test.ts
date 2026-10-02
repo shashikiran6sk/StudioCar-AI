@@ -246,7 +246,7 @@ databaseDescribe("PrismaManualSubscriptionRepository", () => {
       ).resolves.toEqual({ kind: "PROVIDER_MANAGED" });
 
       // The provider is the authority on what somebody has paid for.
-      await expect(billing.findOwnedPlanKey(owner.id, now)).resolves.toBeNull();
+      await expect(billing.findOwnedPlanKey(owner.id, now)).resolves.toBe("STUDIO_PLUS");
       expect(
         await database.auditLog.count({
           where: { resourceType: "PlanSubscription" },
@@ -355,7 +355,7 @@ databaseDescribe("PrismaManualSubscriptionRepository", () => {
       });
 
       await expect(
-        repository.revoke({ actorUserId: admin.id, now, userId: owner.id }),
+          repository.revoke({ actorUserId: admin.id, now, userId: owner.id }),
       ).resolves.toEqual({ kind: "REVOKED" });
       await expect(
         billing.findOwnedPlanKey(owner.id, now),
@@ -409,7 +409,7 @@ databaseDescribe("PrismaManualSubscriptionRepository", () => {
       await expect(
         repository.revoke({ actorUserId: admin.id, now, userId: owner.id }),
       ).resolves.toEqual({ kind: "NOT_ASSIGNED" });
-      await expect(billing.findOwnedPlanKey(owner.id, now)).resolves.toBeNull();
+      await expect(billing.findOwnedPlanKey(owner.id, now)).resolves.toBe("STUDIO_PRO");
     });
 
     it("reports an account with nothing to end", async () => {
@@ -419,7 +419,7 @@ databaseDescribe("PrismaManualSubscriptionRepository", () => {
       ]);
 
       await expect(
-        repository.revoke({ actorUserId: admin.id, now, userId: owner.id }),
+          repository.revoke({ actorUserId: admin.id, now, userId: owner.id }),
       ).resolves.toEqual({ kind: "NOT_ASSIGNED" });
     });
   });

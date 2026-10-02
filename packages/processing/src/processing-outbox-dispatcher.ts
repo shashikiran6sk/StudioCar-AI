@@ -1,3 +1,4 @@
+import { dispatchProcessingOutboxBatches } from "./dispatch-processing-outbox-batches";
 import { randomUUID } from "node:crypto";
 import { WorkerMessageSchema } from "@studiocar/contracts";
 
@@ -42,6 +43,13 @@ export class ProcessingOutboxDispatcher {
       limit: this.options.batchSize,
       now: claimedAt,
     });
+    if (this.queue.publishBatch && this.outbox.markOutboxPublishedBatch) {
+      return dispatchProcessingOutboxBatches(messages, claimToken,
+        new Date(claimedAt.getTime() + this.options.claimTtlMilliseconds),
+        this.queue.publishBatch.bind(this.queue),
+        this.outbox.markOutboxPublishedBatch.bind(this.outbox),
+        this.outbox.releaseOutboxClaim.bind(this.outbox), this.options, this.now, this.random);
+    }
     let failed = 0;
     let published = 0;
 
@@ -51,6 +59,10 @@ export class ProcessingOutboxDispatcher {
           version: PROCESS_IMAGE_MESSAGE_VERSION,
           type: PROCESS_IMAGE_MESSAGE_TYPE,
           jobId: message.jobId,
+          requestId: message.job?.requestId ?? message.jobId,
+          ...(message.job?.batchIdempotencyKey
+            ? { batchId: message.job.batchIdempotencyKey }
+            : {}),
           enqueuedAt: message.createdAt.toISOString(),
         });
         const queueResult = await this.queue.publish(workerMessage);

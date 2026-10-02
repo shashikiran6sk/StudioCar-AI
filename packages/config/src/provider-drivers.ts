@@ -7,11 +7,6 @@ import { z } from "zod";
  */
 export const GoogleAuthDriverSchema = z.enum(["google", "fake"]);
 export const PhoneOtpDriverSchema = z.enum(["msg91", "fake"]);
-export const BackgroundRemovalProviderSchema = z.enum([
-  "removebg",
-  "fal",
-  "birefnet",
-]);
 
 /** Where object storage lives: the local S3-compatible emulator, or AWS S3. */
 export const StorageTarget = {
@@ -33,9 +28,6 @@ export const WorkerRuntime = {
 
 export type GoogleAuthDriver = z.infer<typeof GoogleAuthDriverSchema>;
 export type PhoneOtpDriver = z.infer<typeof PhoneOtpDriverSchema>;
-export type BackgroundRemovalProvider = z.infer<
-  typeof BackgroundRemovalProviderSchema
->;
 export type StorageTarget = (typeof StorageTarget)[keyof typeof StorageTarget];
 export type QueueTarget = (typeof QueueTarget)[keyof typeof QueueTarget];
 export type WorkerRuntime = (typeof WorkerRuntime)[keyof typeof WorkerRuntime];

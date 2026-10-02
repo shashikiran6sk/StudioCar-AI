@@ -4,8 +4,8 @@ StudioCar AI runs in exactly three environments, selected by `APP_ENV`:
 
 | `APP_ENV` | Purpose |
 | --- | --- |
-| `local` | Everything on the developer's machine. Needs nothing but a remove.bg key. |
-| `development` | Real Google, MSG91, AWS S3, AWS SQS, remove.bg, and database; the image worker and dispatcher stay local. |
+| `local` | Everything on the developer's machine. Needs nothing but a Leonardo key, and cannot complete a real background removal (see Local). |
+| `development` | Real Google, MSG91, AWS S3, AWS SQS, Leonardo.Ai, and database; the image worker and dispatcher stay local. |
 | `production` | Fully deployed. No local adapter can be selected. |
 
 `NODE_ENV` keeps its ordinary Node.js and Next.js meaning (how the code was
@@ -27,7 +27,7 @@ every runtime; no environment is ever assumed.
 | Original and processed images | MinIO | AWS S3 Development bucket | AWS S3 production bucket |
 | Processing queue | ElasticMQ | AWS SQS Development queue | AWS SQS |
 | Image worker | local container | local container | deployed Lambda |
-| Background removal | remove.bg | remove.bg | configured provider (remove.bg) |
+| Background removal and shadow | Leonardo.Ai (cannot fetch MinIO) | Leonardo.Ai | Leonardo.Ai |
 | Email delivery | none | none | none |
 | Dispatch scheduler | local ticker | local ticker | trusted scheduler |
 | AWS credentials | none | explicit S3 and SQS pairs or AWS default chain | workload identity |
@@ -57,7 +57,7 @@ explicit overrides it tolerates.
    refused. A violation names the setting and fails startup.
 
 Only repository-owned infrastructure is ever defaulted. External credentials
-(remove.bg, Google, MSG91, AWS), a Development session secret, and
+(Leonardo, Google, MSG91, AWS), a Development session secret, and
 anything a deployment owns have no default anywhere.
 
 The Local defaults live in one module,
@@ -94,10 +94,10 @@ environment starts without it.
 
 ## Local
 
-The whole application runs without any external account except remove.bg.
+The whole application runs without any external account except Leonardo.Ai.
 
 ```bash
-cp .env.example.local .env.local   # then fill in REMOVEBG_API_KEY
+cp .env.example.local .env.local   # then fill in LEONARDO_API_KEY
 pnpm install
 pnpm infra:up                      # PostgreSQL, MinIO, ElasticMQ, image worker, dispatcher
 pnpm db:reset                      # Local only: drop and reapply every migration
@@ -119,9 +119,12 @@ pnpm dev                           # http://localhost:3000
   checksum-bound PUT used in production, and the commit endpoint verifies the
   object. The content security policy allows the MinIO origin only under this
   profile.
-- **Processing** follows the real path: reservation and outbox in PostgreSQL,
-  the dispatcher, ElasticMQ, the image worker (the deployed handler driven by a
-  local consumer), MinIO, remove.bg, and completion with its usage event.
+- **Processing** follows the real path — reservation and outbox in PostgreSQL,
+  the dispatcher, ElasticMQ, and the image worker (the deployed handler driven
+  by a local consumer) — up to the provider. Leonardo fetches each source image
+  from a short-lived HTTPS URL and cannot reach MinIO, so a Local job fails at
+  the provider step and shows the ordinary failure state. Process real images
+  under the Development profile, whose bucket Leonardo can read.
 
 | Service | Address |
 | --- | --- |
@@ -134,7 +137,7 @@ pnpm dev                           # http://localhost:3000
 `pnpm infra:build` rebuilds the worker and application images after their code
 or dependencies change.
 
-Automated tests never call remove.bg, Google, or MSG91; they replace
+Automated tests never call Leonardo, Google, or MSG91; they replace
 providers at their ports.
 
 ## Development
@@ -153,7 +156,7 @@ Required: `DATABASE_URL` (the Development database), `SESSION_SECRET`,
 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MSG91_WIDGET_ID`,
 `MSG91_WIDGET_TOKEN`, `MSG91_AUTH_KEY`, `AWS_REGION` (the example sets
 `ap-south-1`), `S3_BUCKET` (the Development bucket), `SQS_IMAGE_QUEUE_URL` (the
-Development queue), and `REMOVEBG_API_KEY`. Optional: the `S3_*` and `SQS_*`
+Development queue), and `LEONARDO_API_KEY`. Optional: the `S3_*` and `SQS_*`
 key pairs (see below), and `WORKER_DATABASE_URL`, for a database the worker
 container cannot reach at `DATABASE_URL` (see below). `pnpm infra:up` refuses to
 start without `SQS_IMAGE_QUEUE_URL`.
@@ -253,6 +256,20 @@ Production refuses, at startup:
 Missing production configuration is always an error. Nothing is filled in by a
 default except the driver choices the production profile itself makes.
 
+### Search indexing and Search Console
+
+Only the canonical `https://studiocarai.com/` homepage is indexable. The SEO
+routes use `APP_ENV`, Vercel's `VERCEL_ENV` when present, and the request host:
+Local, Development, previews, missing `APP_ENV`, and noncanonical hosts emit `noindex, nofollow`,
+disallow crawling, and publish an empty sitemap. Workspace, administrator,
+sign-in, and authentication error pages are always `noindex, nofollow`.
+
+To complete Google Search Console verification, add the Google-provided token
+as optional server-side `GOOGLE_SITE_VERIFICATION` in the Vercel Production
+environment. The homepage then emits the verification meta tag. No token is
+needed to build or deploy. Verify the `studiocarai.com` property and submit
+`https://studiocarai.com/sitemap.xml` after deployment.
+
 ## Storage and queue ownership
 
 The application cannot see an AWS account, so it checks ownership by declared
@@ -270,3 +287,34 @@ the `studiocar:environment` bucket tag.
 and refuses any database host that is not the developer's machine or the
 compose network unless `--i-understand-this-destroys-data` is passed. It never
 creates sample data; `pnpm db:seed` installs configuration only.
+
+
+## Image processing provider
+
+Leonardo.Ai is the only provider, in every profile; there is nothing to
+select. Only the image worker reads `LEONARDO_API_KEY` and
+`LEONARDO_TIMEOUT_MS` (default 90000, range 1000–150000), and
+`IMAGE_WORKER_CLAIM_TTL_MS` must be at least 30 s longer than the timeout.
+The control plane holds no provider setting at all. See
+[image processing](./image-processing.md).
+
+## Web database connection budget
+
+Every web composition root uses `getWebDatabase()`: one lazy Prisma/PrismaPg
+client per Next.js process, including development module reloads. Vercel
+instances do not share that client. `WEB_DATABASE_POOL_SIZE` is validated in
+`packages/config`, defaults to 5 and accepts integers 1–20. Restart the process
+after changing its database or pool settings. Repository constructors still
+accept injected clients; isolated tests and the Lambda worker keep independent
+clients. The worker's existing pool of two is unchanged.
+
+For Neon application traffic, use the dashboard's pooled connection string
+(the hostname contains `-pooler`) with TLS. Do not copy a database URL into
+logs or commit it. Keep migration connectivity configured according to Neon
+and Prisma requirements. Sharing removes the previous twenty independent
+web pools; raising a session-mode connection cap does not solve that problem.
+Budget total connections across all live Vercel instances and worker
+concurrency, and measure wait time before increasing the web pool size.
+Production endpoint and region still require live verification.
+
+Reference: [Neon Prisma connection guidance](https://github.com/neondatabase/website/blob/main/content/docs/guides/prisma.md).

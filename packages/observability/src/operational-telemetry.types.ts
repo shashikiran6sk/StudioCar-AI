@@ -4,6 +4,7 @@ import type {
 } from "./operational-telemetry.constants";
 
 export interface OperationalCorrelation {
+  batchId?: string;
   assetId?: string;
   jobId?: string;
   providerRequestId?: string;

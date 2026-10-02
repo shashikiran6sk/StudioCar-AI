@@ -1,3 +1,5 @@
+import type { ProcessingFailureStage } from "@studiocar/processing";
+
 export const IMAGE_PROCESSING_SERVICE = "image-processing-worker";
 export const PROCESSING_OUTCOME_DIMENSION = "Outcome";
 export const PROCESSING_PROVIDER_DIMENSION = "Provider";
@@ -16,5 +18,13 @@ export const PROCESSING_TERMINAL_FAILURE_METRIC =
 export const PROCESSING_RETRY_METRIC = "ProcessingRetryCount";
 export const PROCESSING_IGNORED_METRIC = "ProcessingIgnoredCount";
 export const PROCESSING_PROVIDER_RATE_LIMIT_METRIC = "ProviderRateLimitCount";
+
+/** Where a failed attempt stopped: one bounded counter per pipeline stage. */
+export const PROCESSING_STAGE_FAILURE_METRICS = {
+  SOURCE: "ProcessingSourceFailureCount",
+  PROVIDER: "ProcessingProviderFailureCount",
+  COMPOSITION: "ProcessingCompositionFailureCount",
+  STORAGE: "ProcessingStorageFailureCount",
+} as const satisfies Record<ProcessingFailureStage, string>;
 
 export const PROCESSING_EVENT_NAME = "image_processing_message";

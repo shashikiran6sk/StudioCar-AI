@@ -1,3 +1,4 @@
+import { monitoringContext } from "@studiocar/observability";
 import type { ApiError, ApiErrorCode } from "@studiocar/contracts";
 
 export interface ApiErrorResponseOptions {
@@ -14,11 +15,13 @@ const RETRY_AFTER_HEADER = "retry-after";
 export function createApiErrorResponse(
   options: ApiErrorResponseOptions,
 ): Response {
+  const context = monitoringContext.getStore();
+  if (context) context.errorCode = options.code;
   const body: ApiError = {
     error: {
       code: options.code,
       message: options.message,
-      requestId: options.requestId,
+      requestId: context?.requestId ?? options.requestId,
       ...(options.fieldErrors ? { fieldErrors: options.fieldErrors } : {}),
     },
   };

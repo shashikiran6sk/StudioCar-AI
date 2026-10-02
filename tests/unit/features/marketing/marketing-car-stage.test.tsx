@@ -9,7 +9,7 @@ describe("MarketingCarStage", () => {
       <MarketingCarStage label="Premium White" treatment="premium" />,
     );
 
-    expect(screen.getByRole("img", { name: "Silver sedan in a studio treatment" }))
+    expect(screen.getByRole("img", { name: "Silver sedan on a Premium White studio background" }))
       .toHaveAttribute("src", expect.stringContaining("silver-sedan.png"));
     expect(screen.getByText("Premium White")).toBeVisible();
     expect(container.firstChild).toHaveClass("marketing-car-stage--premium");

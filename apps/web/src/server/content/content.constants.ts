@@ -28,3 +28,6 @@ export const AUDIT_ACTION_SOCIAL_LINK_SAVED = "SOCIAL_LINK_SAVED";
 export const AUDIT_ACTION_SOCIAL_LINK_REMOVED = "SOCIAL_LINK_REMOVED";
 
 export const SOCIAL_LINK_LOCK_KEY = "social-link";
+
+/** Cache tag for the public footer links. */
+export const PUBLIC_SOCIAL_LINKS_CACHE_TAG = "public-social-links";

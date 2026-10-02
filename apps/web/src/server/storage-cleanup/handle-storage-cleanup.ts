@@ -1,3 +1,7 @@
+import {
+  ApplicationErrorCode,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import { randomUUID } from "node:crypto";
 
 import { createApiErrorResponse } from "../auth/create-api-error-response";
@@ -36,7 +40,8 @@ export async function handleStorageCleanup(
           STORAGE_CLEANUP_PRIVATE_CACHE_CONTROL,
       },
     });
-  } catch {
+  } catch (error) {
+    reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
     return createApiErrorResponse({
       status: STORAGE_CLEANUP_UNAVAILABLE_STATUS,
       code: STORAGE_CLEANUP_UNAVAILABLE_CODE,

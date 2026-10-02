@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { redirect, usePathname } from "next/navigation";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import AuthenticatedLayout from "../../../../apps/web/src/app/(app)/layout";
+import AuthenticatedLayout, { metadata } from "../../../../apps/web/src/app/(app)/layout";
 import { getCurrentSession } from "../../../../apps/web/src/server/auth/get-current-session";
 
 vi.mock("next/navigation", () => ({
@@ -31,6 +31,9 @@ vi.mock("../../../../apps/web/src/server/plans/get-plan-catalog", () => ({
 }));
 
 describe("AuthenticatedLayout", () => {
+  it("keeps all workspace pages out of search indexes", () => {
+    expect(metadata.robots).toEqual({ index: false, follow: false });
+  });
   afterEach(() => {
     vi.clearAllMocks();
   });

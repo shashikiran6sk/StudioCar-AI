@@ -10,11 +10,8 @@ describe("toProcessingOptionsJson", () => {
       crop: "MAINTAIN_COMPOSITION",
       enhancement: true,
       floor: "HORIZON",
-      outputFormat: "JPEG",
       paddingPercent: 8,
-      platePrivacy: true,
       quality: 90,
-      shadow: "NATURAL",
     });
   });
 

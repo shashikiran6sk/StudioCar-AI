@@ -6,20 +6,34 @@ describe("webhook contract", () => {
   it("requires a provider event identifier for idempotency", () => {
     expect(
       WebhookSchema.safeParse({
-        provider: "FAL",
+        provider: "BILLING",
         externalId: "evt_123",
-        eventType: "job.completed",
-        payload: { result: "ready" },
+        eventType: "payment.captured",
+        payload: { status: "captured" },
       }).success,
     ).toBe(true);
 
     expect(
       WebhookSchema.safeParse({
-        provider: "FAL",
+        provider: "BILLING",
         externalId: "",
-        eventType: "job.completed",
+        eventType: "payment.captured",
         payload: {},
       }).success,
     ).toBe(false);
+  });
+
+  it("accepts no webhook from an image-processing provider", () => {
+    // Processing is synchronous inside the queue worker; no provider calls back.
+    for (const provider of ["REMOVEBG", "FAL", "LEONARDO"]) {
+      expect(
+        WebhookSchema.safeParse({
+          provider,
+          externalId: "evt_123",
+          eventType: "generation.complete",
+          payload: {},
+        }).success,
+      ).toBe(false);
+    }
   });
 });

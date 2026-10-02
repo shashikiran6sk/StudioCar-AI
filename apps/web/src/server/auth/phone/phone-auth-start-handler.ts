@@ -1,3 +1,7 @@
+import {
+  ApplicationErrorCode,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import { randomUUID } from "node:crypto";
 import {
   PhoneAuthenticationStatus,
@@ -88,6 +92,7 @@ export async function handlePhoneAuthStart(
     if (error instanceof PhoneOtpApplicationError) {
       return createPhoneAuthErrorResponse(error, createRequestId);
     }
+    reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
     return createPhoneAuthErrorResponse(
       new PhoneOtpApplicationError(
         PhoneOtpApplicationErrorCode.ServiceUnavailable,

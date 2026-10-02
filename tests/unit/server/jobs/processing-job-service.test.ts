@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ProcessingJobService } from "../../../../apps/web/src/server/jobs/processing-job-service";
 import type {
-  ProcessingDispatchPort,
+  ProcessingDispatchSchedulerPort,
   ProcessingJobRepositoryPort,
 } from "../../../../apps/web/src/server/jobs/processing-job.types";
 import { ProcessingProvider } from "../../../../packages/database-runtime/generated/prisma/client";
@@ -16,11 +16,8 @@ const OPTIONS = {
   floor: "HORIZON",
   crop: "MAINTAIN_COMPOSITION",
   enhancement: true,
-  outputFormat: "JPEG",
   paddingPercent: 8,
-  platePrivacy: true,
   quality: 90,
-  shadow: "NATURAL",
 } satisfies Parameters<ProcessingJobService["createBatch"]>[2]["options"];
 
 /**
@@ -45,10 +42,10 @@ function allowanceResolver(
 }
 
 describe("ProcessingJobService", () => {
-  it("reserves deterministic jobs and asks the outbox to publish them", async () => {
+  it.each(["CREATED", "EXISTING"])("schedules publication after a %s reservation", async (kind) => {
     const repository: ProcessingJobRepositoryPort = {
       reserveBatchOwned: vi.fn().mockResolvedValue({
-        kind: "CREATED",
+        kind,
         jobs: [
           {
             id: JOB_ID,
@@ -56,7 +53,7 @@ describe("ProcessingJobService", () => {
             vehicleId: VEHICLE_ID,
             imageAssetId: ASSET_ID,
             status: "CREATED",
-            provider: "REMOVEBG",
+            provider: "LEONARDO",
             options: {},
             idempotencyKey: "job-key",
             batchIdempotencyKey: "processing-request-0001",
@@ -68,17 +65,13 @@ describe("ProcessingJobService", () => {
         ],
       }),
     };
-    const dispatcher: ProcessingDispatchPort = {
-      dispatch: vi.fn().mockResolvedValue({
-        claimed: 1,
-        failed: 0,
-        published: 1,
-      }),
+    const dispatcher: ProcessingDispatchSchedulerPort = {
+      schedule: vi.fn(),
     };
     const service = new ProcessingJobService(
       repository,
       dispatcher,
-      ProcessingProvider.REMOVEBG,
+      ProcessingProvider.LEONARDO,
       allowanceResolver(),
       () => NOW,
     );
@@ -93,10 +86,10 @@ describe("ProcessingJobService", () => {
       ok: true,
       response: {
         jobs: [{ jobId: JOB_ID, assetId: ASSET_ID, state: "CREATED" }],
-        replayed: false,
+        replayed: kind === "EXISTING",
       },
     });
-    expect(dispatcher.dispatch).toHaveBeenCalledWith({ jobIds: [JOB_ID] });
+    expect(dispatcher.schedule).toHaveBeenCalledWith({ jobIds: [JOB_ID] });
     expect(repository.reserveBatchOwned).toHaveBeenCalledWith(
       expect.objectContaining({
         usageBillingPeriodKey: "2026-09",
@@ -111,11 +104,11 @@ describe("ProcessingJobService", () => {
         .fn()
         .mockResolvedValue({ kind: "ASSETS_NOT_READY" }),
     };
-    const dispatcher: ProcessingDispatchPort = { dispatch: vi.fn() };
+    const dispatcher: ProcessingDispatchSchedulerPort = { schedule: vi.fn() };
     const service = new ProcessingJobService(
       repository,
       dispatcher,
-      ProcessingProvider.REMOVEBG,
+      ProcessingProvider.LEONARDO,
       allowanceResolver(),
     );
 
@@ -126,7 +119,7 @@ describe("ProcessingJobService", () => {
         options: OPTIONS,
       }),
     ).resolves.toEqual({ ok: false, reason: "ASSETS_NOT_READY" });
-    expect(dispatcher.dispatch).not.toHaveBeenCalled();
+    expect(dispatcher.schedule).not.toHaveBeenCalled();
   });
 });
 
@@ -138,11 +131,11 @@ describe("ProcessingJobService plan limits", () => {
         maxImagesPerBatch: 5,
       }),
     };
-    const dispatcher = { dispatch: vi.fn() };
+    const dispatcher = { schedule: vi.fn() };
     const service = new ProcessingJobService(
       repository,
       dispatcher,
-      ProcessingProvider.REMOVEBG,
+      ProcessingProvider.LEONARDO,
       allowanceResolver({ maxImagesPerBatch: 5 }),
       () => NOW,
     );
@@ -158,7 +151,7 @@ describe("ProcessingJobService plan limits", () => {
       reason: "BATCH_LIMIT_EXCEEDED",
       maxImagesPerBatch: 5,
     });
-    expect(dispatcher.dispatch).not.toHaveBeenCalled();
+    expect(dispatcher.schedule).not.toHaveBeenCalled();
   });
 
   it("refuses a batch beyond the remaining allowance without queueing work", async () => {
@@ -169,11 +162,11 @@ describe("ProcessingJobService plan limits", () => {
         imagesRemaining: 0,
       }),
     };
-    const dispatcher = { dispatch: vi.fn() };
+    const dispatcher = { schedule: vi.fn() };
     const service = new ProcessingJobService(
       repository,
       dispatcher,
-      ProcessingProvider.REMOVEBG,
+      ProcessingProvider.LEONARDO,
       allowanceResolver({ imageCapacity: 15 }),
       () => NOW,
     );
@@ -190,7 +183,7 @@ describe("ProcessingJobService plan limits", () => {
       imageCapacity: 15,
       imagesRemaining: 0,
     });
-    expect(dispatcher.dispatch).not.toHaveBeenCalled();
+    expect(dispatcher.schedule).not.toHaveBeenCalled();
   });
 
   it("passes the resolved plan limits into the reservation", async () => {
@@ -206,8 +199,8 @@ describe("ProcessingJobService plan limits", () => {
     });
     const service = new ProcessingJobService(
       repository,
-      { dispatch: vi.fn() },
-      ProcessingProvider.REMOVEBG,
+      { schedule: vi.fn() },
+      ProcessingProvider.LEONARDO,
       allowances,
       () => NOW,
     );
@@ -237,8 +230,8 @@ describe("ProcessingJobService plan limits", () => {
     };
     const service = new ProcessingJobService(
       repository,
-      { dispatch: vi.fn() },
-      ProcessingProvider.REMOVEBG,
+      { schedule: vi.fn() },
+      ProcessingProvider.LEONARDO,
       allowanceResolver(),
       () => NOW,
     );

@@ -9,11 +9,8 @@ export const PORTFOLIO_OPTIONS = {
   floor: "HORIZON",
   crop: "MAINTAIN_COMPOSITION",
   enhancement: true,
-  outputFormat: "WEBP",
   paddingPercent: 8,
-  platePrivacy: true,
   quality: 90,
-  shadow: "NATURAL",
 } satisfies ProcessingOptions;
 
 export const WHITE_VERSION_ID = "a".repeat(64);

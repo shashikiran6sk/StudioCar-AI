@@ -10,10 +10,7 @@ export function toProcessingOptionsJson(
     crop: options.crop,
     enhancement: options.enhancement,
     floor: options.floor,
-    outputFormat: options.outputFormat,
     paddingPercent: options.paddingPercent,
-    platePrivacy: options.platePrivacy,
     quality: options.quality,
-    shadow: options.shadow,
   };
 }

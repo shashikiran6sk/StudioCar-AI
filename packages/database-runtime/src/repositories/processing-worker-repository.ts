@@ -1,4 +1,4 @@
-import { ProcessingOptionsSchema } from "@studiocar/contracts";
+import { StoredProcessingOptionsSchema } from "@studiocar/contracts";
 import {
   PROCESSING_FAILURE_CODES,
   USER_ATTENTION_JOB_STATES,
@@ -11,10 +11,7 @@ import {
   type ProcessingWorkerRepositoryPort,
 } from "@studiocar/processing";
 
-import type {
-  Prisma,
-  PrismaClient,
-} from "../../generated/prisma/client";
+import type { Prisma, PrismaClient } from "../../generated/prisma/client";
 import {
   ImageAssetStatus,
   ProcessingAttemptStatus,
@@ -22,6 +19,7 @@ import {
   UsageEventType,
   VehicleStatus,
 } from "../../generated/prisma/client";
+import { findCurrentSubscriptionPlanKey } from "./find-current-subscription-plan-key";
 import { toOutputFormat } from "./to-output-format";
 import { releaseCreditAllocation } from "./release-credit-allocation";
 import { settleCreditAllocation } from "./settle-credit-allocation";
@@ -34,7 +32,6 @@ const claimableJobSelect = {
   vehicleId: true,
   imageAssetId: true,
   status: true,
-  provider: true,
   options: true,
   attemptCount: true,
   maxAttempts: true,
@@ -83,8 +80,11 @@ export class PrismaProcessingWorkerRepository
       }
 
       // The dispatcher sends a message before recording its job as queued,
-      // so a fast worker can see the job a moment early.
-      if (job.status === ProcessingJobStatus.CREATED) {
+      // so a fast worker can see an initial job or retry a moment early.
+      if (
+        job.status === ProcessingJobStatus.CREATED ||
+        job.status === ProcessingJobStatus.RETRYING
+      ) {
         return { kind: "AWAITING_PUBLICATION" };
       }
 
@@ -92,6 +92,12 @@ export class PrismaProcessingWorkerRepository
         job.status === ProcessingJobStatus.PROCESSING &&
         job.claimExpiresAt !== null &&
         job.claimExpiresAt <= input.now;
+      if (
+        job.status === ProcessingJobStatus.PROCESSING &&
+        !expiredProcessingClaim
+      ) {
+        return { kind: "CLAIM_BUSY" };
+      }
       if (
         job.status !== ProcessingJobStatus.QUEUED &&
         !expiredProcessingClaim
@@ -158,7 +164,7 @@ export class PrismaProcessingWorkerRepository
           workerId: input.workerId,
         },
       });
-      if (claimed.count !== 1) return { kind: "NOT_READY" };
+      if (claimed.count !== 1) return { kind: "CLAIM_BUSY" };
 
       if (expiredProcessingClaim) {
         await transaction.processingAttempt.updateMany({
@@ -183,15 +189,22 @@ export class PrismaProcessingWorkerRepository
       }
 
       const attemptNumber = job.attemptCount + 1;
+      // The attempt records the provider that actually runs it: a job reserved
+      // before a provider change is executed, and billed, by the current one.
       await transaction.processingAttempt.create({
         data: {
           attemptNumber,
           jobId: job.id,
-          provider: job.provider,
+          provider: input.provider,
           startedAt: input.now,
           status: ProcessingAttemptStatus.STARTED,
         },
       });
+      const subscriptionPlanKey = await findCurrentSubscriptionPlanKey(
+        transaction,
+        job.userId,
+        input.now,
+      );
 
       return {
         kind: "CLAIMED",
@@ -201,10 +214,10 @@ export class PrismaProcessingWorkerRepository
           id: job.id,
           imageAssetId: job.imageAssetId,
           mimeType: job.imageAsset.mimeType,
-          options: ProcessingOptionsSchema.parse(job.options),
+          options: StoredProcessingOptionsSchema.parse(job.options),
           originalObjectKey: job.imageAsset.originalObjectKey,
-          provider: job.provider,
           sizeBytes: job.imageAsset.sizeBytes,
+          subscriptionPlanKey,
           userId: job.userId,
           vehicleId: job.vehicleId,
         },
@@ -228,10 +241,7 @@ export class PrismaProcessingWorkerRepository
         },
       });
       if (!job) return { kind: "NOT_FOUND" };
-      if (
-        job.status === ProcessingJobStatus.COMPLETED &&
-        job.processedAsset
-      ) {
+      if (job.status === ProcessingJobStatus.COMPLETED && job.processedAsset) {
         return {
           kind: "ALREADY_COMPLETED",
           processedAssetId: job.processedAsset.id,

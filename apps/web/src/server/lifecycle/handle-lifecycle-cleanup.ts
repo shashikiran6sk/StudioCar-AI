@@ -1,3 +1,7 @@
+import {
+  ApplicationErrorCode,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import { randomUUID } from "node:crypto";
 
 import { createApiErrorResponse } from "../auth/create-api-error-response";
@@ -35,7 +39,8 @@ export async function handleLifecycleCleanup(
         [LIFECYCLE_CACHE_CONTROL_HEADER]: LIFECYCLE_PRIVATE_CACHE_CONTROL,
       },
     });
-  } catch {
+  } catch (error) {
+    reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
     return createApiErrorResponse({
       status: LIFECYCLE_UNAVAILABLE_STATUS,
       code: LIFECYCLE_UNAVAILABLE_CODE,

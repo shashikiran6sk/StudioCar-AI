@@ -6,7 +6,7 @@
  * not secrets, which is why they are committed. Every Local default, the
  * database reset guard, and the compose-consistency test read them from here.
  *
- * External credentials (remove.bg, Google, MSG91, AWS) never appear in
+ * External credentials (Leonardo, Google, MSG91, AWS) never appear in
  * this file, and a deployed environment refuses every value in it.
  *
  * This module has no imports on purpose: repository scripts load it directly

@@ -3,21 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import {
-  ADMIN_NAVIGATION_ITEM,
-  APP_NAVIGATION_ITEMS,
-} from "./app-navigation.constants";
 import { navigationItemIsActive } from "./navigation-item-is-active";
+import { workspaceNavigationItems } from "./workspace-navigation-items";
 
 export interface AppNavigationProps {
+  /** Called when a destination is chosen, so a drawer can close itself. */
+  onNavigate?: () => void;
   showAdmin: boolean;
 }
 
-export function AppNavigation({ showAdmin }: AppNavigationProps) {
+export function AppNavigation({ onNavigate, showAdmin }: AppNavigationProps) {
   const pathname = usePathname();
-  const items = showAdmin
-    ? [...APP_NAVIGATION_ITEMS, ADMIN_NAVIGATION_ITEM]
-    : APP_NAVIGATION_ITEMS;
+  const items = workspaceNavigationItems(showAdmin);
 
   return (
     <nav aria-label="Workspace" className="app-navigation">
@@ -29,6 +26,7 @@ export function AppNavigation({ showAdmin }: AppNavigationProps) {
             className="app-navigation__item"
             href={item.href}
             key={item.href}
+            {...(onNavigate ? { onClick: onNavigate } : {})}
           >
             <span aria-hidden="true" className="app-navigation__icon">
               {item.icon}

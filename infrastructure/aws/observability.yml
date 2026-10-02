@@ -1,0 +1,244 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: StudioCar operational dashboard, HTTP metric policy, and sustained failure alarms
+Parameters:
+  DashboardName:
+    Type: String
+    Default: studiocar-production
+  WorkerFunctionName:
+    Type: String
+  QueueName:
+    Type: String
+  DeadLetterQueueName:
+    Type: String
+  AlarmTopicArn:
+    Type: String
+    Default: ""
+    Description: Optional existing SNS topic for incident notifications; confirm subscriptions
+  LambdaErrorRatePercent:
+    Type: Number
+    Default: 5
+    MinValue: 1
+    MaxValue: 100
+  MinimumLambdaInvocations:
+    Type: Number
+    Default: 20
+    MinValue: 1
+  LambdaThrottleCount:
+    Type: Number
+    Default: 5
+    MinValue: 1
+  ProviderRateLimitCount:
+    Type: Number
+    Default: 5
+    MinValue: 1
+  ProviderServerErrorCount:
+    Type: Number
+    Default: 5
+    MinValue: 1
+  ProviderTimeoutCount:
+    Type: Number
+    Default: 5
+    MinValue: 1
+  ProviderFailureRatePercent:
+    Type: Number
+    Default: 20
+    MinValue: 1
+    MaxValue: 100
+  MinimumProviderRequests:
+    Type: Number
+    Default: 20
+    MinValue: 1
+Conditions:
+  HasAlarmTopic: !Not [!Equals [!Ref AlarmTopicArn, ""]]
+Resources:
+  HttpMetricPublisherPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Attach to the Vercel application's existing AWS workload role
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: cloudwatch:PutMetricData
+            Resource: "*"
+            Condition:
+              StringEquals:
+                cloudwatch:namespace: StudioCarAI/Operations
+  Dashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Ref DashboardName
+      DashboardBody: !Sub |
+        {"widgets": [
+          {"type":"text","x":0,"y":0,"width":24,"height":1,"properties":{"markdown":"## API \u2014 Vercel route completions (enable HTTP metric publication)"}},
+          {"type":"metric","x":0,"y":1,"width":12,"height":6,"properties":{"title":"Requests and HTTP status","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","HttpRequests","Service","nextjs-api"],["StudioCarAI/Operations","Http2xx","Service","nextjs-api"],["StudioCarAI/Operations","Http401","Service","nextjs-api"],["StudioCarAI/Operations","Http403","Service","nextjs-api"],["StudioCarAI/Operations","Http4xx","Service","nextjs-api"],["StudioCarAI/Operations","Http5xx","Service","nextjs-api"]]}},
+          {"type":"metric","x":12,"y":1,"width":12,"height":6,"properties":{"title":"API latency in milliseconds","region":"${AWS::Region}","period":300,"stat":"Average","view":"timeSeries","metrics":[["StudioCarAI/Operations","HttpDuration","Service","nextjs-api"]]}},
+          {"type":"text","x":0,"y":7,"width":24,"height":1,"properties":{"markdown":"## Lambda \u2014 AWS native metrics"}},
+          {"type":"metric","x":0,"y":8,"width":12,"height":6,"properties":{"title":"Invocations, errors, throttles","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["AWS/Lambda","Invocations","FunctionName","${WorkerFunctionName}"],["AWS/Lambda","Errors","FunctionName","${WorkerFunctionName}"],["AWS/Lambda","Throttles","FunctionName","${WorkerFunctionName}"]]}},
+          {"type":"metric","x":12,"y":8,"width":12,"height":6,"properties":{"title":"Lambda error rate %","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["AWS/Lambda","Invocations","FunctionName","${WorkerFunctionName}",{"id":"inv","visible":false}],["AWS/Lambda","Errors","FunctionName","${WorkerFunctionName}",{"id":"err","visible":false}],[{"expression":"IF(inv>0,100*err/inv,0)","label":"Error rate %","id":"rate"}]]}},
+          {"type":"metric","x":0,"y":14,"width":12,"height":6,"properties":{"title":"Lambda duration in milliseconds","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["AWS/Lambda","Duration","FunctionName","${WorkerFunctionName}",{"stat":"Average"}],["AWS/Lambda","Duration","FunctionName","${WorkerFunctionName}",{"stat":"p95"}],["AWS/Lambda","Duration","FunctionName","${WorkerFunctionName}",{"stat":"Maximum"}]]}},
+          {"type":"metric","x":12,"y":14,"width":12,"height":6,"properties":{"title":"Concurrent executions","region":"${AWS::Region}","period":300,"stat":"Maximum","view":"timeSeries","metrics":[["AWS/Lambda","ConcurrentExecutions","FunctionName","${WorkerFunctionName}"]]}},
+          {"type":"text","x":0,"y":20,"width":24,"height":1,"properties":{"markdown":"## SQS \u2014 AWS native metrics (delivery counts include retries)"}},
+          {"type":"metric","x":0,"y":21,"width":12,"height":6,"properties":{"title":"Queue depth and DLQ messages","region":"${AWS::Region}","period":300,"stat":"Maximum","view":"timeSeries","metrics":[["AWS/SQS","ApproximateNumberOfMessagesVisible","QueueName","${QueueName}"],["AWS/SQS","ApproximateNumberOfMessagesNotVisible","QueueName","${QueueName}"],["AWS/SQS","ApproximateNumberOfMessagesVisible","QueueName","${DeadLetterQueueName}"]]}},
+          {"type":"metric","x":12,"y":21,"width":12,"height":6,"properties":{"title":"Oldest message age in seconds","region":"${AWS::Region}","period":300,"stat":"Maximum","view":"timeSeries","metrics":[["AWS/SQS","ApproximateAgeOfOldestMessage","QueueName","${QueueName}"]]}},
+          {"type":"metric","x":0,"y":27,"width":12,"height":6,"properties":{"title":"Messages sent, received, deleted","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["AWS/SQS","NumberOfMessagesSent","QueueName","${QueueName}"],["AWS/SQS","NumberOfMessagesReceived","QueueName","${QueueName}"],["AWS/SQS","NumberOfMessagesDeleted","QueueName","${QueueName}"]]}},
+          {"type":"metric","x":12,"y":27,"width":12,"height":6,"properties":{"title":"Images completed (application success)","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","ImagesProcessed","Service","image-processing-worker"]]}},
+          {"type":"text","x":0,"y":33,"width":24,"height":1,"properties":{"markdown":"## Leonardo \u2014 actual Sync exchanges only; a staged cutout reused on retry is excluded"}},
+          {"type":"metric","x":0,"y":34,"width":12,"height":6,"properties":{"title":"Requests, successes, failures","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","ProviderRequestCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderSuccessCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderFailureCount","Service","image-processing-worker"]]}},
+          {"type":"metric","x":12,"y":34,"width":12,"height":6,"properties":{"title":"Failures by category","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","ProviderRateLimitedResponseCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderServerErrorResponseCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderTimeoutCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderNetworkErrorCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderDownloadFailureCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderInvalidResponseCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderInvalidOutputCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderContentBlockedCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderRejectedRequestCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderAuthorizationFailureCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderPaymentRequiredCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderSourceUnavailableCount","Service","image-processing-worker"]]}},
+          {"type":"metric","x":0,"y":40,"width":12,"height":6,"properties":{"title":"Exchange duration in milliseconds (p50, p95)","region":"${AWS::Region}","period":300,"view":"timeSeries","metrics":[["StudioCarAI/Operations","ProviderExchangeDurationMilliseconds","Service","image-processing-worker",{"stat":"p50"}],["StudioCarAI/Operations","ProviderExchangeDurationMilliseconds","Service","image-processing-worker",{"stat":"p95"}]]}},
+          {"type":"metric","x":12,"y":40,"width":12,"height":6,"properties":{"title":"Reported provider cost","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","ProviderCostCredits","Service","image-processing-worker"],["StudioCarAI/Operations","ProviderCostDollars","Service","image-processing-worker"]]}},
+          {"type":"metric","x":0,"y":46,"width":24,"height":6,"properties":{"title":"Failed attempts by pipeline stage","region":"${AWS::Region}","period":300,"stat":"Sum","view":"timeSeries","metrics":[["StudioCarAI/Operations","ProcessingSourceFailureCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProcessingProviderFailureCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProcessingCompositionFailureCount","Service","image-processing-worker"],["StudioCarAI/Operations","ProcessingStorageFailureCount","Service","image-processing-worker"]]}}
+        ]}
+
+  LambdaErrorRateAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Sustained Lambda errors; minimum traffic suppresses isolated errors
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 2
+      TreatMissingData: notBreaching
+      Threshold: !Ref LambdaErrorRatePercent
+      Metrics:
+        - Id: inv
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/Lambda
+              MetricName: Invocations
+              Dimensions:
+                - Name: FunctionName
+                  Value: !Ref WorkerFunctionName
+            Period: 300
+            Stat: Sum
+        - Id: err
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/Lambda
+              MetricName: Errors
+              Dimensions:
+                - Name: FunctionName
+                  Value: !Ref WorkerFunctionName
+            Period: 300
+            Stat: Sum
+        - Id: rate
+          Expression: !Sub 'IF(inv >= ${MinimumLambdaInvocations}, 100*FILL(err,0)/inv, 0)'
+          ReturnData: true
+  LambdaThrottlesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Sustained Lambda throttling
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 2
+      TreatMissingData: notBreaching
+      Threshold: !Ref LambdaThrottleCount
+      Namespace: AWS/Lambda
+      MetricName: Throttles
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref WorkerFunctionName
+      Period: 300
+      Statistic: Sum
+  ProviderRateLimitAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Sustained Leonardo 429 responses
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 2
+      TreatMissingData: notBreaching
+      Threshold: !Ref ProviderRateLimitCount
+      Namespace: StudioCarAI/Operations
+      MetricName: ProviderRateLimitedResponseCount
+      Dimensions:
+        - Name: Service
+          Value: image-processing-worker
+      Period: 300
+      Statistic: Sum
+  ProviderServerErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Sustained Leonardo 5xx responses
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 2
+      TreatMissingData: notBreaching
+      Threshold: !Ref ProviderServerErrorCount
+      Namespace: StudioCarAI/Operations
+      MetricName: ProviderServerErrorResponseCount
+      Dimensions:
+        - Name: Service
+          Value: image-processing-worker
+      Period: 300
+      Statistic: Sum
+  ProviderTimeoutAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Sustained Leonardo exchanges reaching the worker's deadline
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 2
+      TreatMissingData: notBreaching
+      Threshold: !Ref ProviderTimeoutCount
+      Namespace: StudioCarAI/Operations
+      MetricName: ProviderTimeoutCount
+      Dimensions:
+        - Name: Service
+          Value: image-processing-worker
+      Period: 300
+      Statistic: Sum
+  ProviderFailureRateAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Sustained provider failures with a minimum request volume
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      OKActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 2
+      TreatMissingData: notBreaching
+      Threshold: !Ref ProviderFailureRatePercent
+      Metrics:
+        - Id: req
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: StudioCarAI/Operations
+              MetricName: ProviderRequestCount
+              Dimensions:
+                - Name: Service
+                  Value: image-processing-worker
+            Period: 300
+            Stat: Sum
+        - Id: fail
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: StudioCarAI/Operations
+              MetricName: ProviderFailureCount
+              Dimensions:
+                - Name: Service
+                  Value: image-processing-worker
+            Period: 300
+            Stat: Sum
+        - Id: rate
+          Expression: !Sub 'IF(req >= ${MinimumProviderRequests}, 100*FILL(fail,0)/req, 0)'
+          ReturnData: true
+Outputs:
+  DashboardUrl:
+    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${DashboardName}
+  HttpMetricPublisherPolicyArn:
+    Value: !Ref HttpMetricPublisherPolicy

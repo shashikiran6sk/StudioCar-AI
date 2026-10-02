@@ -21,6 +21,7 @@ import {
   PROCESSING_PROVIDER_LATENCY_METRIC,
   PROCESSING_PROVIDER_RATE_LIMIT_METRIC,
   PROCESSING_RETRY_METRIC,
+  PROCESSING_STAGE_FAILURE_METRICS,
   PROCESSING_TERMINAL_FAILURE_METRIC,
   UNEXPECTED_PROCESSING_OUTCOME,
   UNKNOWN_PROCESSING_PROVIDER,
@@ -104,6 +105,14 @@ export function createProcessingOperationalEvent(
       value: 1,
     });
   }
+  const failureStage = input.result?.telemetry?.failureStage;
+  if (failureStage) {
+    metrics.push({
+      name: PROCESSING_STAGE_FAILURE_METRICS[failureStage],
+      unit: OperationalMetricUnit.COUNT,
+      value: 1,
+    });
+  }
   if (input.result?.telemetry?.failureKind === "PROVIDER_429") {
     metrics.push({
       name: PROCESSING_PROVIDER_RATE_LIMIT_METRIC,
@@ -127,7 +136,15 @@ export function createProcessingOperationalEvent(
             vehicleId: input.result.telemetry.vehicleId,
           }
         : {}),
-      ...(input.message ? { jobId: input.message.jobId } : {}),
+      ...(input.message
+        ? {
+            jobId: input.message.jobId,
+            requestId: input.message.requestId ?? input.message.jobId,
+            ...(input.message.batchId
+              ? { batchId: input.message.batchId }
+              : {}),
+          }
+        : {}),
       queueMessageId: input.queueMessageId,
     },
     dimensions: {

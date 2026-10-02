@@ -13,15 +13,52 @@ describe("CustomizeTreatmentStep", () => {
       <CustomizeTreatmentStep onBack={vi.fn()} onContinue={onContinue} />,
     );
 
-    fireEvent.click(screen.getByRole("switch", { name: "Hide Number Plate" }));
     fireEvent.click(screen.getByRole("button", { name: "Dark Studio" }));
     fireEvent.click(screen.getByRole("button", { name: "Review batch →" }));
 
     expect(useVehicleCreateStore.getState().options).toMatchObject({
       background: "DARK_STUDIO",
-      platePrivacy: false,
     });
     expect(onContinue).toHaveBeenCalledOnce();
+  });
+
+  it("offers no number-plate masking", () => {
+    render(<CustomizeTreatmentStep onBack={vi.fn()} onContinue={vi.fn()} />);
+
+    expect(screen.queryByRole("switch", { name: "Hide Number Plate" })).toBeNull();
+    expect(screen.getAllByRole("switch").map((control) => control.getAttribute("aria-label"))).toEqual([
+      "Image Enhancement",
+      "Studio Background",
+      "Maintain Composition",
+    ]);
+  });
+
+  it("describes enhancement as a change to the vehicle", () => {
+    render(<CustomizeTreatmentStep onBack={vi.fn()} onContinue={vi.fn()} />);
+
+    expect(screen.getByRole("switch", { name: "Image Enhancement" })).toHaveTextContent(
+      "Refine the vehicle's lighting, clarity, and colour",
+    );
+  });
+
+  it("keeps the photo's own composition while the studio background is off", () => {
+    render(<CustomizeTreatmentStep onBack={vi.fn()} onContinue={vi.fn()} />);
+    const composition = screen.getByRole("switch", { name: "Maintain Composition" });
+
+    fireEvent.click(composition);
+    expect(useVehicleCreateStore.getState().options.crop).toBe("FIT_VEHICLE");
+
+    fireEvent.click(screen.getByRole("switch", { name: "Studio Background" }));
+    expect(useVehicleCreateStore.getState().options).toMatchObject({
+      background: "ORIGINAL",
+      crop: "MAINTAIN_COMPOSITION",
+    });
+    expect(composition).toBeDisabled();
+    expect(composition).toHaveAttribute("aria-checked", "true");
+
+    fireEvent.click(screen.getByRole("switch", { name: "Studio Background" }));
+    expect(composition).toBeEnabled();
+    expect(useVehicleCreateStore.getState().options.background).toBe("PREMIUM_WHITE");
   });
 
   it("disables studio presets when background treatment is off", () => {

@@ -8,8 +8,45 @@ import { MarketingStudioBackgrounds } from "../features/marketing/marketing-stud
 import { MarketingWorkflow } from "../features/marketing/marketing-workflow";
 import { PricingSection } from "../features/pricing/pricing-section";
 import { getCurrentSession } from "../server/auth/get-current-session";
-import { getEnabledSocialLinks } from "../server/content/get-social-links";
-import { getPlanCatalog } from "../server/plans/get-plan-catalog";
+import { getPublicEnabledSocialLinks } from "../server/content/get-social-links";
+import { getPublicPlanCatalog } from "../server/plans/get-plan-catalog";
+import { isPublicSiteIndexable } from "../lib/is-public-site-indexable";
+import { SoftwareApplicationJsonLd } from "../lib/software-application-json-ld";
+import { siteConfig } from "../lib/site-config";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const environment = parseSeoEnvironment(process.env);
+  const requestHeaders = await headers();
+  const indexable = isPublicSiteIndexable(
+    environment.APP_ENV,
+    environment.VERCEL_ENV,
+    requestHeaders.get("host"),
+  );
+
+  return {
+    title: siteConfig.title,
+    description: siteConfig.description,
+    robots: { index: indexable, follow: indexable },
+    openGraph: {
+      type: "website",
+      locale: "en_IN",
+      siteName: siteConfig.name,
+      url: new URL(siteConfig.homepage),
+      title: siteConfig.title,
+      description: siteConfig.description,
+      images: [{ url: siteConfig.openGraphImage, width: 1200, height: 630, alt: "StudioCar AI vehicle photography" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: siteConfig.title,
+      description: siteConfig.description,
+      images: [siteConfig.openGraphImage],
+    },
+    ...(environment.GOOGLE_SITE_VERIFICATION
+      ? { verification: { google: environment.GOOGLE_SITE_VERIFICATION } }
+      : {}),
+  };
+}
 
 /**
  * Prices and footer links are configuration, so the landing page reads them
@@ -19,14 +56,16 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const [plans, socialLinks, session] = await Promise.all([
-    getPlanCatalog(),
-    getEnabledSocialLinks(),
+    getPublicPlanCatalog(),
+    getPublicEnabledSocialLinks(),
     getCurrentSession(),
   ]);
 
   return (
     <div className="marketing-page">
+      <link href={siteConfig.homepage} rel="canonical" />
       <MarketingHeader user={session?.user ?? null} />
+      <SoftwareApplicationJsonLd />
       <main>
         <MarketingHero />
         <MarketingFeatureSelector />
@@ -40,3 +79,6 @@ export default async function HomePage() {
     </div>
   );
 }
+import { parseSeoEnvironment } from "@studiocar/config";
+import type { Metadata } from "next";
+import { headers } from "next/headers";

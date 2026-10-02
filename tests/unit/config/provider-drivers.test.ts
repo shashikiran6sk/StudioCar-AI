@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  BackgroundRemovalProviderSchema,
   GoogleAuthDriverSchema,
   PhoneOtpDriverSchema,
   QueueTarget,
@@ -15,12 +14,11 @@ describe("provider drivers", () => {
     expect(PhoneOtpDriverSchema.options).toEqual(["msg91", "fake"]);
   });
 
-  it("keeps the existing background-removal choices", () => {
-    expect(BackgroundRemovalProviderSchema.options).toEqual([
-      "removebg",
-      "fal",
-      "birefnet",
-    ]);
+  it("offers no background-removal selection: Leonardo is the only provider", async () => {
+    const drivers: Record<string, unknown> = await import(
+      "../../../packages/config/src/provider-drivers"
+    );
+    expect(Object.keys(drivers)).not.toContain("BackgroundRemovalProviderSchema");
   });
 
   it("refuses a driver that does not exist", () => {

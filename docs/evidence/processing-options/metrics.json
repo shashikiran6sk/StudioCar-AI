@@ -1,0 +1,376 @@
+{
+  "fixtures": {
+    "three-quarter": {
+      "source": "source-three-quarter.jpg",
+      "providerCutout": "provider-cutout-three-quarter.jpg",
+      "cutoutVehicleAspectRatio": 2.0359
+    },
+    "three-quarter-mirrored": {
+      "source": "source-three-quarter-mirrored.jpg",
+      "providerCutout": "provider-cutout-three-quarter-mirrored.jpg",
+      "cutoutVehicleAspectRatio": 2.0359
+    },
+    "small-off-centre": {
+      "source": "source-small-off-centre.jpg",
+      "providerCutout": "provider-cutout-small-off-centre.jpg",
+      "cutoutVehicleAspectRatio": 2.078
+    }
+  },
+  "enhancement": {
+    "images": {
+      "off": "enhancement-off.jpg",
+      "on": "enhancement-on.jpg",
+      "comparison": "enhancement-off-vs-on.jpg"
+    },
+    "backgroundPixels": 4010004,
+    "backgroundPixelsChanged": 84692,
+    "backgroundMeanAbsoluteDifference": 0.02,
+    "vehicleMeanAbsoluteDifference": 18.79,
+    "vehicleTonalRange": {
+      "off": 204.92,
+      "on": 248.42
+    },
+    "milliseconds": {
+      "off": 1309,
+      "on": 1530
+    },
+    "exact": {
+      "backgroundPixels": 4010004,
+      "backgroundPixelsChanged": 0,
+      "backgroundMeanAbsoluteDifference": 0,
+      "vehicleMeanAbsoluteDifference": 18.66,
+      "vehicleTonalRange": {
+        "off": 204.92,
+        "on": 250.28
+      }
+    }
+  },
+  "composition": {
+    "images": {
+      "on": "composition-on.jpg",
+      "off": "composition-off.jpg",
+      "comparison": "composition-on-vs-off.jpg"
+    },
+    "on": {
+      "width": 2656,
+      "height": 1856,
+      "vehicle": {
+        "left": 461,
+        "top": 830,
+        "width": 1419,
+        "height": 697,
+        "widthShareOfCanvas": 0.534,
+        "aspectRatio": 2.0359,
+        "scale": 1
+      }
+    },
+    "off": {
+      "width": 1600,
+      "height": 1200,
+      "vehicle": {
+        "left": 141.9,
+        "top": 259.5,
+        "width": 1302.4,
+        "height": 639.7,
+        "widthShareOfCanvas": 0.814,
+        "aspectRatio": 2.0359,
+        "scale": 0.9179
+      }
+    }
+  },
+  "shadow": {
+    "addedDarkeningOutsideProviderAlpha": {
+      "pixels": 0,
+      "maximumLevels": 0
+    }
+  },
+  "floorAlignment": [
+    {
+      "fixture": "three-quarter",
+      "background": "PREMIUM_WHITE",
+      "tyreLineY": 899.2,
+      "seamY": 707.3,
+      "seamAboveTyreLineShareOfVehicleHeight": 0.3
+    },
+    {
+      "fixture": "three-quarter",
+      "background": "GREY_STUDIO",
+      "tyreLineY": 899.2,
+      "seamY": 707.3,
+      "seamAboveTyreLineShareOfVehicleHeight": 0.3
+    },
+    {
+      "fixture": "three-quarter",
+      "background": "DARK_STUDIO",
+      "tyreLineY": 899.2,
+      "seamY": 707.3,
+      "seamAboveTyreLineShareOfVehicleHeight": 0.3
+    },
+    {
+      "fixture": "three-quarter-mirrored",
+      "background": "PREMIUM_WHITE",
+      "tyreLineY": 899.2,
+      "seamY": 707.3,
+      "seamAboveTyreLineShareOfVehicleHeight": 0.3
+    },
+    {
+      "fixture": "three-quarter-mirrored",
+      "background": "GREY_STUDIO",
+      "tyreLineY": 899.2,
+      "seamY": 707.3,
+      "seamAboveTyreLineShareOfVehicleHeight": 0.3
+    },
+    {
+      "fixture": "three-quarter-mirrored",
+      "background": "DARK_STUDIO",
+      "tyreLineY": 899.2,
+      "seamY": 707.3,
+      "seamAboveTyreLineShareOfVehicleHeight": 0.3
+    },
+    {
+      "fixture": "small-off-centre",
+      "background": "PREMIUM_WHITE",
+      "tyreLineY": 837.3,
+      "seamY": 677.4,
+      "seamAboveTyreLineShareOfVehicleHeight": 0.3
+    },
+    {
+      "fixture": "small-off-centre",
+      "background": "GREY_STUDIO",
+      "tyreLineY": 837.3,
+      "seamY": 677.4,
+      "seamAboveTyreLineShareOfVehicleHeight": 0.3
+    },
+    {
+      "fixture": "small-off-centre",
+      "background": "DARK_STUDIO",
+      "tyreLineY": 837.3,
+      "seamY": 677.4,
+      "seamAboveTyreLineShareOfVehicleHeight": 0.3
+    }
+  ],
+  "backgrounds": [
+    {
+      "fixture": "three-quarter",
+      "background": "PREMIUM_WHITE",
+      "floor": "HORIZON",
+      "image": "premium-white-floor-three-quarter.jpg",
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 90732,
+      "milliseconds": 691,
+      "vehicleAspectRatio": 2.0359
+    },
+    {
+      "fixture": "three-quarter",
+      "background": "PREMIUM_WHITE",
+      "floor": "PLAIN",
+      "image": "premium-white-plain-three-quarter.jpg",
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 82084,
+      "milliseconds": 539,
+      "vehicleAspectRatio": 2.0359
+    },
+    {
+      "fixture": "three-quarter",
+      "background": "GREY_STUDIO",
+      "floor": "HORIZON",
+      "image": "grey-studio-floor-three-quarter.jpg",
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 89660,
+      "milliseconds": 706,
+      "vehicleAspectRatio": 2.0359
+    },
+    {
+      "fixture": "three-quarter",
+      "background": "GREY_STUDIO",
+      "floor": "PLAIN",
+      "image": "grey-studio-plain-three-quarter.jpg",
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 81880,
+      "milliseconds": 553,
+      "vehicleAspectRatio": 2.0359
+    },
+    {
+      "fixture": "three-quarter",
+      "background": "DARK_STUDIO",
+      "floor": "HORIZON",
+      "image": "dark-studio-floor-three-quarter.jpg",
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 88418,
+      "milliseconds": 651,
+      "vehicleAspectRatio": 2.0359
+    },
+    {
+      "fixture": "three-quarter",
+      "background": "DARK_STUDIO",
+      "floor": "PLAIN",
+      "image": "dark-studio-plain-three-quarter.jpg",
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 79706,
+      "milliseconds": 557,
+      "vehicleAspectRatio": 2.0359
+    },
+    {
+      "fixture": "three-quarter-mirrored",
+      "background": "PREMIUM_WHITE",
+      "floor": "HORIZON",
+      "image": "premium-white-floor-three-quarter-mirrored.jpg",
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 92156,
+      "milliseconds": 679,
+      "vehicleAspectRatio": 2.0359
+    },
+    {
+      "fixture": "three-quarter-mirrored",
+      "background": "PREMIUM_WHITE",
+      "floor": "PLAIN",
+      "image": null,
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 83566,
+      "milliseconds": 546,
+      "vehicleAspectRatio": 2.0359
+    },
+    {
+      "fixture": "three-quarter-mirrored",
+      "background": "GREY_STUDIO",
+      "floor": "HORIZON",
+      "image": "grey-studio-floor-three-quarter-mirrored.jpg",
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 91400,
+      "milliseconds": 695,
+      "vehicleAspectRatio": 2.0359
+    },
+    {
+      "fixture": "three-quarter-mirrored",
+      "background": "GREY_STUDIO",
+      "floor": "PLAIN",
+      "image": null,
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 83392,
+      "milliseconds": 549,
+      "vehicleAspectRatio": 2.0359
+    },
+    {
+      "fixture": "three-quarter-mirrored",
+      "background": "DARK_STUDIO",
+      "floor": "HORIZON",
+      "image": "dark-studio-floor-three-quarter-mirrored.jpg",
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 90426,
+      "milliseconds": 683,
+      "vehicleAspectRatio": 2.0359
+    },
+    {
+      "fixture": "three-quarter-mirrored",
+      "background": "DARK_STUDIO",
+      "floor": "PLAIN",
+      "image": null,
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 81390,
+      "milliseconds": 565,
+      "vehicleAspectRatio": 2.0359
+    },
+    {
+      "fixture": "small-off-centre",
+      "background": "PREMIUM_WHITE",
+      "floor": "HORIZON",
+      "image": "premium-white-floor-small-off-centre.jpg",
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 66224,
+      "milliseconds": 747,
+      "vehicleAspectRatio": 2.078
+    },
+    {
+      "fixture": "small-off-centre",
+      "background": "PREMIUM_WHITE",
+      "floor": "PLAIN",
+      "image": null,
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 58426,
+      "milliseconds": 627,
+      "vehicleAspectRatio": 2.078
+    },
+    {
+      "fixture": "small-off-centre",
+      "background": "GREY_STUDIO",
+      "floor": "HORIZON",
+      "image": "grey-studio-floor-small-off-centre.jpg",
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 65518,
+      "milliseconds": 691,
+      "vehicleAspectRatio": 2.078
+    },
+    {
+      "fixture": "small-off-centre",
+      "background": "GREY_STUDIO",
+      "floor": "PLAIN",
+      "image": null,
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 56334,
+      "milliseconds": 587,
+      "vehicleAspectRatio": 2.078
+    },
+    {
+      "fixture": "small-off-centre",
+      "background": "DARK_STUDIO",
+      "floor": "HORIZON",
+      "image": "dark-studio-floor-small-off-centre.jpg",
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 64746,
+      "milliseconds": 726,
+      "vehicleAspectRatio": 2.078
+    },
+    {
+      "fixture": "small-off-centre",
+      "background": "DARK_STUDIO",
+      "floor": "PLAIN",
+      "image": null,
+      "width": 1600,
+      "height": 1200,
+      "sizeBytes": 54848,
+      "milliseconds": 619,
+      "vehicleAspectRatio": 2.078
+    }
+  ],
+  "legacy": {
+    "source": "renderProcessedImage from the supplied legacy worker checkout",
+    "images": {
+      "doubleShadow": "legacy-double-shadow.jpg",
+      "enhancementOn": "legacy-enhancement-on.jpg",
+      "compositionOff": "legacy-composition-off.jpg",
+      "shadowComparison": "shadow-legacy-vs-current.jpg",
+      "enhancementComparison": "enhancement-legacy-vs-current.jpg"
+    },
+    "localShadowDarkening": {
+      "pixels": 173474,
+      "maximumLevels": 36.5
+    },
+    "enhancement": {
+      "backgroundPixels": 4010004,
+      "backgroundPixelsChanged": 4009888,
+      "backgroundMeanAbsoluteDifference": 6.54,
+      "vehicleMeanAbsoluteDifference": 21.01,
+      "vehicleTonalRange": {
+        "off": 187.65,
+        "on": 214.08
+      }
+    }
+  }
+}

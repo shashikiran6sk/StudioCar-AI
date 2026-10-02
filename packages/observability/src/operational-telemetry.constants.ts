@@ -15,4 +15,6 @@ export enum OperationalMetricUnit {
   BYTES = "Bytes",
   COUNT = "Count",
   MILLISECONDS = "Milliseconds",
+  /** A dimensionless value, such as a provider-reported cost amount. */
+  NONE = "None",
 }

@@ -32,6 +32,8 @@ export function ProcessingStatusPoller({
     const controller = new AbortController();
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     let disposed = false;
+    let polling = false;
+    let wakeRequested = false;
 
     const schedule = () => {
       if (disposed || document.visibilityState === "hidden") return;
@@ -43,6 +45,11 @@ export function ProcessingStatusPoller({
     };
     const poll = async () => {
       if (disposed || document.visibilityState === "hidden") return;
+      if (polling) {
+        wakeRequested = true;
+        return;
+      }
+      polling = true;
       try {
         const response = await requestStatuses(
           trackedJobs.map((job) => job.jobId),
@@ -61,12 +68,20 @@ export function ProcessingStatusPoller({
         setError(
           error instanceof Error ? error.message : PROCESSING_STATUS_REQUEST_ERROR,
         );
+      } finally {
+        polling = false;
       }
-      schedule();
+      if (wakeRequested) {
+        wakeRequested = false;
+        void poll();
+      } else {
+        schedule();
+      }
     };
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
         if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = undefined;
         return;
       }
       void poll();

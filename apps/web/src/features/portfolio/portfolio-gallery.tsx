@@ -3,7 +3,7 @@
 import type { VehiclePortfolio } from "@studiocar/contracts";
 import { Button, ButtonLink, ComparisonSlider } from "@studiocar/ui";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { createPortfolioZipFilename } from "./create-portfolio-zip-filename";
 import {
@@ -12,9 +12,15 @@ import {
   PORTFOLIO_DOWNLOAD_LABEL,
   PORTFOLIO_ESCAPE_KEY,
   PORTFOLIO_FULLSCREEN_LABEL,
+  PORTFOLIO_IMAGES_LABEL,
   PORTFOLIO_NEXT_LABEL,
   PORTFOLIO_PREVIOUS_LABEL,
+  PORTFOLIO_TAB_KEY,
+  PORTFOLIO_THUMBNAIL_LIMIT,
+  PORTFOLIO_VIEW_ALL_LABEL,
+  PORTFOLIO_VIEWER_IMAGES_LABEL,
 } from "./portfolio.constants";
+import { PortfolioThumbnail } from "./portfolio-thumbnail";
 import { PortfolioZipDownloadButton } from "./portfolio-zip-download-button";
 import { selectPortfolioVersion } from "./select-portfolio-version";
 
@@ -25,8 +31,29 @@ export interface PortfolioGalleryProps {
 export function PortfolioGallery({ portfolio }: PortfolioGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const viewerRef = useRef<HTMLDialogElement>(null);
+  const viewerTriggerRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const nextButtonRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewerOpen || !viewer) return;
+    const overflow = document.body.style.overflow;
+    viewer.showModal();
+    document.body.style.overflow = "hidden";
+    return () => {
+      viewer.close();
+      document.body.style.overflow = overflow;
+      if (viewerTriggerRef.current?.isConnected) viewerTriggerRef.current.focus();
+    };
+  }, [viewerOpen]);
   const selected = portfolio.images[selectedIndex] ?? portfolio.images[0];
   if (!selected) return null;
+  const hasOverflow = portfolio.images.length > PORTFOLIO_THUMBNAIL_LIMIT;
+  const visibleImages = hasOverflow
+    ? portfolio.images.slice(0, PORTFOLIO_THUMBNAIL_LIMIT - 1)
+    : portfolio.images;
+  const remainingCount = portfolio.images.length - visibleImages.length;
 
   const showPrevious = () => {
     setSelectedIndex((current) =>
@@ -66,32 +93,41 @@ export function PortfolioGallery({ portfolio }: PortfolioGalleryProps) {
   return (
     <section aria-label={`${portfolio.name} image portfolio`} className="portfolio-gallery">
       <div className="portfolio-gallery__stage">{comparison}</div>
-      <div aria-label="Portfolio images" className="portfolio-gallery__thumbnails">
-        {portfolio.images.map((image, index) => (
-          <button
-            aria-label={`View image ${String(index + 1)}`}
-            aria-pressed={index === selectedIndex}
-            className="portfolio-gallery__thumbnail"
+      <div aria-label={PORTFOLIO_IMAGES_LABEL} className="portfolio-gallery__thumbnails">
+        {visibleImages.map((image, index) => (
+          <PortfolioThumbnail
+            image={image}
+            index={index}
             key={image.id}
-            onClick={() => setSelectedIndex(index)}
+            onSelect={setSelectedIndex}
+            selectedIndex={selectedIndex}
+          />
+        ))}
+        {hasOverflow ? (
+          <button
+            aria-label={`${PORTFOLIO_VIEW_ALL_LABEL} ${String(portfolio.images.length)} images`}
+            className="portfolio-gallery__thumbnail portfolio-gallery__overflow"
+            onClick={(event) => {
+              viewerTriggerRef.current = event.currentTarget;
+              setSelectedIndex(visibleImages.length);
+              setViewerOpen(true);
+            }}
             type="button"
           >
-            <Image
-              alt=""
-              fill
-              sizes="160px"
-              src={image.previewUrl}
-              unoptimized
-            />
+            <strong>+{remainingCount}</strong>
+            <span>{PORTFOLIO_VIEW_ALL_LABEL}</span>
           </button>
-        ))}
+        ) : null}
       </div>
       <footer className="portfolio-gallery__footer">
         <span>
           {selected.width} × {selected.height} · {selected.originalFilename}
         </span>
         <div>
-          <Button onClick={() => setViewerOpen(true)} variant="secondary">
+          <Button onClick={(event) => {
+            viewerTriggerRef.current = event.currentTarget;
+            setViewerOpen(true);
+          }} variant="secondary">
             {PORTFOLIO_FULLSCREEN_LABEL}
           </Button>
           <PortfolioZipDownloadButton
@@ -110,25 +146,43 @@ export function PortfolioGallery({ portfolio }: PortfolioGalleryProps) {
         <dialog
           aria-label={`${portfolio.name} full screen viewer`}
           className="portfolio-viewer"
+          onCancel={() => setViewerOpen(false)}
           onKeyDown={(event) => {
             if (event.key === PORTFOLIO_ESCAPE_KEY) setViewerOpen(false);
           }}
-          open
+          ref={viewerRef}
         >
           <div className="portfolio-viewer__topbar">
             <span>
               {selectedIndex + 1} / {portfolio.images.length}
             </span>
             <Button
-              autoFocus
               className="portfolio-viewer__close"
               onClick={() => setViewerOpen(false)}
+              onKeyDown={(event) => {
+                if (event.key === PORTFOLIO_TAB_KEY && event.shiftKey) {
+                  event.preventDefault();
+                  nextButtonRef.current?.focus();
+                }
+              }}
+              ref={closeButtonRef}
               variant="ghost"
             >
               <span aria-hidden="true">×</span> {PORTFOLIO_CLOSE_VIEWER_LABEL}
             </Button>
           </div>
           <div className="portfolio-viewer__image">{comparison}</div>
+          <div aria-label={PORTFOLIO_VIEWER_IMAGES_LABEL} className="portfolio-viewer__thumbnails">
+            {portfolio.images.map((image, index) => (
+              <PortfolioThumbnail
+                image={image}
+                index={index}
+                key={image.id}
+                onSelect={setSelectedIndex}
+                selectedIndex={selectedIndex}
+              />
+            ))}
+          </div>
           <div className="portfolio-viewer__navigation">
             <Button aria-label={PORTFOLIO_PREVIOUS_LABEL} onClick={showPrevious} size="icon">
               ←
@@ -136,7 +190,18 @@ export function PortfolioGallery({ portfolio }: PortfolioGalleryProps) {
             <ButtonLink download href={selected.downloadUrl} variant="primary">
               {PORTFOLIO_DOWNLOAD_LABEL}
             </ButtonLink>
-            <Button aria-label={PORTFOLIO_NEXT_LABEL} onClick={showNext} size="icon">
+            <Button
+              aria-label={PORTFOLIO_NEXT_LABEL}
+              onClick={showNext}
+              onKeyDown={(event) => {
+                if (event.key === PORTFOLIO_TAB_KEY && !event.shiftKey) {
+                  event.preventDefault();
+                  closeButtonRef.current?.focus();
+                }
+              }}
+              ref={nextButtonRef}
+              size="icon"
+            >
               →
             </Button>
           </div>

@@ -1,3 +1,5 @@
+import { measureStage, PerformanceStage } from "@studiocar/observability";
+import { withRouteMonitoring } from "../../../server/observability/with-route-monitoring";
 import { getCurrentSession } from "../../../server/auth/get-current-session";
 import { handleCreateProcessingBatch } from "../../../server/jobs/create-processing-batch-handler";
 import { handleGetProcessingStatuses } from "../../../server/jobs/get-processing-status-handler";
@@ -5,8 +7,8 @@ import { getProcessingRuntime } from "../../../server/jobs/processing-runtime";
 
 export const runtime = "nodejs";
 
-export async function GET(request: Request): Promise<Response> {
-  const session = await getCurrentSession();
+async function handleGET(request: Request): Promise<Response> {
+  const session = await measureStage(PerformanceStage.AUTHENTICATION, getCurrentSession);
   return handleGetProcessingStatuses(
     request,
     session,
@@ -14,8 +16,8 @@ export async function GET(request: Request): Promise<Response> {
   );
 }
 
-export async function POST(request: Request): Promise<Response> {
-  const session = await getCurrentSession();
+async function handlePOST(request: Request): Promise<Response> {
+  const session = await measureStage(PerformanceStage.AUTHENTICATION, getCurrentSession);
   const runtime = getProcessingRuntime();
   return handleCreateProcessingBatch(
     request,
@@ -24,3 +26,7 @@ export async function POST(request: Request): Promise<Response> {
     runtime.rateLimiter,
   );
 }
+
+export const GET = withRouteMonitoring("/api/jobs", handleGET);
+
+export const POST = withRouteMonitoring("/api/jobs", handlePOST);

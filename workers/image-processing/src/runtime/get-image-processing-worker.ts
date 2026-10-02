@@ -5,6 +5,6 @@ import { createImageProcessingWorker } from "./create-image-processing-worker";
 let worker: ProcessingWorker | undefined;
 
 export function getImageProcessingWorker(): ProcessingWorker {
-  worker ??= createImageProcessingWorker(process.env);
+  worker ??= createImageProcessingWorker(process.env, import.meta.url);
   return worker;
 }

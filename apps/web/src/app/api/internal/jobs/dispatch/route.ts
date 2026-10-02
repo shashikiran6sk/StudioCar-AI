@@ -1,9 +1,10 @@
+import { withRouteMonitoring } from "../../../../../server/observability/with-route-monitoring";
 import { handleDispatchProcessingOutbox } from "../../../../../server/jobs/dispatch-processing-outbox-handler";
 import { getProcessingRuntime } from "../../../../../server/jobs/processing-runtime";
 
 export const runtime = "nodejs";
 
-export async function POST(request: Request): Promise<Response> {
+async function handlePOST(request: Request): Promise<Response> {
   const processing = getProcessingRuntime();
   return handleDispatchProcessingOutbox(
     request,
@@ -11,3 +12,8 @@ export async function POST(request: Request): Promise<Response> {
     processing.dispatcher,
   );
 }
+
+export const POST = withRouteMonitoring(
+  "/api/internal/jobs/dispatch",
+  handlePOST,
+);

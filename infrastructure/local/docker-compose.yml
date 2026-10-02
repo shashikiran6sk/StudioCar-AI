@@ -35,6 +35,12 @@ x-worker-environment: &worker-environment
   SQS_SECRET_ACCESS_KEY: studiocarlocal123
   SQS_IMAGE_QUEUE_URL: http://elasticmq:9324/000000000000/studiocar-images
 
+x-minio-image: &minio-image
+  image: studiocar-local-minio
+  build:
+    context: ../..
+    dockerfile: infrastructure/local/Dockerfile.minio
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -53,9 +59,8 @@ services:
       timeout: 5s
       retries: 20
 
-  # Docker Hub's minio/minio repository is access gated; quay.io is not.
   minio:
-    image: quay.io/minio/minio:latest
+    <<: *minio-image
     profiles: [infra, app]
     command: server /data --console-address ":9001"
     environment:
@@ -78,7 +83,7 @@ services:
   # Creates the private bucket and the browser CORS rule that direct uploads
   # need, then exits. Re-running is harmless.
   minio-init:
-    image: quay.io/minio/mc:latest
+    <<: *minio-image
     profiles: [infra, app]
     depends_on:
       minio:
@@ -136,11 +141,8 @@ services:
       SQS_ACCESS_KEY_ID: ${LOCAL_WORKER_SQS_ACCESS_KEY_ID-studiocarlocal}
       SQS_SECRET_ACCESS_KEY: ${LOCAL_WORKER_SQS_SECRET_ACCESS_KEY-studiocarlocal123}
       SQS_IMAGE_QUEUE_URL: ${LOCAL_WORKER_SQS_IMAGE_QUEUE_URL-http://elasticmq:9324/000000000000/studiocar-images}
-      # Empty means "use the profile default", which is remove.bg.
-      BACKGROUND_REMOVAL_PROVIDER: ${BACKGROUND_REMOVAL_PROVIDER:-}
-      REMOVEBG_API_KEY: ${REMOVEBG_API_KEY:-}
-      FAL_KEY: ${FAL_KEY:-}
-      SELF_HOSTED_BIREFNET_ENDPOINT: ${SELF_HOSTED_BIREFNET_ENDPOINT:-}
+      LEONARDO_API_KEY: ${LEONARDO_API_KEY:-}
+      LEONARDO_TIMEOUT_MS: ${LEONARDO_TIMEOUT_MS:-90000}
       # Development may resolve AWS credentials from the standard environment
       # variables instead of an explicit S3 or SQS key pair. A shared ~/.aws profile
       # is not visible inside the container.
@@ -199,7 +201,6 @@ services:
       MSG91_AUTH_KEY: ${MSG91_AUTH_KEY:-}
       MSG91_WIDGET_ID: ${MSG91_WIDGET_ID:-}
       MSG91_WIDGET_TOKEN: ${MSG91_WIDGET_TOKEN:-}
-      BACKGROUND_REMOVAL_PROVIDER: ${BACKGROUND_REMOVAL_PROVIDER:-}
       PROCESSING_DISPATCH_TOKEN: ${PROCESSING_DISPATCH_TOKEN:-}
       LIFECYCLE_CLEANUP_TOKEN: ${LIFECYCLE_CLEANUP_TOKEN:-}
       STORAGE_CLEANUP_TOKEN: ${STORAGE_CLEANUP_TOKEN:-}

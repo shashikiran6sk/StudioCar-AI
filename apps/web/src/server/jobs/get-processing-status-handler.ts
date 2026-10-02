@@ -1,3 +1,7 @@
+import {
+  ApplicationErrorCode,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import { randomUUID } from "node:crypto";
 import {
   JobStatusQuerySchema,
@@ -69,7 +73,8 @@ export async function handleGetProcessingStatuses(
         [PROCESSING_STATUS_CACHE_CONTROL_HEADER]: PROCESSING_STATUS_CACHE_CONTROL,
       },
     });
-  } catch {
+  } catch (error) {
+    reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
     return createApiErrorResponse({
       code: PROCESSING_STATUS_UNAVAILABLE_CODE,
       message: PROCESSING_STATUS_UNAVAILABLE_MESSAGE,

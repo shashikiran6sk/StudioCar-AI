@@ -63,4 +63,21 @@ describe("ProcessingStatusPoller", () => {
     document.dispatchEvent(new Event("visibilitychange"));
     await waitFor(() => expect(requestStatuses).toHaveBeenCalledTimes(1));
   });
+
+  it("allows only one request and coalesces wakeups while it is pending", async () => {
+    useProcessingStatusStore.getState().register([
+      { jobId: JOB_ID, assetId: ASSET_ID, state: "QUEUED" },
+    ]);
+    let resolveRequest: ((value: { jobs: [] }) => void) | undefined;
+    const requestStatuses = vi.fn().mockImplementation(
+      () => new Promise<{ jobs: [] }>((resolve) => { resolveRequest = resolve; }),
+    );
+    render(<ProcessingStatusPoller requestStatuses={requestStatuses} />);
+    await waitFor(() => expect(requestStatuses).toHaveBeenCalledTimes(1));
+    document.dispatchEvent(new Event("visibilitychange"));
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(requestStatuses).toHaveBeenCalledTimes(1);
+    resolveRequest?.({ jobs: [] });
+    await waitFor(() => expect(requestStatuses).toHaveBeenCalledTimes(2));
+  });
 });

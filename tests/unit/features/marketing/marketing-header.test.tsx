@@ -10,7 +10,7 @@ describe("MarketingHeader", () => {
     expect(screen.getByRole("navigation", { name: "Product" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Features" })).toHaveAttribute(
       "href",
-      "#features",
+      "/#features",
     );
     expect(screen.getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/login");
     expect(screen.getByRole("link", { name: "Start free" })).toHaveAttribute(

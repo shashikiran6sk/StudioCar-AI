@@ -1,5 +1,4 @@
-import { parseSessionEnvironment } from "@studiocar/config";
-import { createDatabaseClient } from "@studiocar/database-runtime";
+import { getWebDatabase } from "../db/web-database";
 import { PrismaUsageBillingRepository } from "../db/repositories/usage-billing-repository";
 
 import { UsageBillingService } from "./usage-billing-service";
@@ -10,10 +9,7 @@ let usageBillingService: UsageBillingService | undefined;
 export function getUsageBillingService(): UsageBillingService {
   if (usageBillingService) return usageBillingService;
 
-  const environment = parseSessionEnvironment(process.env);
-  const database = createDatabaseClient({
-    connectionString: environment.DATABASE_URL,
-  });
+  const database = getWebDatabase();
   usageBillingService = new UsageBillingService(
     new PrismaUsageBillingRepository(database),
     { list: getPlanCatalog },

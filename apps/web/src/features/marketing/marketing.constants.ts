@@ -2,9 +2,18 @@ export const MARKETING_FEATURES_ID = "features";
 export const MARKETING_WORKFLOW_ID = "workflow";
 export const MARKETING_BACKGROUNDS_ID = "studio-backgrounds";
 export const MARKETING_PRICING_ID = "pricing";
+export const MARKETING_ABOUT_ID = "about";
 export const MARKETING_START_PATH = "/login?returnTo=%2Fdashboard";
 export const MARKETING_CAR_IMAGE_PATH = "/images/marketing/silver-sedan.png";
-export const MARKETING_CAR_IMAGE_ALT = "Silver sedan in a studio treatment";
+export const MARKETING_CAR_HERO_SIZES = "(max-width: 899px) 100vw, 60vw";
+export const MARKETING_CAR_GALLERY_MAIN_SIZES = "(max-width: 899px) 100vw, 34vw";
+export const MARKETING_CAR_GALLERY_SMALL_SIZES = "(max-width: 899px) 50vw, 25vw";
+export const MARKETING_CAR_IMAGE_ALT = {
+  original: "Silver sedan in the original comparison view",
+  premium: "Silver sedan on a Premium White studio background",
+  dark: "Silver sedan on a Dark Studio background",
+  grey: "Silver sedan on a Grey Studio background",
+} as const;
 
 export const MARKETING_COPY = {
   audienceLabel: "Built for automotive teams",
@@ -16,7 +25,7 @@ export const MARKETING_COPY = {
   cta: {
     body: "Upload the vehicle. Choose the treatment. Let Inventory handle the rest.",
     eyebrow: "Your next vehicle is ready to look its best",
-    primaryAction: "Process your first vehicle",
+    primaryAction: "Process your car",
     secondaryAction: "View Inventory",
     title: "Build a showroom-ready portfolio before the listing goes live.",
   },
@@ -42,9 +51,9 @@ export const MARKETING_COPY = {
   hero: {
     comparisonLabel: "Compare original and studio processed vehicle",
     eyebrow: "Built for vehicle imagery",
-    primaryAction: "Process your first vehicle →",
+    primaryAction: "Process your car →",
     secondaryAction: "Explore the product",
-    summary: "Remove distracting backgrounds, protect number plates, enhance every detail, and deliver consistent portfolios—without slowing down your inventory team.",
+    summary: "Remove distracting backgrounds, ground every car with a natural shadow, enhance every detail, and deliver consistent portfolios—without slowing down your inventory team.",
     treatmentSummary: "✓ Premium White · Enhanced",
     title: "Turn every vehicle photo into showroom material.",
   },
@@ -71,7 +80,6 @@ export const MARKETING_STUDIO_BENEFITS = [
 ];
 
 export const MARKETING_COMPANY_LINKS = [
-  "About",
   "Contact",
   "Privacy",
   "Terms",
@@ -79,10 +87,10 @@ export const MARKETING_COMPANY_LINKS = [
 ];
 
 export const MARKETING_NAVIGATION = [
-  { href: `#${MARKETING_FEATURES_ID}`, label: "Features" },
-  { href: `#${MARKETING_WORKFLOW_ID}`, label: "Workflow" },
-  { href: `#${MARKETING_BACKGROUNDS_ID}`, label: "Studio backgrounds" },
-  { href: `#${MARKETING_PRICING_ID}`, label: "Pricing" },
+  { href: `/#${MARKETING_FEATURES_ID}`, label: "Features" },
+  { href: `/#${MARKETING_WORKFLOW_ID}`, label: "Workflow" },
+  { href: `/#${MARKETING_BACKGROUNDS_ID}`, label: "Studio backgrounds" },
+  { href: `/#${MARKETING_PRICING_ID}`, label: "Pricing" },
 ];
 
 export const MARKETING_FEATURES = [
@@ -91,8 +99,8 @@ export const MARKETING_FEATURES = [
     label: "Studio backgrounds",
   },
   {
-    description: "Automatically hide visible number plates while preserving clean, believable vehicle details.",
-    label: "Plate privacy",
+    description: "Every vehicle keeps a realistic ground shadow, so it stands on the studio floor instead of floating.",
+    label: "Natural shadows",
   },
   {
     description: "Refine lighting, colour, clarity, and visual consistency without changing the vehicle.",
@@ -116,7 +124,7 @@ export const MARKETING_WORKFLOW_STEPS = [
     title: "Upload photos",
   },
   {
-    description: "Choose privacy, enhancement, composition, shadow, and a studio treatment.",
+    description: "Choose enhancement, composition, and a studio background and floor.",
     detail: "Preview every treatment before processing",
     title: "Customize",
   },

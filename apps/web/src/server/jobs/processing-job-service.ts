@@ -1,3 +1,6 @@
+import { measureStage, PerformanceStage } from "@studiocar/observability";
+import { LOG_EVENTS } from "@studiocar/observability";
+import { logger, monitoringContext } from "@studiocar/observability";
 import type { CreateProcessingBatch } from "@studiocar/contracts";
 import type { ProcessingProvider } from "@studiocar/database-runtime";
 import {
@@ -10,7 +13,7 @@ import {
 import type {
   CreateProcessingJobsResult,
   ProcessingAllowanceResolverPort,
-  ProcessingDispatchPort,
+  ProcessingDispatchSchedulerPort,
   ProcessingJobApplication,
   ProcessingJobRepositoryPort,
 } from "./processing-job.types";
@@ -18,7 +21,7 @@ import type {
 export class ProcessingJobService implements ProcessingJobApplication {
   public constructor(
     private readonly jobs: ProcessingJobRepositoryPort,
-    private readonly dispatcher: ProcessingDispatchPort,
+    private readonly dispatcher: ProcessingDispatchSchedulerPort,
     private readonly provider: ProcessingProvider,
     private readonly allowances: ProcessingAllowanceResolverPort,
     private readonly now: () => Date = () => new Date(),
@@ -29,9 +32,13 @@ export class ProcessingJobService implements ProcessingJobApplication {
     idempotencyKey: string,
     command: CreateProcessingBatch,
   ): Promise<CreateProcessingJobsResult> {
+    const context = monitoringContext.getStore();
+    if (context) context.batchId = idempotencyKey;
     const now = this.now();
-    const reservation = await this.jobs.reserveBatchOwned({
-      allowance: await this.allowances.resolve(userId, now),
+    const allowance = await measureStage(PerformanceStage.ENTITLEMENTS, () => this.allowances.resolve(userId, now));
+    const reservation = await measureStage(PerformanceStage.RESERVATION, () => this.jobs.reserveBatchOwned({
+      ...(context?.requestId ? { requestId: context.requestId } : {}),
+      allowance,
       userId,
       vehicleId: command.vehicleId,
       batchIdempotencyKey: idempotencyKey,
@@ -50,7 +57,7 @@ export class ProcessingJobService implements ProcessingJobApplication {
           assetId,
         ),
       })),
-    });
+    }));
     if (reservation.kind === "BATCH_LIMIT_EXCEEDED") {
       return {
         ok: false,
@@ -70,7 +77,13 @@ export class ProcessingJobService implements ProcessingJobApplication {
       return { ok: false, reason: reservation.kind };
     }
 
-    await this.dispatcher.dispatch({
+    for (const job of reservation.jobs)
+      logger.log("info", LOG_EVENTS.JOB_RESERVED, {
+        jobId: job.id,
+        batchId: idempotencyKey,
+        requestId: job.requestId ?? context?.requestId,
+      });
+    this.dispatcher.schedule({
       jobIds: reservation.jobs.map((job) => job.id),
     });
 

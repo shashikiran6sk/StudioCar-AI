@@ -1,3 +1,4 @@
+import { PrismaStorageDeletionRepository } from "../../../../../apps/web/src/server/db/repositories/storage-deletion-repository";
 import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
@@ -35,7 +36,7 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
     await database.$disconnect();
   });
 
-  it("atomically reserves one owned job per uploaded asset and replays the batch", async () => {
+  it("atomically reserves and replays an ordered 20-image batch", async () => {
     const [owner, other] = await Promise.all([
       database.user.create({ data: { primaryEmail: ownerEmail } }),
       database.user.create({ data: { primaryEmail: otherEmail } }),
@@ -43,7 +44,7 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
     const vehicle = await database.vehicle.create({
       data: { userId: owner.id, name: "Processing test vehicle" },
     });
-    const assetIds = [randomUUID(), randomUUID()];
+    const assetIds = Array.from({ length: 20 }, () => randomUUID());
     await Promise.all(
       assetIds.map((assetId, displayOrder) =>
         database.imageAsset.create({
@@ -71,6 +72,7 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
       options,
     };
     const command = {
+      requestId: "7e38d07b-c3c3-4ce0-9a50-91055e9bf3de",
       allowance: {
         imageCapacity: 100,
         maxImagesPerBatch: 20,
@@ -81,7 +83,7 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
       batchIdempotencyKey,
       batchLabel: null,
       batchRequestHash: createProcessingBatchRequestHash(request),
-      provider: ProcessingProvider.REMOVEBG,
+      provider: ProcessingProvider.LEONARDO,
       usageBillingPeriodKey: "2026-09",
       usageIdempotencyKey: "usage:upload-session:processing-integration-batch-1",
       options,
@@ -103,6 +105,22 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
     ]);
 
     expect([first.kind, replay.kind].sort()).toEqual(["CREATED", "EXISTING"]);
+    for (const result of [first, replay]) {
+      if (result.kind !== "CREATED" && result.kind !== "EXISTING") {
+        throw new Error(`Unexpected reservation result: ${result.kind}`);
+      }
+      expect(result.jobs.map((job) => job.imageAssetId)).toEqual(assetIds);
+      expect(result.jobs.map((job) => job.displayOrder)).toEqual(
+        assetIds.map((_, index) => index),
+      );
+    }
+    await repository.reserveBatchOwned({ ...command, requestId: randomUUID() });
+    expect(
+      await database.processingJob.findMany({
+        where: { vehicleId: vehicle.id },
+        select: { requestId: true },
+      }),
+    ).toEqual(assetIds.map(() => ({ requestId: command.requestId })));
     await expect(
       repository.reserveBatchOwned({
         ...command,
@@ -120,12 +138,12 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
     ).resolves.toEqual({ status: "PROCESSING" });
     await expect(
       database.processingJob.count({ where: { vehicleId: vehicle.id } }),
-    ).resolves.toBe(2);
+    ).resolves.toBe(20);
     await expect(
       database.processingOutboxMessage.count({
         where: { job: { vehicleId: vehicle.id } },
       }),
-    ).resolves.toBe(2);
+    ).resolves.toBe(20);
     await expect(
       database.usageEvent.findMany({
         where: { userId: owner.id },
@@ -162,7 +180,7 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
         batchIdempotencyKey: "processing-integration-batch-2",
         batchLabel: null,
         batchRequestHash: "a".repeat(64),
-        provider: ProcessingProvider.REMOVEBG,
+        provider: ProcessingProvider.LEONARDO,
         usageBillingPeriodKey: "2026-09",
         usageIdempotencyKey: "usage:upload-session:processing-integration-batch-2",
         options,
@@ -201,6 +219,7 @@ databaseDescribe("PrismaProcessingJobRepository plan limits", () => {
   });
 
   afterEach(async () => {
+    await database.storageDeletionOutboxMessage.deleteMany({ where: { imageAsset: { user: { primaryEmail: limitOwnerEmail } } } });
     await database.user.deleteMany({
       where: { primaryEmail: limitOwnerEmail },
     });
@@ -263,7 +282,7 @@ databaseDescribe("PrismaProcessingJobRepository plan limits", () => {
         assetIds,
         options,
       }),
-      provider: ProcessingProvider.REMOVEBG,
+      provider: ProcessingProvider.LEONARDO,
       usageBillingPeriodKey: "2026-09",
       usageIdempotencyKey: `usage:upload-session:${batchKey}`,
       options,
@@ -281,12 +300,100 @@ databaseDescribe("PrismaProcessingJobRepository plan limits", () => {
     allowanceBillingPeriodKey: null,
   };
 
+  it("serializes quota consumption across different vehicles of one tenant", async () => {
+    const first = await seedVehicle(3);
+    const second = await seedVehicleFor(first.owner.id, 3);
+    const allowance = { ...freeAllowance, imageCapacity: 5 };
+    const results = await Promise.all([
+      repository.reserveBatchOwned(command(first.owner, first.vehicle, first.assetIds, allowance, "quota-race-first")),
+      repository.reserveBatchOwned(command(first.owner, second.vehicle, second.assetIds, allowance, "quota-race-second")),
+    ]);
+    expect(results.map((result) => result.kind).sort()).toEqual(["ALLOWANCE_EXHAUSTED", "CREATED"]);
+    expect(await database.processingJob.count({ where: { userId: first.owner.id } })).toBe(3);
+    expect(await database.usageEvent.count({ where: { userId: first.owner.id } })).toBe(1);
+  });
+
+  it("rolls back jobs, outbox, vehicle state and usage on a late insert failure", async () => {
+    const first = await seedVehicle(1);
+    const firstCommand = command(first.owner, first.vehicle, first.assetIds, freeAllowance, "rollback-first");
+    await repository.reserveBatchOwned(firstCommand);
+    const second = await seedVehicleFor(first.owner.id, 2);
+    const secondCommand = command(first.owner, second.vehicle, second.assetIds, freeAllowance, "rollback-second");
+    await expect(repository.reserveBatchOwned({ ...secondCommand, usageIdempotencyKey: firstCommand.usageIdempotencyKey }))
+      .resolves.toEqual({ kind: "VEHICLE_UNAVAILABLE" });
+    expect(await database.processingJob.count({ where: { vehicleId: second.vehicle.id } })).toBe(0);
+    expect(await database.processingOutboxMessage.count({ where: { job: { userId: first.owner.id } } })).toBe(1);
+    expect(await database.usageEvent.count({ where: { userId: first.owner.id } })).toBe(1);
+    expect(await database.vehicle.findUnique({ where: { id: second.vehicle.id }, select: { status: true } })).toEqual({ status: "DRAFT" });
+  });
+
+  it("rejects duplicate assets and foreign assets without reserving anything", async () => {
+    const first = await seedVehicle(1);
+    const assetId = first.assetIds[0];
+    if (!assetId) throw new Error("Missing fixture asset");
+    const duplicate = command(first.owner, first.vehicle, [assetId, assetId], freeAllowance, "duplicate-assets");
+    expect(await repository.reserveBatchOwned(duplicate)).toEqual({ kind: "ASSETS_NOT_READY" });
+    const other = await database.user.create({ data: {} });
+    try {
+      const foreign = await seedVehicleFor(other.id, 1);
+      expect(await repository.reserveBatchOwned(command(first.owner, first.vehicle, foreign.assetIds, freeAllowance, "foreign-assets")))
+        .toEqual({ kind: "ASSETS_NOT_READY" });
+      expect(await database.processingJob.count({ where: { userId: first.owner.id } })).toBe(0);
+    } finally {
+      await database.user.delete({ where: { id: other.id } });
+    }
+  });
+
+  it("serializes removal with reservation without ever deleting a reserved original", async () => {
+    const first = await seedVehicle(1);
+    const assetId = first.assetIds[0];
+    if (!assetId) throw new Error("Missing fixture asset");
+    const [reserved, removed] = await Promise.all([
+      repository.reserveBatchOwned(command(first.owner, first.vehicle, first.assetIds, freeAllowance, "deletion-race")),
+      new PrismaStorageDeletionRepository(database).reserveUserUploadRemoval({ userId: first.owner.id, assetId, now: new Date() }),
+    ]);
+    if (reserved.kind === "CREATED") {
+      expect(removed.kind).toBe("NOT_REMOVABLE");
+      expect(await database.storageDeletionOutboxMessage.count({ where: { imageAssetId: assetId } })).toBe(0);
+    } else {
+      expect(reserved.kind).toBe("ASSETS_NOT_READY");
+      expect(removed.kind).toBe("RESERVED");
+      expect(await database.processingJob.count({ where: { userId: first.owner.id } })).toBe(0);
+    }
+  });
+
+  it("does not release capacity when completion transfers in-flight work to charged usage", async () => {
+    const first = await seedVehicle(3);
+    const allowance = { ...freeAllowance, imageCapacity: 3 };
+    const accepted = await repository.reserveBatchOwned(command(first.owner, first.vehicle, first.assetIds, allowance, "completion-first"));
+    if (accepted.kind !== "CREATED") throw new Error("Expected accepted fixture");
+    const second = await seedVehicleFor(first.owner.id, 1);
+    const [, result] = await Promise.all([
+      database.$transaction(async (transaction) => {
+        await transaction.usageEvent.createMany({ data: accepted.jobs.map((job) => ({
+          userId: first.owner.id, jobId: job.id, type: "BACKGROUND_REMOVAL_COMPLETED",
+          quantity: 1, billingPeriodKey: "2026-09", idempotencyKey: `completion:${job.id}`,
+        })) });
+        await transaction.processingJob.updateMany({ where: { id: { in: accepted.jobs.map((job) => job.id) } },
+          data: { status: "COMPLETED", completedAt: new Date() } });
+      }),
+      repository.reserveBatchOwned(command(first.owner, second.vehicle, second.assetIds, allowance, "completion-second")),
+    ]);
+    expect(result).toEqual({ kind: "ALLOWANCE_EXHAUSTED", imageCapacity: 3, imagesRemaining: 0 });
+  });
+
   it("refuses a batch larger than the plan's per-batch limit", async () => {
     const { owner, vehicle, assetIds } = await seedVehicle(6);
 
     await expect(
       repository.reserveBatchOwned(
-        command(owner, vehicle, assetIds, freeAllowance, "limits-batch-too-big"),
+        command(
+          owner,
+          vehicle,
+          assetIds,
+          freeAllowance,
+          "limits-batch-too-big",
+        ),
       ),
     ).resolves.toEqual({ kind: "BATCH_LIMIT_EXCEEDED", maxImagesPerBatch: 5 });
 
@@ -408,14 +515,20 @@ databaseDescribe("PrismaProcessingJobRepository studio versions", () => {
   });
 
   afterEach(async () => {
-    await database.user.deleteMany({ where: { primaryEmail: versionOwnerEmail } });
+    await database.user.deleteMany({
+      where: { primaryEmail: versionOwnerEmail },
+    });
   });
 
   afterAll(async () => {
     await database.$disconnect();
   });
 
-  async function createAsset(userId: string, vehicleId: string, status: "UPLOADED" | "INVALID" = "UPLOADED") {
+  async function createAsset(
+    userId: string,
+    vehicleId: string,
+    status: "UPLOADED" | "INVALID" = "UPLOADED",
+  ) {
     const id = randomUUID();
     await database.imageAsset.create({
       data: {
@@ -434,8 +547,12 @@ databaseDescribe("PrismaProcessingJobRepository studio versions", () => {
   }
 
   /** A vehicle whose first batch finished: one completed image with output. */
-  async function seedFinishedVehicle(status: "READY" | "PARTIALLY_FAILED" = "READY") {
-    const owner = await database.user.create({ data: { primaryEmail: versionOwnerEmail } });
+  async function seedFinishedVehicle(
+    status: "READY" | "PARTIALLY_FAILED" = "READY",
+  ) {
+    const owner = await database.user.create({
+      data: { primaryEmail: versionOwnerEmail },
+    });
     const vehicle = await database.vehicle.create({
       data: { name: "2024 BMW X1", status, userId: owner.id },
     });
@@ -448,7 +565,7 @@ databaseDescribe("PrismaProcessingJobRepository studio versions", () => {
         idempotencyKey: "versions-white-job",
         imageAssetId: assetId,
         options: ProcessingOptionsSchema.parse({}),
-        provider: "REMOVEBG",
+        provider: "LEONARDO",
         status: "COMPLETED",
         userId: owner.id,
         vehicleId: vehicle.id,
@@ -483,14 +600,18 @@ databaseDescribe("PrismaProcessingJobRepository studio versions", () => {
       allowance,
       batchIdempotencyKey: batchKey,
       batchLabel: null,
-      batchRequestHash: createProcessingBatchRequestHash({ assetIds, options, vehicleId }),
+      batchRequestHash: createProcessingBatchRequestHash({
+        assetIds,
+        options,
+        vehicleId,
+      }),
       jobs: assetIds.map((assetId, displayOrder) => ({
         assetId,
         displayOrder,
         idempotencyKey: createProcessingJobIdempotencyKey(batchKey, assetId),
       })),
       options,
-      provider: ProcessingProvider.REMOVEBG,
+      provider: ProcessingProvider.LEONARDO,
       usageBillingPeriodKey: "2026-09",
       usageIdempotencyKey: `usage:upload-session:${batchKey}`,
       userId,
@@ -502,19 +623,30 @@ databaseDescribe("PrismaProcessingJobRepository studio versions", () => {
     const seeded = await seedFinishedVehicle();
 
     const result = await repository.reserveBatchOwned(
-      batch(seeded.owner.id, seeded.vehicle.id, [seeded.assetId], "versions-dark-batch"),
+      batch(
+        seeded.owner.id,
+        seeded.vehicle.id,
+        [seeded.assetId],
+        "versions-dark-batch",
+      ),
     );
 
     expect(result.kind).toBe("CREATED");
     await expect(
-      database.vehicle.findUnique({ where: { id: seeded.vehicle.id }, select: { status: true } }),
+      database.vehicle.findUnique({
+        where: { id: seeded.vehicle.id },
+        select: { status: true },
+      }),
     ).resolves.toEqual({ status: "PROCESSING" });
     await expect(
       database.processingJob.findUnique({
         where: { id: seeded.job.id },
         select: { completedAt: true, status: true },
       }),
-    ).resolves.toEqual({ completedAt: seeded.completedAt, status: "COMPLETED" });
+    ).resolves.toEqual({
+      completedAt: seeded.completedAt,
+      status: "COMPLETED",
+    });
     await expect(
       database.processedAsset.findUnique({
         where: { id: seeded.output.id },
@@ -528,21 +660,40 @@ databaseDescribe("PrismaProcessingJobRepository studio versions", () => {
         select: { batchIdempotencyKey: true, imageAssetId: true },
       }),
     ).resolves.toEqual([
-      { batchIdempotencyKey: "versions-white-batch", imageAssetId: seeded.assetId },
-      { batchIdempotencyKey: "versions-dark-batch", imageAssetId: seeded.assetId },
+      {
+        batchIdempotencyKey: "versions-white-batch",
+        imageAssetId: seeded.assetId,
+      },
+      {
+        batchIdempotencyKey: "versions-dark-batch",
+        imageAssetId: seeded.assetId,
+      },
     ]);
-    await expect(database.vehicle.count({ where: { userId: seeded.owner.id } })).resolves.toBe(1);
+    await expect(
+      database.vehicle.count({ where: { userId: seeded.owner.id } }),
+    ).resolves.toBe(1);
   });
 
   it("refuses another batch while one is running, and for an archived vehicle", async () => {
     const seeded = await seedFinishedVehicle();
     await repository.reserveBatchOwned(
-      batch(seeded.owner.id, seeded.vehicle.id, [seeded.assetId], "versions-running-batch"),
+      batch(
+        seeded.owner.id,
+        seeded.vehicle.id,
+        [seeded.assetId],
+        "versions-running-batch",
+      ),
     );
 
     await expect(
       repository.reserveBatchOwned(
-        batch(seeded.owner.id, seeded.vehicle.id, [seeded.assetId], "versions-second-batch", "PREMIUM_WHITE"),
+        batch(
+          seeded.owner.id,
+          seeded.vehicle.id,
+          [seeded.assetId],
+          "versions-second-batch",
+          "PREMIUM_WHITE",
+        ),
       ),
     ).resolves.toEqual({ kind: "VEHICLE_UNAVAILABLE" });
 
@@ -552,7 +703,12 @@ databaseDescribe("PrismaProcessingJobRepository studio versions", () => {
     });
     await expect(
       repository.reserveBatchOwned(
-        batch(seeded.owner.id, seeded.vehicle.id, [seeded.assetId], "versions-archived-batch"),
+        batch(
+          seeded.owner.id,
+          seeded.vehicle.id,
+          [seeded.assetId],
+          "versions-archived-batch",
+        ),
       ),
     ).resolves.toEqual({ kind: "VEHICLE_UNAVAILABLE" });
   });
@@ -568,7 +724,9 @@ databaseDescribe("PrismaProcessingJobRepository studio versions", () => {
       ),
     );
 
-    expect(results.filter((result) => result.kind === "CREATED")).toHaveLength(1);
+    expect(results.filter((result) => result.kind === "CREATED")).toHaveLength(
+      1,
+    );
     expect(
       results.filter((result) => result.kind === "VEHICLE_UNAVAILABLE"),
     ).toHaveLength(2);
@@ -579,7 +737,11 @@ databaseDescribe("PrismaProcessingJobRepository studio versions", () => {
 
   it("processes a replacement original and keeps the failed batch's history", async () => {
     const seeded = await seedFinishedVehicle("PARTIALLY_FAILED");
-    const unreadable = await createAsset(seeded.owner.id, seeded.vehicle.id, "INVALID");
+    const unreadable = await createAsset(
+      seeded.owner.id,
+      seeded.vehicle.id,
+      "INVALID",
+    );
     const failed = await database.processingJob.create({
       data: {
         batchIdempotencyKey: "versions-white-batch",
@@ -588,7 +750,7 @@ databaseDescribe("PrismaProcessingJobRepository studio versions", () => {
         idempotencyKey: "versions-failed-job",
         imageAssetId: unreadable,
         options: ProcessingOptionsSchema.parse({}),
-        provider: "REMOVEBG",
+        provider: "LEONARDO",
         status: "FAILED",
         userId: seeded.owner.id,
         vehicleId: seeded.vehicle.id,
@@ -598,11 +760,23 @@ databaseDescribe("PrismaProcessingJobRepository studio versions", () => {
 
     await expect(
       repository.reserveBatchOwned(
-        batch(seeded.owner.id, seeded.vehicle.id, [unreadable], "versions-invalid-retry", "PREMIUM_WHITE"),
+        batch(
+          seeded.owner.id,
+          seeded.vehicle.id,
+          [unreadable],
+          "versions-invalid-retry",
+          "PREMIUM_WHITE",
+        ),
       ),
     ).resolves.toEqual({ kind: "ASSETS_NOT_READY" });
     const result = await repository.reserveBatchOwned(
-      batch(seeded.owner.id, seeded.vehicle.id, [replacement], "versions-replace-batch", "PREMIUM_WHITE"),
+      batch(
+        seeded.owner.id,
+        seeded.vehicle.id,
+        [replacement],
+        "versions-replace-batch",
+        "PREMIUM_WHITE",
+      ),
     );
 
     expect(result).toMatchObject({

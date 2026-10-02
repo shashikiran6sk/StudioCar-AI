@@ -159,10 +159,10 @@ describe("upload environment", () => {
   it("ignores unrelated secrets that share the process environment", () => {
     const environment = parseUploadEnvironment({
       ...baseUploadEnvironment,
-      REMOVEBG_API_KEY: "must-not-cross-this-boundary",
+      LEONARDO_API_KEY: "must-not-cross-this-boundary",
     });
 
-    expect(Object.keys(environment)).not.toContain("REMOVEBG_API_KEY");
+    expect(Object.keys(environment)).not.toContain("LEONARDO_API_KEY");
   });
 });
 
@@ -205,8 +205,7 @@ describe("storage cleanup and image worker environments", () => {
       DATABASE_URL: databaseUrl,
       AWS_REGION: "ap-south-1",
       S3_BUCKET: "studiocar-private",
-      BACKGROUND_REMOVAL_PROVIDER: "removebg",
-      REMOVEBG_API_KEY: "provider-key",
+      LEONARDO_API_KEY: "provider-key",
       S3_ENDPOINT: "http://minio:9000",
       S3_FORCE_PATH_STYLE: "1",
       S3_ACCESS_KEY_ID: accessKeyId,
@@ -221,9 +220,7 @@ describe("storage cleanup and image worker environments", () => {
     });
   });
 
-  it("starts when only the selected provider is configured", () => {
-    // docker-compose sends every provider's setting, so the two not in use
-    // arrive as empty strings. They used to stop the worker from starting.
+  it("ignores the retired provider settings a stale environment may still send", () => {
     const environment = parseImageWorkerEnvironment({
       APP_ENV: "development",
       DATABASE_URL: databaseUrl,
@@ -231,41 +228,80 @@ describe("storage cleanup and image worker environments", () => {
       S3_BUCKET: "studiocar-private",
       S3_ENDPOINT: "https://s3.ap-south-1.amazonaws.com",
       S3_FORCE_PATH_STYLE: "",
+      LEONARDO_API_KEY: "provider-key",
       BACKGROUND_REMOVAL_PROVIDER: "removebg",
-      REMOVEBG_API_KEY: "provider-key",
-      FAL_KEY: "",
-      SELF_HOSTED_BIREFNET_ENDPOINT: "",
+      REMOVEBG_API_KEY: "retired",
+      FAL_KEY: "retired",
+      SELF_HOSTED_BIREFNET_ENDPOINT: "https://retired.example",
     });
 
-    expect(environment.REMOVEBG_API_KEY).toBe("provider-key");
-    expect(environment.FAL_KEY).toBeUndefined();
-    expect(environment.SELF_HOSTED_BIREFNET_ENDPOINT).toBeUndefined();
+    expect(environment.LEONARDO_API_KEY).toBe("provider-key");
+    for (const retired of [
+      "BACKGROUND_REMOVAL_PROVIDER",
+      "REMOVEBG_API_KEY",
+      "FAL_KEY",
+      "SELF_HOSTED_BIREFNET_ENDPOINT",
+    ]) {
+      expect(Object.keys(environment)).not.toContain(retired);
+    }
   });
 
-  it("still refuses an empty key for the selected provider", () => {
+  it.each(["", "   ", undefined])(
+    "refuses to start without a Leonardo key (%j)",
+    (LEONARDO_API_KEY) => {
+      expect(() =>
+        parseImageWorkerEnvironment({
+          APP_ENV: "development",
+          DATABASE_URL: databaseUrl,
+          AWS_REGION: "ap-south-1",
+          S3_BUCKET: "studiocar-private",
+          LEONARDO_API_KEY,
+        }),
+      ).toThrow(/LEONARDO_API_KEY/);
+    },
+  );
+
+  it("defaults the Leonardo deadline to 90 s inside a 180 s claim lease", () => {
+    const environment = parseImageWorkerEnvironment({
+      APP_ENV: "development",
+      DATABASE_URL: databaseUrl,
+      AWS_REGION: "ap-south-1",
+      S3_BUCKET: "studiocar-private",
+      LEONARDO_API_KEY: "provider-key",
+    });
+    expect(environment.LEONARDO_TIMEOUT_MS).toBe(90_000);
+    expect(environment.IMAGE_WORKER_CLAIM_TTL_MS).toBe(180_000);
+  });
+
+  it("refuses a claim lease that cannot cover the provider deadline and composition", () => {
     expect(() =>
       parseImageWorkerEnvironment({
         APP_ENV: "development",
         DATABASE_URL: databaseUrl,
         AWS_REGION: "ap-south-1",
         S3_BUCKET: "studiocar-private",
-        BACKGROUND_REMOVAL_PROVIDER: "removebg",
-        REMOVEBG_API_KEY: "",
+        LEONARDO_API_KEY: "provider-key",
+        LEONARDO_TIMEOUT_MS: "120000",
+        IMAGE_WORKER_CLAIM_TTL_MS: "140000",
       }),
-    ).toThrow(/REMOVEBG_API_KEY is required/);
+    ).toThrow(/IMAGE_WORKER_CLAIM_TTL_MS must cover LEONARDO_TIMEOUT_MS/);
   });
 
-  it("still requires the selected provider credential", () => {
-    expect(() =>
-      parseImageWorkerEnvironment({
-        APP_ENV: "development",
-        DATABASE_URL: databaseUrl,
-        AWS_REGION: "ap-south-1",
-        S3_BUCKET: "studiocar-private",
-        BACKGROUND_REMOVAL_PROVIDER: "fal",
-      }),
-    ).toThrow(/FAL_KEY is required/);
-  });
+  it.each(["999", "150001"])(
+    "refuses a Leonardo deadline outside 1–150 s (%s)",
+    (LEONARDO_TIMEOUT_MS) => {
+      expect(() =>
+        parseImageWorkerEnvironment({
+          APP_ENV: "development",
+          DATABASE_URL: databaseUrl,
+          AWS_REGION: "ap-south-1",
+          S3_BUCKET: "studiocar-private",
+          LEONARDO_API_KEY: "provider-key",
+          LEONARDO_TIMEOUT_MS,
+        }),
+      ).toThrow(/LEONARDO_TIMEOUT_MS/);
+    },
+  );
 });
 
 describe("SQS connection configuration", () => {
@@ -299,7 +335,6 @@ describe("SQS connection configuration", () => {
       SQS_ENDPOINT: "http://localhost:9324",
       SQS_ACCESS_KEY_ID: accessKeyId,
       SQS_SECRET_ACCESS_KEY: secretAccessKey,
-      BACKGROUND_REMOVAL_PROVIDER: "removebg",
       PROCESSING_DISPATCH_TOKEN: "b".repeat(32),
     });
 
@@ -318,7 +353,6 @@ describe("SQS connection configuration", () => {
         AWS_REGION: "ap-south-1",
         SQS_IMAGE_QUEUE_URL: "http://localhost:9324/queue/studiocar-images",
         SQS_ACCESS_KEY_ID: accessKeyId,
-        BACKGROUND_REMOVAL_PROVIDER: "removebg",
         PROCESSING_DISPATCH_TOKEN: "b".repeat(32),
       }),
     ).toThrow(/must be configured together/);
@@ -331,7 +365,6 @@ describe("SQS connection configuration", () => {
         DATABASE_URL: databaseUrl,
         AWS_REGION: "ap-south-1",
         SQS_IMAGE_QUEUE_URL: "http://localhost:9324/queue/studiocar-images",
-        BACKGROUND_REMOVAL_PROVIDER: "removebg",
         PROCESSING_DISPATCH_TOKEN: "b".repeat(32),
         PROCESSING_OUTBOX_RETRY_BASE_MS: "60000",
         PROCESSING_OUTBOX_RETRY_MAX_MS: "1000",

@@ -1,3 +1,7 @@
+import {
+  ApplicationErrorCode,
+  reportUnexpectedError,
+} from "@studiocar/observability";
 import { randomUUID } from "node:crypto";
 import {
   PhoneAuthenticationStatus,
@@ -22,10 +26,7 @@ import {
   INVALID_REQUEST_MESSAGE,
 } from "./phone-auth.constants";
 import type { PhoneOtpApplication } from "./phone-auth.types";
-import {
-  clearPhoneOtpCookie,
-  phoneOtpCookieName,
-} from "./phone-otp-cookie";
+import { clearPhoneOtpCookie, phoneOtpCookieName } from "./phone-otp-cookie";
 import {
   clearVerifiedPhoneCookie,
   createVerifiedPhoneCookie,
@@ -137,6 +138,7 @@ export async function handlePhoneAuthVerify(
     if (error instanceof PhoneOtpApplicationError) {
       return createPhoneAuthErrorResponse(error, createRequestId);
     }
+    reportUnexpectedError(error, ApplicationErrorCode.INTERNAL_ERROR);
     return createPhoneAuthErrorResponse(
       new PhoneOtpApplicationError(
         PhoneOtpApplicationErrorCode.ServiceUnavailable,

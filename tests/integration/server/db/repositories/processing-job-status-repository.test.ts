@@ -59,7 +59,7 @@ databaseDescribe("PrismaProcessingJobStatusRepository", () => {
           userId,
           vehicleId,
           imageAssetId: assetId,
-          provider: "REMOVEBG",
+          provider: "LEONARDO",
           options: {},
           idempotencyKey: `status-${suffix}`,
         },

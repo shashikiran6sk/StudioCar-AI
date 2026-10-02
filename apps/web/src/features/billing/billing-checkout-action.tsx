@@ -142,6 +142,7 @@ export function BillingCheckoutAction({ includedImages, label, planKey, variant 
       <Script
         src="https://checkout.razorpay.com/v1/checkout.js"
         strategy="afterInteractive"
+        onLoad={() => setScriptReady(true)}
         onReady={() => setScriptReady(true)}
         onError={() => setState("script-error")}
       />

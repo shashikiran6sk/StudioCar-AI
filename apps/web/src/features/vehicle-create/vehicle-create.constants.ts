@@ -74,10 +74,8 @@ export const CUSTOMIZE_BACKGROUND_HEADING = "Choose a studio background";
 export const CUSTOMIZE_FLOOR_HEADING = "Choose a floor";
 export const CUSTOMIZE_PRESERVATION_NOTE =
   "Preview updates preserve the original photo. You can compare and re-process later.";
-export const PLATE_PRIVACY_LABEL = "Hide Number Plate";
-export const PLATE_PRIVACY_DESCRIPTION = "Automatically mask visible plates";
 export const ENHANCEMENT_LABEL = "Image Enhancement";
-export const ENHANCEMENT_DESCRIPTION = "Refine lighting, clarity, and colour";
+export const ENHANCEMENT_DESCRIPTION = "Refine the vehicle's lighting, clarity, and colour";
 export const STUDIO_BACKGROUND_LABEL = "Studio Background";
 export const STUDIO_BACKGROUND_DESCRIPTION =
   "Apply a consistent premium setting";
@@ -91,7 +89,6 @@ export const REVIEW_PROCESS_PENDING_LABEL = "Starting…";
 export const REVIEW_PROCESS_ERROR =
   "Processing could not be started. Your draft and originals are preserved.";
 export const REVIEW_IMAGE_LABEL = "Images";
-export const REVIEW_PLATE_PRIVACY_LABEL = "Plate privacy";
 export const REVIEW_BACKGROUND_LABEL = "Background";
 export const REVIEW_FLOOR_LABEL = "Floor";
 export const REVIEW_ENHANCEMENT_LABEL = "Enhancement";
@@ -158,9 +155,6 @@ export const DEFAULT_PROCESSING_OPTIONS: ProcessingOptions = {
   floor: DEFAULT_FLOOR_STYLE,
   crop: MAINTAIN_COMPOSITION_CROP,
   enhancement: true,
-  outputFormat: "JPEG",
   paddingPercent: 8,
-  platePrivacy: true,
   quality: 90,
-  shadow: "NATURAL",
 };

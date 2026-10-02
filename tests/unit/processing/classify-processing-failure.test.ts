@@ -12,11 +12,15 @@ const retryableFailures: ProcessingFailureKind[] = [
 
 const terminalFailures: ProcessingFailureKind[] = [
   "AUTHORIZATION",
+  "CONTENT_BLOCKED",
+  "PAYMENT_REQUIRED",
   "INTERNAL",
   "INVALID_IMAGE",
   "INVALID_REQUEST",
   "NON_CAR_IMAGE",
   "UNSUPPORTED_FORMAT",
+  // Already paid for: a retry would pay again for the same unusable result.
+  "UNUSABLE_PROVIDER_RESULT",
 ];
 
 describe("classifyProcessingFailure", () => {
