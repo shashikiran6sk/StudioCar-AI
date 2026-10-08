@@ -22,6 +22,10 @@ The production implementation remains [PR #73](https://github.com/shashikiran6sk
 - To reproduce an archived run, use a separate checkout of its exact tested source commit with Node 24, pnpm 12.3.4 and a fresh disposable database. Historical diagnostic fixtures must be copied to their original path in that checkout before using the archived configuration. Never run fixtures against shared or production data.
 - Real merchant Test/Live payments, deployed AWS checks and the recorded unrelated processing findings remain unverified or unresolved as stated in their source reports. Passing repository gates do not waive these limits.
 
+## Archive-branch CI status
+
+The [first archive CI run](https://github.com/shashikiran6sk/StudioCar-AI/actions/runs/37744001532) passed production build/browser tests and worker packaging; Vercel passed. Its quality job stopped at the production dependency audit on versions inherited unchanged from main: Next.js 16.3.6, Sharp 0.35.4 and source-map-js 1.2.1. That job therefore did not run lint/types/unit/integration checks. These dependencies are already patched in the separately verified billing implementation. This archive intentionally carries no dependency or runtime changes and no check is skipped or disabled. Do not deploy this baseline or read its audit failure as a failure of the Plus-only tested source.
+
 ## Publication boundaries
 
 Logs have local repository paths normalized, credential-bearing URL passwords redacted and terminal color escapes removed. The browser configuration redacts synthetic provider and queue fixture values. Historical artifacts retain their previous sanitization. Environment files, cookies, browser storage state, traces, private credentials, application build outputs and Lambda ZIPs are excluded.
