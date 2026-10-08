@@ -76,7 +76,7 @@ databaseDescribe("PrismaPlanConfigRepository", () => {
 
     const active = await repository.findActive();
     const keys = active.map((plan) => plan.planKey);
-    expect(keys).toContain("TEST_PRO");
+    expect(keys).not.toContain("TEST_PRO");
     expect(keys).not.toContain("TEST_INACTIVE");
     const orders = active.map((plan) => plan.displayOrder);
     expect([...orders]).toEqual([...orders].sort((a, b) => a - b));
@@ -118,7 +118,7 @@ databaseDescribe("PrismaPlanConfigRepository", () => {
 
     const plus = stored.find((plan) => plan.planKey === "STUDIO_PLUS");
     expect(plus).toMatchObject({
-      displayName: "Studio Plus",
+      displayName: "StudioCar Plus",
       priceMinorUnits: 199_900,
       includedImages: 100,
       maxImagesPerBatch: 20,
@@ -134,7 +134,7 @@ databaseDescribe("PrismaPlanConfigRepository", () => {
 
   const edit = {
     active: true,
-    billingInterval: "MONTHLY" as const,
+    billingInterval: "ONE_TIME" as const,
     description: "Edited by an administrator.",
     displayName: "Test Free Edited",
     displayOrder: 95,
@@ -198,7 +198,7 @@ databaseDescribe("PrismaPlanConfigRepository", () => {
 
     await repository.update({
       actorUserId: actor.id,
-      fallback: { ...sample, allowanceScope: "BILLING_PERIOD" },
+      fallback: { ...sample, allowanceScope: "LIFETIME" },
       planKey: sample.planKey,
       update: edit,
     });

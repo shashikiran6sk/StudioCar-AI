@@ -28,14 +28,12 @@ function allowanceResolver(
   overrides: Partial<{
     imageCapacity: number;
     maxImagesPerBatch: number;
-    allowanceBillingPeriodKey: string | null;
   }> = {},
 ) {
   return {
     resolve: vi.fn().mockResolvedValue({
       imageCapacity: 100,
       maxImagesPerBatch: 20,
-      allowanceBillingPeriodKey: null,
       ...overrides,
     }),
   };

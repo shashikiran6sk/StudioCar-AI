@@ -26,15 +26,14 @@ export async function createReceipt(
   const number = sequence[0]?.number;
   if (number === undefined) throw new Error("Receipt sequence is unavailable.");
   const receiptNumber = `SC-${String(input.paidAt.getUTCFullYear())}-${String(number).padStart(6, "0")}`;
-  const plus = input.productCode === "STUDIO_PLUS";
   await transaction.receipt.create({
     data: {
       receiptNumber,
       paymentId: input.paymentId,
       userId: input.userId,
       productCode: input.productCode,
-      productName: plus ? "Studio Plus" : "Studio Pro",
-      description: plus ? "100 image credits" : "Monthly subscription — 400 images",
+      productName: "StudioCar Plus",
+      description: "100 non-expiring image credits",
       subtotalPaise: input.amountPaise,
       taxPaise: 0,
       totalPaise: input.amountPaise,

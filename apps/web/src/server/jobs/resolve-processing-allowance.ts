@@ -1,4 +1,3 @@
-import { createUsageBillingPeriodKey } from "@studiocar/processing";
 
 import type { ProcessingAllowance } from "../db/repositories/processing-job-repository";
 import { getUsageBillingService } from "../billing/usage-billing-runtime";
@@ -17,9 +16,5 @@ export async function resolveProcessingAllowance(
   return {
     imageCapacity: plan.imageCapacity,
     maxImagesPerBatch: plan.maxImagesPerBatch,
-    allowanceBillingPeriodKey:
-      plan.allowanceScope === "LIFETIME"
-        ? null
-        : createUsageBillingPeriodKey(now),
   };
 }

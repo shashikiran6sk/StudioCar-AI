@@ -8,7 +8,7 @@ import { verifyRazorpaySignature } from "../../../../server/billing/providers/ra
 export const runtime = "nodejs";
 
 export async function POST(request: Request): Promise<Response> {
-  const rawBody = await request.text();
+  const rawBody = Buffer.from(await request.arrayBuffer());
   const signature = request.headers.get("x-razorpay-signature");
   const environment = parseRazorpayEnvironment(process.env);
   if (!verifyRazorpaySignature(rawBody, signature, environment.RAZORPAY_WEBHOOK_SECRET)) {
@@ -17,7 +17,7 @@ export async function POST(request: Request): Promise<Response> {
   const eventId = request.headers.get("x-razorpay-event-id");
   if (!eventId || eventId.length > 255) return Response.json({ error: "Missing event ID" }, { status: 400 });
   let body: unknown;
-  try { body = JSON.parse(rawBody); } catch { return Response.json({ error: "Invalid event" }, { status: 400 }); }
+  try { body = JSON.parse(rawBody.toString("utf8")); } catch { return Response.json({ error: "Invalid event" }, { status: 400 }); }
   const event = RazorpayWebhookSchema.safeParse(body);
   if (!event.success) return Response.json({ error: "Invalid event" }, { status: 400 });
   try {

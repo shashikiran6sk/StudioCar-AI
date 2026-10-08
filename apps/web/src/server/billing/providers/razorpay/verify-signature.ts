@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export function verifyRazorpaySignature(
-  message: string,
+  message: string | Uint8Array,
   suppliedHex: string | null,
   secret: string,
 ): boolean {

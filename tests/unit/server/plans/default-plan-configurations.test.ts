@@ -22,7 +22,7 @@ describe("default plan configurations", () => {
 
   it("states the confirmed Studio Plus configuration", () => {
     expect(plan("STUDIO_PLUS")).toMatchObject({
-      displayName: "Studio Plus",
+      displayName: "StudioCar Plus",
       priceMinorUnits: 199_900,
       currency: "INR",
       billingInterval: "ONE_TIME",
@@ -32,14 +32,13 @@ describe("default plan configurations", () => {
     });
   });
 
-  it("ships exactly Free, Studio Plus and Studio Pro", () => {
+  it("ships exactly Free and StudioCar Plus", () => {
     expect(
       DEFAULT_PLAN_CONFIGURATIONS.map((configuration) => configuration.planKey),
-    ).toEqual(["FREE", "STUDIO_PLUS", "STUDIO_PRO"]);
+    ).toEqual(["FREE", "STUDIO_PLUS"]);
   });
 
-  it("refills a monthly plan and never refills a one-off allowance", () => {
-    expect(plan("STUDIO_PRO").allowanceScope).toBe("BILLING_PERIOD");
+  it("never refills or expires either lifetime allowance", () => {
     expect(plan("FREE").allowanceScope).toBe("LIFETIME");
     expect(plan("STUDIO_PLUS").allowanceScope).toBe("LIFETIME");
   });
@@ -48,7 +47,6 @@ describe("default plan configurations", () => {
     expect(DEFAULT_PLAN_CONFIGURATIONS.map((configuration) => [configuration.planKey, configuration.purchasable])).toEqual([
       ["FREE", false],
       ["STUDIO_PLUS", true],
-      ["STUDIO_PRO", true],
     ]);
   });
 

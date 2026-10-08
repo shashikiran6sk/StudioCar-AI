@@ -19,7 +19,7 @@ describe("receipt owner route", () => {
       id: "session-1", userId: "owner-id", expiresAt: new Date("2026-10-01"),
       user: { id: "owner-id", displayName: null, primaryEmail: null, primaryPhone: null },
     });
-    vi.mocked(getBillingRuntime).mockReturnValue({ database, service: new BillingService(database, {
+    vi.mocked(getBillingRuntime).mockReturnValue({ orderRateLimiter: { consume: vi.fn().mockResolvedValue({ allowed: true }) }, verificationRateLimiter: { consume: vi.fn().mockResolvedValue({ allowed: true }) }, database, service: new BillingService(database, {
       APP_ENV: "development", RAZORPAY_KEY_ID: "rzp_test_123", RAZORPAY_KEY_SECRET: "secret", RAZORPAY_WEBHOOK_SECRET: "webhook",
     }) });
     const response = await GET(new Request("https://app.example.test/api/billing/receipts/" + receiptId), { params: Promise.resolve({ receiptId }) });

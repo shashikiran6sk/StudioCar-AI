@@ -75,7 +75,6 @@ databaseDescribe("studio treatment matrix against PostgreSQL", () => {
       {
         resolve: () =>
           Promise.resolve({
-            allowanceBillingPeriodKey: null,
             imageCapacity: 1_000,
             maxImagesPerBatch: 20,
           }),

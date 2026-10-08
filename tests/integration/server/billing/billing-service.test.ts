@@ -37,17 +37,6 @@ databaseDescribe("BillingService", () => {
         allowanceScope: "LIFETIME", includedImages: 100, maxImagesPerBatch: 20, features: ["100 credits"], displayOrder: 1 },
       update: { active: true, purchasable: true, priceMinorUnits: 199900, includedImages: 100 },
     });
-    const pro = await database.planConfig.upsert({
-      where: { planKey: "STUDIO_PRO" },
-      create: { planKey: "STUDIO_PRO", displayName: "Studio Pro", description: "Monthly", segment: "Teams",
-        active: true, purchasable: true, featured: false, priceMinorUnits: 549900, currency: "INR", billingInterval: "MONTHLY",
-        allowanceScope: "BILLING_PERIOD", includedImages: 400, maxImagesPerBatch: 20, features: ["400 images"], displayOrder: 2 },
-      update: { active: true, purchasable: true, priceMinorUnits: 549900, includedImages: 400 },
-    });
-    await database.planPrice.create({
-      data: { planConfigId: pro.id, environment: "development", priceMinorUnits: 549900, currency: "INR",
-        includedImages: 400, razorpayPlanId: `plan_${suffix}` },
-    });
     service = new BillingService(database, {
       APP_ENV: "development", RAZORPAY_KEY_ID: "rzp_test_fixture", RAZORPAY_KEY_SECRET: "secret", RAZORPAY_WEBHOOK_SECRET: "webhook",
     });
@@ -58,8 +47,6 @@ databaseDescribe("BillingService", () => {
   afterAll(async () => {
     if (!database) return;
     await database.payment.deleteMany({ where: { userId } });
-    await database.planSubscription.deleteMany({ where: { userId } });
-    await database.planPrice.deleteMany({ where: { razorpayPlanId: `plan_${suffix}` } });
     await database.user.delete({ where: { id: userId } });
     await database.$disconnect();
   });
@@ -79,23 +66,5 @@ databaseDescribe("BillingService", () => {
     expect(await database.receipt.count({ where: { userId } })).toBe(0);
   });
 
-  it("reuses one pending Pro subscription and cancels it at period end", async () => {
-    const fetchMock = vi.fn().mockImplementation((url: string) => {
-      if (url.endsWith("/cancel")) return Promise.resolve(new Response(JSON.stringify({ status: "active" }), { status: 200 }));
-      return Promise.resolve(new Response(JSON.stringify({ id: `sub_${suffix}`, plan_id: `plan_${suffix}` }), { status: 200 }));
-    });
-    vi.stubGlobal("fetch", fetchMock);
-    const first = await service.createSubscription(userId);
-    const second = await service.createSubscription(userId);
-    expect(first.subscriptionId).toBe(second.subscriptionId);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const signature = createHmac("sha256", "secret").update(`pay_${suffix}|sub_${suffix}`).digest("hex");
-    expect(await service.verifySubscription(userId, {
-      razorpay_subscription_id: `sub_${suffix}`, razorpay_payment_id: `pay_${suffix}`, razorpay_signature: signature,
-    })).toBe(true);
-    await database.planSubscription.update({ where: { providerSubscriptionId: `sub_${suffix}` }, data: { status: "ACTIVE" } });
-    expect(await service.cancelSubscription(userId)).toBe(true);
-    expect((await database.planSubscription.findUniqueOrThrow({ where: { providerSubscriptionId: `sub_${suffix}` } })).cancelAtPeriodEnd).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-  });
+
 });

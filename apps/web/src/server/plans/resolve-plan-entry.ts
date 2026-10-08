@@ -13,7 +13,7 @@ export interface ResolvedPlan {
 }
 
 /**
- * Finds the plan a subscription names, and never fails to return one.
+ * Finds the plan a entitlement names, and never fails to return one.
  *
  * A plan an administrator has deactivated must not lock an account out of the
  * product, so the search widens from the live catalog to the shipped defaults

@@ -19,7 +19,7 @@ import {
   UsageEventType,
   VehicleStatus,
 } from "../../generated/prisma/client";
-import { findCurrentSubscriptionPlanKey } from "./find-current-subscription-plan-key";
+import { findOwnedPlanKey } from "./find-owned-plan-key";
 import { toOutputFormat } from "./to-output-format";
 import { releaseCreditAllocation } from "./release-credit-allocation";
 import { settleCreditAllocation } from "./settle-credit-allocation";
@@ -200,10 +200,9 @@ export class PrismaProcessingWorkerRepository
           status: ProcessingAttemptStatus.STARTED,
         },
       });
-      const subscriptionPlanKey = await findCurrentSubscriptionPlanKey(
+      const ownedPlanKey = await findOwnedPlanKey(
         transaction,
         job.userId,
-        input.now,
       );
 
       return {
@@ -217,7 +216,7 @@ export class PrismaProcessingWorkerRepository
           options: StoredProcessingOptionsSchema.parse(job.options),
           originalObjectKey: job.imageAsset.originalObjectKey,
           sizeBytes: job.imageAsset.sizeBytes,
-          subscriptionPlanKey,
+          ownedPlanKey,
           userId: job.userId,
           vehicleId: job.vehicleId,
         },

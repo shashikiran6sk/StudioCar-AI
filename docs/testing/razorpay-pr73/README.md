@@ -1,3 +1,7 @@
+# Archived pre-refactor evidence
+
+This directory records the earlier PR #73 implementation and its baseline comparison. Subscription references are historical evidence, not current setup instructions. Current Plus-only setup and testing live in [the billing runbook](../../razorpay-billing.md).
+
 # Razorpay PR #73 integration and baseline comparison
 
 PR: [Implement Razorpay billing, subscriptions, credits, and receipts](https://github.com/shashikiran6sk/StudioCar-AI/pull/73). Tested code: `07f5fed`. Main: `dd835cad364493038b6c28cd0dd0434c5ded2781`; original PR: `ed26b28e52ba515dc25f495cfb92712dc2143bfa`. Date/counts/full tested SHA: [summary](evidence/summary.json), Asia/Calcutta.

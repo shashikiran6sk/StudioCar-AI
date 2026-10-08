@@ -32,16 +32,17 @@ describe("POST Razorpay webhook", () => {
     vi.stubEnv("RAZORPAY_KEY_SECRET", "secret");
     vi.stubEnv("RAZORPAY_WEBHOOK_SECRET", "webhook");
     const database = createDatabaseClient({ connectionString: "postgresql://postgres:postgres@localhost:5432/test" });
-    vi.mocked(getBillingRuntime).mockReturnValue({ database, service: new BillingService(database, {
+    vi.mocked(getBillingRuntime).mockReturnValue({ orderRateLimiter: { consume: vi.fn().mockResolvedValue({ allowed: true }) }, verificationRateLimiter: { consume: vi.fn().mockResolvedValue({ allowed: true }) }, database, service: new BillingService(database, {
       APP_ENV: "development", RAZORPAY_KEY_ID: "rzp_test_123", RAZORPAY_KEY_SECRET: "secret", RAZORPAY_WEBHOOK_SECRET: "webhook",
     }) });
-    const body = '{"event":"payment.failed", "payload":{}}';
+    const event = { event: "payment.failed", payload: { payment: { entity: { id: "pay_1", order_id: "order_1", amount: 199900, currency: "INR", status: "failed", created_at: 1 } } } };
+    const body = JSON.stringify(event, null, 2);
     const signature = createHmac("sha256", "webhook").update(body).digest("hex");
     const response = await POST(new Request("https://app.example.test/api/webhooks/razorpay", {
       method: "POST", headers: { "x-razorpay-signature": signature, "x-razorpay-event-id": "evt_1" }, body,
     }));
     expect(response.status).toBe(200);
-    expect(processRazorpayWebhook).toHaveBeenCalledWith(database, "evt_1", { event: "payment.failed", payload: {} });
+    expect(processRazorpayWebhook).toHaveBeenCalledWith(database, "evt_1", event);
     await database.$disconnect();
   });
 });

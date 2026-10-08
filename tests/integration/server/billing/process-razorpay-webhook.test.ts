@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { RazorpayWebhookSchema } from "../../../../packages/contracts/src/billing";
 import { createDatabaseClient } from "../../../../packages/database-runtime/src/client";
@@ -43,13 +43,9 @@ databaseDescribe("Razorpay webhook effects", () => {
     await database.webhookEvent.deleteMany({ where: { externalId: { contains: suffix } } });
     await database.auditLog.deleteMany({ where: { resourceType: "Payment", resourceId: { in: paymentIds } } });
     await database.receipt.deleteMany({ where: { userId } });
-    await database.subscriptionAllowance.deleteMany({ where: { userId } });
     await database.creditLedger.deleteMany({ where: { userId } });
     await database.billingRefund.deleteMany({ where: { payment: { userId } } });
     await database.payment.deleteMany({ where: { userId } });
-    await database.planSubscription.deleteMany({ where: { userId } });
-    await database.planPrice.deleteMany({ where: { planConfig: { planKey: `TEST_PRO_${suffix}` } } });
-    await database.planConfig.deleteMany({ where: { planKey: `TEST_PRO_${suffix}` } });
     await database.user.delete({ where: { id: userId } });
     await database.$disconnect();
   });
@@ -64,72 +60,86 @@ databaseDescribe("Razorpay webhook effects", () => {
       event: "payment.captured",
       payload: { payment: { entity: { id: paymentId, amount: 199900, currency: "INR", status: "captured", order_id: orderId, method: "upi", created_at: 1790294400 } } },
     });
-    await processRazorpayWebhook(database, `event_plus_${suffix}`, event);
-    await processRazorpayWebhook(database, `event_plus_${suffix}`, event);
-    await processRazorpayWebhook(database, `event_plus_retry_${suffix}`, event);
+    await Promise.all([`event_plus_${suffix}`, `event_plus_${suffix}`, `event_plus_retry_${suffix}`].map((id) => processRazorpayWebhook(database, id, event)));
     expect(await database.creditLedger.count({ where: { userId, type: "PURCHASE_GRANT" } })).toBe(1);
     expect(await database.creditLedger.aggregate({ where: { userId }, _sum: { amount: true } })).toMatchObject({ _sum: { amount: 100 } });
     expect(await database.receipt.count({ where: { paymentId: payment.id } })).toBe(1);
     expect((await database.payment.findUniqueOrThrow({ where: { id: payment.id } })).status).toBe("PAID");
   });
 
-  it("creates one allowance and receipt per unique Pro charge, without rollover", async () => {
-    const plan = await database.planConfig.create({
-      data: {
-        planKey: `TEST_PRO_${suffix}`, displayName: "Test Pro", description: "Test", segment: "Test",
-        active: true, purchasable: true, featured: false, priceMinorUnits: 549900,
-        currency: "INR", billingInterval: "MONTHLY", allowanceScope: "BILLING_PERIOD",
-        includedImages: 400, maxImagesPerBatch: 20, storageBytes: null,
-        features: ["400 images"], displayOrder: 99,
-      },
-    });
-    const price = await database.planPrice.create({
-      data: { planConfigId: plan.id, environment: "development", priceMinorUnits: 549900, currency: "INR", includedImages: 400, razorpayPlanId: `plan_${suffix}` },
-    });
-    const subscription = await database.planSubscription.create({
-      data: {
-        userId, source: "PAYMENT_PROVIDER", provider: "RAZORPAY", providerSubscriptionId: `sub_${suffix}`,
-        razorpayPlanId: price.razorpayPlanId, planPriceId: price.id,
-        planKey: "STUDIO_PRO", status: "CREATED",
-        currentPeriodStart: new Date("2026-09-01T00:00:00Z"), currentPeriodEnd: new Date("2026-10-01T00:00:00Z"),
-      },
-    });
-    const periods = [
-      { start: 1790294400, end: 1792886400, paymentId: `pay_profirst${suffix}` },
-      { start: 1792886400, end: 1795564800, paymentId: `pay_pronext${suffix}` },
-    ];
-    for (const [index, period] of periods.entries()) {
-      const event = RazorpayWebhookSchema.parse({
-        event: "subscription.charged",
-        payload: {
-          subscription: { entity: { id: `sub_${suffix}`, plan_id: price.razorpayPlanId, status: "active", current_start: period.start, current_end: period.end } },
-          payment: { entity: { id: period.paymentId, amount: 549900, currency: "INR", status: "captured", created_at: period.start } },
-        },
-      });
-      await processRazorpayWebhook(database, `event_pro_${String(index)}_${suffix}`, event);
-      await processRazorpayWebhook(database, `event_pro_retry_${String(index)}_${suffix}`, event);
-    }
-    const allowances = await database.subscriptionAllowance.findMany({ where: { subscriptionId: subscription.id }, orderBy: { periodStart: "asc" } });
-    expect(allowances).toHaveLength(2);
-    expect(allowances.map((allowance) => [allowance.allowance, allowance.consumed])).toEqual([[400, 0], [400, 0]]);
-    expect(await database.payment.count({ where: { subscriptionId: subscription.id } })).toBe(2);
-    expect(await database.receipt.count({ where: { userId, productCode: "STUDIO_PRO_MONTHLY" } })).toBe(2);
 
-    for (const [index, state] of ["pending", "halted", "cancelled"].entries()) {
-      await processRazorpayWebhook(database, `event_state_${String(index)}_${suffix}`, RazorpayWebhookSchema.parse({
-        event: `subscription.${state}`,
-        payload: { subscription: { entity: { id: `sub_${suffix}`, plan_id: price.razorpayPlanId, status: state, current_start: periods[1]?.start, current_end: periods[1]?.end } } },
-      }));
-      expect((await database.planSubscription.findUniqueOrThrow({ where: { id: subscription.id } })).status).toBe(state.toUpperCase());
-    }
-    const refund = RazorpayWebhookSchema.parse({
-      event: "refund.processed",
-      payload: { refund: { entity: { id: `rfnd_${suffix}`, payment_id: periods[0]?.paymentId, amount: 549900, status: "processed" } } },
-    });
-    await processRazorpayWebhook(database, `event_refund_${suffix}`, refund);
-    const firstPaymentId = periods[0]?.paymentId;
-    if (!firstPaymentId) throw new Error("Missing first payment fixture");
-    expect((await database.payment.findUniqueOrThrow({ where: { razorpayPaymentId: firstPaymentId } })).status).toBe("REFUNDED");
-    expect(await database.receipt.count({ where: { userId, productCode: "STUDIO_PRO_MONTHLY" } })).toBe(2);
+  async function order(label: string) {
+    return database.payment.create({ data: { userId, productCode: "STUDIO_PLUS", billingType: "ONE_TIME",
+      razorpayOrderId: `order_${label}${suffix}`, amountPaise: 199900, currency: "INR", includedImages: 100 } });
+  }
+  function captured(orderId: string, label: string, amount = 199900, currency = "INR") {
+    return RazorpayWebhookSchema.parse({ event: "payment.captured", payload: { payment: { entity: {
+      id: `pay_${label}${suffix}`, order_id: orderId, amount, currency, status: "captured", created_at: 1704067200,
+    } } } });
+  }
+  it("adds repeat purchases to the remaining balance across months and years", async () => {
+    const before = (await database.creditLedger.aggregate({ where: { userId }, _sum: { amount: true } }))._sum.amount ?? 0;
+    const first = await order("repeatA"); const second = await order("repeatB");
+    if (!first.razorpayOrderId || !second.razorpayOrderId) throw new Error("Expected orders");
+    await processRazorpayWebhook(database, `repeatA${suffix}`, captured(first.razorpayOrderId, "repeatA"));
+    await database.creditLedger.create({ data: { userId, type: "PROCESSING_DEBIT", amount: -25, referenceId: `spent${suffix}` } });
+    await processRazorpayWebhook(database, `repeatB${suffix}`, captured(second.razorpayOrderId, "repeatB"));
+    const balance = (await database.creditLedger.aggregate({ where: { userId }, _sum: { amount: true } }))._sum.amount;
+    expect(balance).toBe(before + 175);
+    expect((await database.payment.findUniqueOrThrow({ where: { id: first.id } })).paidAt?.getUTCFullYear()).toBe(2024);
   });
+  it.each([[1, "INR"], [199900, "USD"]])("rejects wrong captured amount/currency %s/%s and retains a retryable inbox", async (amount, currency) => {
+    const label = `bad${currency}${String(amount)}`; const payment = await order(label);
+    if (!payment.razorpayOrderId) throw new Error("Expected order");
+    const eventId = `${label}${suffix}`;
+    await expect(processRazorpayWebhook(database, eventId, captured(payment.razorpayOrderId, label, amount, currency))).rejects.toThrow();
+    const inbox = await database.webhookEvent.findUniqueOrThrow({ where: { provider_externalId: { provider: "RAZORPAY", externalId: eventId } } });
+    expect(inbox.status).toBe("FAILED"); expect(inbox.processedAt).toBeNull();
+    expect(await database.creditLedger.count({ where: { referenceId: payment.id } })).toBe(0);
+  });
+  it("recovers a webhook delivered before its local order association", async () => {
+    const eventId = `early${suffix}`; const orderId = `order_early${suffix}`; const event = captured(orderId, "early");
+    await expect(processRazorpayWebhook(database, eventId, event)).rejects.toThrow();
+    expect((await database.webhookEvent.findUniqueOrThrow({ where: { provider_externalId: { provider: "RAZORPAY", externalId: eventId } } })).status).toBe("FAILED");
+    const payment = await order("early");
+    await processRazorpayWebhook(database, eventId, event);
+    expect(await database.creditLedger.count({ where: { referenceId: payment.id } })).toBe(1);
+  });
+  it("rolls back financial mutations on transient database failure and retries safely", async () => {
+    const payment = await order("transient"); if (!payment.razorpayOrderId) throw new Error("Expected order");
+    const event = captured(payment.razorpayOrderId, "transient"); const id = `transient${suffix}`;
+    const transaction = vi.spyOn(database, "$transaction").mockRejectedValueOnce(new Error("Transient connection loss"));
+    await expect(processRazorpayWebhook(database, id, event)).rejects.toThrow(); transaction.mockRestore();
+    expect(await database.creditLedger.count({ where: { referenceId: payment.id } })).toBe(0);
+    await processRazorpayWebhook(database, id, event);
+    expect(await database.creditLedger.count({ where: { referenceId: payment.id } })).toBe(1);
+  });
+  it("failed payments never grant credits, and late failures cannot regress capture", async () => {
+    const payment = await order("failed"); if (!payment.razorpayOrderId) throw new Error("Expected order");
+    const failed = RazorpayWebhookSchema.parse({ event: "payment.failed", payload: { payment: { entity: {
+      id: `pay_failed${suffix}`, order_id: payment.razorpayOrderId, amount: 199900, currency: "INR", status: "failed", created_at: 1,
+    } } } });
+    await processRazorpayWebhook(database, `failed${suffix}`, failed);
+    expect(await database.creditLedger.count({ where: { referenceId: payment.id } })).toBe(0);
+    await processRazorpayWebhook(database, `capturedAfterFailed${suffix}`, captured(payment.razorpayOrderId, "failed"));
+    await processRazorpayWebhook(database, `lateFailed${suffix}`, failed);
+    expect((await database.payment.findUniqueOrThrow({ where: { id: payment.id } })).status).toBe("PAID");
+  });
+  it("retains receipts and spent credits on refunds and cannot re-grant a refunded payment", async () => {
+    const payment = await order("refund"); if (!payment.razorpayOrderId) throw new Error("Expected order");
+    const capture = captured(payment.razorpayOrderId, "refund");
+    await processRazorpayWebhook(database, `captureRefund${suffix}`, capture);
+    const before = (await database.creditLedger.aggregate({ where: { userId }, _sum: { amount: true } }))._sum.amount;
+    const refund = RazorpayWebhookSchema.parse({ event: "refund.processed", payload: { refund: { entity: {
+      id: `rfnd_${suffix}`, payment_id: `pay_refund${suffix}`, amount: 199900, status: "processed",
+    } } } });
+    await Promise.all([0, 1].map((n) => processRazorpayWebhook(database, `refund${String(n)}${suffix}`, refund)));
+    await processRazorpayWebhook(database, `captureRefundAgain${suffix}`, capture);
+    expect((await database.payment.findUniqueOrThrow({ where: { id: payment.id } })).status).toBe("REFUNDED");
+    expect(await database.receipt.count({ where: { paymentId: payment.id } })).toBe(1);
+    expect(await database.auditLog.count({ where: { resourceId: payment.id, action: "BILLING_REFUND_RECONCILIATION_REQUIRED" } })).toBe(1);
+    expect((await database.creditLedger.aggregate({ where: { userId }, _sum: { amount: true } }))._sum.amount).toBe(before);
+    expect(await database.creditLedger.count({ where: { referenceId: payment.id } })).toBe(1);
+  });
+
 });

@@ -1,69 +1,43 @@
 import { z } from "zod";
 
-const RazorpayIdentifierSchema = z.string().regex(/^[a-z]+_[A-Za-z0-9]+$/);
+export const PLUS_PRODUCT = Object.freeze({
+  code: "STUDIO_PLUS", name: "StudioCar Plus", amountPaise: 199_900,
+  currency: "INR", credits: 100,
+} satisfies { code: "STUDIO_PLUS"; name: string; amountPaise: number; currency: "INR"; credits: number });
+
+const RazorpayIdentifierSchema = z.string().regex(/^[a-z]+_[A-Za-z0-9]+$/).max(255);
 const RazorpaySignatureSchema = z.string().regex(/^[a-f0-9]{64}$/);
-
-export const CreateBillingOrderSchema = z.object({
-  productCode: z.literal("STUDIO_PLUS"),
-}).strict();
-
-export const CreateBillingSubscriptionSchema = z.object({
-  planCode: z.literal("STUDIO_PRO_MONTHLY"),
-}).strict();
-
+export const CreateBillingOrderSchema = z.object({ productCode: z.literal(PLUS_PRODUCT.code) }).strict();
 export const VerifyBillingOrderSchema = z.object({
   razorpay_payment_id: RazorpayIdentifierSchema,
   razorpay_order_id: RazorpayIdentifierSchema,
   razorpay_signature: RazorpaySignatureSchema,
 }).strict();
-
-export const VerifyBillingSubscriptionSchema = z.object({
-  razorpay_payment_id: RazorpayIdentifierSchema,
-  razorpay_subscription_id: RazorpayIdentifierSchema,
-  razorpay_signature: RazorpaySignatureSchema,
-}).strict();
-
+export const BillingOrderResponseSchema = z.object({
+  orderId: RazorpayIdentifierSchema, keyId: z.string(), amount: z.number().int().positive(),
+  currency: z.literal(PLUS_PRODUCT.currency), name: z.string(),
+});
+export const BillingStatusSchema = z.object({
+  purchasedCredits: z.number().int().nonnegative(),
+  purchasedCreditsGranted: z.number().int().nonnegative(),
+  checkoutPaymentStatus: z.enum(["CREATED", "VERIFIED", "PAID", "FAILED", "REFUNDED", "PARTIALLY_REFUNDED"]).nullable(),
+});
+export const BillingStatusQuerySchema = z.object({ orderId: z.string().regex(/^order_[A-Za-z0-9]+$/).max(255).optional() }).strict();
 export const RazorpayPaymentEntitySchema = z.object({
   id: RazorpayIdentifierSchema,
-  amount: z.number().int().positive(),
-  currency: z.literal("INR"),
-  status: z.string(),
-  order_id: RazorpayIdentifierSchema.nullish(),
-  subscription_id: RazorpayIdentifierSchema.nullish(),
-  method: z.string().nullish(),
-  created_at: z.number().int().nonnegative(),
+  amount: z.number().int().positive(), currency: z.string().length(3), status: z.string(),
+  order_id: RazorpayIdentifierSchema,
+  method: z.string().max(40).nullish(), created_at: z.number().int().nonnegative(),
 });
-
-export const RazorpaySubscriptionEntitySchema = z.object({
-  id: RazorpayIdentifierSchema,
-  plan_id: RazorpayIdentifierSchema,
-  status: z.string(),
-  current_start: z.number().int().nonnegative().nullish(),
-  current_end: z.number().int().nonnegative().nullish(),
-  notes: z.union([
-    z.object({ internalSubscriptionId: z.uuid().optional() }).loose(),
-    z.array(z.unknown()),
-  ]).optional(),
-});
-
 export const RazorpayRefundEntitySchema = z.object({
-  id: RazorpayIdentifierSchema,
-  payment_id: RazorpayIdentifierSchema,
-  amount: z.number().int().positive(),
-  status: z.string(),
+  id: RazorpayIdentifierSchema, payment_id: RazorpayIdentifierSchema,
+  amount: z.number().int().positive(), status: z.enum(["pending", "processed", "failed"]),
 });
-
-export const RazorpayWebhookSchema = z.object({
-  event: z.string(),
-  payload: z.object({
-    payment: z.object({ entity: RazorpayPaymentEntitySchema }).optional(),
-    subscription: z.object({ entity: RazorpaySubscriptionEntitySchema }).optional(),
-    refund: z.object({ entity: RazorpayRefundEntitySchema }).optional(),
-  }),
-});
-
+export const RazorpayWebhookSchema = z.discriminatedUnion("event", [
+  z.object({ event: z.literal("payment.captured"), payload: z.object({ payment: z.object({ entity: RazorpayPaymentEntitySchema.extend({ status: z.literal("captured") }) }) }) }),
+  z.object({ event: z.literal("payment.failed"), payload: z.object({ payment: z.object({ entity: RazorpayPaymentEntitySchema.extend({ status: z.literal("failed") }) }) }) }),
+  z.object({ event: z.enum(["refund.created", "refund.processed", "refund.failed"]), payload: z.object({ refund: z.object({ entity: RazorpayRefundEntitySchema }) }) }),
+]);
 export type CreateBillingOrder = z.infer<typeof CreateBillingOrderSchema>;
-export type CreateBillingSubscription = z.infer<typeof CreateBillingSubscriptionSchema>;
 export type VerifyBillingOrder = z.infer<typeof VerifyBillingOrderSchema>;
-export type VerifyBillingSubscription = z.infer<typeof VerifyBillingSubscriptionSchema>;
 export type RazorpayWebhook = z.infer<typeof RazorpayWebhookSchema>;

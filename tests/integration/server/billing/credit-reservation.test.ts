@@ -7,6 +7,7 @@ import { ProcessingProvider } from "../../../../packages/database-runtime/genera
 import { releaseCreditAllocation } from "../../../../packages/database-runtime/src/repositories/release-credit-allocation";
 import { settleCreditAllocation } from "../../../../packages/database-runtime/src/repositories/settle-credit-allocation";
 import { PrismaProcessingJobRepository } from "../../../../apps/web/src/server/db/repositories/processing-job-repository";
+import { PrismaProcessingWorkerRepository } from "../../../../packages/database-runtime/src/repositories/processing-worker-repository";
 import { getBillingStatus } from "../../../../apps/web/src/server/billing/get-billing-status";
 
 const databaseUrl = process.env["DATABASE_URL"];
@@ -15,7 +16,6 @@ const databaseDescribe = databaseUrl ? describe : describe.skip;
 databaseDescribe("paid credit reservations", () => {
   let database: ReturnType<typeof createDatabaseClient>;
   let userId: string;
-  let allowanceId: string;
   const suffix = randomUUID();
 
   beforeAll(async () => {
@@ -23,30 +23,18 @@ databaseDescribe("paid credit reservations", () => {
     database = createDatabaseClient({ connectionString: databaseUrl, log: [] });
     const user = await database.user.create({ data: { primaryEmail: `credit-${suffix}@example.test` } });
     userId = user.id;
-    const start = new Date(Date.now() - 60_000);
-    const end = new Date(Date.now() + 86_400_000);
-    const subscription = await database.planSubscription.create({
-      data: { userId, source: "PAYMENT_PROVIDER", provider: "RAZORPAY", providerSubscriptionId: `sub_${suffix.replaceAll("-", "")}`,
-        planKey: "STUDIO_PRO", status: "ACTIVE", currentPeriodStart: start, currentPeriodEnd: end },
-    });
-    const allowance = await database.subscriptionAllowance.create({
-      data: { userId, subscriptionId: subscription.id, providerPaymentId: `pay_${suffix.replaceAll("-", "")}`, periodStart: start, periodEnd: end, allowance: 3 },
-    });
-    allowanceId = allowance.id;
-    await database.creditLedger.create({ data: { userId, type: "PURCHASE_GRANT", amount: 5, referenceId: `grant-${suffix}` } });
+    await database.creditLedger.create({ data: { userId, type: "PURCHASE_GRANT", amount: 8, referenceId: `grant-${suffix}` } });
   });
 
   afterAll(async () => {
     if (!database) return;
     await database.creditAllocation.deleteMany({ where: { userId } });
     await database.creditLedger.deleteMany({ where: { userId } });
-    await database.subscriptionAllowance.deleteMany({ where: { userId } });
-    await database.planSubscription.deleteMany({ where: { userId } });
     await database.user.delete({ where: { id: userId } });
     await database.$disconnect();
   });
 
-  it("serializes simultaneous batches and spends Pro before purchased credits", async () => {
+  it("serializes simultaneous batches and prevents overspending cumulative purchased credits", async () => {
     const options = ProcessingOptionsSchema.parse({});
     const repository = new PrismaProcessingJobRepository(database);
     const commands = await Promise.all([0, 1].map(async (number) => {
@@ -62,7 +50,7 @@ databaseDescribe("paid credit reservations", () => {
       }));
       return {
         requestId: randomUUID(),
-        allowance: { imageCapacity: 400, maxImagesPerBatch: 20, allowanceBillingPeriodKey: "2026-09" },
+        allowance: { imageCapacity: 100, maxImagesPerBatch: 20 },
         batchIdempotencyKey: `paid-batch-${suffix}-${String(number)}`,
         batchLabel: null,
         batchRequestHash: "a".repeat(64),
@@ -84,20 +72,54 @@ databaseDescribe("paid credit reservations", () => {
     const replay = await repository.reserveBatchOwned(acceptedCommand);
     if (replay.kind !== "EXISTING") throw new Error("Expected an idempotent paid batch replay.");
     expect(replay.jobs.map((job) => job.id)).toEqual(accepted.jobs.map((job) => job.id));
-    expect(await database.creditAllocation.count({ where: { userId, source: "PRO" } })).toBe(3);
-    expect(await database.creditAllocation.count({ where: { userId, source: "PURCHASED" } })).toBe(2);
+    expect(await database.creditAllocation.count({ where: { userId } })).toBe(5);
     const ledger = await database.creditLedger.aggregate({ where: { userId }, _sum: { amount: true } });
     expect(ledger._sum.amount).toBe(3);
-    const proAllocation = await database.creditAllocation.findFirstOrThrow({ where: { userId, source: "PRO" } });
-    const purchasedAllocation = await database.creditAllocation.findFirstOrThrow({ where: { userId, source: "PURCHASED" } });
-    await database.$transaction(async (transaction) => {
-      await settleCreditAllocation(transaction, proAllocation.jobId);
-      await releaseCreditAllocation(transaction, purchasedAllocation.jobId);
-    });
-    expect((await database.subscriptionAllowance.findUniqueOrThrow({ where: { id: allowanceId } })).consumed).toBe(1);
-    expect((await database.creditLedger.aggregate({ where: { userId }, _sum: { amount: true } }))._sum.amount).toBe(4);
+    const allocations = await database.creditAllocation.findMany({ where: { userId }, orderBy: { id: "asc" } });
+    const first = allocations[0]; const second = allocations[1];
+    if (!first || !second) throw new Error("Expected paid allocations.");
+    await database.$transaction((transaction) => settleCreditAllocation(transaction, first.jobId));
+    await Promise.all([0, 1].map(() => database.$transaction((transaction) => releaseCreditAllocation(transaction, second.jobId))));
+    await database.$transaction((transaction) => releaseCreditAllocation(transaction, first.jobId));
     const status = await getBillingStatus(database, userId);
-    expect(status.subscription?.remaining).toBe(0);
     expect(status.purchasedCredits).toBe(4);
+    expect(await database.creditLedger.count({ where: { userId, type: "PROCESSING_REFUND" } })).toBe(1);
   });
+  it("keeps paid reservations during retry and restores them once on terminal failure", async () => {
+    const allocation = await database.creditAllocation.findFirstOrThrow({ where: { userId, status: "RESERVED" } });
+    const workers = new PrismaProcessingWorkerRepository(database); const now = new Date();
+    const before = (await getBillingStatus(database, userId)).purchasedCredits;
+    await database.processingJob.update({ where: { id: allocation.jobId }, data: { status: "QUEUED", queuedAt: now } });
+    const claim = await workers.claimJob({ jobId: allocation.jobId, provider: "LEONARDO", workerId: "paid-retry", now, claimExpiresAt: new Date(now.getTime() + 60000) });
+    if (claim.kind !== "CLAIMED") throw new Error("Expected claim");
+    const failed = { jobId: allocation.jobId, attemptNumber: claim.job.attemptNumber, workerId: "paid-retry", errorCode: "PROVIDER_NETWORK_ERROR", errorMessage: "Temporary provider failure.", failedAt: now, nextAttemptAt: now, providerLatencyMilliseconds: null, providerRequestId: null, retryable: true };
+    expect((await workers.failJob(failed)).kind).toBe("RETRY_SCHEDULED");
+    expect((await getBillingStatus(database, userId)).purchasedCredits).toBe(before);
+    expect((await database.creditAllocation.findUniqueOrThrow({ where: { jobId: allocation.jobId } })).status).toBe("RESERVED");
+    await database.processingJob.update({ where: { id: allocation.jobId }, data: { status: "QUEUED", queuedAt: now } });
+    const retry = await workers.claimJob({ jobId: allocation.jobId, provider: "LEONARDO", workerId: "paid-terminal", now, claimExpiresAt: new Date(now.getTime() + 60000) });
+    if (retry.kind !== "CLAIMED") throw new Error("Expected retry claim");
+    const terminal = { ...failed, attemptNumber: retry.job.attemptNumber, workerId: "paid-terminal", retryable: false };
+    expect((await workers.failJob(terminal)).kind).toBe("FAILED");
+    await workers.failJob(terminal);
+    expect((await getBillingStatus(database, userId)).purchasedCredits).toBe(before + 1);
+  });
+  it("completes a paid job once without an additional debit or free-credit consumption", async () => {
+    const allocation = await database.creditAllocation.findFirstOrThrow({ where: { userId, status: "RESERVED" } });
+    const workers = new PrismaProcessingWorkerRepository(database); const now = new Date();
+    const before = (await getBillingStatus(database, userId)).purchasedCredits;
+    await database.processingJob.update({ where: { id: allocation.jobId }, data: { status: "QUEUED", queuedAt: now } });
+    const claim = await workers.claimJob({ jobId: allocation.jobId, provider: "LEONARDO", workerId: "paid-complete", now, claimExpiresAt: new Date(now.getTime() + 60000) });
+    if (claim.kind !== "CLAIMED") throw new Error("Expected claim");
+    const completion = { attemptNumber: claim.job.attemptNumber, completedAt: now, jobId: allocation.jobId,
+      output: { checksumSha256: null, height: 100, width: 100, mimeType: "image/webp", objectKey: `users/${userId}/paid.webp`, previewObjectKey: `users/${userId}/paid-preview.webp`, outputFormat: "WEBP", sizeBytes: 1000n },
+      providerLatencyMilliseconds: null, providerRequestId: null, usageBillingPeriodKey: "2026-10", usageIdempotencyKey: `paid-complete-${suffix}`, workerId: "paid-complete",
+    } satisfies Parameters<typeof workers.completeJob>[0];
+    expect((await workers.completeJob(completion)).kind).toBe("COMPLETED");
+    expect((await workers.completeJob(completion)).kind).toBe("ALREADY_COMPLETED");
+    expect((await getBillingStatus(database, userId)).purchasedCredits).toBe(before);
+    expect(await database.usageEvent.count({ where: { jobId: allocation.jobId, type: "BACKGROUND_REMOVAL_COMPLETED" } })).toBe(1);
+    expect((await database.creditAllocation.findUniqueOrThrow({ where: { jobId: allocation.jobId } })).status).toBe("CONSUMED");
+  });
+
 });

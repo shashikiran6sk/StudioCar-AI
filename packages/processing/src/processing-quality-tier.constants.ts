@@ -10,7 +10,6 @@ import type { ProcessingQualityTier } from "./processing-worker.types";
 export const PLAN_PROCESSING_QUALITY_TIERS = {
   FREE: "STANDARD",
   STUDIO_PLUS: "HIGH",
-  STUDIO_PRO: "HIGH",
 } as const satisfies Record<PlanKey, ProcessingQualityTier>;
 
 /** What an account without a current, recognised paid plan receives. */

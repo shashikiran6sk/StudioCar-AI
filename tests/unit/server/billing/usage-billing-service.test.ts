@@ -24,7 +24,7 @@ function repository(
 
 describe("UsageBillingService", () => {
   it("resolves processing limits without scanning usage or storage", async () => {
-    const repo = repository("STUDIO_PRO", {
+    const repo = repository("STUDIO_PLUS", {
       imageUsage: 120,
       storageUsedBytes: 0n,
       uploadSessionUsage: 8,
@@ -32,10 +32,10 @@ describe("UsageBillingService", () => {
     const service = new UsageBillingService(repo, catalog);
 
     await expect(service.getCurrentPlan("user-1", now)).resolves.toMatchObject({
-      key: "STUDIO_PRO",
-      imageCapacity: 400,
+      key: "STUDIO_PLUS",
+      imageCapacity: 100,
       maxImagesPerBatch: 20,
-      allowanceScope: "BILLING_PERIOD",
+      allowanceScope: "LIFETIME",
     });
     expect(repo.findOwnedPlanKey).toHaveBeenCalledWith("user-1", now);
     expect(repo.getOwnedSummary).not.toHaveBeenCalled();
@@ -80,8 +80,8 @@ describe("UsageBillingService", () => {
     expect(repo.getOwnedSummary).toHaveBeenCalledWith("user-1", null, now);
   });
 
-  it("scopes a billing-period allowance to the current month", async () => {
-    const repo = repository("STUDIO_PRO", {
+  it("never scopes paid packs to a calendar month", async () => {
+    const repo = repository("STUDIO_PLUS", {
       imageUsage: 120,
       storageUsedBytes: 0n,
       uploadSessionUsage: 8,
@@ -92,13 +92,13 @@ describe("UsageBillingService", () => {
       now,
     );
 
-    expect(repo.getOwnedSummary).toHaveBeenCalledWith("user-1", "2026-09", now);
+    expect(repo.getOwnedSummary).toHaveBeenCalledWith("user-1", null, now);
     expect(summary.currentPlan).toMatchObject({
-      key: "STUDIO_PRO",
-      allowanceScope: "BILLING_PERIOD",
-      imageCapacity: 400,
+      key: "STUDIO_PLUS",
+      allowanceScope: "LIFETIME",
+      imageCapacity: 100,
     });
-    expect(summary.imagesRemaining).toBe(280);
+    expect(summary.imagesRemaining).toBe(0);
   });
 
   it("never reports negative remaining capacity", async () => {
@@ -130,13 +130,13 @@ describe("UsageBillingService", () => {
   });
 
   it("reports the allowance an administrator configured, not the shipped one", async () => {
-    const repo = repository("STUDIO_PRO", {
+    const repo = repository("STUDIO_PLUS", {
       imageUsage: 10,
       storageUsedBytes: 0n,
       uploadSessionUsage: 0,
     });
     const edited = DEFAULT_PLAN_CATALOG.map((plan) =>
-      plan.planKey === "STUDIO_PRO"
+      plan.planKey === "STUDIO_PLUS"
         ? { ...plan, includedImages: 800, maxImagesPerBatch: 40 }
         : plan,
     );
@@ -153,7 +153,7 @@ describe("UsageBillingService", () => {
   });
 
   it("falls back to the shipped plan when the catalog is empty", async () => {
-    const repo = repository("STUDIO_PRO", {
+    const repo = repository("STUDIO_PLUS", {
       imageUsage: 0,
       storageUsedBytes: 0n,
       uploadSessionUsage: 0,
@@ -164,8 +164,8 @@ describe("UsageBillingService", () => {
     }).getSummary("user-1", now);
 
     expect(summary.currentPlan).toMatchObject({
-      key: "STUDIO_PRO",
-      imageCapacity: 400,
+      key: "STUDIO_PLUS",
+      imageCapacity: 100,
     });
   });
 

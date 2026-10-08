@@ -25,23 +25,21 @@ const CHECKOUT_SCRIPT = `
       fetch('${CHECKOUT_CONNECTION_URL}').then(() => {
         this.options.handler({
           razorpay_payment_id: 'pay_synthetic',
-          razorpay_signature: 'synthetic_signature',
-          ...(this.options.order_id
-            ? { razorpay_order_id: this.options.order_id }
-            : { razorpay_subscription_id: this.options.subscription_id })
+          razorpay_signature: '0000000000000000000000000000000000000000000000000000000000000000',
+          razorpay_order_id: this.options.order_id
         });
       });
     }
   };
 `;
 
-billingTest("loads Plus and Pro Checkout through the browser security policy", async ({ page }, testInfo) => {
+billingTest("loads repeatable Plus Checkout through the browser security policy", async ({ page }, testInfo) => {
   if (!databaseUrl) throw new Error("DATABASE_URL is required for this test.");
   const database = new Pool({ connectionString: databaseUrl, max: 1 });
   const userId = randomUUID();
   let scriptsLoaded = 0;
   let ordersVerified = 0;
-  let subscriptionsVerified = 0;
+  let statusPolls = 0;
 
   try {
     await database.query(
@@ -73,44 +71,34 @@ billingTest("loads Plus and Pro Checkout through the browser security policy", a
         orderId: "order_synthetic", keyId: "rzp_test_browser", amount: 199900, currency: "INR", name: "Studio Plus",
       } });
     });
-    await page.route("**/api/billing/subscriptions", async (route) => {
-      expect(route.request().postData()).toBe(JSON.stringify({ planCode: "STUDIO_PRO_MONTHLY" }));
-      await route.fulfill({ json: {
-        subscriptionId: "sub_synthetic", keyId: "rzp_test_browser", amount: 549900, currency: "INR", name: "Studio Pro",
-      } });
-    });
     await page.route("**/api/billing/orders/verify", async (route) => {
       ordersVerified += 1;
       expect(route.request().postData()).toContain('"razorpay_order_id":"order_synthetic"');
       await route.fulfill({ json: { ok: true } });
     });
-    await page.route("**/api/billing/subscriptions/verify", async (route) => {
-      subscriptionsVerified += 1;
-      expect(route.request().postData()).toContain('"razorpay_subscription_id":"sub_synthetic"');
-      await route.fulfill({ json: { ok: true } });
-    });
     await page.route("**/api/billing/status?**", async (route) => {
+      statusPolls += 1;
       await route.fulfill({ json: {
-        checkoutPaymentStatus: "PAID", checkoutSubscriptionStatus: "ACTIVE", subscription: { remaining: 400 },
+        purchasedCredits: statusPolls > 1 ? 100 : 0, purchasedCreditsGranted: statusPolls > 1 ? 100 : 0, checkoutPaymentStatus: statusPolls > 1 ? "PAID" : "VERIFIED",
       } });
     });
 
     const response = await page.goto("/settings/billing");
     expect(response?.status()).toBe(200);
-    await expect(page.getByRole("button", { name: "Choose Studio Plus" })).toBeEnabled();
-    await expect(page.getByRole("button", { name: "Choose Studio Pro" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Choose StudioCar Plus" })).toBeEnabled();
+    await expect(page.getByText("Studio Pro")).toHaveCount(0);
     expect(scriptsLoaded).toBeGreaterThan(0);
-    await page.getByRole("button", { name: "Choose Studio Plus" }).click();
+    await page.getByRole("button", { name: "Choose StudioCar Plus" }).click();
     await expect(page.frameLocator('iframe[title="Synthetic Razorpay Checkout"]').getByText("Synthetic hosted Checkout")).toBeVisible();
-    await expect(page.getByText("Payment confirmed. 100 credits have been added.")).toBeVisible();
+    await expect(page.getByText("Payment confirmed. View your credits and receipt in billing.")).toBeVisible();
     expect(ordersVerified).toBe(1);
     await page.locator('iframe[title="Synthetic Razorpay Checkout"]').evaluate((frame) => frame.remove());
 
-    await page.getByRole("button", { name: "Choose Studio Pro" }).click();
-    await expect(page.frameLocator('iframe[title="Synthetic Razorpay Checkout"]').getByText("Synthetic hosted Checkout")).toBeVisible();
-    await expect(page.getByText("Studio Pro is active. 400 images are available for the current billing period.")).toBeVisible();
-    expect(subscriptionsVerified).toBe(1);
-    await page.locator('iframe[title="Synthetic Razorpay Checkout"]').evaluate((frame) => frame.remove());
+    expect(statusPolls).toBeGreaterThan(1);
+    for (const path of ["/api/billing/subscriptions", "/api/billing/subscriptions/verify", "/api/billing/subscriptions/cancel"]) {
+      const removed = await page.request.post(path, { data: {} });
+      expect(removed.status()).toBe(404);
+    }
     await page.screenshot({ fullPage: true, path: testInfo.outputPath("billing-checkout-confirmed.png") });
   } finally {
     await database.query('DELETE FROM "User" WHERE "id" = $1', [userId]);

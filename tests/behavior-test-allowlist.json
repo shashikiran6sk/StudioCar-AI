@@ -488,10 +488,6 @@
     "reason": "Composition root wiring the plan configuration repository to the database client."
   },
   {
-    "source": "apps/web/src/server/admin/manual-subscription-runtime.ts",
-    "reason": "Composition root wiring the manual subscription repository to the database client."
-  },
-  {
     "source": "apps/web/src/server/content/content.constants.ts",
     "reason": "Static content administration labels, messages and audit constants only."
   },
@@ -637,7 +633,7 @@
   },
   {
     "source": "apps/web/src/server/billing/get-billing-status.ts",
-    "reason": "Paid-period and purchased-credit status are exercised by the real-PostgreSQL concurrent reservation integration test."
+    "reason": "Cumulative purchased-credit status are exercised by the real-PostgreSQL concurrent reservation integration test."
   },
   {
     "source": "packages/database-runtime/src/repositories/release-credit-allocation.ts",
@@ -645,6 +641,26 @@
   },
   {
     "source": "packages/database-runtime/src/repositories/settle-credit-allocation.ts",
-    "reason": "Successful Pro allowance settlement is exercised by the real-PostgreSQL credit reservation integration test."
+    "reason": "Purchased-credit settlement is exercised by the real-PostgreSQL credit reservation integration test."
+  },
+  {
+    "source": "apps/web/src/features/billing/billing-checkout.constants.ts",
+    "reason": "Static Checkout URLs, retry bounds and status messages exercised by Checkout tests."
+  },
+  {
+    "source": "apps/web/prisma.expand.config.ts",
+    "reason": "Prisma CLI configuration for expansion-only rollout."
+  },
+  {
+    "source": "apps/web/src/server/billing/finalize-plus-payment.ts",
+    "reason": "Atomic grants, capture validation, concurrency, repeat purchases and rollback are exercised by process-razorpay-webhook integration tests."
+  },
+  {
+    "source": "apps/web/src/server/billing/process-plus-refund.ts",
+    "reason": "Receipt preservation, refund concurrency and no re-grant are exercised by process-razorpay-webhook integration tests."
+  },
+  {
+    "source": "apps/web/src/server/billing/billing.constants.ts",
+    "reason": "Static command rate limits exercised through Orders route tests and the shared rate limiter tests."
   }
 ]

@@ -20,11 +20,11 @@ describe("UsageBillingPage", () => {
     vi.mocked(getCurrentSession).mockResolvedValue({ id: "session-1", userId: "user-1", expiresAt: new Date("2027-01-01"), user: { id: "user-1", displayName: "Priya", primaryEmail: "priya@example.com", primaryPhone: null } });
     vi.mocked(getPlanCatalog).mockResolvedValue(DEFAULT_PLAN_CATALOG);
     vi.mocked(getUsageBillingSummary).mockResolvedValue({ currentPlan: { allowanceScope: "LIFETIME", description: "Small batches.", imageCapacity: 15, key: "FREE", maxImagesPerBatch: 5, name: "Free", storageCapacityBytes: 3_221_225_472, uploadSessionCapacity: null }, imagesRemaining: 13, imagesUsed: 2, storageUsedBytes: 1_024, uploadSessionsRemaining: null, uploadSessionsUsed: 1 });
-    vi.mocked(getBillingStatus).mockResolvedValue({ subscription: null, purchasedCredits: 0, purchasedCreditsGranted: 0 });
+    vi.mocked(getBillingStatus).mockResolvedValue({ checkoutPaymentStatus: null, purchasedCredits: 0, purchasedCreditsGranted: 0 });
 
     render(await UsageBillingPage());
     expect(screen.getByRole("heading", { name: "Usage & Billing" })).toBeInTheDocument();
     expect(screen.getByText("1")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Upgrade plan" })).toHaveAttribute("href", "#packs");
+    expect(screen.getByRole("link", { name: "Buy 100 More Credits" })).toHaveAttribute("href", "#packs");
   });
 });

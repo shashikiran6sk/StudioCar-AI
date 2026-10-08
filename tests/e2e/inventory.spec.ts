@@ -201,7 +201,7 @@ inventoryTest(
       await expect(
         page.getByRole("progressbar", { name: /of 15 images used/ }),
       ).toBeVisible();
-      await expect(page.getByRole("link", { name: "Upgrade plan" })).toHaveAttribute("href", "#packs");
+      await expect(page.getByRole("link", { name: "Buy 100 More Credits" })).toHaveAttribute("href", "#packs");
       await expect(page.getByRole("heading", { name: "Payment History" })).toBeVisible();
       await page.screenshot({
         fullPage: true,

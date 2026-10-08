@@ -21,7 +21,7 @@ describe("findLargestBatch", () => {
           },
     );
 
-    expect(findLargestBatch(catalog)).toBe(20);
+    expect(findLargestBatch(catalog)).toBe(5);
   });
 
   it("reports nothing when nothing is on offer", () => {

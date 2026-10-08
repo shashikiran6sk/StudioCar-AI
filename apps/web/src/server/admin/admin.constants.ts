@@ -26,13 +26,13 @@ export const ADMIN_FORBIDDEN_MESSAGE =
 export const ADMIN_OVERVIEW_EYEBROW = "Administration";
 export const ADMIN_OVERVIEW_TITLE = "Overview";
 export const ADMIN_OVERVIEW_DESCRIPTION =
-  "Internal configuration for plans, subscriptions, content, and administrators.";
+  "Internal configuration for plans, purchases, content, and administrators.";
 
 export const ADMINS_PATH = "/admin/admins";
 export const ADMINS_EYEBROW = "Administration";
 export const ADMINS_TITLE = "Administrators";
 export const ADMINS_DESCRIPTION =
-  "Who can change plans, subscriptions, and content. Access is granted only to a verified Google identity.";
+  "Who can change plans, purchases, and content. Access is granted only to a verified Google identity.";
 
 export const ADMIN_GRANT_LABEL = "Grant administrator access";
 export const ADMIN_GRANT_EMAIL_LABEL = "Google email";
@@ -87,49 +87,6 @@ export const ADMIN_PLAN_SAVED_MESSAGE = "Plan updated.";
 export const ADMIN_PLAN_INVALID_MESSAGE =
   "That plan could not be saved. Check the highlighted values.";
 export const ADMIN_PLAN_UNKNOWN_MESSAGE = "That plan does not exist.";
-
-export const ADMIN_SUBSCRIPTIONS_PATH = "/admin/subscriptions";
-export const ADMIN_SUBSCRIPTIONS_EYEBROW = "Administration";
-export const ADMIN_SUBSCRIPTIONS_TITLE = "Subscriptions";
-export const ADMIN_SUBSCRIPTIONS_DESCRIPTION =
-  "Grant Studio Plus credits or Studio Pro access manually. Provider subscriptions remain under Razorpay control.";
-
-export const ADMIN_LOOKUP_LABEL = "Find an account";
-export const ADMIN_LOOKUP_FIELD_LABEL = "Verified email or mobile number";
-export const ADMIN_LOOKUP_SUBMIT_LABEL = "Find account";
-export const ADMIN_LOOKUP_HINT =
-  "An exact match on a sign-in method the account has verified. There is no partial search.";
-export const ADMIN_LOOKUP_QUERY_KEY = "account";
-
-export const ADMIN_ASSIGN_LABEL = "Assign a plan";
-export const ADMIN_ASSIGN_PLAN_LABEL = "Plan";
-export const ADMIN_ASSIGN_MONTHS_LABEL = "Months";
-export const ADMIN_ASSIGN_NOTE_LABEL = "Why (recorded in the audit log)";
-export const ADMIN_ASSIGN_SUBMIT_LABEL = "Assign plan";
-export const ADMIN_SUBSCRIPTION_REVOKE_LABEL = "End now";
-
-export const ADMIN_LOOKUP_INVALID_MESSAGE =
-  "Enter a valid email address or Indian mobile number.";
-export const ADMIN_LOOKUP_NOT_FOUND_MESSAGE =
-  "No account has verified that email address or mobile number.";
-export const ADMIN_SUBSCRIPTION_ASSIGNED_MESSAGE = "Plan assigned.";
-export const ADMIN_SUBSCRIPTION_REPLACED_MESSAGE =
-  "The existing assigned plan was replaced.";
-export const ADMIN_SUBSCRIPTION_PROVIDER_MANAGED_MESSAGE =
-  "A billing provider owns this account's subscription. Change it there, not here.";
-export const ADMIN_SUBSCRIPTION_UNKNOWN_PLAN_MESSAGE =
-  "That plan is not currently offered.";
-export const ADMIN_SUBSCRIPTION_UNKNOWN_ACCOUNT_MESSAGE =
-  "That account no longer exists.";
-export const ADMIN_SUBSCRIPTION_ENDED_MESSAGE = "The assigned plan was ended.";
-export const ADMIN_SUBSCRIPTION_NOT_ASSIGNED_MESSAGE =
-  "That account has no assigned plan to end.";
-
-export const AUDIT_RESOURCE_PLAN_SUBSCRIPTION = "PlanSubscription";
-export const AUDIT_ACTION_SUBSCRIPTION_ASSIGNED = "SUBSCRIPTION_ASSIGNED";
-export const AUDIT_ACTION_SUBSCRIPTION_REVOKED = "SUBSCRIPTION_REVOKED";
-
-export const MANUAL_SUBSCRIPTION_LOCK_KEY = "manual-subscription";
 
 export const ADMIN_ACTIVITY_TITLE = "Recent administrative changes";
 export const ADMIN_ACTIVITY_EMPTY_LABEL =

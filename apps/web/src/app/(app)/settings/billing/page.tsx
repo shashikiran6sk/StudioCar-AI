@@ -28,9 +28,9 @@ export default async function UsageBillingPage() {
     getPlanCatalog(),
     getBillingStatus(database, session.userId),
     database.payment.findMany({
-      where: { userId: session.userId, status: { in: ["PAID", "REFUNDED", "PARTIALLY_REFUNDED"] } },
+      where: { userId: session.userId },
       orderBy: { createdAt: "desc" }, take: 100,
-      select: { id: true, createdAt: true, productCode: true, amountPaise: true, currency: true, status: true, receipt: { select: { id: true } } },
+      select: { id: true, createdAt: true, productCode: true, amountPaise: true, currency: true, status: true, razorpayOrderId: true, receipt: { select: { id: true } } },
     }),
   ]);
 

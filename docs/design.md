@@ -345,7 +345,7 @@ The homepage is a scrollable product site, never a one-screen landing page.
 3. **Audience strip** — 54px dark band listing Dealerships, Sellers, Photographers, Marketplaces.
 4. **Workflow** — `padding:96px 54px`; white field; two-column introduction followed by four step cards and the dark “After you click Process Photos” note.
 5. **Studio backgrounds** — neutral-150 field; `.75fr 1.25fr`; copy/checks left and a 2×2 asymmetric image gallery right.
-6. **Pricing** — white field; centred 690px heading; three equal cards. Featured pack moves upward 8px and uses a dark surface.
+6. **Pricing** — white field; centred 690px heading; two equal cards. Featured pack moves upward 8px and uses a dark surface.
 7. **Final CTA** — 54px side margins, 84px bottom margin; dark 26px-radius panel with headline left and two actions right.
 8. **Footer** — dark field, `padding:60px 54px 28px`; brand + social column and Product, Workspace, Company link columns; copyright row below a divider.
 
@@ -427,7 +427,7 @@ Header with title, explanatory copy, and blue Upgrade plan action. Content grid 
 
 - Current-plan card: dark surface, plan name, description, 9px usage progress, used and remaining values.
 - Quota stack: upload sessions and storage, each in bordered cards.
-- Available Packs appears immediately below current usage and reuses the homepage three-card pricing system: Free, Studio Plus, and Studio Pro. Free is marked Current plan and disabled; Studio Plus keeps the dark Most Popular treatment; Studio Pro uses the blue upgrade action.
+- Available Packs appears immediately below current usage and reuses the homepage two-card pricing system: Free and StudioCar Plus. Free is marked Current plan and disabled; Plus keeps the dark Most Popular treatment and always supports another purchase.
 - Pack cards retain the same names, prices, limits, and benefits as the homepage. Do not maintain separate marketing and application pricing copy.
 - The content area scrolls independently so all pack details and actions remain accessible within the application shell.
 
@@ -530,7 +530,7 @@ Sentence case everywhere. Uppercase is limited to eyebrow/micro labels with incr
 
 ### 4.15 Currency and locale
 
-Pricing uses Indian rupees and `en-IN` grouping: `₹1,999` one-time for Studio Plus and `₹5,499 / month` for Studio Pro. The admin-managed catalog is authoritative. Dates use `Sep 18, 2026` in compact metadata and `September 18, 2026` when written in full. Store dates in an unambiguous machine format and localize at render time.
+Pricing uses Indian rupees and `en-IN` grouping: `₹1,999` for StudioCar Plus, 100 image credits, One-time payment. Credits never expire and can be purchased repeatedly. The server validates the database catalog against this fixed product. Dates use `Sep 18, 2026` in compact metadata and `September 18, 2026` when written in full. Store dates in an unambiguous machine format and localize at render time.
 
 ### 4.16 Accessibility
 

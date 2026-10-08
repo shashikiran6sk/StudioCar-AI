@@ -81,19 +81,6 @@ enum UsageEventType {
   VEHICLE_PROCESSING_BATCH_CREATED
 }
 
-enum SubscriptionStatus {
-  CREATED
-  AUTHENTICATED
-  TRIALING
-  ACTIVE
-  PENDING
-  PAUSED
-  HALTED
-  PAST_DUE
-  CANCELLED
-  COMPLETED
-  EXPIRED
-}
 
 enum PaymentStatus {
   CREATED
@@ -104,10 +91,6 @@ enum PaymentStatus {
   PARTIALLY_REFUNDED
 }
 
-enum CreditAllocationSource {
-  PRO
-  PURCHASED
-}
 
 enum CreditAllocationStatus {
   RESERVED
@@ -155,12 +138,10 @@ enum AdminInviteStatus {
 enum PlanBillingInterval {
   NONE
   ONE_TIME
-  MONTHLY
 }
 
 enum PlanAllowanceScope {
   LIFETIME
-  BILLING_PERIOD
 }
 
 enum SocialPlatform {
@@ -171,17 +152,10 @@ enum SocialPlatform {
   FACEBOOK
 }
 
-/**
- * Distinguishes a subscription an administrator assigned by hand from one a
- * payment provider owns. The two must never be confused: a manual change may
- * not overwrite or cancel a provider-backed subscription.
- */
-enum SubscriptionSource {
-  PAYMENT_PROVIDER
-  MANUAL_ADMIN
-}
 
 enum CommandRateLimitScope {
+  BILLING_ORDER
+  BILLING_VERIFICATION
   UPLOAD_PRESIGN
   PROCESSING_BATCH
 }
@@ -200,19 +174,16 @@ model User {
   processingJobs         ProcessingJob[]
   processedAssets        ProcessedAsset[]
   usageEvents            UsageEvent[]
-  planSubscriptions      PlanSubscription[]
   auditLogs              AuditLog[]
   roles                  UserRole[]
   grantedRoles           UserRole[]           @relation("UserRoleGrantedBy")
   sentAdminInvites       AdminInvite[]        @relation("AdminInviteInvitedBy")
   acceptedAdminInvites   AdminInvite[]        @relation("AdminInviteAcceptedBy")
-  assignedSubscriptions  PlanSubscription[]   @relation("PlanSubscriptionAssignedBy")
   commandRateLimitEvents CommandRateLimitEvent[]
   payments               Payment[]
   receipts               Receipt[]
   creditLedger           CreditLedger[]
   creditAllocations      CreditAllocation[]
-  subscriptionAllowances SubscriptionAllowance[]
 }
 
 /**
@@ -290,30 +261,13 @@ model PlanConfig {
   storageBytes      BigInt?
   features          String[]
   displayOrder      Int
-  providerPriceId   String?             @db.VarChar(255)
   createdAt         DateTime            @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime            @updatedAt @db.Timestamptz(3)
-  priceVersions     PlanPrice[]
 
   @@index([active, displayOrder])
 }
 
 /** A Razorpay plan is immutable and belongs to exactly one environment/price. */
-model PlanPrice {
-  id                String       @id @default(uuid()) @db.Uuid
-  planConfigId      String       @db.Uuid
-  environment       String       @db.VarChar(20)
-  priceMinorUnits   Int
-  currency          String       @db.Char(3)
-  includedImages    Int
-  razorpayPlanId    String       @unique @db.VarChar(255)
-  createdAt         DateTime     @default(now()) @db.Timestamptz(3)
-  planConfig        PlanConfig   @relation(fields: [planConfigId], references: [id], onDelete: Restrict)
-  payments          Payment[]
-  subscriptions     PlanSubscription[]
-
-  @@unique([planConfigId, environment, priceMinorUnits, includedImages])
-}
 
 model SocialLink {
   id           String         @id @default(uuid()) @db.Uuid
@@ -639,43 +593,14 @@ model UsageEvent {
   @@index([userId, occurredAt])
 }
 
-model PlanSubscription {
-  id                     String             @id @default(uuid()) @db.Uuid
-  userId                 String             @db.Uuid
-  source                 SubscriptionSource @default(PAYMENT_PROVIDER)
-  provider               String?            @db.VarChar(50)
-  providerSubscriptionId String?            @unique @db.VarChar(255)
-  razorpayPlanId         String?            @db.VarChar(255)
-  planPriceId            String?            @db.Uuid
-  planKey                String             @db.VarChar(80)
-  status                 SubscriptionStatus
-  currentPeriodStart     DateTime           @db.Timestamptz(3)
-  currentPeriodEnd       DateTime           @db.Timestamptz(3)
-  cancelAtPeriodEnd      Boolean            @default(false)
-  assignedByUserId       String?            @db.Uuid
-  note                   String?            @db.VarChar(500)
-  createdAt              DateTime           @default(now()) @db.Timestamptz(3)
-  updatedAt              DateTime           @updatedAt @db.Timestamptz(3)
-  user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  assignedBy             User?              @relation("PlanSubscriptionAssignedBy", fields: [assignedByUserId], references: [id], onDelete: SetNull)
-  planPrice              PlanPrice?         @relation(fields: [planPriceId], references: [id], onDelete: Restrict)
-  allowances             SubscriptionAllowance[]
-  payments               Payment[]
-
-  @@index([userId, status, currentPeriodEnd])
-  @@index([userId, source, status])
-}
 
 model Payment {
   id                         String        @id @default(uuid()) @db.Uuid
   userId                     String        @db.Uuid
   productCode                String        @db.VarChar(80)
   billingType                PlanBillingInterval
-  planPriceId                String?       @db.Uuid
-  subscriptionId             String?       @db.Uuid
   razorpayOrderId            String?       @unique @db.VarChar(255)
   razorpayPaymentId          String?       @unique @db.VarChar(255)
-  razorpaySubscriptionId     String?       @db.VarChar(255)
   amountPaise                Int
   currency                   String        @db.Char(3)
   includedImages             Int
@@ -684,13 +609,10 @@ model Payment {
   createdAt                  DateTime      @default(now()) @db.Timestamptz(3)
   updatedAt                  DateTime      @updatedAt @db.Timestamptz(3)
   user                       User          @relation(fields: [userId], references: [id], onDelete: Restrict)
-  planPrice                  PlanPrice?    @relation(fields: [planPriceId], references: [id], onDelete: Restrict)
-  subscription               PlanSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
   receipt                    Receipt?
   refunds                    BillingRefund[]
 
   @@index([userId, createdAt])
-  @@index([razorpaySubscriptionId])
 }
 
 model BillingRefund {
@@ -734,23 +656,6 @@ model Receipt {
   @@index([userId, createdAt])
 }
 
-model SubscriptionAllowance {
-  id                 String   @id @default(uuid()) @db.Uuid
-  userId             String   @db.Uuid
-  subscriptionId     String   @db.Uuid
-  providerPaymentId  String   @unique @db.VarChar(255)
-  periodStart        DateTime @db.Timestamptz(3)
-  periodEnd          DateTime @db.Timestamptz(3)
-  allowance          Int
-  consumed           Int      @default(0)
-  createdAt          DateTime @default(now()) @db.Timestamptz(3)
-  user               User     @relation(fields: [userId], references: [id], onDelete: Restrict)
-  subscription       PlanSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
-  allocations        CreditAllocation[]
-
-  @@unique([subscriptionId, periodStart])
-  @@index([userId, periodEnd])
-}
 
 model CreditLedger {
   id          String           @id @default(uuid()) @db.Uuid
@@ -769,15 +674,12 @@ model CreditAllocation {
   id            String                 @id @default(uuid()) @db.Uuid
   userId        String                 @db.Uuid
   jobId         String                 @unique @db.Uuid
-  allowanceId   String?                @db.Uuid
-  source        CreditAllocationSource
   status        CreditAllocationStatus @default(RESERVED)
   createdAt     DateTime               @default(now()) @db.Timestamptz(3)
   user          User                   @relation(fields: [userId], references: [id], onDelete: Restrict)
   job           ProcessingJob          @relation(fields: [jobId], references: [id], onDelete: Restrict)
-  allowance     SubscriptionAllowance? @relation(fields: [allowanceId], references: [id], onDelete: Restrict)
 
-  @@index([userId, source, status])
+  @@index([userId, status])
 }
 
 model WebhookEvent {

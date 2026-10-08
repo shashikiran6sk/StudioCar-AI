@@ -4,8 +4,6 @@ import type { ProcessingOptions } from "@studiocar/contracts";
 
 import type { PrismaClient } from "@studiocar/database-runtime";
 import {
-  CreditAllocationSource,
-  CreditAllocationStatus,
   CreditLedgerType,
   ImageAssetStatus,
   Prisma,
@@ -13,8 +11,6 @@ import {
   type ProcessingProvider,
   UsageEventType,
   VehicleStatus,
-  SubscriptionStatus,
-  SubscriptionSource,
 } from "@studiocar/database-runtime";
 import { toProcessingOptionsJson } from "./to-processing-options-json";
 import { PROCESSABLE_VEHICLE_STATUSES } from "../../vehicles/vehicle-status-groups.constants";
@@ -62,7 +58,6 @@ export interface ProcessingAllowance {
   imageCapacity: number;
   maxImagesPerBatch: number;
   /** Null counts every charged image ever; a key scopes to that period. */
-  allowanceBillingPeriodKey: string | null;
 }
 
 export interface ReserveProcessingBatchCommand {
@@ -174,42 +169,16 @@ export class PrismaProcessingJobRepository {
 
     const uniqueAssetIds = new Set(command.jobs.map((job) => job.assetId));
     if (command.jobs.length === 0) return { kind: "ASSETS_NOT_READY" };
-    const now = new Date();
-    const providerSubscription = await transaction.planSubscription.findFirst({
-      where: {
-        userId: command.userId,
-        source: SubscriptionSource.PAYMENT_PROVIDER,
-        status: SubscriptionStatus.ACTIVE,
-        currentPeriodStart: { lte: now },
-        currentPeriodEnd: { gt: now },
-      },
-      select: { id: true },
-    });
-    const currentAllowance = providerSubscription
-      ? await transaction.subscriptionAllowance.findFirst({
-          where: {
-            userId: command.userId,
-            subscriptionId: providerSubscription.id,
-            periodStart: { lte: now },
-            periodEnd: { gt: now },
-          },
-          select: { id: true, allowance: true, consumed: true },
-        })
-      : null;
     const purchased = await transaction.creditLedger.aggregate({
       where: { userId: command.userId },
       _sum: { amount: true },
     });
     const purchasedBalance = purchased._sum.amount ?? 0;
-    const providerHistory = await transaction.planSubscription.findFirst({
-      where: { userId: command.userId, source: SubscriptionSource.PAYMENT_PROVIDER },
-      select: { id: true },
-    });
     const purchaseHistory = await transaction.creditLedger.findFirst({
-      where: { userId: command.userId, type: CreditLedgerType.PURCHASE_GRANT },
+      where: { userId: command.userId, type: { in: [CreditLedgerType.PURCHASE_GRANT, CreditLedgerType.ADMIN_ADJUSTMENT] }, amount: { gt: 0 } },
       select: { id: true },
     });
-    const hasPaidCredits = providerHistory !== null || purchaseHistory !== null || purchasedBalance > 0;
+    const hasPaidCredits = purchaseHistory !== null;
     const plusPlan = purchasedBalance > 0
       ? await transaction.planConfig.findUnique({ where: { planKey: "STUDIO_PLUS" }, select: { maxImagesPerBatch: true } })
       : null;
@@ -229,22 +198,14 @@ export class PrismaProcessingJobRepository {
      * The allowance therefore counts charged images plus everything already
      * reserved and not yet terminal.
      */
-    const reservedPro = currentAllowance
-      ? await transaction.creditAllocation.count({
-          where: { allowanceId: currentAllowance.id, status: CreditAllocationStatus.RESERVED },
-        })
-      : 0;
-    const proRemaining = currentAllowance
-      ? Math.max(0, currentAllowance.allowance - currentAllowance.consumed - reservedPro)
-      : 0;
     const allowanceUsed = hasPaidCredits ? 0 : await this.countAllowanceUsed(transaction, command);
     const imagesRemaining = hasPaidCredits
-      ? proRemaining + purchasedBalance
+      ? purchasedBalance
       : Math.max(0, command.allowance.imageCapacity - allowanceUsed);
     if (command.jobs.length > imagesRemaining) {
       return {
         kind: "ALLOWANCE_EXHAUSTED",
-        imageCapacity: hasPaidCredits ? (currentAllowance?.allowance ?? 0) + purchasedBalance : command.allowance.imageCapacity,
+        imageCapacity: hasPaidCredits ? purchasedBalance : command.allowance.imageCapacity,
         imagesRemaining,
       };
     }
@@ -313,27 +274,14 @@ export class PrismaProcessingJobRepository {
     }));
     if (hasPaidCredits) {
       await transaction.creditAllocation.createMany({
-        data: jobs.map((job, index) => {
-          const usePro = index < proRemaining && currentAllowance !== null;
-          return {
-            userId: command.userId,
-            jobId: job.id,
-            allowanceId: usePro ? currentAllowance.id : null,
-            source: usePro ? CreditAllocationSource.PRO : CreditAllocationSource.PURCHASED,
-          };
-        }),
+        data: jobs.map((job) => ({ userId: command.userId, jobId: job.id })),
       });
-      const purchasedJobs = jobs.slice(proRemaining);
-      if (purchasedJobs.length > 0) {
-        await transaction.creditLedger.createMany({
-          data: purchasedJobs.map((job) => ({
-            userId: command.userId,
-            amount: -1,
-            type: CreditLedgerType.PROCESSING_DEBIT,
-            referenceId: job.id,
-          })),
-        });
-      }
+      await transaction.creditLedger.createMany({
+        data: jobs.map((job) => ({
+          userId: command.userId, amount: -1,
+          type: CreditLedgerType.PROCESSING_DEBIT, referenceId: job.id,
+        })),
+      });
     }
     const usageJob = jobs[0];
     if (!usageJob) throw new Error(MISSING_USAGE_JOB_ERROR);
@@ -359,13 +307,12 @@ export class PrismaProcessingJobRepository {
     transaction: Prisma.TransactionClient,
     command: ReserveProcessingBatchCommand,
   ): Promise<number> {
-    const period = command.allowance.allowanceBillingPeriodKey;
     const rows = AllowanceUsageRowsSchema.parse(await transaction.$queryRaw`
       SELECT (
         (SELECT COALESCE(SUM("quantity"), 0) FROM "UsageEvent"
           WHERE "userId" = ${command.userId}::uuid
             AND "type" = ${UsageEventType.BACKGROUND_REMOVAL_COMPLETED}::"UsageEventType"
-            AND (${period}::text IS NULL OR "billingPeriodKey" = ${period}::text))
+)
         + (SELECT COUNT(*) FROM "ProcessingJob"
           WHERE "userId" = ${command.userId}::uuid
             AND "status" IN (

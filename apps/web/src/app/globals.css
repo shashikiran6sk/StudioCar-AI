@@ -524,7 +524,7 @@ html {
 
 .pricing-section__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -4076,7 +4076,7 @@ body {
 .billing-packs__grid {
   display: grid;
   min-width: 0;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -4160,13 +4160,6 @@ body {
   margin-top: auto;
 }
 
-.billing-unavailable__message,
-.billing-unavailable__assurance {
-  margin: 0;
-  color: var(--sc-neutral-700);
-  font-size: 12px;
-  line-height: 1.6;
-}
 
 .billing-checkout-status {
   font-size: 11px;
@@ -4195,6 +4188,7 @@ body {
 .billing-payment-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
 .billing-payment-table th, .billing-payment-table td { padding: 12px 10px; border-bottom: 1px solid var(--sc-neutral-300); }
 .billing-payment-table th { font-weight: 800; }
+.billing-payment-reference { display: block; margin-top: 5px; overflow-wrap: anywhere; }
 
 .receipt-page { max-width: 850px; margin: 0 auto; }
 .receipt-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -4224,14 +4218,6 @@ body {
   @page { size: A4; margin: 18mm; }
 }
 
-.billing-unavailable__assurance {
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: var(--sc-radius-control);
-  background: var(--sc-blue-50);
-  color: var(--sc-blue-600);
-  font-weight: 700;
-}
 
 .usage-loading__header {
   height: 92px;
@@ -4248,6 +4234,8 @@ body {
 }
 
 .usage-loading__pack {
+  position: relative;
+  min-width: 0;
   height: 360px;
   border-radius: var(--sc-radius-card);
 }
@@ -4265,6 +4253,10 @@ body {
 }
 
 @media (max-width: 767px) {
+  .usage-billing-page > .app-page-header {
+    flex-wrap: wrap;
+  }
+
   .billing-packs__heading {
     align-items: start;
     flex-direction: column;

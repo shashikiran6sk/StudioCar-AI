@@ -6,8 +6,6 @@ import { safeBigIntToNumber } from "../dashboard/safe-bigint-to-number";
 /**
  * Turns a stored plan into the shape the application reads.
  *
- * `providerPriceId` is deliberately dropped: it is billing-provider plumbing,
- * not something a page or an allowance check has any use for.
  */
 export function toPlanCatalogEntry(record: PlanConfigRecord): PlanCatalogEntry {
   return {

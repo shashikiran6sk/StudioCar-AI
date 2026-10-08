@@ -26,20 +26,19 @@ export function BillingPlanCard({ current, plan }: BillingPlanCardProps) {
         <small>{formatPlanCadence(plan.billingInterval)}</small>
       </p>
       <p>{plan.description}</p>
-      {plan.billingInterval === "MONTHLY" ? <p>Renews monthly</p> : null}
       <ul>
         {plan.features.map((feature) => (
           <li key={feature}>✓ {feature}</li>
         ))}
       </ul>
-      {current || plan.billingInterval === "NONE" ? (
+      {plan.billingInterval === "NONE" ? (
         <Button disabled>{current ? USAGE_BILLING_CURRENT_PLAN_LABEL : "Free plan"}</Button>
+      ) : !plan.active || !plan.purchasable ? (
+        <Button disabled>Purchases temporarily unavailable</Button>
       ) : (
         <BillingCheckoutAction
-          includedImages={plan.includedImages}
-          label={describePlanAction(plan)}
-          planKey={plan.planKey}
-          variant={plan.billingInterval === "MONTHLY" ? "blue" : "secondary"}
+          label={current ? "Buy 100 More Credits" : describePlanAction(plan)}
+          variant="secondary"
         />
       )}
     </article>

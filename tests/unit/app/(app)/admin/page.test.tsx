@@ -36,8 +36,7 @@ function ready() {
     administratorCount: 1,
     userCount: 12,
     activePlanCount: 4,
-    activeSubscriptionCount: 0,
-    manualSubscriptionCount: 0,
+    paidAccountCount: 0,
     enabledSocialLinkCount: 0,
   });
   getAdminPlanDistribution.mockResolvedValue([]);
@@ -78,7 +77,7 @@ describe("AdminOverviewPage", () => {
 
     render(await AdminOverviewPage());
 
-    expect(screen.getByText("Studio Plus")).toBeInTheDocument();
+    expect(screen.getByText("StudioCar Plus")).toBeInTheDocument();
     expect(screen.queryByText("STUDIO_PLUS")).not.toBeInTheDocument();
   });
 

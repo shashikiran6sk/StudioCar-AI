@@ -33,7 +33,6 @@ describe("DEFAULT_PLAN_CATALOG", () => {
     expect(DEFAULT_PLAN_CATALOG.map((plan) => [plan.planKey, plan.purchasable])).toEqual([
       ["FREE", false],
       ["STUDIO_PLUS", true],
-      ["STUDIO_PRO", true],
     ]);
   });
 });

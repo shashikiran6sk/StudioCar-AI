@@ -4,6 +4,8 @@ import { getCurrentSession } from "../../../../../server/auth/get-current-sessio
 import { isSameOriginRequest } from "../../../../../server/auth/is-same-origin-request";
 import { getBillingRuntime } from "../../../../../server/billing/billing-runtime";
 
+import { BILLING_RATE_LIMIT_MESSAGE } from "../../../../../server/billing/billing.constants";
+
 export const runtime = "nodejs";
 
 export async function POST(request: Request): Promise<Response> {
@@ -13,6 +15,8 @@ export async function POST(request: Request): Promise<Response> {
   const input = VerifyBillingOrderSchema.safeParse(await request.json().catch(() => null));
   if (!input.success) return Response.json({ error: "Invalid payment" }, { status: 400 });
   try {
+    const limit = await getBillingRuntime().verificationRateLimiter.consume(session.userId);
+    if (!limit.allowed) return Response.json({ error: BILLING_RATE_LIMIT_MESSAGE }, { status: 429, headers: { "retry-after": String(limit.retryAfterSeconds) } });
     const verified = await getBillingRuntime().service.verifyOrder(session.userId, input.data);
     return Response.json({ verified }, { status: verified ? 200 : 403 });
   } catch {

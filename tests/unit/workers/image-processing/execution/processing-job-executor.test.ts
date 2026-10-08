@@ -186,12 +186,12 @@ describe("ProcessingJobExecutor", () => {
     [null, "STANDARD"],
     ["FREE", "STANDARD"],
     ["STUDIO_PLUS", "HIGH"],
-    ["STUDIO_PRO", "HIGH"],
+    ["STUDIO_PLUS", "HIGH"],
     ["RETIRED_STUDIO_PLUS", "STANDARD"],
   ])(
-    "asks the provider for the %s plan's resolution (%s) from the server-side subscription alone",
-    async (subscriptionPlanKey, qualityTier) => {
-      const { executor, job, provider } = await setup({ subscriptionPlanKey });
+    "asks the provider for the %s plan's resolution (%s) from the server-side purchase entitlement",
+    async (ownedPlanKey, qualityTier) => {
+      const { executor, job, provider } = await setup({ ownedPlanKey });
       await executor.execute(job);
       expect(provider.requests[0]?.qualityTier).toBe(qualityTier);
     },

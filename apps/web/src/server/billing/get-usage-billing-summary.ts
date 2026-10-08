@@ -4,6 +4,7 @@ import { cache } from "react";
 import { getUsageBillingService } from "./usage-billing-runtime";
 import { getBillingRuntime } from "./billing-runtime";
 import { getBillingStatus } from "./get-billing-status";
+import { resolvePlanEntry } from "../plans/resolve-plan-entry";
 import { getPlanCatalog } from "../plans/get-plan-catalog";
 
 /**
@@ -18,16 +19,12 @@ export const getUsageBillingSummary = cache(
       getBillingStatus(getBillingRuntime().database, userId),
       getPlanCatalog(),
     ]);
-    const activeSubscription = paid.subscription?.status === "ACTIVE" && paid.subscription.allowance > 0 ? paid.subscription : null;
-    const paidKey = activeSubscription ? "STUDIO_PRO" : paid.purchasedCreditsGranted > 0 ? "STUDIO_PLUS" : null;
+    const paidKey = base.currentPlan?.key === "STUDIO_PLUS" || paid.purchasedCreditsGranted > 0 ? "STUDIO_PLUS" : null;
     if (!paidKey) return base;
-    const plan = plans.find((entry) => entry.planKey === paidKey);
-    if (!plan) return base;
-    const capacity = activeSubscription
-      ? activeSubscription.allowance
-      : Math.max(plan.includedImages, paid.purchasedCreditsGranted);
-    const remaining = activeSubscription ? activeSubscription.remaining : paid.purchasedCredits;
-    const used = activeSubscription ? activeSubscription.consumed : Math.max(0, capacity - remaining);
+    const { plan } = resolvePlanEntry(plans, paidKey);
+    const capacity = Math.max(plan.includedImages, paid.purchasedCreditsGranted);
+    const remaining = paid.purchasedCredits;
+    const used = Math.max(0, capacity - remaining);
     return UsageBillingSummarySchema.parse({
       ...base,
       currentPlan: {

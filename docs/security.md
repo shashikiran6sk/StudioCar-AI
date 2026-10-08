@@ -90,8 +90,7 @@ Plan configuration is a row in `PlanConfig`, read fresh on each request rather
 than cached across them: an allowance decides whether somebody's work is charged
 or refused, so it is never served from a stale copy.
 
-Three fields are deliberately not editable. `planKey` identifies existing
-subscriptions and keeps the set of plans closed, so an edit cannot invent a plan
+Three fields are deliberately not editable. `planKey` identifies Free and Plus products and keeps the set of plans closed, so an edit cannot invent a plan
 nothing else in the product understands. `allowanceScope` decides how usage
 **already charged** is counted, so changing it would reinterpret history rather
 than change the future. `currency` is fixed for the same reason.
@@ -107,31 +106,9 @@ the shipped default, and a key nothing describes falls back to the free plan.
 Falling back to the smallest allowance is the safe direction — it can delay
 work, never over-grant it.
 
-## Manually assigned subscriptions
+## One-time purchase security
 
-A subscription a payment provider owns is **never** overwritten from the
-administration area. The provider is the authority on what somebody has paid
-for, and two rows disagreeing with no way to tell which is right is worse than
-refusing the change. When a billing provider lands, its webhook remains the only
-writer of `PAYMENT_PROVIDER` rows.
-
-At most one manual assignment is ever in force, enforced by a partial unique
-index as well as by the write path, so "which plan applies" is never ambiguous.
-Assignments are bounded in length; no grant is open-ended.
-
-An account is found for subscription management only through a sign-in method it
-has **verified** — a Google identity with a verified email, or a phone identity.
-Never `User.primaryEmail` or `primaryPhone`, which are profile values somebody
-typed rather than proof.
-
-Lookup is exact-match only. There is no partial search and no customer listing:
-an administrator assigning a subscription already knows who to, and a browsable
-directory of customers would disclose more than the task needs. A malformed
-lookup queries nothing at all.
-
-Ownership is keyed by account. The assignment contract takes a `userId` and
-rejects a contact detail in its place, so a subscription can never be attached
-to an address rather than to a person.
+Plus order creation and verification require authentication, same-origin validation and durable per-tenant rate limits. All financial effects require a verified captured payment matching the authoritative order, ₹1,999 INR and 100 credits. Webhooks verify raw bytes with timing-safe HMAC comparison before parsing. Grants, payment finalization and immutable receipts commit atomically; event, payment, ledger and receipt uniqueness plus order/tenant locks prevent duplicate grants. Failed financial events remain retryable. Refunds retain receipts and require explicit credit reconciliation. See [the billing runbook](razorpay-billing.md).
 
 ## Public footer links
 
@@ -242,7 +219,7 @@ and original (size, checksum, full decode) before signing that private original
 for 15 minutes — ten times the provider deadline, and minted afresh on every
 attempt. Generations are private and ephemeral; the result is downloaded
 immediately without forwarding Bearer credentials and copied into StudioCar's
-own private S3. The output resolution comes from the owner's subscription in
+own private S3. The output resolution comes from the owner's lifetime purchase entitlement in
 PostgreSQL, never from a request. The structured logger accepts only
 identifier-shaped strings and never error messages, so signed source/result
 URLs, the API key and tokens cannot reach logs; tests pin this.

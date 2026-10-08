@@ -1,3 +1,4 @@
+import { PLUS_PRODUCT } from "@studiocar/contracts";
 import type { PlanConfigurationUpdate } from "@studiocar/contracts";
 import type { PrismaClient } from "@studiocar/database-runtime";
 import { Prisma } from "@studiocar/database-runtime";
@@ -26,7 +27,6 @@ const planConfigSelect = {
   storageBytes: true,
   features: true,
   displayOrder: true,
-  providerPriceId: true,
 } satisfies Prisma.PlanConfigSelect;
 
 export type PlanConfigRecord = Prisma.PlanConfigGetPayload<{
@@ -38,7 +38,7 @@ export class PrismaPlanConfigRepository {
 
   public findActive(): Promise<PlanConfigRecord[]> {
     return this.database.planConfig.findMany({
-      where: { active: true },
+      where: { active: true, planKey: { in: ["FREE", "STUDIO_PLUS"] } },
       orderBy: [{ displayOrder: "asc" }, { planKey: "asc" }],
       select: planConfigSelect,
     });
@@ -46,6 +46,7 @@ export class PrismaPlanConfigRepository {
 
   public findAll(): Promise<PlanConfigRecord[]> {
     return this.database.planConfig.findMany({
+      where: { planKey: { in: ["FREE", "STUDIO_PLUS"] } },
       orderBy: [{ displayOrder: "asc" }, { planKey: "asc" }],
       select: planConfigSelect,
     });
@@ -75,6 +76,13 @@ export class PrismaPlanConfigRepository {
     planKey: string;
     update: PlanConfigurationUpdate;
   }): Promise<void> {
+    if (command.planKey === PLUS_PRODUCT.code && (command.update.priceMinorUnits !== PLUS_PRODUCT.amountPaise ||
+      command.update.includedImages !== PLUS_PRODUCT.credits || command.update.billingInterval !== "ONE_TIME" || command.update.displayName !== PLUS_PRODUCT.name)) {
+      throw new Error("The Plus product is fixed at ₹1,999 for 100 credits.");
+    }
+    if (command.planKey === "FREE" && (command.update.priceMinorUnits !== 0 || command.update.billingInterval !== "NONE" || command.update.purchasable)) {
+      throw new Error("Free cannot be a paid product.");
+    }
     const editable = {
       active: command.update.active,
       description: command.update.description,
