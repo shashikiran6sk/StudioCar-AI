@@ -1,0 +1,347 @@
+[
+  {
+    "name": "razorpay-audit",
+    "command": [
+      "pnpm",
+      "security:audit"
+    ],
+    "start": "2026-10-02T00:06:15Z",
+    "end": "2026-10-02T00:06:16Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-build-checkout",
+    "command": [
+      "pnpm",
+      "build"
+    ],
+    "start": "2026-10-02T00:14:42Z",
+    "end": "2026-10-02T00:14:54Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-build-final",
+    "command": [
+      "pnpm",
+      "build"
+    ],
+    "start": "2026-10-02T00:11:34Z",
+    "end": "2026-10-02T00:11:45Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-build",
+    "command": [
+      "pnpm",
+      "build"
+    ],
+    "start": "2026-10-02T00:06:40Z",
+    "end": "2026-10-02T00:08:18Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-checkout-before-csp",
+    "command": [
+      "pnpm",
+      "--filter",
+      "@studiocar/web",
+      "exec",
+      "playwright",
+      "test",
+      "--config",
+      "/tmp/studiocar-razorpay-playwright.mts",
+      "billing-checkout.spec.ts"
+    ],
+    "start": "2026-10-02T00:10:37Z",
+    "end": "2026-10-02T00:10:47Z",
+    "exit_code": 1
+  },
+  {
+    "name": "razorpay-checkout-lint",
+    "command": [
+      "pnpm",
+      "--filter",
+      "@studiocar/web",
+      "exec",
+      "eslint",
+      "src/features/billing/billing-checkout-action.tsx",
+      "--max-warnings=0"
+    ],
+    "start": "2026-10-02T00:16:02Z",
+    "end": "2026-10-02T00:16:05Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-checkout-unit",
+    "command": [
+      "pnpm",
+      "--filter",
+      "@studiocar/web",
+      "exec",
+      "vitest",
+      "run",
+      "../../tests/unit/features/billing/billing-checkout-action.test.tsx",
+      "--maxWorkers=1",
+      "--reporter=verbose"
+    ],
+    "start": "2026-10-02T00:15:55Z",
+    "end": "2026-10-02T00:16:02Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-e2e-final",
+    "command": [
+      "pnpm",
+      "e2e",
+      "--",
+      "--config",
+      "/tmp/studiocar-razorpay-playwright.mts"
+    ],
+    "start": "2026-10-02T00:15:54Z",
+    "end": "2026-10-02T00:16:54Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-e2e",
+    "command": [
+      "pnpm",
+      "--filter",
+      "@studiocar/web",
+      "exec",
+      "playwright",
+      "test",
+      "--config",
+      "/tmp/studiocar-razorpay-playwright.mts"
+    ],
+    "start": "2026-10-02T00:12:50Z",
+    "end": "2026-10-02T00:14:30Z",
+    "exit_code": 1
+  },
+  {
+    "name": "razorpay-evidence-types",
+    "command": [
+      "pnpm",
+      "exec",
+      "tsc",
+      "--project",
+      "/tmp/studiocar-razorpay-evidence-tsconfig.json",
+      "--noEmit"
+    ],
+    "start": "2026-10-02T00:12:05Z",
+    "end": "2026-10-02T00:12:19Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-final-lint",
+    "command": [
+      "pnpm",
+      "lint",
+      "--force"
+    ],
+    "start": "2026-10-02T00:12:52Z",
+    "end": "2026-10-02T00:13:43Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-final-types",
+    "command": [
+      "pnpm",
+      "typecheck",
+      "--force"
+    ],
+    "start": "2026-10-02T00:11:54Z",
+    "end": "2026-10-02T00:12:41Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-focused",
+    "command": [
+      "pnpm",
+      "--filter",
+      "@studiocar/web",
+      "exec",
+      "vitest",
+      "run",
+      "../../tests/unit/app/instrumentation.test.ts",
+      "../../tests/unit/server/billing",
+      "../../tests/unit/app/api/billing",
+      "../../tests/unit/app/api/webhooks/razorpay",
+      "../../tests/unit/features/billing",
+      "--reporter=verbose"
+    ],
+    "start": "2026-10-02T00:04:21Z",
+    "end": "2026-10-02T00:05:34Z",
+    "exit_code": 1
+  },
+  {
+    "name": "razorpay-generate",
+    "command": [
+      "pnpm",
+      "db:generate"
+    ],
+    "start": "2026-10-02T00:03:47Z",
+    "end": "2026-10-02T00:03:48Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-integration-retest",
+    "command": [
+      "pnpm",
+      "test:integration",
+      "--",
+      "--reporter=verbose"
+    ],
+    "start": "2026-10-02T00:09:38Z",
+    "end": "2026-10-02T00:10:19Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-integration",
+    "command": [
+      "pnpm",
+      "test:integration",
+      "--",
+      "--reporter=verbose"
+    ],
+    "start": "2026-10-02T00:05:56Z",
+    "end": "2026-10-02T00:08:02Z",
+    "exit_code": 1
+  },
+  {
+    "name": "razorpay-lint",
+    "command": [
+      "pnpm",
+      "lint"
+    ],
+    "start": "2026-10-02T00:04:21Z",
+    "end": "2026-10-02T00:05:26Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-migrate",
+    "command": [
+      "pnpm",
+      "db:migrate:deploy"
+    ],
+    "start": "2026-10-02T00:04:08Z",
+    "end": "2026-10-02T00:04:09Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-migration-status",
+    "command": [
+      "pnpm",
+      "db:migrate:status"
+    ],
+    "start": "2026-10-02T00:06:18Z",
+    "end": "2026-10-02T00:06:24Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-package",
+    "command": [
+      "pnpm",
+      "package:worker"
+    ],
+    "start": "2026-10-02T00:12:03Z",
+    "end": "2026-10-02T00:12:21Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-prior-failures",
+    "command": [
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--config",
+      "docs/testing/razorpay-pr73/baseline.vitest.config.mts",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/tmp/studiocar-razorpay-prior-failures-results.json"
+    ],
+    "start": "2026-10-02T00:04:50Z",
+    "end": "2026-10-02T00:05:04Z",
+    "exit_code": 1
+  },
+  {
+    "name": "razorpay-schema",
+    "command": [
+      "pnpm",
+      "db:validate"
+    ],
+    "start": "2026-10-02T00:06:10Z",
+    "end": "2026-10-02T00:06:18Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-security-startup",
+    "command": [
+      "pnpm",
+      "--filter",
+      "@studiocar/web",
+      "exec",
+      "vitest",
+      "run",
+      "../../tests/unit/server/security",
+      "../../tests/unit/app/instrumentation.test.ts",
+      "../../tests/unit/server/billing/usage-billing-service.test.ts",
+      "--maxWorkers=1",
+      "--reporter=verbose"
+    ],
+    "start": "2026-10-02T00:11:54Z",
+    "end": "2026-10-02T00:12:18Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-seed",
+    "command": [
+      "pnpm",
+      "db:seed"
+    ],
+    "start": "2026-10-02T00:09:28Z",
+    "end": "2026-10-02T00:09:29Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-startup-retest",
+    "command": [
+      "pnpm",
+      "--filter",
+      "@studiocar/web",
+      "exec",
+      "vitest",
+      "run",
+      "../../tests/unit/app/instrumentation.test.ts",
+      "../../tests/unit/server/billing/usage-billing-service.test.ts",
+      "--maxWorkers=1",
+      "--reporter=verbose"
+    ],
+    "start": "2026-10-02T00:05:40Z",
+    "end": "2026-10-02T00:05:42Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-typecheck",
+    "command": [
+      "pnpm",
+      "typecheck"
+    ],
+    "start": "2026-10-02T00:04:21Z",
+    "end": "2026-10-02T00:05:27Z",
+    "exit_code": 0
+  },
+  {
+    "name": "razorpay-unit",
+    "command": [
+      "pnpm",
+      "test",
+      "--force",
+      "--",
+      "--reporter=verbose"
+    ],
+    "start": "2026-10-02T00:05:50Z",
+    "end": "2026-10-02T00:15:52Z",
+    "exit_code": 0
+  }
+]

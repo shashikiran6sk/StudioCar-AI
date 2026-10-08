@@ -1,0 +1,859 @@
+
+ RUN  v5.0.1 <repository>/apps/web
+
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+ ❯ ../../tests/unit/app/page.test.tsx (4 tests | 1 failed) 295ms
+   ❯ HomePage (4)
+     × quotes the prices an administrator configured 48ms
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+ ❯ ../../tests/unit/features/pricing/pricing-section.test.tsx (2 tests | 1 failed) 179ms
+   ❯ PricingSection (2)
+     × shows the configured plans without faking checkout 165ms
+ ❯ ../../tests/unit/features/billing/billing-plan-grid.test.tsx (2 tests | 1 failed) 45ms
+   ❯ BillingPlanGrid (2)
+     × shows every configured plan and marks the one in use 40ms
+ ❯ ../../tests/unit/features/pricing/pricing-card.test.tsx (2 tests | 1 failed) 118ms
+   ❯ PricingCard (2)
+     × sends every action to sign-in, because no checkout exists yet 13ms
+{"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T06:30:25.846Z","environment":"unconfigured","errorCode":"INTERNAL_ERROR","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at <repository>/tests/unit/server/jobs/create-processing-batch-handler.test.ts:111:32","causes":[]}}
+{"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T06:30:26.007Z","environment":"unconfigured","errorCode":"INTERNAL_ERROR","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at <repository>/tests/unit/server/vehicles/create-vehicle-handler.test.ts:143:32","causes":[]}}
+{"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T06:30:26.316Z","environment":"unconfigured","errorCode":"INTERNAL_ERROR","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at Object.<anonymous> (<repository>/tests/unit/server/uploads/remove-upload-service.test.ts:77:15)\n    at RemoveUploadService.remove (<repository>/apps/web/src/server/uploads/remove-upload-service.ts:39:26)","causes":[]}}
+{"level":"info","event":"processing_job_reserved","timestamp":"2026-10-08T06:30:26.355Z","batchId":"processing-request-0001","jobId":"8c879f46-1193-4d77-b785-057fe026d111","environment":"unconfigured"}
+{"level":"info","event":"processing_job_reserved","timestamp":"2026-10-08T06:30:26.359Z","batchId":"processing-request-0001","jobId":"8c879f46-1193-4d77-b785-057fe026d111","environment":"unconfigured"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:26.955Z","requestId":"48280ca1-738f-4fd8-aa2f-5fbbbc27277a","environment":"unconfigured","method":"POST","durationMs":4.413666000000148,"requestStartedAtUnixMs":1791441026950,"statusCode":200,"timings":{},"route":"/api/auth/phone/verify"}
+{"level":"warn","event":"http_request_completed","timestamp":"2026-10-08T06:30:27.261Z","requestId":"7e38d07b-c3c3-4ce0-9a50-91055e9bf3de","environment":"unconfigured","method":"GET","errorCode":"FORBIDDEN","durationMs":1.2291659999999638,"requestStartedAtUnixMs":1791441027260,"statusCode":403,"timings":{},"route":"/api/jobs","errorMessage":"Request forbidden"}
+{"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T06:30:27.269Z","requestId":"bfbdb1f7-2e94-40bf-954f-bf6ecf2a9a7f","environment":"unconfigured","method":"GET","errorCode":"INTERNAL_ERROR","route":"/api/jobs","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at <repository>/tests/unit/server/observability/with-route-monitoring.test.ts:48:11\n    at <repository>/apps/web/src/server/observability/with-route-monitoring.ts:32:28\n    at <repository>/apps/web/src/server/observability/with-route-monitoring.ts:25:30\n    at <repository>/tests/unit/server/observability/with-route-monitoring.test.ts:50:26","causes":[]}}
+{"level":"error","event":"http_request_completed","timestamp":"2026-10-08T06:30:27.270Z","requestId":"bfbdb1f7-2e94-40bf-954f-bf6ecf2a9a7f","environment":"unconfigured","method":"GET","errorCode":"INTERNAL_ERROR","durationMs":3.721584000000007,"requestStartedAtUnixMs":1791441027266,"statusCode":500,"timings":{},"route":"/api/jobs","errorMessage":"Unexpected application failure"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:27.271Z","requestId":"e1be6732-8dba-4354-9e52-f0dca931e949","environment":"unconfigured","method":"GET","durationMs":0.09404199999994489,"requestStartedAtUnixMs":1791441027271,"statusCode":200,"timings":{},"route":"/api/uploads/[assetId]"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:27.272Z","requestId":"4771fa6b-f525-4e51-b2a8-7920e017a889","environment":"unconfigured","method":"GET","durationMs":0.10758299999997689,"requestStartedAtUnixMs":1791441027272,"statusCode":302,"timings":{},"route":"/api/auth/google/start"}
+{"level":"info","event":"sqs_job_published","timestamp":"2026-10-08T06:30:27.636Z","jobId":"0e879f46-1193-4d77-b785-057fe026d998","queueMessageId":"sqs-message-1","environment":"unconfigured","durationMs":1.0008750000000646}
+{"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T06:30:27.647Z","jobId":"0e879f46-1193-4d77-b785-057fe026d998","environment":"unconfigured","errorCode":"SQS_JOB_FAILED","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at SqsProcessingQueue.publish (<repository>/apps/web/src/server/jobs/sqs-processing-queue.ts:80:15)\n    at <repository>/tests/unit/server/jobs/sqs-processing-queue.test.ts:62:5","causes":[]}}
+{"level":"info","event":"sqs_job_published","timestamp":"2026-10-08T06:30:27.650Z","jobId":"job-0","queueMessageId":"sqs-ok","environment":"unconfigured","durationMs":0.11491600000010749}
+{"level":"info","event":"sqs_job_published","timestamp":"2026-10-08T06:30:27.651Z","requestId":"request","batchId":"batch","jobId":"job","queueMessageId":"accepted","environment":"unconfigured","durationMs":0.05358300000000327}
+{"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T06:30:27.976Z","environment":"unconfigured","errorCode":"INTERNAL_ERROR","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at <repository>/tests/unit/server/lifecycle/handle-lifecycle-cleanup.test.ts:50:32","causes":[]}}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:28.189Z","requestId":"1cd7308c-4127-4b27-9868-34c4a50cac60","environment":"unconfigured","method":"POST","durationMs":0.4024579999999105,"requestStartedAtUnixMs":1791441028189,"statusCode":201,"timings":{},"route":"/api/uploads/presign"}
+{"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T06:30:28.676Z","environment":"unconfigured","errorCode":"INTERNAL_ERROR","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at <repository>/tests/unit/server/storage-cleanup/handle-storage-cleanup.test.ts:42:32","causes":[]}}
+{"level":"warn","event":"http_request_completed","timestamp":"2026-10-08T06:30:29.197Z","requestId":"77260054-0d95-44f0-aadd-930d635cee6a","environment":"unconfigured","method":"POST","errorCode":"CONFLICT","durationMs":2.859540999999922,"requestStartedAtUnixMs":1791441029194,"statusCode":409,"timings":{},"route":"/api/auth/phone/create-account","errorMessage":"Unexpected application failure"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:29.204Z","requestId":"309b102f-0986-44ab-9d90-c0991f247ee7","environment":"unconfigured","method":"POST","durationMs":0.3917500000000018,"requestStartedAtUnixMs":1791441029204,"statusCode":204,"timings":{},"route":"/api/auth/logout-all"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:29.462Z","requestId":"c04beb01-51c6-439e-a24e-758bc27b95c5","environment":"unconfigured","method":"POST","durationMs":0.3860420000000886,"requestStartedAtUnixMs":1791441029461,"statusCode":200,"timings":{},"route":"/api/internal/jobs/dispatch"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:29.716Z","requestId":"7afce018-351f-4171-8161-49050e0bb899","environment":"unconfigured","method":"POST","durationMs":3.480374999999981,"requestStartedAtUnixMs":1791441029706,"statusCode":200,"timings":{},"route":"/api/profile/identities/phone"}
+{"level":"warn","event":"http_request_completed","timestamp":"2026-10-08T06:30:29.725Z","requestId":"9f5b195e-9bbf-4daf-afb2-442ac7ad269e","environment":"unconfigured","method":"POST","errorCode":"UNAUTHENTICATED","durationMs":0.43279199999983575,"requestStartedAtUnixMs":1791441029724,"statusCode":401,"timings":{},"route":"/api/profile/identities/phone","errorMessage":"Authentication required"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:30.230Z","requestId":"67b09e25-890d-47d3-9139-d43af1c0fc5c","environment":"unconfigured","method":"POST","durationMs":3.498625000000061,"requestStartedAtUnixMs":1791441030227,"statusCode":201,"timings":{},"route":"/api/auth/phone/start"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:30.572Z","requestId":"6e47dd81-5d76-4c06-933a-2196d7bfdad0","environment":"unconfigured","method":"POST","durationMs":0.4635000000000673,"requestStartedAtUnixMs":1791441030572,"statusCode":202,"timings":{"authentication":{"durationMs":0.09887499999990723,"count":1}},"route":"/api/jobs"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:30.575Z","requestId":"cdcef0a3-07cc-4ea4-bdb2-05dc6fc0eee7","environment":"unconfigured","method":"GET","durationMs":0.0472500000000764,"requestStartedAtUnixMs":1791441030575,"statusCode":200,"timings":{"authentication":{"durationMs":0.009958999999980733,"count":1}},"route":"/api/jobs"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:30.630Z","requestId":"35c744e7-bc2b-4e36-8afb-4edd07422139","environment":"unconfigured","method":"POST","durationMs":0.415958000000046,"requestStartedAtUnixMs":1791441030629,"statusCode":201,"timings":{},"route":"/api/vehicles"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:30.834Z","requestId":"eebb3626-ee2b-4139-b553-42badb293262","environment":"unconfigured","method":"GET","durationMs":0.8996670000000222,"requestStartedAtUnixMs":1791441030833,"statusCode":200,"timings":{},"route":"/api/auth/phone/widget"}
+ ❯ ../../tests/unit/server/billing/usage-billing-service.test.ts (9 tests | 4 failed) 14ms
+   ❯ UsageBillingService (9)
+     × resolves processing limits without scanning usage or storage 9ms
+     × scopes a billing-period allowance to the current month 1ms
+     × reports the allowance an administrator configured, not the shipped one 0ms
+     × falls back to the shipped plan when the catalog is empty 0ms
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:31.251Z","requestId":"cd74fc2a-1420-4efd-9afd-7e7bedf77f71","environment":"unconfigured","method":"GET","durationMs":2.971041000000014,"requestStartedAtUnixMs":1791441031248,"statusCode":303,"timings":{},"route":"/api/auth/google/callback"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:31.592Z","requestId":"f89f7ea1-f517-4f30-b4dd-092b975b8708","environment":"unconfigured","method":"GET","durationMs":1.5900409999999283,"requestStartedAtUnixMs":1791441031590,"statusCode":302,"timings":{},"route":"/api/auth/google/start"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:31.656Z","requestId":"09bee921-1bc2-484d-8813-716a3d158806","environment":"unconfigured","method":"DELETE","durationMs":0.24137499999994816,"requestStartedAtUnixMs":1791441031656,"statusCode":204,"timings":{},"route":"/api/uploads/[assetId]"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:31.962Z","requestId":"331079df-3c35-475c-9e73-7bf6633df4ef","environment":"unconfigured","method":"POST","durationMs":0.2539590000000089,"requestStartedAtUnixMs":1791441031961,"statusCode":204,"timings":{},"route":"/api/uploads/[assetId]/commit"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:32.179Z","requestId":"acac64c7-adab-4ca5-9dba-1fd995d89e4d","environment":"unconfigured","method":"PATCH","durationMs":0.42170899999996436,"requestStartedAtUnixMs":1791441032179,"statusCode":200,"timings":{},"route":"/api/vehicles/[vehicleId]"}
+ ❯ ../../tests/unit/server/plans/plan-configuration-form.test.ts (13 tests | 1 failed) 12ms
+   ❯ PlanConfigurationFormSchema (12)
+     × trims what an administrator typed 4ms
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:33.015Z","requestId":"1343f5ea-4a51-4cf1-a5f5-d91aa60e1345","environment":"unconfigured","method":"POST","durationMs":0.4000419999999849,"requestStartedAtUnixMs":1791441033014,"statusCode":200,"timings":{},"route":"/api/internal/storage/cleanup"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:33.419Z","requestId":"ef2d5306-0b9d-4ce1-b808-2d05d94fa771","environment":"unconfigured","method":"POST","durationMs":0.4225410000000238,"requestStartedAtUnixMs":1791441033418,"statusCode":204,"timings":{},"route":"/api/auth/logout"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:35.286Z","requestId":"11e74245-0e0a-40db-86db-9835217f9fb6","environment":"unconfigured","method":"PATCH","durationMs":0.3882499999999709,"requestStartedAtUnixMs":1791441035285,"statusCode":204,"timings":{},"route":"/api/profile"}
+{"level":"info","event":"http_request_completed","timestamp":"2026-10-08T06:30:36.220Z","requestId":"a0358a9d-bbc9-4d7b-b742-6c07ef16cdfc","environment":"unconfigured","method":"POST","durationMs":0.3775420000000622,"requestStartedAtUnixMs":1791441036220,"statusCode":200,"timings":{},"route":"/api/internal/lifecycle/cleanup"}
+{"commits":100,"rowCommits":100,"changedRow":100,"untouchedRow":0}
+ ❯ ../../tests/unit/server/admin/plan-configuration-actions.test.ts (7 tests | 2 failed) 9ms
+   ❯ savePlanConfigurationAction (7)
+     × saves an edit made by an administrator 6ms
+     × refreshes every surface that quotes a price 1ms
+ ❯ ../../tests/unit/features/vehicle-create/describe-batch-limit.test.ts (5 tests | 1 failed) 7ms
+   ❯ describeBatchLimit (5)
+     × never tells an account on the largest batch to upgrade to it 4ms
+ ❯ ../../tests/unit/server/plans/find-largest-batch.test.ts (3 tests | 1 failed) 7ms
+   ❯ findLargestBatch (3)
+     × ignores a plan that is not on offer 4ms
+ ❯ ../../tests/unit/server/plans/describe-plan-action.test.ts (3 tests | 1 failed) 6ms
+   ❯ describePlanAction (3)
+     × names the plan on a paid card 3ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../tests/unit/app/page.test.tsx > HomePage > quotes the prices an administrator configured
+TestingLibraryElementError: Unable to find an element with the text: ₹4,499. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="marketing-page"
+    >
+      <header
+        class="marketing-header"
+      >
+        <a
+          aria-label="StudioCar AI home"
+          class="marketing-header__brand"
+          href="/#top"
+        >
+          <span
+            class="sc-brand"
+          >
+            <span
+              aria-hidden="true"
+              class="sc-brand__mark"
+            >
+              SC
+            </span>
+            <span
+              class="sc-brand__name"
+            >
+              StudioCar AI
+            </span>
+          </span>
+        </a>
+        <nav
+          aria-label="Product"
+          class="marketing-header__navigation"
+        >
+          <a
+            href="/#features"
+          >
+            Features
+          </a>
+          <a
+            href="/#workflow"
+          >
+            Workflow
+          </a>
+          <a
+            href="/#studio-backgrounds"
+          >
+            Studio backgrounds
+          </a>
+          <a
+            href="/#pricing"
+          >
+            Pricing
+          </a>
+        </nav>
+        <div
+          class="marketing-header__actions"
+        >
+          <a
+            class="sc-button sc-button--secondary sc-button--marketing"
+            href="/login"
+          >
+            Log in
+          </a>
+          <a
+            class="sc-button sc-button--primary sc-button--marketing"
+            href="/login?returnTo=%2Fdashboard"
+          >
+            Start free
+          </a>
+        </div>
+      </header>
+      <main>
+        <section
+          class="marketing-hero"
+          id="top"
+        >
+          <div
+            class="marketing-hero__copy"
+          >
+            <p
+              class="marketing-pill"
+            >
+              <span
+                aria-hidden="true"
+              />
+              Built for vehicle imagery
+            </p>
+            <h1>
+              Turn every vehicle photo into showroom material.
+            </h1>
+            <p
+              class="marketing-hero__summary"
+            >
+              Remove distracting backgrounds, ground every car with a natural shadow, enhance every detail, and deliver consistent portfolios—without slowing down your inventory team.
+            </p>
+            <div
+              class="marketing-hero__actions"
+            >
+              <a
+                class="sc-button sc-button--primary sc-button--marketing"
+                href="/login?returnTo=%2Fdashboard"
+              >
+                Process your car →
+              </a>
+              <a
+                class="sc-button sc-button--secondary sc-button--marketing"
+                href="/#features"
+              >
+                Explore the product
+              </a>
+            </div>
+            <dl
+              class="marketing-proof"
+            >
+              <div>
+                <dt>
+                  20×
+                </dt>
+                <dd>
+                  images per paid batch
+                </dd>
+              </div>
+              <div>
+                <dt>
+                  Async
+                </dt>
+                <dd>
+                  controlled processing
+                </dd>
+              </div>
+              <div>
+                <dt>
+                  Originals
+                </dt>
+                <dd>
+                  always preserved
+                </dd>
+              </div>
+            </dl>
+          </div>
+          <div
+            class="marketing-hero__visual"
+          >
+            <div
+              class="sc-comparison"
+              style="--sc-comparison-split: 50%;"
+            >
+              <div
+                class="sc-comparison__layer sc-comparison__layer--before"
+              >
+                <div
+                  class="marketing-car-stage marketing-car-stage--original"
+                >
+                  <img
+                    alt="Silver sedan in the original comparison view"
+                    data-nimg="fill"
+                    decoding="async"
+                    sizes="(max-width: 899px) 100vw, 60vw"
+                    src="/_next/image?url=%2Fimages%2Fmarketing%2Fsilver-sedan.png&w=3840&q=75"
+                    srcset="/_next/image?url=%2Fimages%2Fmarketing%2Fsilver-sedan.png&w=384&q=75 384w, /_next/image?url=%2Fimages%2Fmarketing%2Fsilver-sedan.png&w=640&q=75 640w, /_next/image?url=%2Fimages%2Fmarketing%2Fsilver-sedan.png&w=750&q=75 750w, /_next/image?url=%2Fimages%2Fmarketing%2Fsilver-sedan.png&w=828&q=75 828w, /_next/image?url=%2Fimages%2Fmarketing%2Fsilver-sedan.png&w=1080&q=75 1080w, /_next/image?url=%2Fimages%2Fmarketing%2Fsilver-sedan.png&w=1200&q=75 1200w, /_next/image?url=%2Fimages%2Fmarketing%2Fsilver-sedan.png&w=1920&q=75 1920w, /_next/image?url=%2Fimages%2Fmarketing%2Fsilver-sedan.png&w=2048&q=75 2048w, /_next/image?url=%2Fimages%2Fmarketing%2Fsilver-sedan.png&w=3840&q=75 3840w"
+                    style="position: absolute; height: 100%; width: 100%; left: 0px; top: 0px; right: 0px; bottom: 0px;...
+ ❯ Object.getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ ../../tests/unit/app/page.test.tsx:58:19
+     56|     render(await HomePage());
+     57|
+     58|     expect(screen.getByText("₹4,499")).toBeVisible();
+       |                   ^
+     59|   });
+     60|   it("shows the footer links an administrator configured", async () =>…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  ../../tests/unit/features/billing/billing-plan-grid.test.tsx > BillingPlanGrid > shows every configured plan and marks the one in use
+TestingLibraryElementError: Unable to find an element with the text: ₹5,499. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <section
+      class="billing-packs"
+      id="packs"
+    >
+      <div
+        class="billing-packs__heading"
+      >
+        <div>
+          <p
+            class="eyebrow"
+          >
+            Available packs
+          </p>
+          <h2>
+            Choose the capacity that fits your inventory.
+          </h2>
+        </div>
+        <p>
+          The same packs shown on the homepage are available here with your current usage in context.
+        </p>
+      </div>
+      <div
+        class="billing-packs__grid"
+      >
+        <article
+          class="billing-plan-card"
+        >
+          <header>
+            <strong>
+              Free
+            </strong>
+            <span>
+              Current plan
+            </span>
+          </header>
+          <p
+            class="billing-plan-card__price"
+          >
+            ₹0
+
+            <small>
+              forever
+            </small>
+          </p>
+          <p>
+            For individuals trying the StudioCar workflow on a small set of vehicles.
+          </p>
+          <ul>
+            <li>
+              ✓
+              15 images in total
+            </li>
+            <li>
+              ✓
+              Maximum 5 images per batch
+            </li>
+            <li>
+              ✓
+              Standard background processing
+            </li>
+            <li>
+              ✓
+              3 GB storage
+            </li>
+          </ul>
+          <button
+            class="sc-button sc-button--secondary sc-button--default"
+            disabled=""
+            type="button"
+          >
+            Current plan
+          </button>
+        </article>
+        <article
+          class="billing-plan-card billing-plan-card--featured"
+        >
+          <header>
+            <strong>
+              StudioCar Plus
+            </strong>
+            <span>
+              Most popular
+            </span>
+          </header>
+          <p
+            class="billing-plan-card__price"
+          >
+            ₹1,999
+
+            <small>
+              One-time payment
+            </small>
+          </p>
+          <p>
+            A flexible credit pack for sellers, photographers, and growing dealerships.
+          </p>
+          <ul>
+            <li>
+              ✓
+              100 image credits
+            </li>
+            <li>
+              ✓
+              Up to 20 images per batch
+            </li>
+            <li>
+              ✓
+              Premium studio backgrounds
+            </li>
+            <li>
+              ✓
+              Credits never expire
+            </li>
+            <li>
+              ✓
+              Buy additional credits at any time
+            </li>
+          </ul>
+          <button
+            class="sc-button sc-button--secondary sc-button--default"
+            disabled=""
+            type="button"
+          >
+            Choose StudioCar Plus
+          </button>
+          <span
+            aria-live="polite"
+            class="billing-checkout-status"
+          />
+        </article>
+      </div>
+    </section>
+  </div>
+</body>
+ ❯ Object.getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ ../../tests/unit/features/billing/billing-plan-grid.test.tsx:16:19
+     14|
+     15|     expect(screen.getByText("₹1,999")).toBeInTheDocument();
+     16|     expect(screen.getByText("₹5,499")).toBeInTheDocument();
+       |                   ^
+     17|     expect(screen.getByText("StudioCar Plus")).toBeInTheDocument();
+     18|     expect(screen.queryByText("Studio Pack")).not.toBeInTheDocument();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  ../../tests/unit/features/pricing/pricing-card.test.tsx > PricingCard > sends every action to sign-in, because no checkout exists yet
+TestingLibraryElementError: Unable to find an element with the text: / month. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <article
+      class="pricing-card"
+    >
+      <header>
+        <strong>
+          StudioCar Plus
+        </strong>
+        <span>
+          Explore
+        </span>
+      </header>
+      <p
+        class="pricing-card__price"
+      >
+        ₹7,999
+
+        <small>
+          One-time payment
+        </small>
+      </p>
+      <p
+        class="pricing-card__description"
+      >
+        For individuals trying the StudioCar workflow on a small set of vehicles.
+      </p>
+      <ul>
+        <li>
+          ✓
+          15 images in total
+        </li>
+        <li>
+          ✓
+          Maximum 5 images per batch
+        </li>
+        <li>
+          ✓
+          Standard background processing
+        </li>
+        <li>
+          ✓
+          3 GB storage
+        </li>
+      </ul>
+      <a
+        class="sc-button sc-button--primary sc-button--marketing"
+        href="/login?returnTo=%2Fdashboard"
+      >
+        Choose StudioCar Plus
+      </a>
+    </article>
+  </div>
+</body>
+ ❯ Object.getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ ../../tests/unit/features/pricing/pricing-card.test.tsx:32:19
+     30|     expect(action).toHaveAttribute("href", "/login?returnTo=%2Fdashboa…
+     31|     expect(screen.getByText("₹7,999")).toBeVisible();
+     32|     expect(screen.getByText("/ month")).toBeVisible();
+       |                   ^
+     33|   });
+     34| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  ../../tests/unit/features/pricing/pricing-section.test.tsx > PricingSection > shows the configured plans without faking checkout
+TestingLibraryElementError: Unable to find an element with the text: /billing provider is connected/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <section
+      class="pricing-section"
+      id="pricing"
+    >
+      <div
+        class="pricing-section__heading"
+      >
+        <p
+          class="eyebrow"
+        >
+          Simple packs that scale with your inventory
+        </p>
+        <h2>
+          Start free. Add capacity when the vehicles arrive.
+        </h2>
+        <p>
+          Start with 15 free images. StudioCar Plus adds 100 image credits for ₹1,999 with a one-time payment. Credits never expire.
+        </p>
+      </div>
+      <div
+        class="pricing-section__grid"
+      >
+        <article
+          class="pricing-card"
+        >
+          <header>
+            <strong>
+              Free
+            </strong>
+            <span>
+              Explore
+            </span>
+          </header>
+          <p
+            class="pricing-card__price"
+          >
+            ₹0
+
+            <small>
+              forever
+            </small>
+          </p>
+          <p
+            class="pricing-card__description"
+          >
+            For individuals trying the StudioCar workflow on a small set of vehicles.
+          </p>
+          <ul>
+            <li>
+              ✓
+              15 images in total
+            </li>
+            <li>
+              ✓
+              Maximum 5 images per batch
+            </li>
+            <li>
+              ✓
+              Standard background processing
+            </li>
+            <li>
+              ✓
+              3 GB storage
+            </li>
+          </ul>
+          <a
+            class="sc-button sc-button--primary sc-button--marketing"
+            href="/login?returnTo=%2Fdashboard"
+          >
+            Start free
+          </a>
+        </article>
+        <article
+          class="pricing-card pricing-card--featured"
+        >
+          <header>
+            <strong>
+              StudioCar Plus
+            </strong>
+            <span>
+              Most popular
+            </span>
+          </header>
+          <p
+            class="pricing-card__price"
+          >
+            ₹1,999
+
+            <small>
+              One-time payment
+            </small>
+          </p>
+          <p
+            class="pricing-card__description"
+          >
+            A flexible credit pack for sellers, photographers, and growing dealerships.
+          </p>
+          <ul>
+            <li>
+              ✓
+              100 image credits
+            </li>
+            <li>
+              ✓
+              Up to 20 images per batch
+            </li>
+            <li>
+              ✓
+              Premium studio backgrounds
+            </li>
+            <li>
+              ✓
+              Credits never expire
+            </li>
+            <li>
+              ✓
+              Buy additional credits at any time
+            </li>
+          </ul>
+          <a
+            class="sc-button sc-button--secondary sc-button--marketing"
+            href="/login?returnTo=%2Fdashboard"
+          >
+            Choose StudioCar Plus
+          </a>
+        </article>
+      </div>
+      <p
+        class="pricing-section__note"
+      >
+        Buy additional credits at any time. Credits carry forward indefinitely.
+      </p>
+    </section>
+  </div>
+</body>
+ ❯ Object.getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ ../../tests/unit/features/pricing/pricing-section.test.tsx:15:19
+     13|     ).toBeVisible();
+     14|     expect(screen.getByText("₹1,999")).toBeVisible();
+     15|     expect(screen.getByText(/billing provider is connected/)).toBeVisi…
+       |                   ^
+     16|     for (const action of screen.getAllByRole("link")) {
+     17|       expect(action).toHaveAttribute("href", "/login?returnTo=%2Fdashb…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  ../../tests/unit/features/vehicle-create/describe-batch-limit.test.ts > describeBatchLimit > never tells an account on the largest batch to upgrade to it
+AssertionError: expected 'StudioCar Plus plan · Up to 20 images…' to be 'Studio Plus plan · Up to 20 images pe…' // Object.is equality
+
+Expected: "Studio Plus plan · Up to 20 images per batch."
+Received: "StudioCar Plus plan · Up to 20 images per batch."
+
+ ❯ ../../tests/unit/features/vehicle-create/describe-batch-limit.test.ts:38:7
+     36|         planName: "StudioCar Plus",
+     37|       }),
+     38|     ).toBe("Studio Plus plan · Up to 20 images per batch.");
+       |       ^
+     39|   });
+     40|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  ../../tests/unit/server/admin/plan-configuration-actions.test.ts > savePlanConfigurationAction > saves an edit made by an administrator
+AssertionError: expected 'error' to be 'success' // Object.is equality
+
+Expected: "success"
+Received: "error"
+
+ ❯ ../../tests/unit/server/admin/plan-configuration-actions.test.ts:63:25
+     61|     const result = await savePlanConfigurationAction(null, form());
+     62|
+     63|     expect(result.kind).toBe("success");
+       |                         ^
+     64|     expect(update).toHaveBeenCalledWith(
+     65|       expect.objectContaining({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  ../../tests/unit/server/admin/plan-configuration-actions.test.ts > savePlanConfigurationAction > refreshes every surface that quotes a price
+AssertionError: expected "vi.fn()" to be called with arguments: [ '/admin/pricing' ]
+
+Number of calls: 0
+
+ ❯ ../../tests/unit/server/admin/plan-configuration-actions.test.ts:78:28
+     76|     await savePlanConfigurationAction(null, form());
+     77|
+     78|     expect(revalidatePath).toHaveBeenCalledWith("/admin/pricing");
+       |                            ^
+     79|     expect(revalidatePath).toHaveBeenCalledWith("/settings/billing");
+     80|     expect(revalidatePath).toHaveBeenCalledWith("/");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > resolves processing limits without scanning usage or storage
+AssertionError: expected { allowanceScope: 'LIFETIME', …(7) } to match object { key: 'STUDIO_PRO', …(3) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "allowanceScope": "LIFETIME",
+-   "imageCapacity": 400,
+-   "key": "STUDIO_PRO",
+-   "maxImagesPerBatch": 20,
++   "imageCapacity": 15,
++   "key": "FREE",
++   "maxImagesPerBatch": 5,
+  }
+
+ ❯ ../../tests/unit/server/billing/usage-billing-service.test.ts:34:56
+     32|     const service = new UsageBillingService(repo, catalog);
+     33|
+     34|     await expect(service.getCurrentPlan("user-1", now)).resolves.toMat…
+       |                                                        ^
+     35|       key: "STUDIO_PRO",
+     36|       imageCapacity: 400,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > scopes a billing-period allowance to the current month
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'user-1', '2026-09', …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "user-1",
+-   "2026-09",
++   null,
+    2026-09-20T10:00:00.000Z,
+  ]
+
+
+Number of calls: 1
+
+ ❯ ../../tests/unit/server/billing/usage-billing-service.test.ts:95:34
+     93|     );
+     94|
+     95|     expect(repo.getOwnedSummary).toHaveBeenCalledWith("user-1", "2026-…
+       |                                  ^
+     96|     expect(summary.currentPlan).toMatchObject({
+     97|       key: "STUDIO_PRO",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > reports the allowance an administrator configured, not the shipped one
+AssertionError: expected { allowanceScope: 'LIFETIME', …(7) } to match object { imageCapacity: 800, …(1) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "imageCapacity": 800,
+-   "maxImagesPerBatch": 40,
++   "imageCapacity": 15,
++   "maxImagesPerBatch": 5,
+  }
+
+ ❯ ../../tests/unit/server/billing/usage-billing-service.test.ts:148:33
+    146|     }).getSummary("user-1", now);
+    147|
+    148|     expect(summary.currentPlan).toMatchObject({
+       |                                 ^
+    149|       imageCapacity: 800,
+    150|       maxImagesPerBatch: 40,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > falls back to the shipped plan when the catalog is empty
+AssertionError: expected { allowanceScope: 'LIFETIME', …(7) } to match object { key: 'STUDIO_PRO', …(1) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "imageCapacity": 400,
+-   "key": "STUDIO_PRO",
++   "imageCapacity": 15,
++   "key": "FREE",
+  }
+
+ ❯ ../../tests/unit/server/billing/usage-billing-service.test.ts:166:33
+    164|     }).getSummary("user-1", now);
+    165|
+    166|     expect(summary.currentPlan).toMatchObject({
+       |                                 ^
+    167|       key: "STUDIO_PRO",
+    168|       imageCapacity: 400,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+ FAIL  ../../tests/unit/server/plans/describe-plan-action.test.ts > describePlanAction > names the plan on a paid card
+AssertionError: expected undefined to be 'Choose Studio Pro' // Object.is equality
+
+- Expected:
+"Choose Studio Pro"
+
++ Received:
+undefined
+
+ ❯ ../../tests/unit/server/plans/describe-plan-action.test.ts:18:44
+     16|       (plan) => plan.planKey === "STUDIO_PRO",
+     17|     );
+     18|     expect(pro && describePlanAction(pro)).toBe("Choose Studio Pro");
+       |                                            ^
+     19|   });
+     20|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+
+ FAIL  ../../tests/unit/server/plans/find-largest-batch.test.ts > findLargestBatch > ignores a plan that is not on offer
+AssertionError: expected 5 to be 20 // Object.is equality
+
+- Expected
++ Received
+
+- 20
++ 5
+
+ ❯ ../../tests/unit/server/plans/find-largest-batch.test.ts:24:39
+     22|     );
+     23|
+     24|     expect(findLargestBatch(catalog)).toBe(20);
+       |                                       ^
+     25|   });
+     26|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯
+
+ FAIL  ../../tests/unit/server/plans/plan-configuration-form.test.ts > PlanConfigurationFormSchema > trims what an administrator typed
+AssertionError: expected 'Studio Plus' to be 'StudioCar Plus' // Object.is equality
+
+Expected: "StudioCar Plus"
+Received: "Studio Plus"
+
+ ❯ ../../tests/unit/server/plans/plan-configuration-form.test.ts:109:55
+    107|     const result = parse({ displayName: "  Studio Plus  " });
+    108|
+    109|     expect(result.success && result.data.displayName).toBe("StudioCar …
+       |                                                       ^
+    110|   });
+    111| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
+
+
+ Test Files  10 failed | 396 passed (406)
+      Tests  14 failed | 1208 passed (1222)
+   Start at  12:00:15
+   Duration  35.51s (environment 62%, setup 15%, import 11%, tests 7%, transform 4%)
+
+Environment  jsdom was created 406 times · 176.54s total, 62% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in /Users/shashikiran/Development/StudioCar-
+  │ AI/apps/web

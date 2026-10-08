@@ -1,0 +1,7 @@
+$ pnpm --filter @studiocar/web db:seed
+$ esbuild prisma/seed.ts --bundle --platform=node --target=node24 --format=esm --external:@prisma/adapter-pg --external:@prisma/client --external:pg --outfile=.prisma-seed.mjs && node --env-file-if-exists=../../.env.local .prisma-seed.mjs
+
+  .prisma-seed.mjs  1020.9kb
+
+⚡ Done in 21ms
+Seeded 0 plan configurations; existing rows were left unchanged.

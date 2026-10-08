@@ -1,0 +1,30 @@
+[WebServer] (node:59968) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:59970) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 16 tests using 1 worker
+
+(node:59976) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/16] ../../tests/e2e/admin-authorization.spec.ts:50:1 › keeps the administration area from everybody who is not an administrator
+[2/16] ../../tests/e2e/admin-authorization.spec.ts:173:1 › lets an administrator change a plan and shows it to everybody
+[3/16] ../../tests/e2e/admin-authorization.spec.ts:270:1 › configures a footer link and shows it to the public
+[4/16] ../../tests/e2e/auth-shell.spec.ts:3:5 › redirects an unauthenticated workspace request to sign in
+[5/16] ../../tests/e2e/auth-shell.spec.ts:24:5 › keeps the sign-in controls usable on a mobile viewport
+[6/16] ../../tests/e2e/billing-checkout.spec.ts:36:1 › loads repeatable Plus Checkout through the browser security policy
+[7/16] ../../tests/e2e/foundation.spec.ts:3:5 › renders the complete marketing homepage at desktop and mobile widths
+[8/16] ../../tests/e2e/inventory.spec.ts:28:1 › renders authenticated inventory states at desktop and mobile widths
+[9/16] ../../tests/e2e/mobile-workspace-navigation.spec.ts:33:1 › replaces the sidebar with a navigation drawer on narrow screens
+[10/16] ../../tests/e2e/phone-account-resolution.spec.ts:13:1 › verifies a new phone, creates one account, then signs into it
+[11/16] ../../tests/e2e/phone-account-resolution.spec.ts:63:1 › keeps a wrong code on the code step as an incorrect code, not an outage
+[12/16] ../../tests/e2e/profile-security.spec.ts:23:1 › updates a profile and revokes every active session
+[13/16] ../../tests/e2e/seo.spec.ts:3:5 › serves canonical homepage metadata, navigation, and SEO assets
+[14/16] ../../tests/e2e/seo.spec.ts:59:5 › serves declared favicon files to Google crawlers without authentication
+[15/16] ../../tests/e2e/seo.spec.ts:85:5 › keeps sign-in and authentication errors out of search indexes
+[16/16] ../../tests/e2e/workspace-shell.spec.ts:14:1 › offers exactly the delivered workspace destinations and a plan summary
+  16 passed (22.3s)

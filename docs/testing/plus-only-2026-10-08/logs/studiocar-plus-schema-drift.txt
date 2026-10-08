@@ -1,0 +1,15 @@
+Loaded Prisma config from prisma.config.ts.
+
+
+[*] Changed the `PhoneOtpAttempt` table
+  [*] Altered column `id` (default changed from `Some(DbGenerated(Some("gen_random_uuid()")))` to `None`)
+
+[*] Changed the `PhoneOtpChallenge` table
+  [*] Altered column `id` (default changed from `Some(DbGenerated(Some("gen_random_uuid()")))` to `None`)
+
+[*] Changed the `ProcessingOutboxMessage` table
+  [*] Altered column `id` (default changed from `Some(DbGenerated(Some("gen_random_uuid()")))` to `None`)
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in /Users/shashikiran/Development/StudioCar-
+  │ AI/apps/web

@@ -1,0 +1,531 @@
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* feat/razorpay-billing CI shashikiran6sk/StudioCar-AI#73 · 37741815840
+Triggered via pull_request less than a minute ago
+
+JOBS
+* Build and end-to-end smoke test (ID 113194015658)
+  ✓ Set up job
+  ✓ Initialize containers
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Apply migrations for authenticated browser tests
+  * Generate Prisma client for billing seed
+  * Seed billing plans for authenticated browser tests
+  * Build
+  * End-to-end smoke test
+  * Upload Playwright report
+  * Post Set up Node.js
+  * Post Install pnpm
+  * Post Check out repository
+  * Stop containers
+* Lint typecheck and test (ID 113194015856)
+  ✓ Set up job
+  ✓ Initialize containers
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Audit production dependencies
+  ✓ Generate Prisma client
+  ✓ Validate Prisma schema
+  * Apply and verify migrations
+  * Lint
+  * Typecheck
+  * Unit tests and source mapping
+  * Integration test task
+  * Post Set up Node.js
+  * Post Install pnpm
+  * Post Check out repository
+  * Stop containers
+* Image worker Lambda package (ID 113194015914)
+  ✓ Set up job
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Package the Lambda archive
+  ✓ Verify the archive is reproducible
+  ✓ Set up arm64 emulation
+  * Smoke-test the archive in the arm64 Lambda runtime
+  * Summarize the archive
+  * Upload the archive
+  * Post Set up arm64 emulation
+  * Post Set up Node.js
+  * Post Install pnpm
+  * Post Check out repository
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* feat/razorpay-billing CI shashikiran6sk/StudioCar-AI#73 · 37741815840
+Triggered via pull_request about 1 minute ago
+
+JOBS
+* Build and end-to-end smoke test (ID 113194015658)
+  ✓ Set up job
+  ✓ Initialize containers
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Apply migrations for authenticated browser tests
+  ✓ Generate Prisma client for billing seed
+  ✓ Seed billing plans for authenticated browser tests
+  * Build
+  * End-to-end smoke test
+  * Upload Playwright report
+  * Post Set up Node.js
+  * Post Install pnpm
+  * Post Check out repository
+  * Stop containers
+* Lint typecheck and test (ID 113194015856)
+  ✓ Set up job
+  ✓ Initialize containers
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Audit production dependencies
+  ✓ Generate Prisma client
+  ✓ Validate Prisma schema
+  ✓ Apply and verify migrations
+  ✓ Lint
+  * Typecheck
+  * Unit tests and source mapping
+  * Integration test task
+  * Post Set up Node.js
+  * Post Install pnpm
+  * Post Check out repository
+  * Stop containers
+✓ Image worker Lambda package in 1m3s (ID 113194015914)
+  ✓ Set up job
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Package the Lambda archive
+  ✓ Verify the archive is reproducible
+  ✓ Set up arm64 emulation
+  ✓ Smoke-test the archive in the arm64 Lambda runtime
+  ✓ Summarize the archive
+  ✓ Upload the archive
+  ✓ Post Set up arm64 emulation
+  ✓ Post Set up Node.js
+  ✓ Post Install pnpm
+  ✓ Post Check out repository
+  ✓ Complete job
+
+ANNOTATIONS
+! Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/upload-artifact@v5, docker/setup-qemu-action@v3, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Image worker Lambda package: .github#2
+
+- "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Image worker Lambda package: .github#1
+
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* feat/razorpay-billing CI shashikiran6sk/StudioCar-AI#73 · 37741815840
+Triggered via pull_request about 1 minute ago
+
+JOBS
+* Build and end-to-end smoke test (ID 113194015658)
+  ✓ Set up job
+  ✓ Initialize containers
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Apply migrations for authenticated browser tests
+  ✓ Generate Prisma client for billing seed
+  ✓ Seed billing plans for authenticated browser tests
+  ✓ Build
+  * End-to-end smoke test
+  * Upload Playwright report
+  * Post Set up Node.js
+  * Post Install pnpm
+  * Post Check out repository
+  * Stop containers
+* Lint typecheck and test (ID 113194015856)
+  ✓ Set up job
+  ✓ Initialize containers
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Audit production dependencies
+  ✓ Generate Prisma client
+  ✓ Validate Prisma schema
+  ✓ Apply and verify migrations
+  ✓ Lint
+  ✓ Typecheck
+  * Unit tests and source mapping
+  * Integration test task
+  * Post Set up Node.js
+  * Post Install pnpm
+  * Post Check out repository
+  * Stop containers
+✓ Image worker Lambda package in 1m3s (ID 113194015914)
+  ✓ Set up job
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Package the Lambda archive
+  ✓ Verify the archive is reproducible
+  ✓ Set up arm64 emulation
+  ✓ Smoke-test the archive in the arm64 Lambda runtime
+  ✓ Summarize the archive
+  ✓ Upload the archive
+  ✓ Post Set up arm64 emulation
+  ✓ Post Set up Node.js
+  ✓ Post Install pnpm
+  ✓ Post Check out repository
+  ✓ Complete job
+
+ANNOTATIONS
+! Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/upload-artifact@v5, docker/setup-qemu-action@v3, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Image worker Lambda package: .github#2
+
+- "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Image worker Lambda package: .github#1
+
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* feat/razorpay-billing CI shashikiran6sk/StudioCar-AI#73 · 37741815840
+Triggered via pull_request about 2 minutes ago
+
+JOBS
+✓ Build and end-to-end smoke test in 2m8s (ID 113194015658)
+  ✓ Set up job
+  ✓ Initialize containers
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Apply migrations for authenticated browser tests
+  ✓ Generate Prisma client for billing seed
+  ✓ Seed billing plans for authenticated browser tests
+  ✓ Build
+  ✓ End-to-end smoke test
+  ✓ Upload Playwright report
+  ✓ Post Set up Node.js
+  ✓ Post Install pnpm
+  ✓ Post Check out repository
+  ✓ Stop containers
+  ✓ Complete job
+* Lint typecheck and test (ID 113194015856)
+  ✓ Set up job
+  ✓ Initialize containers
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Audit production dependencies
+  ✓ Generate Prisma client
+  ✓ Validate Prisma schema
+  ✓ Apply and verify migrations
+  ✓ Lint
+  ✓ Typecheck
+  * Unit tests and source mapping
+  * Integration test task
+  * Post Set up Node.js
+  * Post Install pnpm
+  * Post Check out repository
+  * Stop containers
+✓ Image worker Lambda package in 1m3s (ID 113194015914)
+  ✓ Set up job
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Package the Lambda archive
+  ✓ Verify the archive is reproducible
+  ✓ Set up arm64 emulation
+  ✓ Smoke-test the archive in the arm64 Lambda runtime
+  ✓ Summarize the archive
+  ✓ Upload the archive
+  ✓ Post Set up arm64 emulation
+  ✓ Post Set up Node.js
+  ✓ Post Install pnpm
+  ✓ Post Check out repository
+  ✓ Complete job
+
+ANNOTATIONS
+! Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/upload-artifact@v5, docker/setup-qemu-action@v3, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Image worker Lambda package: .github#2
+
+- "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Image worker Lambda package: .github#1
+
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* feat/razorpay-billing CI shashikiran6sk/StudioCar-AI#73 · 37741815840
+Triggered via pull_request about 2 minutes ago
+
+JOBS
+✓ Build and end-to-end smoke test in 2m8s (ID 113194015658)
+  ✓ Set up job
+  ✓ Initialize containers
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Apply migrations for authenticated browser tests
+  ✓ Generate Prisma client for billing seed
+  ✓ Seed billing plans for authenticated browser tests
+  ✓ Build
+  ✓ End-to-end smoke test
+  ✓ Upload Playwright report
+  ✓ Post Set up Node.js
+  ✓ Post Install pnpm
+  ✓ Post Check out repository
+  ✓ Stop containers
+  ✓ Complete job
+* Lint typecheck and test (ID 113194015856)
+  ✓ Set up job
+  ✓ Initialize containers
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Audit production dependencies
+  ✓ Generate Prisma client
+  ✓ Validate Prisma schema
+  ✓ Apply and verify migrations
+  ✓ Lint
+  ✓ Typecheck
+  * Unit tests and source mapping
+  * Integration test task
+  * Post Set up Node.js
+  * Post Install pnpm
+  * Post Check out repository
+  * Stop containers
+✓ Image worker Lambda package in 1m3s (ID 113194015914)
+  ✓ Set up job
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Package the Lambda archive
+  ✓ Verify the archive is reproducible
+  ✓ Set up arm64 emulation
+  ✓ Smoke-test the archive in the arm64 Lambda runtime
+  ✓ Summarize the archive
+  ✓ Upload the archive
+  ✓ Post Set up arm64 emulation
+  ✓ Post Set up Node.js
+  ✓ Post Install pnpm
+  ✓ Post Check out repository
+  ✓ Complete job
+
+ANNOTATIONS
+! Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/upload-artifact@v5, docker/setup-qemu-action@v3, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Image worker Lambda package: .github#2
+
+- "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Image worker Lambda package: .github#1
+
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* feat/razorpay-billing CI shashikiran6sk/StudioCar-AI#73 · 37741815840
+Triggered via pull_request about 3 minutes ago
+
+JOBS
+✓ Build and end-to-end smoke test in 2m8s (ID 113194015658)
+  ✓ Set up job
+  ✓ Initialize containers
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Apply migrations for authenticated browser tests
+  ✓ Generate Prisma client for billing seed
+  ✓ Seed billing plans for authenticated browser tests
+  ✓ Build
+  ✓ End-to-end smoke test
+  ✓ Upload Playwright report
+  ✓ Post Set up Node.js
+  ✓ Post Install pnpm
+  ✓ Post Check out repository
+  ✓ Stop containers
+  ✓ Complete job
+* Lint typecheck and test (ID 113194015856)
+  ✓ Set up job
+  ✓ Initialize containers
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Audit production dependencies
+  ✓ Generate Prisma client
+  ✓ Validate Prisma schema
+  ✓ Apply and verify migrations
+  ✓ Lint
+  ✓ Typecheck
+  * Unit tests and source mapping
+  * Integration test task
+  * Post Set up Node.js
+  * Post Install pnpm
+  * Post Check out repository
+  * Stop containers
+✓ Image worker Lambda package in 1m3s (ID 113194015914)
+  ✓ Set up job
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Package the Lambda archive
+  ✓ Verify the archive is reproducible
+  ✓ Set up arm64 emulation
+  ✓ Smoke-test the archive in the arm64 Lambda runtime
+  ✓ Summarize the archive
+  ✓ Upload the archive
+  ✓ Post Set up arm64 emulation
+  ✓ Post Set up Node.js
+  ✓ Post Install pnpm
+  ✓ Post Check out repository
+  ✓ Complete job
+
+ANNOTATIONS
+! Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/upload-artifact@v5, docker/setup-qemu-action@v3, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Image worker Lambda package: .github#2
+
+- "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Image worker Lambda package: .github#1
+
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* feat/razorpay-billing CI shashikiran6sk/StudioCar-AI#73 · 37741815840
+Triggered via pull_request about 3 minutes ago
+
+JOBS
+✓ Build and end-to-end smoke test in 2m8s (ID 113194015658)
+  ✓ Set up job
+  ✓ Initialize containers
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Apply migrations for authenticated browser tests
+  ✓ Generate Prisma client for billing seed
+  ✓ Seed billing plans for authenticated browser tests
+  ✓ Build
+  ✓ End-to-end smoke test
+  ✓ Upload Playwright report
+  ✓ Post Set up Node.js
+  ✓ Post Install pnpm
+  ✓ Post Check out repository
+  ✓ Stop containers
+  ✓ Complete job
+* Lint typecheck and test (ID 113194015856)
+  ✓ Set up job
+  ✓ Initialize containers
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Audit production dependencies
+  ✓ Generate Prisma client
+  ✓ Validate Prisma schema
+  ✓ Apply and verify migrations
+  ✓ Lint
+  ✓ Typecheck
+  ✓ Unit tests and source mapping
+  * Integration test task
+  * Post Set up Node.js
+  * Post Install pnpm
+  * Post Check out repository
+  * Stop containers
+✓ Image worker Lambda package in 1m3s (ID 113194015914)
+  ✓ Set up job
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Package the Lambda archive
+  ✓ Verify the archive is reproducible
+  ✓ Set up arm64 emulation
+  ✓ Smoke-test the archive in the arm64 Lambda runtime
+  ✓ Summarize the archive
+  ✓ Upload the archive
+  ✓ Post Set up arm64 emulation
+  ✓ Post Set up Node.js
+  ✓ Post Install pnpm
+  ✓ Post Check out repository
+  ✓ Complete job
+
+ANNOTATIONS
+! Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/upload-artifact@v5, docker/setup-qemu-action@v3, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Image worker Lambda package: .github#2
+
+- "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Image worker Lambda package: .github#1
+
+✓ feat/razorpay-billing CI shashikiran6sk/StudioCar-AI#73 · 37741815840
+Triggered via pull_request about 4 minutes ago
+
+JOBS
+✓ Build and end-to-end smoke test in 2m8s (ID 113194015658)
+  ✓ Set up job
+  ✓ Initialize containers
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Apply migrations for authenticated browser tests
+  ✓ Generate Prisma client for billing seed
+  ✓ Seed billing plans for authenticated browser tests
+  ✓ Build
+  ✓ End-to-end smoke test
+  ✓ Upload Playwright report
+  ✓ Post Set up Node.js
+  ✓ Post Install pnpm
+  ✓ Post Check out repository
+  ✓ Stop containers
+  ✓ Complete job
+✓ Lint typecheck and test in 4m10s (ID 113194015856)
+  ✓ Set up job
+  ✓ Initialize containers
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Audit production dependencies
+  ✓ Generate Prisma client
+  ✓ Validate Prisma schema
+  ✓ Apply and verify migrations
+  ✓ Lint
+  ✓ Typecheck
+  ✓ Unit tests and source mapping
+  ✓ Integration test task
+  ✓ Post Set up Node.js
+  ✓ Post Install pnpm
+  ✓ Post Check out repository
+  ✓ Stop containers
+  ✓ Complete job
+✓ Image worker Lambda package in 1m3s (ID 113194015914)
+  ✓ Set up job
+  ✓ Check out repository
+  ✓ Install pnpm
+  ✓ Set up Node.js
+  ✓ Install dependencies
+  ✓ Package the Lambda archive
+  ✓ Verify the archive is reproducible
+  ✓ Set up arm64 emulation
+  ✓ Smoke-test the archive in the arm64 Lambda runtime
+  ✓ Summarize the archive
+  ✓ Upload the archive
+  ✓ Post Set up arm64 emulation
+  ✓ Post Set up Node.js
+  ✓ Post Install pnpm
+  ✓ Post Check out repository
+  ✓ Complete job
+- Publish image worker archive in 0s (ID 113195359004)
+
+ANNOTATIONS
+! Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/upload-artifact@v5, docker/setup-qemu-action@v3, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Image worker Lambda package: .github#2
+
+- "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Image worker Lambda package: .github#1

@@ -1,0 +1,36 @@
+
+ RUN  v5.0.1 /workspace/StudioCar-AI/apps/web
+
+ ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > resolves processing limits without scanning usage or storage 10ms
+ ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > derives remaining free capacity from immutable usage totals 10ms
+ ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > counts a lifetime allowance across every billing period 1ms
+ ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > scopes a billing-period allowance to the current month 2ms
+ ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > never reports negative remaining capacity 1ms
+ ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > falls back safely when a persisted plan is not in the approved catalog 0ms
+ ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > reports the allowance an administrator configured, not the shipped one 1ms
+ ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > falls back to the shipped plan when the catalog is empty 0ms
+ ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts > UsageBillingService > keeps a deactivated plan's allowance from the shipped default 0ms
+ ✓ ../../tests/unit/server/security/resolve-local-storage-origin.test.ts > resolveLocalStorageOrigin > returns the Local profile's MinIO origin 3ms
+ ✓ ../../tests/unit/server/security/resolve-local-storage-origin.test.ts > resolveLocalStorageOrigin > returns an explicitly configured local endpoint's origin 0ms
+ ✓ ../../tests/unit/server/security/resolve-local-storage-origin.test.ts > resolveLocalStorageOrigin > adds nothing for AWS storage, which the policy already allows 0ms
+ ✓ ../../tests/unit/server/security/resolve-local-storage-origin.test.ts > resolveLocalStorageOrigin > never trusts an arbitrary remote endpoint 0ms
+ ✓ ../../tests/unit/app/instrumentation.test.ts > billing runtime startup > fails startup with a Test key in production 13ms
+ ✓ ../../tests/unit/app/instrumentation.test.ts > billing runtime startup > accepts a Live key in production 3ms
+ ✓ ../../tests/unit/app/instrumentation.test.ts > billing runtime startup > initializes monitoring in the Node runtime after validating billing 1ms
+ ✓ ../../tests/unit/server/security/command-rate-limiter.test.ts > CommandRateLimiter > passes the tenant, command scope, and sliding window to persistence 48ms
+ ✓ ../../tests/unit/server/security/command-rate-limiter.test.ts > CommandRateLimiter > returns a whole-second retry delay bounded to at least one second 1ms
+ ✓ ../../tests/unit/server/security/create-content-security-policy.test.ts > createContentSecurityPolicy > keeps production scripts same-origin without eval and denies embedding 3ms
+ ✓ ../../tests/unit/server/security/create-content-security-policy.test.ts > createContentSecurityPolicy > permits eval only for the Next.js development runtime 0ms
+ ✓ ../../tests/unit/server/security/create-content-security-policy.test.ts > createContentSecurityPolicy > allows the local storage origin for uploads and previews when given one 0ms
+ ✓ ../../tests/unit/server/security/create-content-security-policy.test.ts > createContentSecurityPolicy > adds no storage origin beyond AWS when none is given 0ms
+ ✓ ../../tests/unit/server/security/create-content-security-policy.test.ts > createContentSecurityPolicy > allows hosted Razorpay Checkout without granting arbitrary script or frame origins 0ms
+ ✓ ../../tests/unit/server/security/create-security-headers.test.ts > createSecurityHeaders > returns the complete browser hardening policy 9ms
+
+ Test Files  6 passed (6)
+      Tests  24 passed (24)
+   Start at  00:11:55
+   Duration  23.44s (environment 68%, setup 16%, transform 10%, import 6%, tests 1%)
+
+Environment  jsdom was created 6 times · 14.14s total, 68% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments

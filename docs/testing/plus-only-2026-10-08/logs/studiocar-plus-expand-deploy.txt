@@ -1,0 +1,91 @@
+Loaded Prisma config from prisma.expand.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+Datasource "db": PostgreSQL database "studiocar_plus_rollout_test_20261008", schema "public" at "localhost:5432"
+
+26 migrations found in prisma/migrations
+
+Applying migration `20260918170000_initial_schema`
+Applying migration `20260918203000_google_oauth_challenges`
+Applying migration `20260918223000_phone_otp_challenges`
+Applying migration `20260919113000_image_asset_upload_idempotency`
+Applying migration `20260919183000_vehicle_creation_idempotency`
+Applying migration `20260919210000_processing_batch_idempotency`
+Applying migration `20260919223000_processing_outbox`
+Applying migration `20260920003000_processing_worker_lifecycle`
+Applying migration `20260920090000_upload_session_usage`
+Applying migration `20260920130000_email_delivery_outbox`
+Applying migration `20260920170000_command_rate_limit_events`
+Applying migration `20260920220000_lifecycle_cleanup_indexes`
+Applying migration `20260920233000_storage_deletion_outbox`
+Applying migration `20260921003000_read_path_indexes`
+Applying migration `20260922090000_phone_otp_provider_token`
+Applying migration `20260922120000_admin_configuration_foundation`
+Applying migration `20260923120000_retire_dealership_custom_backgrounds`
+Applying migration `20260923180000_reconcile_vehicle_attention`
+Applying migration `20260923200000_processing_batch_label`
+Applying migration `20260923220000_retire_studio_plus_rename_studio_pack`
+Applying migration `20260924120000_remove_email_delivery_outbox`
+Applying migration `20260925130000_razorpay_billing`
+Applying migration `20260926160000_processing_request_correlation`
+Applying migration `20260927100000_add_leonardo_provider`
+Applying migration `20261008100000_plus_only_expand`
+Applying migration `20261008103000_billing_command_limits`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260918170000_initial_schema/
+    └─ migration.sql
+  └─ 20260918203000_google_oauth_challenges/
+    └─ migration.sql
+  └─ 20260918223000_phone_otp_challenges/
+    └─ migration.sql
+  └─ 20260919113000_image_asset_upload_idempotency/
+    └─ migration.sql
+  └─ 20260919183000_vehicle_creation_idempotency/
+    └─ migration.sql
+  └─ 20260919210000_processing_batch_idempotency/
+    └─ migration.sql
+  └─ 20260919223000_processing_outbox/
+    └─ migration.sql
+  └─ 20260920003000_processing_worker_lifecycle/
+    └─ migration.sql
+  └─ 20260920090000_upload_session_usage/
+    └─ migration.sql
+  └─ 20260920130000_email_delivery_outbox/
+    └─ migration.sql
+  └─ 20260920170000_command_rate_limit_events/
+    └─ migration.sql
+  └─ 20260920220000_lifecycle_cleanup_indexes/
+    └─ migration.sql
+  └─ 20260920233000_storage_deletion_outbox/
+    └─ migration.sql
+  └─ 20260921003000_read_path_indexes/
+    └─ migration.sql
+  └─ 20260922090000_phone_otp_provider_token/
+    └─ migration.sql
+  └─ 20260922120000_admin_configuration_foundation/
+    └─ migration.sql
+  └─ 20260923120000_retire_dealership_custom_backgrounds/
+    └─ migration.sql
+  └─ 20260923180000_reconcile_vehicle_attention/
+    └─ migration.sql
+  └─ 20260923200000_processing_batch_label/
+    └─ migration.sql
+  └─ 20260923220000_retire_studio_plus_rename_studio_pack/
+    └─ migration.sql
+  └─ 20260924120000_remove_email_delivery_outbox/
+    └─ migration.sql
+  └─ 20260925130000_razorpay_billing/
+    └─ migration.sql
+  └─ 20260926160000_processing_request_correlation/
+    └─ migration.sql
+  └─ 20260927100000_add_leonardo_provider/
+    └─ migration.sql
+  └─ 20261008100000_plus_only_expand/
+    └─ migration.sql
+  └─ 20261008103000_billing_command_limits/
+    └─ migration.sql
+
+All migrations have been successfully applied.

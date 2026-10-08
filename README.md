@@ -1,3 +1,5 @@
+> **Evidence archive branch — DO NOT MERGE.** This branch exists only as a reference for testing evidence. Read [the evidence index](docs/testing/README.md). The draft PR must remain unmerged; the application README below is inherited from the main baseline.
+
 # StudioCar AI
 
 Production-oriented automotive image processing built as a pnpm and Turborepo monorepo.

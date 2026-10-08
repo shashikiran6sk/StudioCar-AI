@@ -1,0 +1,8 @@
+
+ RUN  v5.0.1 <repository>/apps/web
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  12:35:28
+   Duration  861ms (environment 62%, setup 21%, tests 13%, transform 3%)

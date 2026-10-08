@@ -1,0 +1,24 @@
+$ pnpm --filter @studiocar/web db:migrate:deploy
+$ prisma migrate deploy
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+Datasource "db": PostgreSQL database "studiocar_plus_rollout_test_20261008", schema "public" at "localhost:5432"
+
+29 migrations found in prisma/migrations
+
+Applying migration `20261008110000_plus_only_contract`
+Applying migration `20261008130000_fixed_free_product`
+Applying migration `20261008140000_remove_unused_provider_price`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20261008110000_plus_only_contract/
+    └─ migration.sql
+  └─ 20261008130000_fixed_free_product/
+    └─ migration.sql
+  └─ 20261008140000_remove_unused_provider_price/
+    └─ migration.sql
+
+All migrations have been successfully applied.

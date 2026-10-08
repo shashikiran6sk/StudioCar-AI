@@ -1,0 +1,104 @@
+$ pnpm db:generate && turbo run build
+$ pnpm --filter @studiocar/web db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (7.10.0) to ./../../packages/database-runtime/generated/prisma in 94ms
+
+• turbo 2.10.13
+
+   • Packages in scope: @studiocar/config, @studiocar/contracts, @studiocar/database-runtime, @studiocar/image-processing-worker, @studiocar/local-queue, @studiocar/observability, @studiocar/processing, @studiocar/testing, @studiocar/ui, @studiocar/web
+   • Running build in 10 packages
+   • Remote caching disabled
+
+@studiocar/config:build: cache hit, replaying logs 6672f177d8ccbf00
+@studiocar/config:build: $ tsc -p tsconfig.build.json --outDir dist
+@studiocar/testing:build: cache hit, replaying logs 79461266b69b0af6
+@studiocar/ui:build: cache hit, replaying logs f12a46e00c81f321
+@studiocar/testing:build: $ tsc --outDir dist
+@studiocar/ui:build: $ tsc -p tsconfig.build.json --outDir dist
+@studiocar/contracts:build: cache hit, replaying logs 2232c0f0fe91f355
+@studiocar/observability:build: cache hit, replaying logs 6a12463cd3cbcc54
+@studiocar/contracts:build: $ tsc -p tsconfig.build.json --outDir dist
+@studiocar/observability:build: $ tsc --outDir dist
+@studiocar/local-queue:build: cache hit, replaying logs 28371bc984907774
+@studiocar/local-queue:build: $ tsc --outDir dist
+@studiocar/processing:build: cache hit, replaying logs 321f218394af80e8
+@studiocar/processing:build: $ tsc --outDir dist
+@studiocar/database-runtime:build: cache hit, replaying logs 6c70e85a99d65c70
+@studiocar/database-runtime:build: $ tsc -p tsconfig.build.json --outDir dist
+@studiocar/web:build: cache miss, executing ca83b6ba1ec4076f
+@studiocar/image-processing-worker:build: cache hit, replaying logs 332a929fcb16a3e5
+@studiocar/image-processing-worker:build: $ tsc --noEmit && node scripts/bundle.mjs src/handler.ts dist/handler.mjs
+@studiocar/web:build: $ next build
+@studiocar/web:build: ▲ Next.js 16.3.8 (Turbopack)
+@studiocar/web:build: ✓ Running next.config.ts took 126ms
+@studiocar/web:build:
+@studiocar/web:build:   Creating an optimized production build ...
+@studiocar/web:build: ✓ Compiled successfully in 991ms
+@studiocar/web:build:   Running TypeScript ...
+@studiocar/web:build:   Finished TypeScript in 1326ms ...
+@studiocar/web:build:   Collecting page data using 9 workers ...
+@studiocar/web:build:   Generating static pages using 9 workers (0/28) ...
+@studiocar/web:build:   Generating static pages using 9 workers (7/28)
+@studiocar/web:build:   Generating static pages using 9 workers (14/28)
+@studiocar/web:build:   Generating static pages using 9 workers (21/28)
+@studiocar/web:build: ✓ Generating static pages using 9 workers (28/28) in 81ms
+@studiocar/web:build:   Finalizing page optimization ...
+@studiocar/web:build:
+@studiocar/web:build: Route (app)
+@studiocar/web:build: ┌ ƒ /
+@studiocar/web:build: ├ ○ /_not-found
+@studiocar/web:build: ├ ƒ /admin
+@studiocar/web:build: ├ ƒ /admin/admins
+@studiocar/web:build: ├ ƒ /admin/content
+@studiocar/web:build: ├ ƒ /admin/pricing
+@studiocar/web:build: ├ ƒ /api/auth/google/callback
+@studiocar/web:build: ├ ƒ /api/auth/google/start
+@studiocar/web:build: ├ ƒ /api/auth/logout
+@studiocar/web:build: ├ ƒ /api/auth/logout-all
+@studiocar/web:build: ├ ƒ /api/auth/phone/create-account
+@studiocar/web:build: ├ ƒ /api/auth/phone/start
+@studiocar/web:build: ├ ƒ /api/auth/phone/verify
+@studiocar/web:build: ├ ƒ /api/auth/phone/widget
+@studiocar/web:build: ├ ƒ /api/billing/orders
+@studiocar/web:build: ├ ƒ /api/billing/orders/verify
+@studiocar/web:build: ├ ƒ /api/billing/receipts
+@studiocar/web:build: ├ ƒ /api/billing/receipts/[receiptId]
+@studiocar/web:build: ├ ƒ /api/billing/status
+@studiocar/web:build: ├ ƒ /api/internal/jobs/dispatch
+@studiocar/web:build: ├ ƒ /api/internal/lifecycle/cleanup
+@studiocar/web:build: ├ ƒ /api/internal/storage/cleanup
+@studiocar/web:build: ├ ƒ /api/inventory/search
+@studiocar/web:build: ├ ƒ /api/jobs
+@studiocar/web:build: ├ ƒ /api/profile
+@studiocar/web:build: ├ ƒ /api/profile/identities/phone
+@studiocar/web:build: ├ ƒ /api/uploads/[assetId]
+@studiocar/web:build: ├ ƒ /api/uploads/[assetId]/commit
+@studiocar/web:build: ├ ƒ /api/uploads/presign
+@studiocar/web:build: ├ ƒ /api/vehicles
+@studiocar/web:build: ├ ƒ /api/vehicles/[vehicleId]
+@studiocar/web:build: ├ ƒ /api/webhooks/razorpay
+@studiocar/web:build: ├ ○ /apple-icon.png
+@studiocar/web:build: ├ ƒ /auth/error
+@studiocar/web:build: ├ ƒ /billing/receipts/[receiptId]
+@studiocar/web:build: ├ ƒ /dashboard
+@studiocar/web:build: ├ ƒ /inventory
+@studiocar/web:build: ├ ƒ /inventory/[vehicleId]
+@studiocar/web:build: ├ ƒ /login
+@studiocar/web:build: ├ ○ /opengraph-image.png
+@studiocar/web:build: ├ ƒ /robots.txt
+@studiocar/web:build: ├ ƒ /settings/billing
+@studiocar/web:build: ├ ƒ /settings/profile
+@studiocar/web:build: └ ƒ /sitemap.xml
+@studiocar/web:build:
+@studiocar/web:build:
+@studiocar/web:build: ○  (Static)   prerendered as static content
+@studiocar/web:build: ƒ  (Dynamic)  server-rendered on demand
+@studiocar/web:build:
+
+ Tasks:    10 successful, 10 total
+Cached:    9 cached, 10 total
+  Time:    4.752s
