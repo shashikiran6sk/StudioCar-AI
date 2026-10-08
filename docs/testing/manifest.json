@@ -14,23 +14,23 @@
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-build-final.txt",
-      "bytes": 5324,
-      "sha256": "0800d16470b976cc4745980a8a4ae063deed566b79ebc5117e2a90fbb3f674a5"
+      "bytes": 5323,
+      "sha256": "8b7a83b275793d305ecdc4db30a0d87615e750fad0aa7e88bd22a3c07a062049"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-build.txt",
-      "bytes": 5323,
-      "sha256": "b1d5639ab87e0d8ab3daaf8eef555fee1f89f0d54396bf9e981310dc77676f01"
+      "bytes": 5322,
+      "sha256": "e9dd81494e5ef76b2f288f09b5aa7e3cf41c4ee90591563b761979da5b09b45d"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-checkout-test.txt",
-      "bytes": 198,
-      "sha256": "d53400dd0a64880f195d2e51b1bab9344ba2aa558a9b9e895d0b96b2e05a0a8f"
+      "bytes": 197,
+      "sha256": "64acb66dcc9a4f0502d98d5ba3f7b600f1118e0ddfc9288880536e024b3fa15f"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-ci-watch.txt",
-      "bytes": 17815,
-      "sha256": "a5fefaaabfc524f330e9f181eb4ba9322ffb8d74337d5233b8971d737578d1ac"
+      "bytes": 17814,
+      "sha256": "6fddb35a20b75b9ae276a15ec462439faa27589980c0aefd68173cf513c5b7b8"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-contract-deploy.txt",
@@ -54,13 +54,13 @@
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-expand-test.txt",
-      "bytes": 186,
-      "sha256": "a56c7180f6a022141ceb2311d454839b49010bf221513fcec32859f0a1371c51"
+      "bytes": 185,
+      "sha256": "7eec862d64c1676e5549b678f96cfd0d898e3d0e4deb50299d16a6aa87a082d2"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-expanded-compatibility.txt",
-      "bytes": 173,
-      "sha256": "a1fad27959df0f9ef055b89019246a56673c804466e56f21a50547daca04bd07"
+      "bytes": 172,
+      "sha256": "332cb5772d140939ed804a4512e71f6b4de7597867f41d4b5ee5c65fa67d8059"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-install.txt",
@@ -69,28 +69,28 @@
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-integration-final.txt",
-      "bytes": 48588,
-      "sha256": "2be92fee0234a5484fe7718955d7e26ef1e412f623863cf807aceb6637a62db9"
+      "bytes": 48587,
+      "sha256": "38654e331c64159ece10d3745de5318416d6d9fa2b1e6a5b4d1043c449817395"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-integration.txt",
-      "bytes": 48776,
-      "sha256": "ef839a0c36d42d435cef890424f28cdbd9e0cb0ca6591cdc062c5f5b42ce7b0a"
+      "bytes": 48775,
+      "sha256": "2965f61391dc82084d18658af4f7b0591e5dcc2c688ce9e7e11179f74db991e1"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-lint-final.txt",
-      "bytes": 2002,
-      "sha256": "222709bfc8eb1257385f40ef9d2250f7a8904b91eb90910f1871a34c74a2fdb7"
+      "bytes": 2001,
+      "sha256": "c0074ae4559fc1b1da320fa842157f8085ea115e1ad3e1b6b9559c13b5d89e8d"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-lint.txt",
-      "bytes": 1983,
-      "sha256": "8706f5e4f05cafa66ca3d08e9e5678f14c681624da71f2baf6849585c21c0eed"
+      "bytes": 1982,
+      "sha256": "0dd1374cebf1643828582d7a5ef5fa30b62e0a67e6de4fa08f4558040894048d"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-loading-test.txt",
-      "bytes": 196,
-      "sha256": "2285ea8b4ed178d5546d64e9b208f3980e7b67533f344cd68b20feb949dbb78f"
+      "bytes": 195,
+      "sha256": "b618a2905e5d82f669c8ed46e94cbbd8e7bc0266cd803f872aa1ef0585c9e10d"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-mapping-final.txt",
@@ -114,13 +114,13 @@
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-paid-lifecycle.txt",
-      "bytes": 171,
-      "sha256": "fcd7ef0c062e21d377af12c5b793b93bcd2384840b503993d6d98e76eb524392"
+      "bytes": 170,
+      "sha256": "8e2fc813bcb934022124ec209d24d255670d2a1bc6c7f0e42b72028ff33a7bb2"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-paid-summary-test.txt",
-      "bytes": 197,
-      "sha256": "b416f6ed910e3c84c2c18a3f382749c9b501d3319ab6b4d5ca22d16b2708c7da"
+      "bytes": 196,
+      "sha256": "68734243f70b63f1ef1c4b81f2b620b87c0ee76d6dbc7a8fa55ff75a5a0b5895"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-rollout-status.txt",
@@ -129,8 +129,8 @@
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-schema-drift.txt",
-      "bytes": 637,
-      "sha256": "c2a6cd651062c7e7122cbc2f174304bf5b0cdcd7f6136df239c201e36d821058"
+      "bytes": 636,
+      "sha256": "2fe8e898707f20c5e315cb25e2bd88e83fc6090a05e447569eb87ccdfa9d19e4"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-schema.txt",
@@ -144,13 +144,13 @@
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-typecheck-final.txt",
-      "bytes": 1983,
-      "sha256": "0928cb1458af93a0d052077cc942d34a97c15e9d80fb149e655def2637c79228"
+      "bytes": 1982,
+      "sha256": "b2e3b0602b947ba91e899d52192efc0df099f7cd191f363e7e4716ecd7c9d62b"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-typecheck.txt",
-      "bytes": 1964,
-      "sha256": "85b851758d5535703a623b2ac286a264e447869365ce5ae423d39c1cd7b6d338"
+      "bytes": 1963,
+      "sha256": "67a19e0e84bc7f921c19f3b273f71e547bb20a83d213af2e1ec965b4bd4b27d0"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-typegen.txt",
@@ -164,23 +164,23 @@
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-unit-final.txt",
-      "bytes": 164666,
-      "sha256": "b1f00f128d90968366b698bcc4c931a0b60615b91c7ac8417b3d039ddf6c8cf5"
+      "bytes": 164665,
+      "sha256": "5159aced82fa41db59399e00832564801f1facbf5a961f6f630aacfdc0f9428a"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-unit-web-final.txt",
-      "bytes": 13652,
-      "sha256": "72a622119092696af4b53c65fb1add8341e4478c8572b8569dfbac00d9c63b42"
+      "bytes": 13651,
+      "sha256": "5492eb4d67072c1e331bf3edab14764cab21bc464c7b84260a9626f82fc76533"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-unit-web.txt",
-      "bytes": 41100,
-      "sha256": "68ee5daf2b8b6f19af0fdcc7b02275089dbefbf0636fe579fd6befe433dcbd4a"
+      "bytes": 41099,
+      "sha256": "d305721342da45e84536911f124d861054102a38dad475713ba0da1c3df080a8"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-unit.txt",
-      "bytes": 164826,
-      "sha256": "8e368f9a2e1edddf0fe1d5e0f135068e3ad7680c8827dacc68dc5e7bc0e71534"
+      "bytes": 164825,
+      "sha256": "885e71e037b332b50e44dd11e661edd2aff69be8a8d27fe56e3b1c417f405878"
     },
     {
       "path": "plus-only-2026-10-08/logs/studiocar-plus-worker-package.txt",

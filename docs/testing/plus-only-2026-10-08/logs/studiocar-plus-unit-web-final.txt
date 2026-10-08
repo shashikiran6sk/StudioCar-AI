@@ -52,4 +52,3 @@ Not implemented: navigation to another Document
 Environment  jsdom was created 406 times · 184.15s total, 63% of tracked time
              create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
              learn more: https://vitest.dev/guide/improving-performance#test-environments
-

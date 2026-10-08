@@ -102,4 +102,3 @@ Prisma schema loaded from prisma/schema.prisma.
  Tasks:    10 successful, 10 total
 Cached:    9 cached, 10 total
   Time:    9.127s
-

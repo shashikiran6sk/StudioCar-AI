@@ -6,4 +6,3 @@
       Tests  3 passed (3)
    Start at  12:09:57
    Duration  1.64s (environment 40%, transform 26%, tests 15%, import 11%, setup 8%)
-
