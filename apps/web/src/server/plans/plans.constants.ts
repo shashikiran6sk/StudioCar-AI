@@ -1,6 +1,6 @@
 import type { PlanKey } from "@studiocar/contracts";
 
-/** Falls back to this plan when a subscription names one that no longer exists. */
+/** Falls back to this plan when a entitlement names one that no longer exists. */
 export const FALLBACK_PLAN_KEY: PlanKey = "FREE";
 
 export const PLAN_CONFIG_LOCK_KEY = "plan-configuration";
@@ -17,12 +17,11 @@ export const PLAN_PRICE_MINOR_UNITS_PER_MAJOR = 100;
 
 export const PLAN_CADENCE_LABELS = {
   NONE: "forever",
-  ONE_TIME: "one-time",
-  MONTHLY: "/ month",
+  ONE_TIME: "One-time payment",
 } as const;
 
 export const PLAN_FREE_ACTION_LABEL = "Start free";
-/** `Choose Studio Plus`, `Choose Studio Pro`, and so on. */
+/** Paid purchase action label prefix. */
 export const PLAN_PAID_ACTION_PREFIX = "Choose";
 
 /** One gibibyte: plan storage is entered in GB and stored in bytes. */

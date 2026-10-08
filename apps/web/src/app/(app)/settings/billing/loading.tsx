@@ -1,6 +1,6 @@
 import { Skeleton } from "@studiocar/ui";
 
-const BILLING_PLAN_SKELETON_COUNT = 3;
+const BILLING_PLAN_SKELETON_COUNT = 2;
 
 export default function UsageBillingLoading() {
   return (

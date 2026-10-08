@@ -1,5 +1,6 @@
 "use server";
 
+import { PLUS_PRODUCT } from "@studiocar/contracts";
 import { revalidatePath, updateTag } from "next/cache";
 
 import {
@@ -35,7 +36,7 @@ const forbidden: AdminActionMessage = {
  * administrator.
  *
  * Only a plan the deployment ships can be edited. That keeps `planKey` — which
- * existing subscriptions are keyed by — a closed set, so no edit can invent a
+ * existing entitlements are keyed by — a closed set, so no edit can invent a
  * plan that nothing else in the product understands.
  */
 export async function savePlanConfigurationAction(
@@ -55,7 +56,8 @@ export async function savePlanConfigurationAction(
   const parsed = PlanConfigurationFormSchema.safeParse(
     readPlanConfigurationForm(formData),
   );
-  if (!parsed.success) {
+  if (!parsed.success || (fallback.planKey === "FREE" && (parsed.data.priceMinorUnits !== 0 || parsed.data.billingInterval !== "NONE" || parsed.data.purchasable)) || (fallback.planKey === PLUS_PRODUCT.code &&
+      (parsed.data.priceMinorUnits !== PLUS_PRODUCT.amountPaise || parsed.data.includedImages !== PLUS_PRODUCT.credits || parsed.data.billingInterval !== "ONE_TIME" || parsed.data.displayName !== PLUS_PRODUCT.name))) {
     return { kind: "error", message: ADMIN_PLAN_INVALID_MESSAGE };
   }
 

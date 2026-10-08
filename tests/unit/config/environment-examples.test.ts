@@ -17,6 +17,7 @@ import {
   StorageCleanupEnvironmentSchema,
   UploadEnvironmentSchema,
 } from "../../../packages/config/src/environment";
+import { RazorpayEnvironmentSchema } from "../../../packages/config/src/razorpay-environment";
 import {
   APPLICATION_PARSERS,
   DEVELOPMENT_ENVIRONMENT,
@@ -53,6 +54,7 @@ const KNOWN_VARIABLES = new Set([
     ProcessingEnvironmentSchema,
     ImageWorkerQueueEnvironmentSchema,
     ImageWorkerEnvironmentSchema,
+    RazorpayEnvironmentSchema,
   ].flatMap((schema) => Object.keys(schema.shape)),
 ]);
 
@@ -109,6 +111,7 @@ const EXAMPLES: Record<string, ExampleCase> = {
       ...APPLICATION_PARSERS,
       ...WORKER_PARSERS,
       ...LOCAL_CONSUMER_PARSERS,
+      ["Razorpay", (environment) => RazorpayEnvironmentSchema.parse(environment)],
     ],
     optional: [],
   },
@@ -119,6 +122,7 @@ const EXAMPLES: Record<string, ExampleCase> = {
       ...APPLICATION_PARSERS,
       ...WORKER_PARSERS,
       ...LOCAL_CONSUMER_PARSERS,
+      ["Razorpay", (environment) => RazorpayEnvironmentSchema.parse(environment)],
     ],
     optional: [
       "GOOGLE_REDIRECT_URI",
@@ -133,7 +137,7 @@ const EXAMPLES: Record<string, ExampleCase> = {
   ".env.example.production": {
     appEnvironment: "production",
     placeholders: PRODUCTION_ENVIRONMENT,
-    parsers: [...APPLICATION_PARSERS, ...WORKER_PARSERS],
+    parsers: [...APPLICATION_PARSERS, ...WORKER_PARSERS, ["Razorpay", (environment) => RazorpayEnvironmentSchema.parse(environment)]],
     optional: [
       "BOOTSTRAP_ADMIN_EMAIL",
       "SENTRY_DSN",
@@ -230,10 +234,13 @@ describe("environment example files", () => {
     });
   });
 
-  it("asks a Local developer for nothing but the Leonardo key", () => {
+  it("asks a Local developer for Leonardo and Razorpay Test Mode credentials", () => {
     expect(Object.keys(readExample(".env.example.local")).sort()).toEqual([
       "APP_ENV",
       "LEONARDO_API_KEY",
+      "RAZORPAY_KEY_ID",
+      "RAZORPAY_KEY_SECRET",
+      "RAZORPAY_WEBHOOK_SECRET",
     ]);
   });
 
@@ -282,11 +289,14 @@ describe("environment example files", () => {
     }
   });
 
-  it("ships no value for any production setting but APP_ENV", () => {
+  it("ships only explicit Razorpay placeholders for production settings", () => {
     const production = readExample(".env.example.production");
 
     for (const [key, value] of Object.entries(production)) {
-      if (key !== "APP_ENV") expect(value, key).toBe("");
+      if (key === "RAZORPAY_KEY_ID") expect(value).toBe("rzp_live_replace_me");
+      else if (key === "RAZORPAY_KEY_SECRET" || key === "RAZORPAY_WEBHOOK_SECRET") {
+        expect(value).toBe("replace_me");
+      } else if (key !== "APP_ENV") expect(value, key).toBe("");
     }
   });
 });

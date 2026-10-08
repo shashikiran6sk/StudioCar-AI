@@ -13,9 +13,9 @@ describe("describePlanAction", () => {
 
   it("names the plan on a paid card", () => {
     const pro = DEFAULT_PLAN_CATALOG.find(
-      (plan) => plan.planKey === "STUDIO_PRO",
+      (plan) => plan.planKey === "STUDIO_PLUS",
     );
-    expect(pro && describePlanAction(pro)).toBe("Choose Studio Pro");
+    expect(pro && describePlanAction(pro)).toBe("Choose StudioCar Plus");
   });
 
   it("follows a renamed plan", () => {

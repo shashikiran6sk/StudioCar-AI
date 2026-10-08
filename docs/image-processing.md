@@ -128,15 +128,13 @@ default 90 s) covering both the generation and the result download.
 
 ### Output resolution is server-side only
 
-The worker reads the owner's current subscription (ACTIVE or TRIALING, with a
-period end in the future) inside the claim transaction. It then maps that
-subscription to a quality tier:
+The worker reads the owner's durable Plus purchase entitlement inside the claim
+transaction. Purchased credits never expire; it maps that entitlement to a quality tier:
 
 | Plan | Tier | Leonardo `size` |
 | --- | --- | --- |
-| FREE, or no current subscription | STANDARD | `preview` |
+| FREE, or no purchase | STANDARD | `preview` |
 | PLUS | HIGH | `auto` |
-| PRO | HIGH | `auto` |
 
 `PLAN_PROCESSING_QUALITY_TIERS` is declared with `satisfies Record<PlanKey, …>`,
 so the compiler forces a decision for every new plan. The request contract is
@@ -296,7 +294,7 @@ Alarms and the dashboard section are defined in
 | `PROVIDER_PAYMENT_REQUIRED` | Top up Leonardo API credit; failures are terminal |
 | Timeouts | Compare `ProviderLatency` p99 with `LEONARDO_TIMEOUT_MS`; raise both it and the claim TTL together |
 | Composition failures | Lambda memory and duration; the asset table and `assets/backgrounds` in the ZIP |
-| Wrong resolution for a paid plan | The subscription row's status and `currentPeriodEnd` |
+| Wrong resolution for a paid plan | The lifetime PURCHASE_GRANT or positive ADMIN_ADJUSTMENT ledger entry |
 
 ## References
 

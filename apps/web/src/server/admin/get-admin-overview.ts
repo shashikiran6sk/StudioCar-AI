@@ -22,5 +22,5 @@ export const getAdminOverview = cache((): Promise<AdminOverview> =>
 );
 
 export const getAdminPlanDistribution = cache((): Promise<PlanAccountCount[]> =>
-  getRepository().countAccountsByPlan(new Date()),
+  getRepository().countAccountsByPlan(),
 );

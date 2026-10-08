@@ -6,12 +6,11 @@ import { PlanAllowanceScopeSchema } from "./usage";
  * How often a plan is charged.
  *
  * `NONE` is a plan nobody pays for, `ONE_TIME` a credit pack bought outright,
- * and `MONTHLY` a recurring subscription.
+ * with no recurring billing.
  */
 export const PlanBillingIntervalSchema = z.enum([
   "NONE",
   "ONE_TIME",
-  "MONTHLY",
 ]);
 
 /** Matches `PlanConfig.displayName`'s column width. */
@@ -76,7 +75,7 @@ export const PlanCatalogEntrySchema = z
  * What an administrator may change about a plan.
  *
  * `planKey` and `allowanceScope` are deliberately absent. The key identifies
- * existing subscriptions and the scope decides how an allowance is counted, so
+ * existing entitlements and the scope decides how an allowance is counted, so
  * editing either would silently reinterpret usage already charged.
  */
 export const PlanConfigurationUpdateSchema = PlanCatalogEntrySchema.omit({

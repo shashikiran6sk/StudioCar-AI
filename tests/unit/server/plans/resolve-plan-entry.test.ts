@@ -16,9 +16,9 @@ describe("resolvePlanEntry", () => {
   });
 
   it("uses the shipped default when a plan is not configured", () => {
-    expect(resolvePlanEntry([], "STUDIO_PRO")).toMatchObject({
-      key: "STUDIO_PRO",
-      plan: { includedImages: 500 },
+    expect(resolvePlanEntry([], "STUDIO_PLUS")).toMatchObject({
+      key: "STUDIO_PLUS",
+      plan: { includedImages: 100 },
     });
   });
 
@@ -26,13 +26,13 @@ describe("resolvePlanEntry", () => {
     const onlyFree = DEFAULT_PLAN_CATALOG.filter(
       (plan) => plan.planKey === "FREE",
     );
-    const withoutPro = onlyFree.map((plan) => ({
+    const withoutPaid = onlyFree.map((plan) => ({
       ...plan,
       includedImages: 9,
     }));
 
     // A catalog that has been emptied of every paid plan still resolves.
-    const resolved = resolvePlanEntry(withoutPro, "STUDIO_PLUS");
+    const resolved = resolvePlanEntry(withoutPaid, "STUDIO_PLUS");
 
     expect(resolved.key).toBe("STUDIO_PLUS");
     expect(resolved.plan.planKey).toBe("STUDIO_PLUS");

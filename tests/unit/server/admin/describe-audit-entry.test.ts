@@ -33,6 +33,10 @@ describe("describeAuditEntry", () => {
     ).toBe("Assigned a plan (STUDIO_PLUS).");
   });
 
+  it("describes a manual credit grant", () => {
+    expect(describeAuditEntry(entry({ action: "ADMIN_CREDIT_GRANTED", metadata: { accountUserId: "customer-1" } }))).toBe("Granted Studio Plus credits (customer-1).");
+  });
+
   it("names the plan that was edited", () => {
     expect(
       describeAuditEntry(

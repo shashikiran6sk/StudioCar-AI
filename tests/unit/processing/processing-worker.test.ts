@@ -33,7 +33,7 @@ const claimedJob: ClaimProcessingJobResult = {
     options: ProcessingOptionsSchema.parse({}),
     originalObjectKey: "users/user/vehicles/vehicle/assets/asset/original/source.jpg",
     sizeBytes: 1_024n,
-    subscriptionPlanKey: null,
+    ownedPlanKey: null,
     userId: USER_ID,
     vehicleId: VEHICLE_ID,
   },

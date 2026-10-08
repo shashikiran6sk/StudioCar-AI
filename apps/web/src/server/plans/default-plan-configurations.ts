@@ -1,6 +1,6 @@
-import type { PlanAllowanceScope } from "@studiocar/contracts";
+import { PLUS_PRODUCT } from "@studiocar/contracts";
+import type { PlanAllowanceScope, PlanBillingInterval } from "@studiocar/contracts";
 
-export type PlanBillingInterval = "NONE" | "ONE_TIME" | "MONTHLY";
 
 export interface DefaultPlanConfiguration {
   planKey: string;
@@ -10,7 +10,7 @@ export interface DefaultPlanConfiguration {
   active: boolean;
   purchasable: boolean;
   featured: boolean;
-  /** Minor units, so ₹3,999 is 399900 paise and never a float. */
+  /** Minor units, so ₹5,499 is 549900 paise and never a float. */
   priceMinorUnits: number;
   currency: string;
   billingInterval: PlanBillingInterval;
@@ -24,7 +24,7 @@ export interface DefaultPlanConfiguration {
 
 /**
  * The plan every account starts on, and the one the application falls back to
- * when a subscription names a plan that no longer exists.
+ * when a entitlement names a plan that no longer exists.
  *
  * It is named separately so that fallback is a direct reference rather than a
  * lookup that could return nothing.
@@ -55,54 +55,31 @@ export const FREE_PLAN_DEFAULT: DefaultPlanConfiguration = {
 };
 
 const STUDIO_PLUS_PLAN_DEFAULT: DefaultPlanConfiguration = {
-  planKey: "STUDIO_PLUS",
-  displayName: "Studio Plus",
+  planKey: PLUS_PRODUCT.code,
+  displayName: PLUS_PRODUCT.name,
   description:
     "A flexible credit pack for sellers, photographers, and growing dealerships.",
   segment: "Most popular",
   active: true,
-  purchasable: false,
+  purchasable: true,
   featured: true,
-  priceMinorUnits: 149_900,
+  priceMinorUnits: PLUS_PRODUCT.amountPaise,
   currency: "INR",
   billingInterval: "ONE_TIME",
   allowanceScope: "LIFETIME",
-  includedImages: 100,
+  includedImages: PLUS_PRODUCT.credits,
   maxImagesPerBatch: 20,
   storageBytes: null,
   features: [
     "100 image credits",
     "Up to 20 images per batch",
     "Premium studio backgrounds",
-    "Re-processing included",
+    "Credits never expire",
+    "Buy additional credits at any time",
   ],
   displayOrder: 1,
 };
 
-const STUDIO_PRO_PLAN_DEFAULT: DefaultPlanConfiguration = {
-  planKey: "STUDIO_PRO",
-  displayName: "Studio Pro",
-  description:
-    "For high-volume teams that need dependable image-processing throughput.",
-  segment: "Teams",
-  active: true,
-  purchasable: false,
-  featured: false,
-  priceMinorUnits: 399_900,
-  currency: "INR",
-  billingInterval: "MONTHLY",
-  allowanceScope: "BILLING_PERIOD",
-  includedImages: 500,
-  maxImagesPerBatch: 20,
-  storageBytes: null,
-  features: [
-    "500 images each month",
-    "Priority batch processing",
-    "Increased storage",
-    "Team-ready inventory workflow",
-  ],
-  displayOrder: 2,
-};
 
 /**
  * The canonical plan catalog.
@@ -112,12 +89,10 @@ const STUDIO_PRO_PLAN_DEFAULT: DefaultPlanConfiguration = {
  * remain here so a missing row can never take the application down, and so a
  * fresh database has something correct to start from.
  *
- * No plan is purchasable while `BillingPort` is unimplemented. Advertising a
- * checkout that cannot complete would be a lie.
+ * Paid plans are purchasable through the server-side Razorpay billing service.
  */
 export const DEFAULT_PLAN_CONFIGURATIONS: readonly DefaultPlanConfiguration[] =
   [
     FREE_PLAN_DEFAULT,
     STUDIO_PLUS_PLAN_DEFAULT,
-    STUDIO_PRO_PLAN_DEFAULT,
   ];

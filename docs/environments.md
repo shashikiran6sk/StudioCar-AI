@@ -318,3 +318,7 @@ concurrency, and measure wait time before increasing the web pool size.
 Production endpoint and region still require live verification.
 
 Reference: [Neon Prisma connection guidance](https://github.com/neondatabase/website/blob/main/content/docs/guides/prisma.md).
+
+## Plus billing settings
+
+The web application and operator reconciliation command require `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` and `RAZORPAY_WEBHOOK_SECRET`. Local/Development accept Test keys; Production requires Live keys. Keys remain server-side, apart from the public Checkout key ID. No Razorpay plan ID, recurring setup script or subscription configuration is used. Configure only payment and refund events; the [billing runbook](razorpay-billing.md) covers Dashboard capture, staged schema rollout, merchant identity and recovery. The image worker needs no Razorpay credential.

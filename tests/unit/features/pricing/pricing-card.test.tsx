@@ -13,22 +13,22 @@ describe("PricingCard", () => {
     expect(screen.getByText("✓ 15 images in total")).toBeVisible();
   });
 
-  it("sends every action to sign-in, because no checkout exists yet", () => {
+  it("sends every action to sign-in, to authenticate before purchasing", () => {
     render(
       <PricingCard
         plan={{
           ...FALLBACK_PLAN_ENTRY,
-          billingInterval: "MONTHLY",
-          displayName: "Studio Plus",
+          billingInterval: "ONE_TIME",
+          displayName: "StudioCar Plus",
           priceMinorUnits: 799_900,
           purchasable: true,
         }}
       />,
     );
 
-    const action = screen.getByRole("link", { name: "Choose Studio Plus" });
+    const action = screen.getByRole("link", { name: "Choose StudioCar Plus" });
     expect(action).toHaveAttribute("href", "/login?returnTo=%2Fdashboard");
     expect(screen.getByText("₹7,999")).toBeVisible();
-    expect(screen.getByText("/ month")).toBeVisible();
+    expect(screen.getByText("One-time payment")).toBeVisible();
   });
 });

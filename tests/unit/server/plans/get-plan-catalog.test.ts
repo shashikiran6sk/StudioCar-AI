@@ -28,7 +28,6 @@ const row = {
   maxImagesPerBatch: 5,
   planKey: "FREE",
   priceMinorUnits: 0,
-  providerPriceId: null,
   purchasable: false,
   segment: "Explore",
   storageBytes: 3_221_225_472n,

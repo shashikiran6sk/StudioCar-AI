@@ -24,7 +24,7 @@ export function createClaimedJob(
     },
     originalObjectKey: `users/${USER_ID}/vehicles/${VEHICLE_ID}/assets/${ASSET_ID}/original/source.jpg`,
     sizeBytes: 0n,
-    subscriptionPlanKey: null,
+    ownedPlanKey: null,
     userId: USER_ID,
     vehicleId: VEHICLE_ID,
     ...overrides,

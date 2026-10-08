@@ -9,11 +9,11 @@ function submission(overrides: Record<string, string> = {}): FormData {
   const formData = new FormData();
   const fields: Record<string, string> = {
     active: "on",
-    billingInterval: "MONTHLY",
+    billingInterval: "ONE_TIME",
     description: "For high-volume teams.",
-    displayName: "Studio Plus",
+    displayName: "StudioCar Plus",
     displayOrder: "3",
-    features: "1,500 images each month\n\nUp to 20 images per batch\n",
+    features: "100 non-expiring image credits\n\nUp to 20 images per batch\n",
     includedImages: "1500",
     maxImagesPerBatch: "20",
     priceRupees: "7999",
@@ -56,7 +56,7 @@ describe("PlanConfigurationFormSchema", () => {
     const result = parse();
 
     expect(result.success && result.data.features).toEqual([
-      "1,500 images each month",
+      "100 non-expiring image credits",
       "Up to 20 images per batch",
     ]);
   });
@@ -104,9 +104,9 @@ describe("PlanConfigurationFormSchema", () => {
   });
 
   it("trims what an administrator typed", () => {
-    const result = parse({ displayName: "  Studio Plus  " });
+    const result = parse({ displayName: "  StudioCar Plus  " });
 
-    expect(result.success && result.data.displayName).toBe("Studio Plus");
+    expect(result.success && result.data.displayName).toBe("StudioCar Plus");
   });
 });
 

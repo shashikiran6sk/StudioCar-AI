@@ -23,10 +23,10 @@ export interface ClaimedProcessingJob {
   originalObjectKey: string;
   sizeBytes: bigint;
   /**
-   * The plan key of the owner's current subscription, read in the claim
+   * The plan key of the owner's lifetime purchase entitlement, read in the claim
    * transaction, or null without one. Resolution is derived from it.
    */
-  subscriptionPlanKey: string | null;
+  ownedPlanKey: string | null;
   userId: string;
   vehicleId: string;
 }

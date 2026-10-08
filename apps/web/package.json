@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "billing:business:setup": "esbuild prisma/billing-business-setup.ts --bundle --platform=node --target=node24 --format=esm --external:@prisma/adapter-pg --external:@prisma/client --external:pg --outfile=.billing-business-setup.mjs && node --env-file-if-exists=../../.env.local .billing-business-setup.mjs",
     "build": "next build",
     "db:generate": "prisma generate",
     "db:migrate:deploy": "prisma migrate deploy",
@@ -15,7 +16,8 @@
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.mts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "billing:reconcile": "esbuild prisma/billing-reconcile.ts --bundle --platform=node --target=node24 --format=esm --external:@prisma/adapter-pg --external:@prisma/client --external:pg --outfile=.billing-reconcile.mjs && node --env-file-if-exists=../../.env.local .billing-reconcile.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "catalog:",
@@ -31,7 +33,7 @@
     "@studiocar/processing": "workspace:*",
     "@studiocar/ui": "workspace:*",
     "fflate": "0.8.3",
-    "next": "16.3.6",
+    "next": "16.3.8",
     "openid-client": "catalog:",
     "pg": "catalog:",
     "react": "19.3.0",

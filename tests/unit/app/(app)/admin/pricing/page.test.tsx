@@ -45,7 +45,7 @@ describe("AdminPricingPage", () => {
     expect(
       screen.getByRole("heading", { name: "Plans and pricing" }),
     ).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Studio Plus" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "StudioCar Plus" })).toBeVisible();
     expect(screen.getAllByRole("button", { name: "Save plan" })).toHaveLength(
       DEFAULT_PLAN_CATALOG.length,
     );

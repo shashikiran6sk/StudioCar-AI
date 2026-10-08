@@ -7,6 +7,7 @@
   },
   "packageManager": "pnpm@12.3.4",
   "scripts": {
+    "billing:business:setup": "pnpm --filter @studiocar/web billing:business:setup",
     "app:down": "sh scripts/local-compose.sh --profile app down",
     "app:logs": "sh scripts/local-compose.sh --profile app logs -f web image-worker",
     "app:up": "sh scripts/app-up.sh",
@@ -29,7 +30,8 @@
     "test": "pnpm db:generate && pnpm test:mapping && turbo run test",
     "test:integration": "pnpm db:generate && turbo run test:integration",
     "test:mapping": "node scripts/check-test-mapping.mjs",
-    "typecheck": "pnpm db:generate && turbo run typecheck"
+    "typecheck": "pnpm db:generate && turbo run typecheck",
+    "billing:reconcile": "pnpm --filter @studiocar/web billing:reconcile"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "catalog:",
@@ -46,7 +48,7 @@
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.1",
     "eslint": "9.39.3",
-    "eslint-config-next": "16.3.6",
+    "eslint-config-next": "16.3.8",
     "fflate": "0.8.3",
     "globals": "17.12.0",
     "jsdom": "30.1.0",

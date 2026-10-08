@@ -42,7 +42,7 @@ describe("toPlanUsageSummary", () => {
           imageCapacity: 100,
           key: "STUDIO_PLUS",
           maxImagesPerBatch: 20,
-          name: "Studio Plus",
+          name: "StudioCar Plus",
           storageCapacityBytes: null,
           uploadSessionCapacity: null,
         },

@@ -2,9 +2,9 @@
 
 ## Product
 
-StudioCar AI is a production-oriented automotive image-processing SaaS. Dealers upload vehicle photos directly to private object storage, request asynchronous background removal and image treatments, monitor processing, manage inventory/portfolios, and track plan usage.
+StudioCar AI is a production-oriented automotive image-processing SaaS. Dealers upload vehicle photos directly to private object storage, request asynchronous background removal and image treatments, monitor processing, manage inventory/portfolios, and track credit usage.
 
-Background removal runs behind the `ImageProcessingProvider` port. Leonardo.Ai Remove Background (Sync API) is the only provider: the queue worker sends it a short-lived presigned source URL, receives a transparent car with Leonardo's own car shadow, downloads it immediately and composites it onto one of six StudioCar studio backgrounds. Output resolution is chosen server-side from the subscription plan. See `/docs/image-processing.md`.
+Background removal runs behind the `ImageProcessingProvider` port. Leonardo.Ai Remove Background (Sync API) is the only provider: the queue worker sends it a short-lived presigned source URL, receives a transparent car with Leonardo's own car shadow, downloads it immediately and composites it onto one of six StudioCar studio backgrounds. Output resolution is chosen server-side from the purchase entitlement. See `/docs/image-processing.md`.
 
 ## Sources of truth
 
@@ -62,7 +62,7 @@ Route handlers stay thin. React code never calls Prisma or external processing p
 
 ## Core domain
 
-The canonical persistence model includes `User`, `AuthIdentity`, `Session`, `Vehicle`, `ImageAsset`, `ProcessingJob`, `ProcessingAttempt`, `ProcessedAsset`, `UsageEvent`, `PlanSubscription`, `WebhookEvent`, and `AuditLog`, plus the durable outbox tables and the administration and configuration tables: `UserRole`, `AppConfig`, `AdminInvite`, `PlanConfig`, and `SocialLink`.
+The canonical persistence model includes `User`, `AuthIdentity`, `Session`, `Vehicle`, `ImageAsset`, `ProcessingJob`, `ProcessingAttempt`, `ProcessedAsset`, `UsageEvent`, `Payment`, `Receipt`, `CreditLedger`, `CreditAllocation`, `WebhookEvent`, and `AuditLog`, plus the durable outbox tables and the administration and configuration tables: `UserRole`, `AppConfig`, `AdminInvite`, `PlanConfig`, and `SocialLink`.
 
 Important invariants:
 
@@ -77,8 +77,8 @@ Important invariants:
 - Stored database values are private object keys, not permanent S3 URLs.
 - Administrator authorization is a row in `UserRole`, never an environment value, and every administration page and server action re-checks it against the database for itself.
 - Plans, prices, allowances, batch limits, and footer links are configuration rows, not constants. The application carries no second copy of a plan.
-- `planKey`, `allowanceScope`, and `currency` are not editable: the key identifies existing subscriptions, and the scope decides how usage already charged is counted.
-- A subscription a payment provider owns is never written from the administration area, and an account is found there only through a sign-in method it has verified.
+- `planKey`, `allowanceScope`, and `currency` are not editable: the key identifies Free and Plus, and the scope decides how usage already charged is counted.
+- StudioCar Plus is the only paid product: ₹1,999 INR, 100 cumulative non-expiring credits per captured payment. Checkout signatures alone never grant credits. No subscription or monthly allowance exists. Payment finalization, ledger grants and immutable receipt creation commit atomically.
 - `AuditLog` is append-only and read bounded. Its `metadata` is `Json` and must be validated before any field is read; a null `userId` means the system acted or the actor's account was deleted, which are different facts.
 
 ## Code conventions

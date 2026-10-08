@@ -2,8 +2,7 @@ export interface AdminOverview {
   administratorCount: number;
   userCount: number;
   activePlanCount: number;
-  activeSubscriptionCount: number;
-  manualSubscriptionCount: number;
+  paidAccountCount: number;
   enabledSocialLinkCount: number;
 }
 

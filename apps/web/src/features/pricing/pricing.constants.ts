@@ -1,7 +1,7 @@
 export const PRICING_COPY = {
   eyebrow: "Simple packs that scale with your inventory",
-  note: "Need marketplace volume or a custom workflow? Contact our team for a tailored plan.",
+  note: "Buy additional credits at any time. Credits carry forward indefinitely.",
   summary:
-    "Every pack keeps the same guided workflow and preserves originals. Paid checkout remains unavailable until the billing provider is connected.",
+    "Start with 15 free images. StudioCar Plus adds 100 image credits for ₹1,999 with a one-time payment. Credits never expire.",
   title: "Start free. Add capacity when the vehicles arrive.",
 };

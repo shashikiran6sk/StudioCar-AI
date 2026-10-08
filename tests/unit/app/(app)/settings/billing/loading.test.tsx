@@ -5,7 +5,8 @@ import UsageBillingLoading from "../../../../../../apps/web/src/app/(app)/settin
 
 describe("UsageBillingLoading", () => {
   it("preserves page geometry while usage loads", () => {
-    render(<UsageBillingLoading />);
+    const { container } = render(<UsageBillingLoading />);
+    expect(container.querySelectorAll(".usage-loading__pack")).toHaveLength(2);
     expect(screen.getByRole("status", { name: "Loading usage and billing" })).toBeInTheDocument();
   });
 });
