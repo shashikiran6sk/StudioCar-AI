@@ -1,5 +1,7 @@
 # Plus-only Razorpay billing and release runbook
 
+Verification reports and historical diagnostic artifacts are kept separately in the [testing_branch evidence archive](https://github.com/shashikiran6sk/StudioCar-AI/blob/testing_branch/docs/testing/README.md) ([draft PR #99](https://github.com/shashikiran6sk/StudioCar-AI/pull/99), DO NOT MERGE). This runbook remains the current merchant testing and deployment guide.
+
 StudioCar supports one paid product: **StudioCar Plus, ₹1,999 INR (199900 paise), 100 image credits, one-time payment**. Credits never expire, carry forward indefinitely, and each successful new purchase adds 100. Free remains 15 lifetime images, maximum five per batch. Purchased processing uses a separate ledger and never consumes the free trial; after a purchase, paid processing requires an available purchased balance, matching the existing paid-account behavior. Paid batches support up to 20 images.
 
 The server validates the database product against the canonical Plus product. Administrators cannot change its price, currency, billing interval, or credit quantity. They can pause sales and manage copy, batch limits and storage. There are no recurring allowances, monthly resets, renewal dates, mandates, Plans API calls or subscription capabilities.

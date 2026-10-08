@@ -1,7 +1,0 @@
-$ pnpm --filter @studiocar/web db:generate
-$ prisma generate
-Loaded Prisma config from prisma.config.ts.
-
-Prisma schema loaded from prisma/schema.prisma.
-
-✔ Generated Prisma Client (7.10.0) to ./../../packages/database-runtime/generated/prisma in 301ms

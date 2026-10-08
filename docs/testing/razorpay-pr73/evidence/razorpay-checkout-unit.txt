@@ -1,9 +1,0 @@
-
- RUN  v5.0.1 /workspace/StudioCar-AI/apps/web
-
- ✓ ../../tests/unit/features/billing/billing-checkout-action.test.tsx > BillingCheckoutAction > does not open checkout until the provider script is ready 649ms
-
- Test Files  1 passed (1)
-      Tests  1 passed (1)
-   Start at  00:15:56
-   Duration  5.66s (environment 54%, transform 14%, tests 13%, setup 11%, import 8%)
