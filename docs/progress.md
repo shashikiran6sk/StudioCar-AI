@@ -1,6 +1,13 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-10-02
+Last updated: 2026-10-08
+
+## 2026-10-08 — Evidence-only archive branch
+
+- Created `testing_branch` from current main `5a45e72` solely to archive billing PR #73 evidence and available Plus-only verification logs/screenshots. The root README points to `docs/testing/README.md`; the SHA-256 manifest records provenance and integrity. No application code or configuration changes are part of this archive.
+- Preserved all 46 earlier billing evidence files byte for byte. Added sanitized latest logs, screenshots, run configuration and source-commit/results/limitations documentation. Retained intermediate failures and separated historical Plus/Pro findings from current Plus-only results.
+- The user explicitly requires a draft PR that is never merged. This archival branch is not a release or deployment source. Normal CI remains enabled; archive-baseline checks do not replace verification of the tested implementation commit.
+
 
 ## Search-result favicon discovery
 

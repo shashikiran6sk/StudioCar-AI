@@ -1,0 +1,10 @@
+$ pnpm --filter @studiocar/web db:migrate:status
+$ prisma migrate status
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+Datasource "db": PostgreSQL database "studiocar_plus_rollout_test_20261008", schema "public" at "localhost:5432"
+
+29 migrations found in prisma/migrations
+
+Database schema is up to date!

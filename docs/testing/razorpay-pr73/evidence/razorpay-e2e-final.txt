@@ -1,0 +1,127 @@
+$ turbo run e2e -- --config /tmp/studiocar-razorpay-playwright.mts
+
+   • Packages in scope: @studiocar/config, @studiocar/contracts, @studiocar/database-runtime, @studiocar/image-processing-worker, @studiocar/local-queue, @studiocar/observability, @studiocar/processing, @studiocar/testing, @studiocar/ui, @studiocar/web
+   • Running e2e in 10 packages
+   • Remote caching disabled
+
+@studiocar/config:build: cache miss, executing f51633ee5baf4e3f
+@studiocar/config:build: $ tsc -p tsconfig.build.json --outDir dist
+@studiocar/contracts:build: cache miss, executing a7e9574b42e641d5
+@studiocar/ui:build: cache miss, executing d5522b17da435907
+@studiocar/observability:build: cache miss, executing f6e902f7bfe19bd4
+@studiocar/testing:build: cache miss, executing 83c4e8847f4ebb72
+@studiocar/contracts:build: $ tsc -p tsconfig.build.json --outDir dist
+@studiocar/testing:build: $ tsc --outDir dist
+@studiocar/ui:build: $ tsc -p tsconfig.build.json --outDir dist
+@studiocar/observability:build: $ tsc --outDir dist
+@studiocar/local-queue:build: cache miss, executing f4e3de22bda8ee68
+@studiocar/processing:build: cache miss, executing 3298acf4beffb837
+@studiocar/processing:build: $ tsc --outDir dist
+@studiocar/local-queue:build: $ tsc --outDir dist
+@studiocar/database-runtime:build: cache miss, executing 85dfc281e3b88fbf
+@studiocar/database-runtime:build: $ tsc -p tsconfig.build.json --outDir dist
+@studiocar/image-processing-worker:build: cache miss, executing 8bcbc140b04f5500
+@studiocar/web:build: cache miss, executing 7fcc9d9cec67580b
+@studiocar/image-processing-worker:build: $ tsc --noEmit && node scripts/bundle.mjs src/handler.ts dist/handler.mjs
+@studiocar/web:build: $ next build
+@studiocar/web:build: ▲ Next.js 16.3.6 (Turbopack)
+@studiocar/web:build: ✓ Running next.config.ts took 298ms
+@studiocar/web:build:
+@studiocar/web:build:   Creating an optimized production build ...
+@studiocar/web:build: ✓ Compiled successfully in 769ms
+@studiocar/web:build:   Running TypeScript ...
+@studiocar/web:build:   Finished TypeScript in 5.1s ...
+@studiocar/web:build:   Collecting page data using 2 workers ...
+@studiocar/web:build:   Generating static pages using 2 workers (0/33) ...
+@studiocar/web:build:   Generating static pages using 2 workers (8/33)
+@studiocar/web:build:   Generating static pages using 2 workers (16/33)
+@studiocar/web:build:   Generating static pages using 2 workers (24/33)
+@studiocar/web:build: ✓ Generating static pages using 2 workers (33/33) in 172ms
+@studiocar/web:build:   Finalizing page optimization ...
+@studiocar/web:build:
+@studiocar/web:build: Route (app)
+@studiocar/web:build: ┌ ƒ /
+@studiocar/web:build: ├ ○ /_not-found
+@studiocar/web:build: ├ ƒ /admin
+@studiocar/web:build: ├ ƒ /admin/admins
+@studiocar/web:build: ├ ƒ /admin/content
+@studiocar/web:build: ├ ƒ /admin/pricing
+@studiocar/web:build: ├ ƒ /admin/subscriptions
+@studiocar/web:build: ├ ƒ /api/auth/google/callback
+@studiocar/web:build: ├ ƒ /api/auth/google/start
+@studiocar/web:build: ├ ƒ /api/auth/logout
+@studiocar/web:build: ├ ƒ /api/auth/logout-all
+@studiocar/web:build: ├ ƒ /api/auth/phone/create-account
+@studiocar/web:build: ├ ƒ /api/auth/phone/start
+@studiocar/web:build: ├ ƒ /api/auth/phone/verify
+@studiocar/web:build: ├ ƒ /api/auth/phone/widget
+@studiocar/web:build: ├ ƒ /api/billing/orders
+@studiocar/web:build: ├ ƒ /api/billing/orders/verify
+@studiocar/web:build: ├ ƒ /api/billing/receipts
+@studiocar/web:build: ├ ƒ /api/billing/receipts/[receiptId]
+@studiocar/web:build: ├ ƒ /api/billing/status
+@studiocar/web:build: ├ ƒ /api/billing/subscriptions
+@studiocar/web:build: ├ ƒ /api/billing/subscriptions/cancel
+@studiocar/web:build: ├ ƒ /api/billing/subscriptions/verify
+@studiocar/web:build: ├ ƒ /api/internal/jobs/dispatch
+@studiocar/web:build: ├ ƒ /api/internal/lifecycle/cleanup
+@studiocar/web:build: ├ ƒ /api/internal/storage/cleanup
+@studiocar/web:build: ├ ƒ /api/inventory/search
+@studiocar/web:build: ├ ƒ /api/jobs
+@studiocar/web:build: ├ ƒ /api/profile
+@studiocar/web:build: ├ ƒ /api/profile/identities/phone
+@studiocar/web:build: ├ ƒ /api/uploads/[assetId]
+@studiocar/web:build: ├ ƒ /api/uploads/[assetId]/commit
+@studiocar/web:build: ├ ƒ /api/uploads/presign
+@studiocar/web:build: ├ ƒ /api/vehicles
+@studiocar/web:build: ├ ƒ /api/vehicles/[vehicleId]
+@studiocar/web:build: ├ ƒ /api/webhooks/razorpay
+@studiocar/web:build: ├ ○ /apple-icon.png
+@studiocar/web:build: ├ ƒ /auth/error
+@studiocar/web:build: ├ ƒ /billing/receipts/[receiptId]
+@studiocar/web:build: ├ ƒ /dashboard
+@studiocar/web:build: ├ ○ /icon.png
+@studiocar/web:build: ├ ƒ /inventory
+@studiocar/web:build: ├ ƒ /inventory/[vehicleId]
+@studiocar/web:build: ├ ƒ /login
+@studiocar/web:build: ├ ○ /opengraph-image.png
+@studiocar/web:build: ├ ƒ /robots.txt
+@studiocar/web:build: ├ ƒ /settings/billing
+@studiocar/web:build: ├ ƒ /settings/profile
+@studiocar/web:build: └ ƒ /sitemap.xml
+@studiocar/web:build:
+@studiocar/web:build:
+@studiocar/web:build: ○  (Static)   prerendered as static content
+@studiocar/web:build: ƒ  (Dynamic)  server-rendered on demand
+@studiocar/web:build:
+@studiocar/web:e2e: cache bypass, force executing b6e4fa20ad5ca370
+@studiocar/web:e2e: $ playwright test --config /tmp/studiocar-razorpay-playwright.mts
+@studiocar/web:e2e: [WebServer] (node:31200) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+@studiocar/web:e2e: [WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+@studiocar/web:e2e:
+@studiocar/web:e2e: Running 16 tests using 1 worker
+@studiocar/web:e2e:
+@studiocar/web:e2e: (node:31222) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+@studiocar/web:e2e: (Use `node --trace-warnings ...` to show where the warning was created)
+@studiocar/web:e2e:   ✓   1 ../../tests/e2e/admin-authorization.spec.ts:52:1 › keeps the administration area from everybody who is not an administrator (2.5s)
+@studiocar/web:e2e:   ✓   2 ../../tests/e2e/admin-authorization.spec.ts:175:1 › lets an administrator change a plan and shows it to everybody (1.4s)
+@studiocar/web:e2e:   ✓   3 ../../tests/e2e/admin-authorization.spec.ts:270:1 › assigns a paid plan by hand and shows it to the account (1.9s)
+@studiocar/web:e2e:   ✓   4 ../../tests/e2e/admin-authorization.spec.ts:413:1 › configures a footer link and shows it to the public (1.5s)
+@studiocar/web:e2e:   ✓   5 ../../tests/e2e/auth-shell.spec.ts:3:5 › redirects an unauthenticated workspace request to sign in (619ms)
+@studiocar/web:e2e:   ✓   6 ../../tests/e2e/auth-shell.spec.ts:24:5 › keeps the sign-in controls usable on a mobile viewport (614ms)
+@studiocar/web:e2e:   ✓   7 ../../tests/e2e/billing-checkout.spec.ts:38:1 › loads Plus and Pro Checkout through the browser security policy (6.0s)
+@studiocar/web:e2e:   ✓   8 ../../tests/e2e/foundation.spec.ts:3:5 › renders the complete marketing homepage at desktop and mobile widths (1.3s)
+@studiocar/web:e2e:   ✓   9 ../../tests/e2e/inventory.spec.ts:28:1 › renders authenticated inventory states at desktop and mobile widths (9.6s)
+@studiocar/web:e2e:   ✓  10 ../../tests/e2e/mobile-workspace-navigation.spec.ts:33:1 › replaces the sidebar with a navigation drawer on narrow screens (2.8s)
+@studiocar/web:e2e:   ✓  11 ../../tests/e2e/phone-account-resolution.spec.ts:13:1 › verifies a new phone, creates one account, then signs into it (1.6s)
+@studiocar/web:e2e:   ✓  12 ../../tests/e2e/phone-account-resolution.spec.ts:63:1 › keeps a wrong code on the code step as an incorrect code, not an outage (1.0s)
+@studiocar/web:e2e:   ✓  13 ../../tests/e2e/profile-security.spec.ts:23:1 › updates a profile and revokes every active session (1.1s)
+@studiocar/web:e2e:   ✓  14 ../../tests/e2e/seo.spec.ts:3:5 › serves canonical homepage metadata, navigation, and SEO assets (2.6s)
+@studiocar/web:e2e:   ✓  15 ../../tests/e2e/seo.spec.ts:57:5 › keeps sign-in and authentication errors out of search indexes (718ms)
+@studiocar/web:e2e:   ✓  16 ../../tests/e2e/workspace-shell.spec.ts:14:1 › offers exactly the delivered workspace destinations and a plan summary (1.5s)
+@studiocar/web:e2e:
+@studiocar/web:e2e:   16 passed (39.3s)
+
+ Tasks:    11 successful, 11 total
+Cached:    0 cached, 11 total
+  Time:    1m0.718s

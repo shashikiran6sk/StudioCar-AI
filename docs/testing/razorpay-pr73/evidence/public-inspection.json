@@ -1,0 +1,13 @@
+[
+  {
+    "finding": "BUG-008",
+    "httpStatus": 200,
+    "workflowAdvertisesThree": true,
+    "pricingAdvertisesFive": true
+  },
+  {
+    "finding": "BUG-009",
+    "httpStatus": 404,
+    "renderedText": "404\nThis page could not be found."
+  }
+]

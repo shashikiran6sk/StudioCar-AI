@@ -1,0 +1,40 @@
+$ pnpm db:generate && turbo run typecheck
+$ pnpm --filter @studiocar/web db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (7.10.0) to ./../../packages/database-runtime/generated/prisma in 101ms
+
+• turbo 2.10.13
+
+   • Packages in scope: @studiocar/config, @studiocar/contracts, @studiocar/database-runtime, @studiocar/image-processing-worker, @studiocar/local-queue, @studiocar/observability, @studiocar/processing, @studiocar/testing, @studiocar/ui, @studiocar/web
+   • Running typecheck in 10 packages
+   • Remote caching disabled
+
+@studiocar/config:typecheck: cache hit, replaying logs cc17def422d01769
+@studiocar/config:typecheck: $ tsc --noEmit
+@studiocar/contracts:typecheck: cache hit, replaying logs c97cf23877746892
+@studiocar/testing:typecheck: cache hit, replaying logs 813ec52a8b69a7c5
+@studiocar/contracts:typecheck: $ tsc --noEmit
+@studiocar/observability:typecheck: cache hit, replaying logs 84ecd661c1f85f78
+@studiocar/testing:typecheck: $ tsc --noEmit
+@studiocar/ui:typecheck: cache hit, replaying logs d48bed78a1358129
+@studiocar/observability:typecheck: $ tsc --noEmit
+@studiocar/ui:typecheck: $ tsc --noEmit
+@studiocar/local-queue:typecheck: cache hit, replaying logs 45c0497b4090c6b0
+@studiocar/local-queue:typecheck: $ tsc --noEmit
+@studiocar/processing:typecheck: cache hit, replaying logs 7be89ec5e0d19690
+@studiocar/processing:typecheck: $ tsc --noEmit
+@studiocar/database-runtime:typecheck: cache hit, replaying logs d802bf14d997510c
+@studiocar/database-runtime:typecheck: $ tsc --noEmit
+@studiocar/image-processing-worker:typecheck: cache hit, replaying logs 543ce73b4f32a766
+@studiocar/web:typecheck: cache hit, replaying logs cfe4e7aea34d5813
+@studiocar/web:typecheck: $ tsc --noEmit
+@studiocar/image-processing-worker:typecheck: $ tsc --noEmit
+
+ Tasks:    10 successful, 10 total
+Cached:    10 cached, 10 total
+  Time:    15ms >>> FULL TURBO
+

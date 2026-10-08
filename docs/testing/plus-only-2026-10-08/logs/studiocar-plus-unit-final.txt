@@ -1,0 +1,1067 @@
+$ pnpm db:generate && pnpm test:mapping && turbo run test
+$ pnpm --filter @studiocar/web db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (7.10.0) to ./../../packages/database-runtime/generated/prisma in 76ms
+
+$ node scripts/check-test-mapping.mjs
+• turbo 2.10.13
+
+   • Packages in scope: @studiocar/config, @studiocar/contracts, @studiocar/database-runtime, @studiocar/image-processing-worker, @studiocar/local-queue, @studiocar/observability, @studiocar/processing, @studiocar/testing, @studiocar/ui, @studiocar/web
+   • Running test in 10 packages
+   • Remote caching disabled
+
+@studiocar/config:test: cache hit, replaying logs be42391bf72749ba
+@studiocar/config:test: $ vitest run
+@studiocar/config:test:
+@studiocar/config:test:  RUN  v5.0.1 <repository>/packages/config
+@studiocar/config:test:
+@studiocar/config:test:  ✓ ../../tests/unit/config/local-infrastructure.test.ts (9 tests) 4ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/razorpay-environment.test.ts (9 tests) 4ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/profile-defaults.test.ts (10 tests) 6ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/aws-connection.test.ts (31 tests) 8ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/web-database-environment.test.ts (7 tests) 9ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/environment.test.ts (19 tests) 16ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/environment-examples.test.ts (22 tests) 32ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/environment-matrix.test.ts (80 tests) 27ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/seo-environment.test.ts (1 test) 5ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/environment-profiles.test.ts (5 tests) 2ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/empty-as-unset.test.ts (4 tests) 6ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/refine-local-secret-isolation.test.ts (3 tests) 5ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/observability-environment.test.ts (3 tests) 6ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/provider-drivers.test.ts (4 tests) 4ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/refine-storage-isolation.test.ts (10 tests) 6ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/refine-environment-isolation.test.ts (2 tests) 3ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/app-environment-schema.test.ts (8 tests) 3ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/refine-queue-isolation.test.ts (6 tests) 4ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/refine-driver-selection.test.ts (2 tests) 3ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/is-local-service-url.test.ts (12 tests) 3ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/refine-database-isolation.test.ts (5 tests) 2ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/has-name-segment.test.ts (5 tests) 2ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/apply-environment-profile.test.ts (6 tests) 3ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/app-environment.test.ts (2 tests) 1ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/is-aws-service-url.test.ts (6 tests) 2ms
+@studiocar/config:test:  ✓ ../../tests/unit/config/local-compose.test.ts (10 tests) 3080ms
+@studiocar/config:test:    ✓ scripts/local-compose.sh (7)
+@studiocar/config:test:      ✓ gives the worker the application's database by default 558ms
+@studiocar/config:test:      ✓ gives the worker WORKER_DATABASE_URL when Development sets one 300ms
+@studiocar/config:test:    ✓ scripts/infra-up.sh (3)
+@studiocar/config:test:      ✓ starts only the Development profile once the queue is configured 535ms
+@studiocar/config:test:      ✓ starts the Local profile without any queue setting 524ms
+@studiocar/config:test:
+@studiocar/config:test:  Test Files  26 passed (26)
+@studiocar/config:test:       Tests  281 passed (281)
+@studiocar/config:test:    Start at  12:17:48
+@studiocar/config:test:    Duration  3.21s (tests 67%, import 20%, transform 12%, worker 1%)
+@studiocar/config:test:
+@studiocar/config:build: cache hit, replaying logs a6cf9afceffb43c9
+@studiocar/config:build: $ tsc -p tsconfig.build.json --outDir dist
+@studiocar/observability:test: cache hit, replaying logs b831007b51f4f5bc
+@studiocar/ui:test: cache hit, replaying logs 40a50d3e31d5af6d
+@studiocar/contracts:test: cache hit, replaying logs 341e600a93349b04
+@studiocar/contracts:test: $ vitest run
+@studiocar/contracts:test:
+@studiocar/contracts:test:  RUN  v5.0.1 <repository>/packages/contracts
+@studiocar/contracts:test:
+@studiocar/ui:test: $ vitest run
+@studiocar/ui:test:
+@studiocar/ui:test:  RUN  v5.0.1 <repository>/packages/ui
+@studiocar/ui:test:
+@studiocar/ui:test:  ✓ ../../tests/unit/ui/state-panel.test.tsx (1 test) 291ms
+@studiocar/ui:test:  ✓ ../../tests/unit/ui/input.test.tsx (2 tests) 329ms
+@studiocar/ui:test:    ✓ Field (2)
+@studiocar/ui:test:      ✓ associates an error with the invalid input 323ms
+@studiocar/ui:test:  ✓ ../../tests/unit/ui/button.test.tsx (1 test) 358ms
+@studiocar/ui:test:    ✓ Button (1)
+@studiocar/ui:test:      ✓ uses safe button semantics and invokes its action 356ms
+@studiocar/ui:test:  ✓ ../../tests/unit/ui/progress.test.tsx (2 tests) 290ms
+@studiocar/ui:test:  ✓ ../../tests/unit/ui/stepper.test.tsx (2 tests) 266ms
+@studiocar/ui:test:  ✓ ../../tests/unit/ui/textarea.test.tsx (1 test) 358ms
+@studiocar/ui:test:    ✓ TextareaField (1)
+@studiocar/ui:test:      ✓ associates an accessible error with the textarea 357ms
+@studiocar/ui:test:  ✓ ../../tests/unit/ui/comparison-slider.test.tsx (1 test) 391ms
+@studiocar/observability:test: $ vitest run
+@studiocar/ui:test:    ✓ ComparisonSlider (1)
+@studiocar/ui:test:      ✓ uses a labelled native range control 390ms
+@studiocar/ui:test:  ✓ ../../tests/unit/ui/dialog.test.tsx (1 test) 525ms
+@studiocar/ui:test:    ✓ Dialog (1)
+@studiocar/ui:test:      ✓ opens with an accessible title and closes on Escape 524ms
+@studiocar/ui:test:  ✓ ../../tests/unit/ui/sheet.test.tsx (3 tests) 546ms
+@studiocar/ui:test:    ✓ Sheet (3)
+@studiocar/ui:test:      ✓ opens as a named modal dialog with its header and content 429ms
+@studiocar/ui:test:  ✓ ../../tests/unit/ui/toggle-option.test.tsx (1 test) 103ms
+@studiocar/ui:test:  ✓ ../../tests/unit/ui/utils.test.ts (1 test) 2ms
+@studiocar/ui:test:  ✓ ../../tests/unit/ui/status-badge.test.tsx (1 test) 18ms
+@studiocar/ui:test:  ✓ ../../tests/unit/ui/filter-chip.test.tsx (1 test) 69ms
+@studiocar/ui:test:  ✓ ../../tests/unit/ui/brand-mark.test.tsx (1 test) 13ms
+@studiocar/ui:test:  ✓ ../../tests/unit/ui/skeleton.test.tsx (1 test) 69ms
+@studiocar/ui:test:  ✓ ../../tests/unit/ui/card.test.tsx (1 test) 14ms
+@studiocar/ui:test:  ✓ ../../tests/unit/ui/button-link.test.tsx (1 test) 73ms
+@studiocar/ui:test:
+@studiocar/ui:test:  Test Files  17 passed (17)
+@studiocar/ui:test:       Tests  22 passed (22)
+@studiocar/ui:test:    Start at  12:17:49
+@studiocar/ui:test:    Duration  3.53s (environment 71%, tests 13%, setup 10%, import 4%, transform 2%)
+@studiocar/ui:test:
+@studiocar/ui:test: Environment  jsdom was created 17 times · 19.84s total, 71% of tracked time
+@studiocar/ui:test:              create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/leonardo.test.ts (9 tests) 43ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/dashboard.test.ts (2 tests) 6ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/social-links.test.ts (12 tests) 8ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/processing.test.ts (15 tests) 11ms
+@studiocar/ui:test:              learn more: https://vitest.dev/guide/improving-performance#test-environments
+@studiocar/ui:test:
+@studiocar/observability:test:
+@studiocar/observability:test:  RUN  v5.0.1 <repository>/packages/observability
+@studiocar/observability:test:
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/application-error.test.ts (1 test) 4ms
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/get-request-id.test.ts (1 test) 3ms
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/monitoring-context.test.ts (1 test) 3ms
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/sanitize-sentry-event.test.ts (1 test) 17ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/portfolio.test.ts (5 tests) 93ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/studio-treatment-matrix.test.ts (5 tests) 7ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/vehicle.test.ts (4 tests) 12ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/plans.test.ts (10 tests) 20ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/auth.test.ts (12 tests) 116ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/inventory.test.ts (5 tests) 8ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/upload.test.ts (3 tests) 6ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/usage.test.ts (3 tests) 6ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/audit.test.ts (7 tests) 5ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/billing.test.ts (2 tests) 5ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/jobs.test.ts (6 tests) 60ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/profile.test.ts (2 tests) 3ms
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/create-cloudwatch-embedded-metric-payload.test.ts (2 tests) 16ms
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/emit-operational-event.test.ts (1 test) 2ms
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/measure-stage.test.ts (2 tests) 2ms
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/create-http-metrics.test.ts (9 tests) 4ms
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/flush-error-tracking.test.ts (1 test) 3ms
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/initialize-error-tracking.test.ts (1 test) 2ms
+@studiocar/observability:test: {"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T06:47:50.356Z","environment":"unconfigured","errorCode":"SQS_JOB_FAILED","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at <repository>/tests/unit/observability/report-unexpected-error.test.ts:13:5","causes":[]}}
+@studiocar/observability:test: {"level":"warn","event":"http_metrics_publish_failed","timestamp":"2026-10-08T06:47:50.358Z","environment":"unconfigured"}
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/report-unexpected-error.test.ts (1 test) 6ms
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/cloudwatch-http-metrics.test.ts (2 tests) 4ms
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/performance-stages.constants.test.ts (1 test) 8ms
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/structured-logger.test.ts (6 tests) 13ms
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/classify-operational-error.test.ts (7 tests) 3ms
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/serialize-safe-error.test.ts (1 test) 4ms
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/operational-telemetry.test.ts (2 tests) 3ms
+@studiocar/observability:test:  ✓ ../../tests/unit/observability/create-cloudwatch-http-metrics.test.ts (1 test) 7ms
+@studiocar/observability:test:
+@studiocar/observability:test:  Test Files  18 passed (18)
+@studiocar/observability:test:       Tests  41 passed (41)
+@studiocar/observability:test:    Start at  12:17:49
+@studiocar/observability:test:    Duration  1.22s (transform 69%, import 27%, worker 2%, tests 2%)
+@studiocar/observability:test:
+@studiocar/observability:test:   Transform  transforming modules took 4.28s · 69% of tracked time, re-done on every run
+@studiocar/observability:test:              persist transforms across runs with fsModuleCache: true
+@studiocar/observability:test:              learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+@studiocar/observability:test:
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/studio-selection.test.ts (3 tests) 136ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/common.test.ts (2 tests) 20ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/webhooks.test.ts (2 tests) 23ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/worker.test.ts (2 tests) 9ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/api.test.ts (2 tests) 6ms
+@studiocar/contracts:test:  ✓ ../../tests/unit/contracts/phone-number.test.ts (6 tests) 3ms
+@studiocar/contracts:test:
+@studiocar/contracts:test:  Test Files  22 passed (22)
+@studiocar/contracts:test:       Tests  119 passed (119)
+@studiocar/contracts:test:    Start at  12:17:49
+@studiocar/contracts:test:    Duration  1.35s (import 52%, transform 36%, tests 10%, worker 2%)
+@studiocar/contracts:test:
+@studiocar/contracts:test:   Transform  transforming modules took 2.25s · 36% of tracked time, re-done on every run
+@studiocar/contracts:test:              persist transforms across runs with fsModuleCache: true
+@studiocar/contracts:test:              learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+@studiocar/contracts:test:
+@studiocar/ui:build: cache hit, replaying logs c5d9dac4d1ffae5a
+@studiocar/ui:build: $ tsc -p tsconfig.build.json --outDir dist
+@studiocar/contracts:build: cache hit, replaying logs 9360589c7bfb9bc6
+@studiocar/contracts:build: $ tsc -p tsconfig.build.json --outDir dist
+@studiocar/local-queue:test: cache hit, replaying logs a0ee4af43e1eb909
+@studiocar/processing:test: cache hit, replaying logs 29b44e9ed9880946
+@studiocar/processing:test: $ vitest run
+@studiocar/processing:test:
+@studiocar/processing:test:  RUN  v5.0.1 <repository>/packages/processing
+@studiocar/processing:test:
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/validate-processing-worker-options.test.ts (2 tests) 4ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/canonical-processing-options.test.ts (1 test) 4ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/classify-processing-failure.test.ts (13 tests) 6ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/create-processing-batch-request-hash.test.ts (3 tests) 4ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/studio-treatment-matrix-keys.test.ts (4 tests) 5ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/to-processing-failure-reason.test.ts (16 tests) 3ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/job-requires-user-attention.test.ts (7 tests) 4ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/create-usage-billing-period-key.test.ts (1 test) 3ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/create-studio-version-key.test.ts (3 tests) 2ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/processing-worker.test.ts (12 tests) 10ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/create-processing-options-key.test.ts (3 tests) 6ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/normalize-processing-error-message.test.ts (1 test) 2ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/respect-provider-retry-after.test.ts (5 tests) 3ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/validate-processing-outbox-dispatcher-options.test.ts (2 tests) 4ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/calculate-processing-retry-delay.test.ts (2 tests) 3ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/calculate-processing-outbox-retry-delay.test.ts (2 tests) 3ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/create-processing-usage-idempotency-key.test.ts (1 test) 3ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/create-processing-job-idempotency-key.test.ts (1 test) 3ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/resolve-processing-quality-tier.test.ts (8 tests) 4ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/dispatch-processing-outbox-batches.test.ts (5 tests) 10ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/processing-outbox-dispatcher.test.ts (3 tests) 9ms
+@studiocar/processing:test:  ✓ ../../tests/unit/processing/create-upload-session-usage-idempotency-key.test.ts (1 test) 3ms
+@studiocar/processing:test:
+@studiocar/processing:test:  Test Files  22 passed (22)
+@studiocar/processing:test:       Tests  95 passed | 1 expected fail (96)
+@studiocar/processing:test:    Start at  12:17:51
+@studiocar/processing:test:    Duration  1.01s (transform 72%, import 23%, worker 3%, tests 2%)
+@studiocar/processing:test:
+@studiocar/processing:test:   Transform  transforming modules took 3.45s · 72% of tracked time, re-done on every run
+@studiocar/processing:test:              persist transforms across runs with fsModuleCache: true
+@studiocar/processing:test:              learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+@studiocar/processing:test:
+@studiocar/local-queue:test: $ vitest run
+@studiocar/local-queue:test:
+@studiocar/local-queue:test:  RUN  v5.0.1 <repository>/packages/local-queue
+@studiocar/local-queue:test:
+@studiocar/local-queue:test:  ✓ ../../tests/unit/local-queue/select-deletable-receipts.test.ts (4 tests) 4ms
+@studiocar/local-queue:test:  ✓ ../../tests/unit/local-queue/run-local-queue-consumer.test.ts (9 tests) 13ms
+@studiocar/local-queue:test:
+@studiocar/local-queue:test:  Test Files  2 passed (2)
+@studiocar/local-queue:test:       Tests  13 passed (13)
+@studiocar/local-queue:test:    Start at  12:17:51
+@studiocar/local-queue:test:    Duration  336ms (import 46%, transform 37%, tests 12%, worker 4%)
+@studiocar/local-queue:test:
+@studiocar/local-queue:build: cache hit, replaying logs 3da0d52bb88c6822
+@studiocar/local-queue:build: $ tsc --outDir dist
+@studiocar/observability:build: cache hit, replaying logs 8f0761b05dcc1512
+@studiocar/observability:build: $ tsc --outDir dist
+@studiocar/processing:build: cache hit, replaying logs 2d83344bcd9199cd
+@studiocar/processing:build: $ tsc --outDir dist
+@studiocar/database-runtime:test: cache hit, replaying logs 11aecccb8f28598d
+@studiocar/database-runtime:test: $ vitest run
+@studiocar/database-runtime:test:
+@studiocar/database-runtime:test:  RUN  v5.0.1 <repository>/packages/database-runtime
+@studiocar/database-runtime:test:
+@studiocar/database-runtime:test:  ✓ ../../tests/unit/database-runtime/repositories/to-output-format.test.ts (2 tests) 2ms
+@studiocar/database-runtime:test:  ✓ ../../tests/unit/database-runtime/client.test.ts (3 tests) 8ms
+@studiocar/database-runtime:test:
+@studiocar/database-runtime:test:  Test Files  2 passed (2)
+@studiocar/database-runtime:test:       Tests  5 passed (5)
+@studiocar/database-runtime:test:    Start at  12:17:52
+@studiocar/database-runtime:test:    Duration  146ms (transform 52%, import 39%, tests 6%, worker 2%)
+@studiocar/database-runtime:test:
+@studiocar/database-runtime:build: cache hit, replaying logs 8edca9df3332c8d9
+@studiocar/database-runtime:build: $ tsc -p tsconfig.build.json --outDir dist
+@studiocar/web:test: cache miss, executing a09ce5682d0a6642
+@studiocar/image-processing-worker:test: cache hit, replaying logs 639d2dd734de2487
+@studiocar/image-processing-worker:test: $ vitest run
+@studiocar/image-processing-worker:test:
+@studiocar/image-processing-worker:test:  RUN  v5.0.1 <repository>/workers/image-processing
+@studiocar/image-processing-worker:test:
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/providers/read-retry-after.test.ts (8 tests) 22ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/sharpen-within-layer.test.ts (2 tests) 16ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/place-cutout-layer.test.ts (3 tests) 35ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/providers/validate-provider-cutout.test.ts (7 tests) 56ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/measure-cutout.test.ts (4 tests) 87ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/decode-cutout.test.ts (3 tests) 82ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/inspect-source-image.test.ts (2 tests) 16ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/render-original-photo.test.ts (3 tests) 37ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/providers/download-provider-result.test.ts (7 tests) 20ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/providers/read-bounded-response.test.ts (1 test) 32ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/encode-processed-image.test.ts (2 tests) 779ms
+@studiocar/image-processing-worker:test:    ✓ encodes WebP at the requested quality with a bounded WebP preview and no metadata 771ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/render-studio-background.test.ts (1 test) 9ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/create-processing-operational-event.test.ts (7 tests) 5ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/file-studio-background-source.test.ts (3 tests) 12ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/compose-studio-image.test.ts (12 tests) 837ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/place-studio-background.test.ts (7 tests) 2ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/calculate-enhancement-levels.test.ts (7 tests) 5ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/apply-enhancement-levels.test.ts (1 test) 6ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/studio-background-assets.test.ts (13 tests) 1037ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/frame-vehicle.test.ts (6 tests) 4ms
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:55.675Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:55.729Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/providers/describe-response-issue.test.ts (3 tests) 4ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/providers/select-leonardo-result.test.ts (15 tests) 3ms
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.812Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.818Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":7,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/build-processing-object-keys.test.ts (2 tests) 4ms
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_completed","timestamp":"2026-10-08T06:47:55.828Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":16,"sizeBytes":106,"width":30,"height":20,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.830Z","jobId":"job-1","assetId":"asset-1","size":"preview","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.831Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"preview","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":1,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_completed","timestamp":"2026-10-08T06:47:55.841Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"preview","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":11,"sizeBytes":106,"width":30,"height":20,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.843Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.843Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:55.848Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:55.850Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_completed","timestamp":"2026-10-08T06:47:55.853Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":10,"sizeBytes":106,"width":30,"height":20,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.856Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.857Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":1,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_completed","timestamp":"2026-10-08T06:47:55.868Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":12,"sizeBytes":106,"width":30,"height":20,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.870Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.871Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":1,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/create-execution-failure.test.ts (2 tests) 2ms
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_completed","timestamp":"2026-10-08T06:47:55.881Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":10,"sizeBytes":106,"width":30,"height":20,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.883Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.884Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":1,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_completed","timestamp":"2026-10-08T06:47:55.894Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":11,"sizeBytes":106,"width":30,"height":20,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.897Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.897Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_completed","timestamp":"2026-10-08T06:47:55.907Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":10,"sizeBytes":106,"width":30,"height":20,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.909Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.909Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"AUTHORIZATION","errorCode":"PROVIDER_AUTHORIZATION_FAILED","durationMs":1,"statusCode":401,"attempt":2,"errorMessage":"The background-removal provider rejected the server credentials."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.910Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.910Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"AUTHORIZATION","errorCode":"PROVIDER_AUTHORIZATION_FAILED","durationMs":0,"statusCode":403,"attempt":2,"errorMessage":"The background-removal provider rejected the server credentials."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.910Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.910Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"PAYMENT_REQUIRED","errorCode":"PROVIDER_PAYMENT_REQUIRED","durationMs":0,"statusCode":402,"attempt":2,"errorMessage":"The background-removal provider has insufficient credits."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.910Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.911Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"REJECTED","errorCode":"PROVIDER_INVALID_REQUEST","durationMs":0,"statusCode":400,"attempt":2,"errorMessage":"The background-removal provider rejected the image request."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.911Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.911Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"REJECTED","errorCode":"PROVIDER_INVALID_REQUEST","durationMs":0,"statusCode":422,"attempt":2,"errorMessage":"The background-removal provider rejected the image request."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.911Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.911Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"TIMEOUT","errorCode":"PROVIDER_TIMEOUT","durationMs":0,"statusCode":408,"attempt":2,"errorMessage":"The background-removal provider timed out."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.911Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.911Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"RATE_LIMITED","errorCode":"PROVIDER_RATE_LIMITED","durationMs":0,"statusCode":429,"attempt":2,"errorMessage":"The background-removal provider rate limited the request."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.911Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.911Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"SERVER_ERROR","errorCode":"PROVIDER_UNAVAILABLE","durationMs":0,"statusCode":500,"attempt":2,"errorMessage":"The background-removal provider returned a server error."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.911Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.911Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"SERVER_ERROR","errorCode":"PROVIDER_UNAVAILABLE","durationMs":0,"statusCode":503,"attempt":2,"errorMessage":"The background-removal provider returned a server error."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.911Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.911Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"RATE_LIMITED","errorCode":"PROVIDER_RATE_LIMITED","durationMs":0,"statusCode":429,"attempt":2,"errorMessage":"The background-removal provider rate limited the request."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.911Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.912Z","jobId":"job-1","assetId":"asset-1","responseIssuePath":"root","responseIssueCode":"invalid_json","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_RESPONSE","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":1,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.912Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.912Z","jobId":"job-1","assetId":"asset-1","responseIssuePath":"root","responseIssueCode":"unreadable_body","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_RESPONSE","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":0,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.912Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.912Z","jobId":"job-1","assetId":"asset-1","responseIssuePath":"root","responseIssueCode":"invalid_type","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_RESPONSE","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":0,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.912Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.913Z","jobId":"job-1","assetId":"asset-1","responseIssuePath":"results","responseIssueCode":"invalid_type","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_RESPONSE","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":1,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.913Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.913Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.913Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_RESPONSE","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":0,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.913Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.913Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.913Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_RESPONSE","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":0,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.913Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.913Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.913Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_RESPONSE","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":0,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.913Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.914Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":1,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.914Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_RESPONSE","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":1,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.914Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.914Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.914Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_RESPONSE","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":0,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.914Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.914Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.914Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_RESPONSE","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":0,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.914Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.914Z","jobId":"job-1","assetId":"asset-1","responseIssuePath":"root","responseIssueCode":"unreadable_body","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_RESPONSE","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":0,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.915Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.915Z","jobId":"job-1","assetId":"asset-1","responseIssuePath":"root","responseIssueCode":"invalid_json","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_RESPONSE","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":0,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.915Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.915Z","jobId":"job-1","assetId":"asset-1","responseIssuePath":"root","responseIssueCode":"unreadable_body","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_RESPONSE","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":0,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.915Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.915Z","jobId":"job-1","assetId":"asset-1","responseIssuePath":"root","responseIssueCode":"invalid_type","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_RESPONSE","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":0,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.915Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.916Z","jobId":"job-1","assetId":"asset-1","responseIssuePath":"results","responseIssueCode":"invalid_type","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_RESPONSE","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":1,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.917Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.918Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":1,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_completed","timestamp":"2026-10-08T06:47:55.928Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":11,"sizeBytes":106,"width":30,"height":20,"attempt":2}
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/providers/create-leonardo-request.test.ts (4 tests) 3ms
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.929Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.929Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.929Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"CONTENT_BLOCKED","errorCode":"PROVIDER_CONTENT_BLOCKED","durationMs":0,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider withheld the result for an image."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.930Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.930Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.930Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"CONTENT_BLOCKED","errorCode":"PROVIDER_CONTENT_BLOCKED","durationMs":0,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider withheld the result for an image."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.930Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.930Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.930Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"CONTENT_BLOCKED","errorCode":"PROVIDER_CONTENT_BLOCKED","durationMs":0,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider withheld the result for an image."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.930Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.930Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.930Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_OUTPUT","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":0,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.931Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.931Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.931Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"DOWNLOAD_FAILED","errorCode":"PROVIDER_NETWORK_ERROR","durationMs":0,"statusCode":404,"attempt":2,"errorMessage":"The background-removal provider or its result could not be reached."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.933Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.933Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.933Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"DOWNLOAD_FAILED","errorCode":"PROVIDER_NETWORK_ERROR","durationMs":0,"statusCode":503,"attempt":2,"errorMessage":"The background-removal provider or its result could not be reached."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.935Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.935Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.935Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"DOWNLOAD_FAILED","errorCode":"PROVIDER_NETWORK_ERROR","durationMs":0,"attempt":2,"errorMessage":"The background-removal provider or its result could not be reached."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.936Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.937Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":1,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_completed","timestamp":"2026-10-08T06:47:55.948Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":12,"sizeBytes":106,"width":30,"height":20,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.951Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.951Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":1,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.951Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_OUTPUT","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":1,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.952Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.952Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.954Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_OUTPUT","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":2,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.955Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.955Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.956Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_OUTPUT","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":1,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.957Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.958Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":1,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.958Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_OUTPUT","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":1,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.959Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.959Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.960Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_OUTPUT","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":1,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.961Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.961Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.961Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_OUTPUT","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":0,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.961Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.962Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":1,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.963Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"INVALID_OUTPUT","errorCode":"PROVIDER_UNUSABLE_RESULT","durationMs":2,"statusCode":200,"attempt":2,"errorMessage":"The background-removal provider returned a result that could not be used."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.964Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.964Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"NETWORK","errorCode":"PROVIDER_NETWORK_ERROR","durationMs":1,"attempt":2,"errorMessage":"The background-removal provider or its result could not be reached."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.965Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:56.965Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"TIMEOUT","errorCode":"PROVIDER_TIMEOUT","durationMs":1000,"attempt":2,"errorMessage":"The background-removal provider timed out."}
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/find-alpha-bounds.test.ts (3 tests) 2ms
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.973Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"SOURCE_UNAVAILABLE","errorCode":"PROVIDER_NETWORK_ERROR","durationMs":0,"attempt":2,"errorMessage":"The background-removal provider or its result could not be reached."}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:55.973Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"SOURCE_UNAVAILABLE","errorCode":"PROVIDER_NETWORK_ERROR","durationMs":0,"attempt":2,"errorMessage":"The background-removal provider or its result could not be reached."}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.975Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.975Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_completed","timestamp":"2026-10-08T06:47:55.985Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":10,"sizeBytes":106,"width":30,"height":20,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:55.987Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:55.990Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_generation_charged","timestamp":"2026-10-08T06:47:55.990Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":0,"attempt":2,"cost":{"amount":"0.0425","unit":"DOLLARS"}}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_completed","timestamp":"2026-10-08T06:47:56.001Z","jobId":"job-1","assetId":"asset-1","providerGenerationId":"generation-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","durationMs":11,"sizeBytes":106,"width":30,"height":20,"attempt":2}
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_request_started","timestamp":"2026-10-08T06:47:56.002Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","attempt":2}
+@studiocar/image-processing-worker:test: {"level":"error","event":"provider_request_failed","timestamp":"2026-10-08T06:47:56.002Z","jobId":"job-1","assetId":"asset-1","size":"auto","format":"webp","vehicleId":"vehicle-1","environment":"unconfigured","provider":"leonardo","outcome":"SERVER_ERROR","errorCode":"PROVIDER_UNAVAILABLE","durationMs":0,"statusCode":500,"attempt":2,"errorMessage":"The background-removal provider returned a server error."}
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/providers/leonardo-provider.test.ts (59 tests) 197ms
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.006Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/is-studio-background.test.ts (4 tests) 2ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/calculate-sha256.test.ts (1 test) 3ms
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.111Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.156Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"job_received","timestamp":"2026-10-08T06:47:56.206Z","requestId":"7e38d07b-c3c3-4ce0-9a50-91055e9bf3de","jobId":"7e38d07b-c3c3-4ce0-9a50-91055e9bf3de","queueMessageId":"message-1","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"error","event":"image_processing_failed","timestamp":"2026-10-08T06:47:56.207Z","requestId":"7e38d07b-c3c3-4ce0-9a50-91055e9bf3de","jobId":"7e38d07b-c3c3-4ce0-9a50-91055e9bf3de","queueMessageId":"message-1","environment":"unconfigured","outcome":"FAILED","durationMs":2.0502089999999953}
+@studiocar/image-processing-worker:test: {"level":"info","event":"job_received","timestamp":"2026-10-08T06:47:56.209Z","requestId":"7e38d07b-c3c3-4ce0-9a50-91055e9bf3de","jobId":"7e38d07b-c3c3-4ce0-9a50-91055e9bf3de","queueMessageId":"retry","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"error","event":"image_processing_failed","timestamp":"2026-10-08T06:47:56.209Z","requestId":"7e38d07b-c3c3-4ce0-9a50-91055e9bf3de","jobId":"7e38d07b-c3c3-4ce0-9a50-91055e9bf3de","queueMessageId":"retry","environment":"unconfigured","outcome":"RETRY_DELIVERY","durationMs":0.27375000000006366}
+@studiocar/image-processing-worker:test: {"level":"info","event":"job_received","timestamp":"2026-10-08T06:47:56.209Z","requestId":"7e38d07b-c3c3-4ce0-9a50-91055e9bf3de","jobId":"7e38d07b-c3c3-4ce0-9a50-91055e9bf3de","queueMessageId":"unreachable","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T06:47:56.211Z","requestId":"7e38d07b-c3c3-4ce0-9a50-91055e9bf3de","jobId":"7e38d07b-c3c3-4ce0-9a50-91055e9bf3de","queueMessageId":"unreachable","environment":"unconfigured","errorCode":"SQS_JOB_FAILED","errorMessage":"Unexpected application failure","error":{"code":"P1001","name":"PrismaClientKnownRequestError","message":"Unexpected application failure","stack":"PrismaClientKnownRequestError: Unexpected application failure\n    at <repository>/tests/unit/workers/image-processing/handle-processing-queue-event.test.ts:95:7","causes":[]}}
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/extract-alpha.test.ts (2 tests) 2ms
+@studiocar/image-processing-worker:test: {"level":"error","event":"image_processing_failed","timestamp":"2026-10-08T06:47:56.212Z","requestId":"7e38d07b-c3c3-4ce0-9a50-91055e9bf3de","jobId":"7e38d07b-c3c3-4ce0-9a50-91055e9bf3de","queueMessageId":"unreachable","environment":"unconfigured","errorCode":"SQS_JOB_FAILED","durationMs":2.6432920000000877,"errorMessage":"Unexpected application failure","error":{"code":"P1001","name":"PrismaClientKnownRequestError","message":"Unexpected application failure","stack":"PrismaClientKnownRequestError: Unexpected application failure\n    at <repository>/tests/unit/workers/image-processing/handle-processing-queue-event.test.ts:95:7","causes":[]}}
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/handle-processing-queue-event.test.ts (3 tests) 10ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/providers/classify-provider-status.test.ts (11 tests) 2ms
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/storage/is-missing-s3-object-error.test.ts (1 test) 5ms
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.265Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.331Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/runtime/resolve-studio-background-directory.test.ts (2 tests) 9ms
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.395Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.437Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"s3_upload_completed","timestamp":"2026-10-08T06:47:56.488Z","environment":"unconfigured","durationMs":0.07191599999998743,"sizeBytes":3}
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/storage/s3-processing-object-storage.test.ts (1 test) 7ms
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.526Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.534Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.545Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.554Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/providers/create-provider-operational-event.test.ts (17 tests) 5ms
+@studiocar/image-processing-worker:test: {"level":"info","event":"provider_result_reused","timestamp":"2026-10-08T06:47:56.570Z","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.608Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.699Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.712Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/runtime/create-image-processing-provider.test.ts (1 test) 2ms
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.858Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.885Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.894Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:56.927Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T06:47:56.977Z","environment":"unconfigured","errorCode":"IMAGE_PROCESSING_FAILED","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at decodeCutout (<repository>/workers/image-processing/src/execution/decode-cutout.ts:10:6)\n    at ProcessingJobExecutor.compose (<repository>/workers/image-processing/src/execution/processing-job-executor.ts:250:23)\n    at ProcessingJobExecutor.execute (<repository>/workers/image-processing/src/execution/processing-job-executor.ts:98:20)\n    at <repository>/tests/unit/workers/image-processing/execution/processing-job-executor.test.ts:303:5","causes":[]}}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:57.002Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T06:47:57.033Z","environment":"unconfigured","errorCode":"IMAGE_PROCESSING_FAILED","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at Object.read (<repository>/tests/unit/workers/image-processing/execution/processing-job-executor.test.ts:311:34)\n    at ProcessingJobExecutor.compose (<repository>/workers/image-processing/src/execution/processing-job-executor.ts:249:49)\n    at ProcessingJobExecutor.execute (<repository>/workers/image-processing/src/execution/processing-job-executor.ts:98:31)\n    at <repository>/tests/unit/workers/image-processing/execution/processing-job-executor.test.ts:314:5","causes":[]}}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:57.041Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:57.043Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T06:47:57.169Z","environment":"unconfigured","errorCode":"S3_UPLOAD_FAILED","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at MemoryStorage.put (<repository>/tests/unit/workers/image-processing/execution/processing-job-executor.test.ts:52:29)\n    at ProcessingJobExecutor.store (<repository>/workers/image-processing/src/execution/processing-job-executor.ts:297:25)\n    at ProcessingJobExecutor.execute (<repository>/workers/image-processing/src/execution/processing-job-executor.ts:107:18)\n    at <repository>/tests/unit/workers/image-processing/execution/processing-job-executor.test.ts:323:5","causes":[]}}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:57.176Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T06:47:57.177Z","environment":"unconfigured","errorCode":"S3_UPLOAD_FAILED","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at MemoryStorage.getRequired (<repository>/tests/unit/workers/image-processing/execution/processing-job-executor.test.ts:44:46)\n    at ProcessingJobExecutor.readValidatedSource (<repository>/workers/image-processing/src/execution/processing-job-executor.ts:157:39)\n    at ProcessingJobExecutor.execute (<repository>/workers/image-processing/src/execution/processing-job-executor.ts:93:32)\n    at <repository>/tests/unit/workers/image-processing/execution/processing-job-executor.test.ts:337:27","causes":[]}}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:57.183Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:57.213Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/processing-job-executor.test.ts (19 tests) 1613ms
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:57.331Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:57.490Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:57.794Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:58.122Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:58.442Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:58.809Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:59.047Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:59.374Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:47:59.684Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:48:00.011Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:48:00.252Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:48:00.594Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:48:00.856Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:48:01.294Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:48:01.391Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:48:01.450Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:48:01.527Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:48:01.600Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:48:01.677Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:48:01.750Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:48:01.806Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:48:01.884Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:48:01.959Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:48:02.025Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test: {"level":"info","event":"image_processing_started","timestamp":"2026-10-08T06:48:02.081Z","assetId":"33333333-3333-4333-8333-333333333333","vehicleId":"22222222-2222-4222-8222-222222222222","userId":"11111111-1111-4111-8111-111111111111","environment":"unconfigured"}
+@studiocar/image-processing-worker:test:  ✓ ../../tests/unit/workers/image-processing/execution/treatment-matrix.test.ts (79 tests) 6550ms
+@studiocar/image-processing-worker:test:
+@studiocar/image-processing-worker:test:  Test Files  39 passed (39)
+@studiocar/image-processing-worker:test:       Tests  328 passed (328)
+@studiocar/image-processing-worker:test:    Start at  12:17:53
+@studiocar/image-processing-worker:test:    Duration  8.40s (tests 43%, import 43%, transform 13%)
+@studiocar/image-processing-worker:test:
+@studiocar/web:test: $ vitest run
+@studiocar/web:test:
+@studiocar/web:test:  RUN  v5.0.1 <repository>/apps/web
+@studiocar/web:test:
+@studiocar/web:test: Not implemented: navigation to another Document
+@studiocar/web:test:  ✓ ../../tests/unit/server/db/web-database.test.ts (2 tests) 424ms
+@studiocar/web:test:    ✓ shares the same lazy Prisma client across calls and reloaded web modules 421ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/portfolio-gallery.test.tsx (10 tests) 417ms
+@studiocar/web:test: Not implemented: navigation to another Document
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/photo-upload-concurrency.test.tsx (2 tests) 414ms
+@studiocar/web:test:    ✓ bounds a twenty-file batch and never uploads a removed queued file 345ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/photo-upload-step.test.tsx (12 tests) 424ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/vehicle-create-dialog.test.tsx (5 tests) 463ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/phone-sign-in-form.test.tsx (13 tests) 452ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/phone-sign-in-form-msg91.test.tsx (11 tests) 572ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/pricing/pricing-card.test.tsx (2 tests) 96ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/review-process-step.test.tsx (6 tests) 189ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/portfolio-header.test.tsx (4 tests) 95ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/vehicle-details-form.test.tsx (5 tests) 257ms
+@studiocar/web:test: Not implemented: navigation to another Document
+@studiocar/web:test:  ✓ ../../tests/unit/features/shell/mobile-navigation.test.tsx (5 tests) 227ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/customize-treatment-matrix.test.tsx (37 tests) 1532ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/page.test.tsx (4 tests) 248ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/inventory/inventory-explorer.test.tsx (4 tests) 265ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/customize-treatment-step.test.tsx (8 tests) 235ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/marketing/marketing-header.test.tsx (2 tests) 125ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/admin/content/page.test.tsx (3 tests) 128ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/infrastructure-worker-artifact-publisher.test.ts (17 tests) 2547ms
+@studiocar/web:test:    ✓ publish-worker-artifact.sh (11)
+@studiocar/web:test:      ✓ publishes the archive and its manifest under the commit with conditional, checksummed writes 591ms
+@studiocar/web:test:      ✓ treats a re-run for the same commit and bytes as already published 411ms
+@studiocar/web:test:      ✓ refuses to replace an archive already published with different bytes 396ms
+@studiocar/web:test:      ✓ refuses, rather than overwrites, a later commit sharing the short SHA 320ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/billing/billing-account-details.test.tsx (2 tests) 140ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/inventory/inventory-toolbar.test.tsx (2 tests) 139ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/dashboard/dashboard-quick-actions.test.tsx (7 tests) 245ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/photo-upload-item-row.test.tsx (5 tests) 179ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/portfolio-facts.test.tsx (4 tests) 141ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/portfolio-versions.test.tsx (3 tests) 160ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/dashboard/dashboard-recent-vehicles.test.tsx (2 tests) 129ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/profile/connect-phone-form.test.tsx (3 tests) 205ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/marketing/marketing-footer.test.tsx (4 tests) 153ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/inventory/inventory-grid.test.tsx (2 tests) 102ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/phone-otp-step.test.tsx (7 tests) 170ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/studio-selection-launcher.test.tsx (2 tests) 256ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/admin/page.test.tsx (5 tests) 141ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/marketing/marketing-hero.test.tsx (1 test) 177ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/marketing/marketing-audience-strip.test.tsx (1 test) 130ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/admin/administrator-list.test.tsx (5 tests) 190ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/admin/admin-activity-list.test.tsx (4 tests) 145ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/admin/admin-overview-stats.test.tsx (2 tests) 117ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/admin/admin-navigation.test.tsx (2 tests) 121ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/admin/social-link-form.test.tsx (5 tests) 146ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/inventory/[vehicleId]/loading.test.tsx (1 test) 123ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/portfolio-zip-download-button.test.tsx (3 tests) 195ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(auth)/login/page.test.tsx (3 tests) 143ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/dashboard/dashboard-quick-action-card.test.tsx (3 tests) 178ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/inventory/loading.test.tsx (1 test) 111ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/billing/billing-plan-grid.test.tsx (2 tests) 166ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/pricing/pricing-section.test.tsx (2 tests) 171ms
+@studiocar/web:test: {"commits":100,"rowCommits":100,"changedRow":100,"untouchedRow":0}
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/photo-upload-render-performance.test.tsx (1 test) 138ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/photo-upload-store-row.test.tsx (1 test) 189ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/billing/billing-plan-card.test.tsx (2 tests) 127ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/inventory/[vehicleId]/page.test.tsx (9 tests) 342ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/inventory/error.test.tsx (1 test) 127ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/billing/billing-checkout-action.test.tsx (3 tests) 236ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/shell/logout-form.test.tsx (1 test) 128ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/admin/grant-administrator-form.test.tsx (1 test) 173ms
+@studiocar/web:test: Not implemented: navigation to another Document
+@studiocar/web:test:  ✓ ../../tests/unit/features/shell/app-navigation.test.tsx (7 tests) 280ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/dashboard/page.test.tsx (1 test) 131ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/background-treatment-card.test.tsx (1 test) 114ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/billing/print-receipt-action.test.tsx (1 test) 126ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/inventory/inventory-filter-bar.test.tsx (1 test) 182ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/phone-account-choices.test.tsx (1 test) 171ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/inventory/page.test.tsx (7 tests) 297ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/portfolio-attention-panel.test.tsx (4 tests) 197ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/shell/sidebar-plan-summary.test.tsx (5 tests) 216ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/settings/profile/page.test.tsx (1 test) 244ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/billing/usage-current-plan-card.test.tsx (1 test) 192ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/marketing/marketing-studio-backgrounds.test.tsx (1 test) 254ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/layout.test.tsx (3 tests) 125ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/marketing/marketing-workflow.test.tsx (1 test) 213ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/shell/account-menu.test.tsx (1 test) 227ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/vehicle-create-launcher.test.tsx (1 test) 220ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/portfolio-thumbnail.test.tsx (1 test) 131ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/inventory/inventory-empty-state.test.tsx (3 tests) 133ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/auth-card.test.tsx (2 tests) 157ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/settings/billing/page.test.tsx (1 test) 136ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/phone-create-account-step.test.tsx (1 test) 140ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/inventory/inventory-card-action.test.tsx (4 tests) 125ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/inventory/[vehicleId]/error.test.tsx (1 test) 112ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/processing/processing-indicator.test.tsx (5 tests) 205ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/inventory/inventory-card.test.tsx (5 tests) 221ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/admin/plan-configuration-form.test.tsx (4 tests) 105ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/shell/app-shell.test.tsx (2 tests) 283ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/profile/profile-form.test.tsx (2 tests) 199ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/admin/admin-action-message.test.tsx (3 tests) 123ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/shell/brand-home-link.test.tsx (3 tests) 165ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/admin/pricing/page.test.tsx (2 tests) 203ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/billing/usage-quota-card.test.tsx (1 test) 181ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/portfolio-failed-image-item.test.tsx (1 test) 185ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(auth)/auth/error/page.test.tsx (1 test) 176ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/marketing/marketing-feature-selector.test.tsx (2 tests) 164ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/settings/billing/error.test.tsx (1 test) 118ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/floor-style-card.test.tsx (2 tests) 151ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/marketing/marketing-final-cta.test.tsx (1 test) 153ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/dashboard/loading.test.tsx (1 test) 125ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/marketing/marketing-car-stage.test.tsx (1 test) 155ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/dashboard/error.test.tsx (1 test) 135ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/profile/profile-security-card.test.tsx (1 test) 198ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/processing/processing-status-poller.test.tsx (3 tests) 75ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/billing/usage-overview.test.tsx (1 test) 45ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/profile/profile-identities-card.test.tsx (1 test) 38ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/msg91-widget/load-msg91-widget.test.ts (6 tests) 64ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/admin/administrator-invite-list.test.tsx (3 tests) 30ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/admin/admin-plan-distribution.test.tsx (2 tests) 20ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/shell/plan-limits-context.test.tsx (3 tests) 73ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/msg91-widget/log-msg91-otp-failure.test.ts (4 tests) 5ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/profile/profile-details-card.test.tsx (1 test) 83ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/settings/billing/loading.test.tsx (1 test) 163ms
+@studiocar/web:test: {"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T07:03:05.780Z","environment":"unconfigured","errorCode":"INTERNAL_ERROR","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at <repository>/tests/unit/server/jobs/create-processing-batch-handler.test.ts:111:32","causes":[]}}
+@studiocar/web:test:  ✓ ../../tests/unit/server/jobs/create-processing-batch-handler.test.ts (6 tests) 24ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/google/fake-google-identity-provider.test.ts (5 tests) 12ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/map-with-concurrency.test.ts (4 tests) 43ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/use-countdown.test.ts (2 tests) 17ms
+@studiocar/web:test:  ✓ ../../tests/unit/lib/software-application-json-ld.test.tsx (1 test) 18ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/dashboard/dashboard-stats.test.tsx (1 test) 35ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/msg91-widget/wait-for-widget.test.ts (3 tests) 8ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/admin/normalize-admin-email.test.ts (2 tests) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/processing/processing-stage-label.test.ts (1 test) 5ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/vehicles/update-vehicle-handler.test.ts (2 tests) 12ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/dashboard/dashboard-stat-card.test.tsx (1 test) 37ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:07.466Z","requestId":"176727a0-a62b-4de7-854c-76d0401e22fe","environment":"unconfigured","method":"POST","durationMs":0.2516659999998865,"requestStartedAtUnixMs":1791442987465,"statusCode":204,"timings":{},"route":"/api/uploads/[assetId]/commit"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/uploads/[assetId]/commit/route.test.ts (1 test) 5ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/profile/update-profile-handler.test.ts (2 tests) 8ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/portfolio/portfolio-service.test.ts (14 tests) 20ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/phone-otp-cookie.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/dashboard/dashboard-date.test.ts (1 test) 24ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/inventory/search-inventory-handler.test.ts (3 tests) 21ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/google/google-openid-provider.test.ts (3 tests) 8ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/phone-otp-service.test.ts (18 tests) 28ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/google/google-oauth-service.test.ts (13 tests) 10ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/plans/format-plan-price.test.ts (3 tests) 22ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/plans/default-plan-catalog.test.ts (4 tests) 6ms
+@studiocar/web:test: {"level":"warn","event":"http_request_completed","timestamp":"2026-10-08T07:03:08.546Z","requestId":"7e38d07b-c3c3-4ce0-9a50-91055e9bf3de","environment":"unconfigured","method":"GET","errorCode":"FORBIDDEN","durationMs":0.7926250000000437,"requestStartedAtUnixMs":1791442988545,"statusCode":403,"timings":{},"route":"/api/jobs","errorMessage":"Request forbidden"}
+@studiocar/web:test: {"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T07:03:08.552Z","requestId":"c738aaf0-5357-4d08-907d-1571bcbd6a74","environment":"unconfigured","method":"GET","errorCode":"INTERNAL_ERROR","route":"/api/jobs","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at <repository>/tests/unit/server/observability/with-route-monitoring.test.ts:48:11\n    at <repository>/apps/web/src/server/observability/with-route-monitoring.ts:32:28\n    at <repository>/apps/web/src/server/observability/with-route-monitoring.ts:25:30\n    at <repository>/tests/unit/server/observability/with-route-monitoring.test.ts:50:26","causes":[]}}
+@studiocar/web:test: {"level":"error","event":"http_request_completed","timestamp":"2026-10-08T07:03:08.553Z","requestId":"c738aaf0-5357-4d08-907d-1571bcbd6a74","environment":"unconfigured","method":"GET","errorCode":"INTERNAL_ERROR","durationMs":2.0782919999999194,"requestStartedAtUnixMs":1791442988551,"statusCode":500,"timings":{},"route":"/api/jobs","errorMessage":"Unexpected application failure"}
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:08.553Z","requestId":"763249fc-2d00-46bd-87da-23400633d0ec","environment":"unconfigured","method":"GET","durationMs":0.056874999999990905,"requestStartedAtUnixMs":1791442988553,"statusCode":200,"timings":{},"route":"/api/uploads/[assetId]"}
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:08.554Z","requestId":"46d4507d-59fa-4b8c-9277-a024e97ecc94","environment":"unconfigured","method":"GET","durationMs":0.06629100000009203,"requestStartedAtUnixMs":1791442988554,"statusCode":302,"timings":{},"route":"/api/auth/google/start"}
+@studiocar/web:test:  ✓ ../../tests/unit/server/observability/with-route-monitoring.test.ts (4 tests) 11ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/uploads/create-upload-intent-handler.test.ts (3 tests) 12ms
+@studiocar/web:test: {"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T07:03:08.789Z","environment":"unconfigured","errorCode":"INTERNAL_ERROR","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at <repository>/tests/unit/server/storage-cleanup/handle-storage-cleanup.test.ts:42:32","causes":[]}}
+@studiocar/web:test:  ✓ ../../tests/unit/server/storage-cleanup/handle-storage-cleanup.test.ts (2 tests) 12ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/phone-auth-start-handler.test.ts (3 tests) 15ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/uploads/upload-service.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/msg91-widget/call-msg91-method.test.ts (7 tests) 54ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/webhooks/razorpay/route.test.ts (2 tests) 17ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/google/google-auth-start-handler.test.ts (7 tests) 28ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/billing/receipts/[receiptId]/route.test.ts (1 test) 20ms
+@studiocar/web:test: {"level":"info","event":"sqs_job_published","timestamp":"2026-10-08T07:03:09.573Z","jobId":"0e879f46-1193-4d77-b785-057fe026d998","queueMessageId":"sqs-message-1","environment":"unconfigured","durationMs":0.9912920000001577}
+@studiocar/web:test: {"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T07:03:09.580Z","jobId":"0e879f46-1193-4d77-b785-057fe026d998","environment":"unconfigured","errorCode":"SQS_JOB_FAILED","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at SqsProcessingQueue.publish (<repository>/apps/web/src/server/jobs/sqs-processing-queue.ts:80:15)\n    at <repository>/tests/unit/server/jobs/sqs-processing-queue.test.ts:62:5","causes":[]}}
+@studiocar/web:test: {"level":"info","event":"sqs_job_published","timestamp":"2026-10-08T07:03:09.582Z","jobId":"job-0","queueMessageId":"sqs-ok","environment":"unconfigured","durationMs":0.17458299999998417}
+@studiocar/web:test:  ✓ ../../tests/unit/server/uploads/s3-object-storage.test.ts (1 test) 11ms
+@studiocar/web:test: {"level":"info","event":"sqs_job_published","timestamp":"2026-10-08T07:03:09.583Z","requestId":"request","batchId":"batch","jobId":"job","queueMessageId":"accepted","environment":"unconfigured","durationMs":0.10233399999992798}
+@studiocar/web:test:  ✓ ../../tests/unit/server/jobs/sqs-processing-queue.test.ts (4 tests) 17ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/link-phone-identity-handler.test.ts (9 tests) 13ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/internal/dispatch-token-is-valid.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/profile/format-profile-date.test.ts (1 test) 20ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/storage-cleanup/calculate-storage-deletion-retry-delay.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/google/google-auth-callback-handler.test.ts (7 tests) 18ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/sitemap.test.ts (3 tests) 5ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/uploads/commit-upload-handler.test.ts (2 tests) 6ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/billing/providers/razorpay/razorpay-client.test.ts (1 test) 7ms
+@studiocar/web:test: {"level":"warn","event":"http_request_completed","timestamp":"2026-10-08T07:03:10.577Z","requestId":"9102de7f-2c02-485e-8269-88e4047b2e82","environment":"unconfigured","method":"POST","errorCode":"CONFLICT","durationMs":2.7239580000000387,"requestStartedAtUnixMs":1791442990575,"statusCode":409,"timings":{},"route":"/api/auth/phone/create-account","errorMessage":"Unexpected application failure"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/auth/phone/create-account/route.test.ts (1 test) 8ms
+@studiocar/web:test: {"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T07:03:10.593Z","environment":"unconfigured","errorCode":"INTERNAL_ERROR","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at <repository>/tests/unit/server/lifecycle/handle-lifecycle-cleanup.test.ts:50:32","causes":[]}}
+@studiocar/web:test:  ✓ ../../tests/unit/server/lifecycle/handle-lifecycle-cleanup.test.ts (2 tests) 11ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/processing/use-refresh-when-jobs-settle.test.tsx (3 tests) 10ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/portfolio/sort-by-display-order.test.ts (1 test) 10ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/vehicles/vehicle-service.test.ts (3 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/plans/get-plan-catalog.test.ts (3 tests) 4ms
+@studiocar/web:test: {"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T07:03:11.358Z","environment":"unconfigured","errorCode":"INTERNAL_ERROR","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at <repository>/tests/unit/server/vehicles/create-vehicle-handler.test.ts:143:32","causes":[]}}
+@studiocar/web:test:  ✓ ../../tests/unit/server/vehicles/create-vehicle-handler.test.ts (3 tests) 20ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/request-create-vehicle-draft.test.ts (2 tests) 14ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/request-processing-batch.test.ts (2 tests) 20ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/admin/get-admin-overview.test.ts (1 test) 8ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:11.570Z","requestId":"f119b533-7e8e-4577-a370-b2de73496be8","environment":"unconfigured","method":"POST","durationMs":4.43429100000003,"requestStartedAtUnixMs":1791442991565,"statusCode":200,"timings":{},"route":"/api/auth/phone/verify"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/auth/phone/verify/route.test.ts (1 test) 11ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/select-photo-files.test.ts (6 tests) 5ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/portfolio/group-studio-versions.test.ts (5 tests) 17ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:12.082Z","requestId":"11b0aed8-d1f6-4c5c-ac74-10e9235d9cb6","environment":"unconfigured","method":"POST","durationMs":1.864958999999999,"requestStartedAtUnixMs":1791442992080,"statusCode":200,"timings":{},"route":"/api/profile/identities/phone"}
+@studiocar/web:test: {"level":"warn","event":"http_request_completed","timestamp":"2026-10-08T07:03:12.084Z","requestId":"ca58ec41-0b46-42c5-9ebb-a7ea0cfef035","environment":"unconfigured","method":"POST","errorCode":"UNAUTHENTICATED","durationMs":0.2976250000001528,"requestStartedAtUnixMs":1791442992084,"statusCode":401,"timings":{},"route":"/api/profile/identities/phone","errorMessage":"Authentication required"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/profile/identities/phone/route.test.ts (2 tests) 7ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/inventory/to-inventory-item-status.test.ts (5 tests) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/billing/usage-billing-service.test.ts (9 tests) 12ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/create-phone-account-handler.test.ts (5 tests) 19ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/phone-auth-verify-handler.test.ts (3 tests) 7ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:12.534Z","requestId":"b4c412e6-ae91-4503-9735-3e17165e47d9","environment":"unconfigured","method":"GET","durationMs":1.5632499999999254,"requestStartedAtUnixMs":1791442992533,"statusCode":200,"timings":{},"route":"/api/auth/phone/widget"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/auth/phone/widget/route.test.ts (1 test) 9ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/create-phone-auth-error-response.test.ts (11 tests) 11ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/oauth-challenge-protector.test.ts (3 tests) 12ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/inventory/fetch-inventory-search.test.ts (2 tests) 9ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/request-upload-intent.test.ts (2 tests) 10ms
+@studiocar/web:test: stderr | ../../tests/unit/features/auth/msg91-widget/verify-msg91-otp.test.ts > verifyMsg91Otp > refuses a success that carries no token
+@studiocar/web:test: MSG91 OTP widget call failed {
+@studiocar/web:test:   method: 'verifyOtp',
+@studiocar/web:test:   category: 'UNKNOWN_PROVIDER_ERROR',
+@studiocar/web:test:   providerCode: null,
+@studiocar/web:test:   providerType: null,
+@studiocar/web:test:   providerStatus: null,
+@studiocar/web:test:   providerMessage: "Verification didn't complete. Request a new code and try again.",
+@studiocar/web:test:   transportFailure: false,
+@studiocar/web:test:   requestId: null
+@studiocar/web:test: }
+@studiocar/web:test:
+@studiocar/web:test: stderr | ../../tests/unit/features/auth/msg91-widget/verify-msg91-otp.test.ts > verifyMsg91Otp > reports MSG91's wrong-code refusal as INVALID_OTP, not an outage
+@studiocar/web:test: MSG91 OTP widget call failed {
+@studiocar/web:test:   method: 'verifyOtp',
+@studiocar/web:test:   category: 'INVALID_OTP',
+@studiocar/web:test:   providerCode: 705,
+@studiocar/web:test:   providerType: 'error',
+@studiocar/web:test:   providerStatus: null,
+@studiocar/web:test:   providerMessage: 'invalid otp',
+@studiocar/web:test:   transportFailure: false,
+@studiocar/web:test:   requestId: 'req-1'
+@studiocar/web:test: }
+@studiocar/web:test:
+@studiocar/web:test: stderr | ../../tests/unit/features/auth/msg91-widget/verify-msg91-otp.test.ts > verifyMsg91Otp > reports the attempt limit as TOO_MANY_ATTEMPTS
+@studiocar/web:test: MSG91 OTP widget call failed {
+@studiocar/web:test:   method: 'verifyOtp',
+@studiocar/web:test:   category: 'TOO_MANY_ATTEMPTS',
+@studiocar/web:test:   providerCode: 704,
+@studiocar/web:test:   providerType: 'error',
+@studiocar/web:test:   providerStatus: null,
+@studiocar/web:test:   providerMessage: 'verification limit exceeded',
+@studiocar/web:test:   transportFailure: false,
+@studiocar/web:test:   requestId: 'req-1'
+@studiocar/web:test: }
+@studiocar/web:test:
+@studiocar/web:test: stderr | ../../tests/unit/features/auth/msg91-widget/verify-msg91-otp.test.ts > verifyMsg91Otp > reports a failed request as a network error
+@studiocar/web:test: MSG91 OTP widget call failed {
+@studiocar/web:test:   method: 'verifyOtp',
+@studiocar/web:test:   category: 'NETWORK_ERROR',
+@studiocar/web:test:   providerCode: null,
+@studiocar/web:test:   providerType: null,
+@studiocar/web:test:   providerStatus: null,
+@studiocar/web:test:   providerMessage: null,
+@studiocar/web:test:   transportFailure: true,
+@studiocar/web:test:   requestId: 'req-1'
+@studiocar/web:test: }
+@studiocar/web:test:
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/msg91-widget/verify-msg91-otp.test.ts (5 tests) 14ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/uploads/remove-upload-handler.test.ts (5 tests) 11ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/describe-phone-otp-widget.test.ts (7 tests) 6ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/remove-photo-upload.test.ts (2 tests) 8ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/storage-cleanup/s3-object-deletion-storage.test.ts (3 tests) 35ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/plans/plan-configuration-form.test.ts (13 tests) 10ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/inventory/s3-inventory-preview-signer.test.ts (1 test) 8ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:14.106Z","requestId":"98c87f95-9745-48e8-8a62-a426ecd32852","environment":"unconfigured","method":"POST","durationMs":0.4406250000001819,"requestStartedAtUnixMs":1791442994105,"statusCode":202,"timings":{"authentication":{"durationMs":0.09308299999997871,"count":1}},"route":"/api/jobs"}
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:14.113Z","requestId":"22205dde-2846-49b0-a3a8-25254819de71","environment":"unconfigured","method":"GET","durationMs":0.2722080000000915,"requestStartedAtUnixMs":1791442994113,"statusCode":200,"timings":{"authentication":{"durationMs":0.016166999999995824,"count":1}},"route":"/api/jobs"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/jobs/route.test.ts (2 tests) 12ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/build-portfolio-zip.test.ts (2 tests) 4ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:14.211Z","requestId":"cb6a26ac-3709-4c30-895a-a2cf006e2e7d","environment":"unconfigured","method":"POST","durationMs":2.8019160000001193,"requestStartedAtUnixMs":1791442994208,"statusCode":201,"timings":{},"route":"/api/auth/phone/start"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/auth/phone/start/route.test.ts (1 test) 8ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/admin/admin-management-actions.test.ts (13 tests) 9ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/request-phone-otp-widget.test.ts (4 tests) 8ms
+@studiocar/web:test: {"level":"error","event":"unexpected_exception","timestamp":"2026-10-08T07:03:14.623Z","environment":"unconfigured","errorCode":"INTERNAL_ERROR","errorMessage":"Unexpected application failure","error":{"name":"Error","message":"Unexpected application failure","stack":"Error: Unexpected application failure\n    at Object.<anonymous> (<repository>/tests/unit/server/uploads/remove-upload-service.test.ts:77:15)\n    at RemoveUploadService.remove (<repository>/apps/web/src/server/uploads/remove-upload-service.ts:39:26)","causes":[]}}
+@studiocar/web:test:  ✓ ../../tests/unit/server/uploads/remove-upload-service.test.ts (5 tests) 12ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:14.690Z","requestId":"3ea8466e-ad66-4cf9-bd82-1f3e077495ae","environment":"unconfigured","method":"GET","durationMs":2.9585410000001957,"requestStartedAtUnixMs":1791442994687,"statusCode":303,"timings":{},"route":"/api/auth/google/callback"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/auth/google/callback/route.test.ts (1 test) 9ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/describe-batch-limit.test.ts (5 tests) 6ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/request-update-vehicle-draft.test.ts (1 test) 7ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/processing/request-processing-statuses.test.ts (1 test) 8ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/content/social-link-actions.test.ts (12 tests) 9ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/jobs/get-processing-status-handler.test.ts (2 tests) 12ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/google/create-google-identity-provider.test.ts (3 tests) 6ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:15.572Z","requestId":"3a5657e8-5141-49ab-a881-20596a3de0f9","environment":"unconfigured","method":"POST","durationMs":0.8185419999999795,"requestStartedAtUnixMs":1791442995571,"statusCode":200,"timings":{},"route":"/api/internal/jobs/dispatch"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/internal/jobs/dispatch/route.test.ts (1 test) 10ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/msg91-widget-otp-provider.test.ts (10 tests) 464ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/admin/require-administrator.test.ts (3 tests) 5ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/logout-everywhere-handler.test.ts (2 tests) 89ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/storage-cleanup/storage-cleanup-service.test.ts (2 tests) 5ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/dashboard/dashboard-service.test.ts (2 tests) 9ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/vehicle-create-store.test.ts (10 tests) 15ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/jobs/dispatch-processing-outbox-handler.test.ts (1 test) 17ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:18.687Z","requestId":"291cf60e-6242-4286-853e-8c4bfac8698c","environment":"unconfigured","method":"POST","durationMs":0.9704580000002352,"requestStartedAtUnixMs":1791442998686,"statusCode":201,"timings":{},"route":"/api/uploads/presign"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/uploads/presign/route.test.ts (1 test) 15ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/save-file.test.ts (1 test) 7ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:18.900Z","requestId":"b7bddb8e-b4f2-44d0-9b09-c9fe676d7b4e","environment":"unconfigured","method":"PATCH","durationMs":0.6430000000000291,"requestStartedAtUnixMs":1791442998899,"statusCode":204,"timings":{},"route":"/api/profile"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/profile/route.test.ts (1 test) 11ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/environment/load-repository-environment.test.ts (6 tests) 12ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:20.682Z","requestId":"6bf0bb1b-cfb5-4bba-aaf0-4e955b6fd945","environment":"unconfigured","method":"PATCH","durationMs":2.2555410000004485,"requestStartedAtUnixMs":1791443000679,"statusCode":200,"timings":{},"route":"/api/vehicles/[vehicleId]"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/vehicles/[vehicleId]/route.test.ts (1 test) 18ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/commit-photo-upload.test.ts (1 test) 8ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/billing/orders/route.test.ts (2 tests) 9ms
+@studiocar/web:test: stderr | ../../tests/unit/features/auth/msg91-widget/send-msg91-otp.test.ts > sendMsg91Otp > normalizes a refusal
+@studiocar/web:test: MSG91 OTP widget call failed {
+@studiocar/web:test:   method: 'sendOtp',
+@studiocar/web:test:   category: 'NETWORK_ERROR',
+@studiocar/web:test:   providerCode: null,
+@studiocar/web:test:   providerType: null,
+@studiocar/web:test:   providerStatus: null,
+@studiocar/web:test:   providerMessage: null,
+@studiocar/web:test:   transportFailure: true,
+@studiocar/web:test:   requestId: null
+@studiocar/web:test: }
+@studiocar/web:test:
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/msg91-widget/send-msg91-otp.test.ts (3 tests) 9ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/portfolio/s3-portfolio-asset-signer.test.ts (1 test) 9ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/instrumentation.test.ts (3 tests) 9ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/msg91-widget/normalize-msg91-otp-error.test.ts (11 tests) 7ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:22.862Z","requestId":"b108ad1b-52b2-4096-bb95-1783f3f7b6dc","environment":"unconfigured","method":"DELETE","durationMs":0.4912500000000364,"requestStartedAtUnixMs":1791443002861,"statusCode":204,"timings":{},"route":"/api/uploads/[assetId]"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/uploads/[assetId]/route.test.ts (1 test) 9ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/portfolio/select-studio-selection-sources.test.ts (3 tests) 6ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:23.843Z","requestId":"7fd8d0dc-4b73-4b5d-83f5-d672b9dcb315","environment":"unconfigured","method":"POST","durationMs":0.52212499999996,"requestStartedAtUnixMs":1791443003843,"statusCode":204,"timings":{},"route":"/api/auth/logout-all"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/auth/logout-all/route.test.ts (1 test) 9ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:23.996Z","requestId":"8aa1e1a7-ecf4-4a6d-aa60-0307f5bc4172","environment":"unconfigured","method":"POST","durationMs":66.12800000000016,"requestStartedAtUnixMs":1791443003930,"statusCode":200,"timings":{},"route":"/api/internal/storage/cleanup"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/internal/storage/cleanup/route.test.ts (1 test) 158ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/environment/find-repository-root.test.ts (3 tests) 4ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:24.513Z","requestId":"fdf97a69-32dc-4694-bc63-25debc8932dc","environment":"unconfigured","method":"GET","durationMs":3.3608330000001843,"requestStartedAtUnixMs":1791443004509,"statusCode":302,"timings":{},"route":"/api/auth/google/start"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/auth/google/start/route.test.ts (1 test) 12ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/homepage-metadata.test.ts (3 tests) 8ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/admin/get-admin-activity.test.ts (3 tests) 36ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/jobs/schedule-processing-dispatch.test.ts (3 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/plan-usage/to-plan-usage-summary.test.ts (2 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/create-api-error-response.test.ts (1 test) 6ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/parse-vehicle-details.test.ts (2 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/phone-account-service.test.ts (3 tests) 7ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/plans/resolve-plan-entry.test.ts (4 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/processing/job-status-is-terminal.test.ts (1 test) 24ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/jobs/processing-status-service.test.ts (2 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/processing/request-processing-status-batches.test.ts (1 test) 5ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/download-portfolio-zip.test.ts (2 tests) 6ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/msg91-widget/read-msg91-access-token.test.ts (14 tests) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/admin/plan-configuration-actions.test.ts (7 tests) 10ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/format-studio-treatment.test.ts (2 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/msg91-widget/read-msg91-widget-settings.test.ts (5 tests) 8ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/admin/assert-administrator.test.ts (2 tests) 6ms
+@studiocar/web:test: stderr | ../../tests/unit/features/auth/msg91-widget/retry-msg91-otp.test.ts > retryMsg91Otp > reports the provider's resend wait instead of sending a new code
+@studiocar/web:test: MSG91 OTP widget call failed {
+@studiocar/web:test:   method: 'retryOtp',
+@studiocar/web:test:   category: 'RATE_LIMITED',
+@studiocar/web:test:   providerCode: 704,
+@studiocar/web:test:   providerType: 'error',
+@studiocar/web:test:   providerStatus: null,
+@studiocar/web:test:   providerMessage: 'wait 41 seconds to retry.',
+@studiocar/web:test:   transportFailure: false,
+@studiocar/web:test:   requestId: 'req-1'
+@studiocar/web:test: }
+@studiocar/web:test:
+@studiocar/web:test: stderr | ../../tests/unit/features/auth/msg91-widget/retry-msg91-otp.test.ts > retryMsg91Otp > reports the widget refusing a missing channel as an invalid request
+@studiocar/web:test: MSG91 OTP widget call failed {
+@studiocar/web:test:   method: 'retryOtp',
+@studiocar/web:test:   category: 'INVALID_REQUEST',
+@studiocar/web:test:   providerCode: null,
+@studiocar/web:test:   providerType: null,
+@studiocar/web:test:   providerStatus: null,
+@studiocar/web:test:   providerMessage: 'Channel not provided in retryOtp() method.',
+@studiocar/web:test:   transportFailure: false,
+@studiocar/web:test:   requestId: 'req-1'
+@studiocar/web:test: }
+@studiocar/web:test:
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/msg91-widget/retry-msg91-otp.test.ts (5 tests) 9ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/msg91-widget/read-msg91-request-id.test.ts (2 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/uploads/to-commit-upload-response.test.ts (1 test) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/uploads/create-upload-intent-service.test.ts (2 tests) 5ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/create-upload-scheduler.test.ts (2 tests) 5ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/admin/to-admin-action-message.test.ts (6 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/jobs/to-job-status.test.ts (2 tests) 7ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/billing/get-usage-billing-summary.test.ts (3 tests) 6ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/jobs/resolve-processing-allowance.test.ts (4 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/inventory/inventory-service.test.ts (4 tests) 6ms
+@studiocar/web:test: {"level":"info","event":"processing_job_reserved","timestamp":"2026-10-08T07:03:28.318Z","batchId":"processing-request-0001","jobId":"8c879f46-1193-4d77-b785-057fe026d111","environment":"unconfigured"}
+@studiocar/web:test: {"level":"info","event":"processing_job_reserved","timestamp":"2026-10-08T07:03:28.321Z","batchId":"processing-request-0001","jobId":"8c879f46-1193-4d77-b785-057fe026d111","environment":"unconfigured"}
+@studiocar/web:test:  ✓ ../../tests/unit/server/jobs/processing-job-service.test.ts (7 tests) 9ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:28.413Z","requestId":"ea67a377-329f-4e4c-bc44-ca782f470b12","environment":"unconfigured","method":"POST","durationMs":0.49033299999996416,"requestStartedAtUnixMs":1791443008413,"statusCode":204,"timings":{},"route":"/api/auth/logout"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/auth/logout/route.test.ts (1 test) 7ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/admin/describe-audit-entry.test.ts (10 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/plans/default-plan-configurations.test.ts (7 tests) 5ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/seo-assets.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/upload-photo.test.ts (2 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/db/repositories/to-processing-options-json.test.ts (2 tests) 4ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:29.084Z","requestId":"c6e9a0f3-9deb-4ba8-b16e-faca57ea8ab9","environment":"unconfigured","method":"POST","durationMs":0.2482079999999769,"requestStartedAtUnixMs":1791443009084,"statusCode":201,"timings":{},"route":"/api/vehicles"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/vehicles/route.test.ts (1 test) 5ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/google/google-id-token-claims.test.ts (6 tests) 6ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/complete-processing-batch.test.ts (2 tests) 5ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/format-portfolio-date.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/read-client-address.test.ts (2 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/billing/status/route.test.ts (1 test) 4ms
+@studiocar/web:test: {"level":"info","event":"http_request_completed","timestamp":"2026-10-08T07:03:29.615Z","requestId":"944107b6-4b87-402f-9ad3-ad66fe007e84","environment":"unconfigured","method":"POST","durationMs":0.773584000000028,"requestStartedAtUnixMs":1791443009614,"statusCode":200,"timings":{},"route":"/api/internal/lifecycle/cleanup"}
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/internal/lifecycle/cleanup/route.test.ts (1 test) 11ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/profile/profile-service.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/admin/layout.test.tsx (3 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/processing/calculate-adaptive-polling-delay.test.ts (8 tests) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/webhooks/hmac-sha256-webhook-signature-verifier.test.ts (2 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/infrastructure-worker-template.test.ts (8 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/admin/describe-invitation.test.ts (4 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/logout-handler.test.ts (2 tests) 8ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/admin/admin-bootstrap-service.test.ts (9 tests) 6ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/content/social-platform-catalog.test.ts (3 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/portfolio/select-attention-jobs.test.ts (3 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/read-response-json.test.ts (2 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/release-photo-preview.test.ts (2 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/lifecycle/lifecycle-cleanup-service.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/phone-otp-error/create-phone-otp-error.test.ts (8 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/get-verified-phone-for-browser.test.ts (2 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/billing/billing-business.test.ts (2 tests) 7ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/plan-usage/get-plan-usage-summary.test.ts (3 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/create-unique-filename.test.ts (3 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/security/create-content-security-policy.test.ts (5 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/content/get-social-links.test.ts (3 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/parse-portfolio-search-params.test.ts (2 tests) 5ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/get-current-session.test.ts (2 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/security/resolve-local-storage-origin.test.ts (4 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/create-portfolio-attention-href.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/read-msg91-identifier.test.ts (11 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/billing/receipts/[receiptId]/page.test.tsx (1 test) 5ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/development-otp-provider.test.ts (4 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/fetch-portfolio-image.test.ts (2 tests) 7ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/describe-batch-limit-rejection.test.ts (3 tests) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/get-auth-return-path.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/verified-phone-cookie.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/phone-widget-handler.test.ts (3 tests) 6ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/db/repositories/to-vehicle.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/is-same-origin-request.test.ts (1 test) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/session-service.test.ts (5 tests) 6ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/hash-sensitive-identifier.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(auth)/layout.test.tsx (1 test) 20ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/admin/is-current-user-administrator.test.ts (3 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/security/create-security-headers.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/(app)/admin/admins/page.test.tsx (1 test) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/dashboard/describe-attention-quick-action.test.ts (4 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/uploads/commit-upload-service.test.ts (2 tests) 6ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/google/create-google-auth-error-redirect.test.ts (1 test) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/processing/processing-status-store.test.ts (2 tests) 5ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/telemetry-phone-otp-verification-observer.test.ts (2 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/create-portfolio-zip-filename.test.ts (4 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/create-existing-photo-item.test.ts (3 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/to-provider-msisdn.test.ts (11 tests) 11ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/security/command-rate-limiter.test.ts (2 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/admin/to-social-link-fields.test.ts (4 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/db/repositories/validate-storage-deletion-batch-size.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/admin/plan-billing-interval-options.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/format-attention-count.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/plans/describe-plan-action.test.ts (3 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/to-processing-batch-command.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/inventory/parse-inventory-search-params.test.ts (3 tests) 7ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/robots.test.ts (3 tests) 10ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/create-photo-upload-item.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/portfolio/image-requires-replacement.test.ts (3 tests) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/google/google-oauth-cookie.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/vehicles/vehicle-matches-create-command.test.ts (3 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/read-request-cookie.test.ts (1 test) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/portfolio/to-portfolio-status.test.ts (5 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/to-vehicle-details-values.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/hash-file-sha256.test.ts (1 test) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/billing/providers/razorpay/verify-signature.test.ts (2 tests) 7ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/billing/orders/verify/route.test.ts (1 test) 5ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/uploads/validate-stored-upload.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/inventory/create-inventory-href.test.ts (4 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/processing/describe-processing-activity.test.ts (3 tests) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/to-widget-identifier.test.ts (2 tests) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/db/repositories/to-vehicle-update-data.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/select-portfolio-version.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/shell/navigation-item-is-active.test.ts (5 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/content/to-social-link.test.ts (2 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/uploads/image-validation/parse-jpeg-metadata.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/dashboard/dashboard-greeting.test.ts (3 tests) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/webhooks/parse-webhook-signatures.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/admin/describe-administrator-grant.test.ts (4 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/uploads/image-validation/parse-png-metadata.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/admin/to-plan-configuration-fields.test.ts (4 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/webhooks/parse-webhook-timestamp.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/is-complete-otp-code.test.ts (3 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/dashboard/calculate-processing-success-rate.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/dashboard/dashboard-period-start.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/google-auth-error-message.test.ts (4 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/put-file-with-progress.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/inventory/format-inventory-image-count.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/shell/user-initials.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/session-cookie.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/admin/calculate-invite-expiry.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/admin/describe-audit-actor.test.ts (3 tests) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/inventory/format-inventory-date.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/jobs/to-processing-provider.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/portfolio/select-latest-batch-jobs.test.ts (3 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/create-upload-progress-reporter.test.ts (1 test) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/admin/describe-account.test.ts (3 tests) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/format-floor-style.test.ts (1 test) 1ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/plans/find-largest-batch.test.ts (3 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/dashboard/format-dashboard-count.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/vehicle-create-step-title.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/portfolio/portfolio-batch-key.test.ts (2 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/phone/create-phone-otp-browser-binding.test.ts (1 test) 6ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/portfolio-vehicle-metadata.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/webhooks/webhook-signature-is-valid.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/inventory/create-inventory-search-url.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/photo-upload-status-label.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/dashboard/safe-bigint-to-number.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/shell/workspace-navigation-items.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/lib/is-public-site-indexable.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/format-crop-mode.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/create-google-auth-start-href.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/api/billing/receipts/route.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/to-otp-digits.test.ts (3 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/inventory/inventory-vehicle-metadata.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/format-photo-count.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/plans/format-plan-cadence.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/app/layout.test.tsx (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/uploads/hex-sha256-to-base64.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/portfolio/create-portfolio-download-filename.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/db/repositories/create-image-asset-lock-key.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/inventory/calculate-inventory-completion.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/create-google-verified-phone-link-href.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/plans/to-plan-catalog-entry.test.ts (3 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/profile/find-profile-identity.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/create-vehicle-portfolio-path.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/shell/find-active-navigation-item.test.ts (3 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/format-zip-progress.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/vehicle-review-metadata.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/create-development-access-token.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/studio-selection-heading.test.ts (2 tests) 4ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/auth/hash-auth-secret.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/mask-phone-number.test.ts (4 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/format-background-treatment.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/admin/format-admin-date.test.ts (2 tests) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/dashboard/format-storage-size.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/webhooks/validate-webhook-signature-options.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/uploads/image-validation/parse-webp-metadata.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/db/repositories/to-vehicle-create-data.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/uploads/image-validation/parse-image-metadata.test.ts (1 test) 12ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/processing-batch-request-error.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/uploads/build-original-object-key.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/shell/user-display-name.test.ts (2 tests) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/create-google-link-href.test.ts (2 tests) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/auth/phone-otp-error/phone-otp-error.test.ts (1 test) 3ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/upload-performance.constants.test.ts (1 test) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/portfolio/create-portfolio-href.test.ts (2 tests) 2ms
+@studiocar/web:test:  ✓ ../../tests/unit/server/uploads/image-validation/image-dimensions-are-safe.test.ts (1 test) 1ms
+@studiocar/web:test:  ✓ ../../tests/unit/features/vehicle-create/format-photo-size.test.ts (1 test) 1ms
+@studiocar/web:test:
+@studiocar/web:test:  Test Files  405 passed (405)
+@studiocar/web:test:       Tests  1225 passed (1225)
+@studiocar/web:test:    Start at  12:32:52
+@studiocar/web:test:    Duration  49.94s (environment 63%, setup 15%, import 12%, tests 6%, transform 4%)
+@studiocar/web:test:
+@studiocar/web:test: Environment  jsdom was created 405 times · 254.44s total, 63% of tracked time
+@studiocar/web:test:              create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+@studiocar/web:test:              learn more: https://vitest.dev/guide/improving-performance#test-environments
+@studiocar/web:test:
+
+ Tasks:    16 successful, 16 total
+Cached:    15 cached, 16 total
+  Time:    50.277s
+

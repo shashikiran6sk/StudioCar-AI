@@ -1,0 +1,22 @@
+import { defineConfig } from "<repository>/node_modules/@playwright/test/index.mjs";
+export default defineConfig({
+  fullyParallel: true,
+  retries: 0,
+  reporter: [["html", { open: "never" }]],
+  use: { baseURL: "http://localhost:3100", channel: "chrome", trace: "on-first-retry", viewport: { height: 960, width: 1440 } },
+  testDir: "<repository>/tests/e2e",
+  outputDir: "<repository>/apps/web/test-results",
+  webServer: {
+    command: "pnpm exec next start --hostname 127.0.0.1 --port 3100",
+    cwd: "<repository>/apps/web",
+    reuseExistingServer: false,
+    timeout: 120000,
+    url: "http://127.0.0.1:3100",
+    env: {
+      APP_ENV: "local", DATABASE_URL: "postgresql://dealersdrive:[REDACTED]@localhost:5432/studiocar_plus_test_20261008",
+      SQS_IMAGE_QUEUE_URL: "http://localhost:9324/000000000000/studiocar-images",
+      SQS_ENDPOINT: "http://localhost:9324", SQS_ACCESS_KEY_ID: "[REDACTED: synthetic fixture]", SQS_SECRET_ACCESS_KEY: "[REDACTED: synthetic fixture]",
+      RAZORPAY_KEY_ID: "[REDACTED: synthetic fixture]", RAZORPAY_KEY_SECRET: "[REDACTED: synthetic fixture]", RAZORPAY_WEBHOOK_SECRET: "[REDACTED: synthetic fixture]",
+    },
+  },
+});

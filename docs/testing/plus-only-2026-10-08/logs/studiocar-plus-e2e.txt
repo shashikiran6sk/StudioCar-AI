@@ -1,0 +1,213 @@
+$ turbo run e2e
+• turbo 2.10.13
+
+   • Packages in scope: @studiocar/config, @studiocar/contracts, @studiocar/database-runtime, @studiocar/image-processing-worker, @studiocar/local-queue, @studiocar/observability, @studiocar/processing, @studiocar/testing, @studiocar/ui, @studiocar/web
+   • Running e2e in 10 packages
+   • Remote caching disabled
+
+@studiocar/config:build: cache hit, replaying logs 5491497d39348bba
+@studiocar/config:build: $ tsc -p tsconfig.build.json --outDir dist
+@studiocar/testing:build: cache hit, replaying logs f5df48ebd260de76
+@studiocar/testing:build: $ tsc --outDir dist
+@studiocar/ui:build: cache hit, replaying logs 0d910d657fc76637
+@studiocar/ui:build: $ tsc -p tsconfig.build.json --outDir dist
+@studiocar/contracts:build: cache hit, replaying logs 1ecd8e1d7a6a5d43
+@studiocar/contracts:build: $ tsc -p tsconfig.build.json --outDir dist
+@studiocar/local-queue:build: cache hit, replaying logs 7387682c9bae25f3
+@studiocar/local-queue:build: $ tsc --outDir dist
+@studiocar/observability:build: cache hit, replaying logs 9d96f084674ead92
+@studiocar/observability:build: $ tsc --outDir dist
+@studiocar/processing:build: cache hit, replaying logs 9c36b6cab22d8f61
+@studiocar/processing:build: $ tsc --outDir dist
+@studiocar/database-runtime:build: cache hit, replaying logs 7aeb2a142028f9fb
+@studiocar/database-runtime:build: $ tsc -p tsconfig.build.json --outDir dist
+@studiocar/image-processing-worker:build: cache hit, replaying logs 0bb4f52b3c9ad84a
+@studiocar/image-processing-worker:build: $ tsc --noEmit && node scripts/bundle.mjs src/handler.ts dist/handler.mjs
+@studiocar/web:build: cache hit, replaying logs 4df7430393c51030
+@studiocar/web:build: $ next build
+@studiocar/web:build: ▲ Next.js 16.3.6 (Turbopack)
+@studiocar/web:build: ✓ Running next.config.ts took 103ms
+@studiocar/web:build:
+@studiocar/web:build:   Creating an optimized production build ...
+@studiocar/web:build: ✓ Compiled successfully in 966ms
+@studiocar/web:build:   Running TypeScript ...
+@studiocar/web:build:   Finished TypeScript in 1111ms ...
+@studiocar/web:build:   Collecting page data using 9 workers ...
+@studiocar/web:build:   Generating static pages using 9 workers (0/28) ...
+@studiocar/web:build:   Generating static pages using 9 workers (7/28)
+@studiocar/web:build:   Generating static pages using 9 workers (14/28)
+@studiocar/web:build:   Generating static pages using 9 workers (21/28)
+@studiocar/web:build: ✓ Generating static pages using 9 workers (28/28) in 105ms
+@studiocar/web:build:   Finalizing page optimization ...
+@studiocar/web:build:
+@studiocar/web:build: Route (app)
+@studiocar/web:build: ┌ ƒ /
+@studiocar/web:build: ├ ○ /_not-found
+@studiocar/web:build: ├ ƒ /admin
+@studiocar/web:build: ├ ƒ /admin/admins
+@studiocar/web:build: ├ ƒ /admin/content
+@studiocar/web:build: ├ ƒ /admin/pricing
+@studiocar/web:build: ├ ƒ /api/auth/google/callback
+@studiocar/web:build: ├ ƒ /api/auth/google/start
+@studiocar/web:build: ├ ƒ /api/auth/logout
+@studiocar/web:build: ├ ƒ /api/auth/logout-all
+@studiocar/web:build: ├ ƒ /api/auth/phone/create-account
+@studiocar/web:build: ├ ƒ /api/auth/phone/start
+@studiocar/web:build: ├ ƒ /api/auth/phone/verify
+@studiocar/web:build: ├ ƒ /api/auth/phone/widget
+@studiocar/web:build: ├ ƒ /api/billing/orders
+@studiocar/web:build: ├ ƒ /api/billing/orders/verify
+@studiocar/web:build: ├ ƒ /api/billing/receipts
+@studiocar/web:build: ├ ƒ /api/billing/receipts/[receiptId]
+@studiocar/web:build: ├ ƒ /api/billing/status
+@studiocar/web:build: ├ ƒ /api/internal/jobs/dispatch
+@studiocar/web:build: ├ ƒ /api/internal/lifecycle/cleanup
+@studiocar/web:build: ├ ƒ /api/internal/storage/cleanup
+@studiocar/web:build: ├ ƒ /api/inventory/search
+@studiocar/web:build: ├ ƒ /api/jobs
+@studiocar/web:build: ├ ƒ /api/profile
+@studiocar/web:build: ├ ƒ /api/profile/identities/phone
+@studiocar/web:build: ├ ƒ /api/uploads/[assetId]
+@studiocar/web:build: ├ ƒ /api/uploads/[assetId]/commit
+@studiocar/web:build: ├ ƒ /api/uploads/presign
+@studiocar/web:build: ├ ƒ /api/vehicles
+@studiocar/web:build: ├ ƒ /api/vehicles/[vehicleId]
+@studiocar/web:build: ├ ƒ /api/webhooks/razorpay
+@studiocar/web:build: ├ ○ /apple-icon.png
+@studiocar/web:build: ├ ƒ /auth/error
+@studiocar/web:build: ├ ƒ /billing/receipts/[receiptId]
+@studiocar/web:build: ├ ƒ /dashboard
+@studiocar/web:build: ├ ƒ /inventory
+@studiocar/web:build: ├ ƒ /inventory/[vehicleId]
+@studiocar/web:build: ├ ƒ /login
+@studiocar/web:build: ├ ○ /opengraph-image.png
+@studiocar/web:build: ├ ƒ /robots.txt
+@studiocar/web:build: ├ ƒ /settings/billing
+@studiocar/web:build: ├ ƒ /settings/profile
+@studiocar/web:build: └ ƒ /sitemap.xml
+@studiocar/web:build:
+@studiocar/web:build:
+@studiocar/web:build: ○  (Static)   prerendered as static content
+@studiocar/web:build: ƒ  (Dynamic)  server-rendered on demand
+@studiocar/web:build:
+@studiocar/web:e2e: cache bypass, force executing 9b8ef0b807993ef8
+@studiocar/web:e2e: $ playwright test
+@studiocar/web:e2e: [WebServer] (node:49283) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+@studiocar/web:e2e: [WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+@studiocar/web:e2e:
+@studiocar/web:e2e: [WebServer] (node:49287) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+@studiocar/web:e2e: [WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+@studiocar/web:e2e:
+@studiocar/web:e2e:
+@studiocar/web:e2e: Running 16 tests using 5 workers
+@studiocar/web:e2e:
+@studiocar/web:e2e: (node:49303) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+@studiocar/web:e2e: (Use `node --trace-warnings ...` to show where the warning was created)
+@studiocar/web:e2e:
+@studiocar/web:e2e:
+@studiocar/web:e2e: (node:49304) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+@studiocar/web:e2e: (Use `node --trace-warnings ...` to show where the warning was created)
+@studiocar/web:e2e:
+@studiocar/web:e2e:
+@studiocar/web:e2e: (node:49306) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+@studiocar/web:e2e: (Use `node --trace-warnings ...` to show where the warning was created)
+@studiocar/web:e2e:
+@studiocar/web:e2e:
+@studiocar/web:e2e:
+@studiocar/web:e2e:
+@studiocar/web:e2e: (node:49302) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+@studiocar/web:e2e: (Use `node --trace-warnings ...` to show where the warning was created)
+@studiocar/web:e2e: [1/16] ../../tests/e2e/billing-checkout.spec.ts:36:1 › loads repeatable Plus Checkout through the browser security policy
+@studiocar/web:e2e: (node:49305) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+@studiocar/web:e2e: (Use `node --trace-warnings ...` to show where the warning was created)
+@studiocar/web:e2e:
+@studiocar/web:e2e:
+@studiocar/web:e2e: [2/16] ../../tests/e2e/auth-shell.spec.ts:24:5 › keeps the sign-in controls usable on a mobile viewport
+@studiocar/web:e2e: [3/16] ../../tests/e2e/auth-shell.spec.ts:3:5 › redirects an unauthenticated workspace request to sign in
+@studiocar/web:e2e: [4/16] ../../tests/e2e/admin-authorization.spec.ts:50:1 › keeps the administration area from everybody who is not an administrator
+@studiocar/web:e2e: [5/16] ../../tests/e2e/foundation.spec.ts:3:5 › renders the complete marketing homepage at desktop and mobile widths
+@studiocar/web:e2e: [6/16] ../../tests/e2e/mobile-workspace-navigation.spec.ts:33:1 › replaces the sidebar with a navigation drawer on narrow screens
+@studiocar/web:e2e: [7/16] ../../tests/e2e/inventory.spec.ts:28:1 › renders authenticated inventory states at desktop and mobile widths
+@studiocar/web:e2e: [8/16] ../../tests/e2e/phone-account-resolution.spec.ts:13:1 › verifies a new phone, creates one account, then signs into it
+@studiocar/web:e2e: [9/16] ../../tests/e2e/admin-authorization.spec.ts:173:1 › lets an administrator change a plan and shows it to everybody
+@studiocar/web:e2e: [10/16] ../../tests/e2e/phone-account-resolution.spec.ts:63:1 › keeps a wrong code on the code step as an incorrect code, not an outage
+@studiocar/web:e2e:   1) ../../tests/e2e/admin-authorization.spec.ts:173:1 › lets an administrator change a plan and shows it to everybody
+@studiocar/web:e2e:
+@studiocar/web:e2e:     Error: expect(locator).toBeVisible() failed
+@studiocar/web:e2e:
+@studiocar/web:e2e:     Locator: getByText('Edited free trial description.')
+@studiocar/web:e2e:     Expected: visible
+@studiocar/web:e2e:     Error: strict mode violation: getByText('Edited free trial description.') resolved to 2 elements:
+@studiocar/web:e2e:         1) <span>Edited free trial description.</span> aka getByRole('region', { name: 'Current plan usage' }).getByText('Edited free trial description.')
+@studiocar/web:e2e:         2) <p>Edited free trial description.</p> aka locator('#packs').getByText('Edited free trial description.')
+@studiocar/web:e2e:
+@studiocar/web:e2e:     Call log:
+@studiocar/web:e2e:       - Expect "toBeVisible" getByText('Edited free trial description.') with timeout 5000ms
+@studiocar/web:e2e:       - waiting for getByText('Edited free trial description.')
+@studiocar/web:e2e:
+@studiocar/web:e2e:
+@studiocar/web:e2e:       237 |       // The whole point of the slice: configuration reaches the public page.
+@studiocar/web:e2e:       238 |       await page.goto("/settings/billing");
+@studiocar/web:e2e:     > 239 |       await expect(page.getByText(EDITED_PRICE_LABEL)).toBeVisible();
+@studiocar/web:e2e:           |                                                        ^
+@studiocar/web:e2e:       240 |
+@studiocar/web:e2e:       241 |       await page.context().clearCookies();
+@studiocar/web:e2e:       242 |       await page.goto("/");
+@studiocar/web:e2e:         at <repository>/tests/e2e/admin-authorization.spec.ts:239:56
+@studiocar/web:e2e:
+@studiocar/web:e2e:     Error Context: test-results/admin-authorization-lets-a-11dff-n-and-shows-it-to-everybody/error-context.md
+@studiocar/web:e2e:
+@studiocar/web:e2e:
+@studiocar/web:e2e: [11/16] ../../tests/e2e/admin-authorization.spec.ts:270:1 › configures a footer link and shows it to the public
+@studiocar/web:e2e: [12/16] ../../tests/e2e/seo.spec.ts:3:5 › serves canonical homepage metadata, navigation, and SEO assets
+@studiocar/web:e2e: [13/16] ../../tests/e2e/seo.spec.ts:59:5 › serves declared favicon files to Google crawlers without authentication
+@studiocar/web:e2e: [14/16] ../../tests/e2e/seo.spec.ts:85:5 › keeps sign-in and authentication errors out of search indexes
+@studiocar/web:e2e: [15/16] ../../tests/e2e/workspace-shell.spec.ts:14:1 › offers exactly the delivered workspace destinations and a plan summary
+@studiocar/web:e2e:
+@studiocar/web:e2e:
+@studiocar/web:e2e: (node:49446) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+@studiocar/web:e2e: (Use `node --trace-warnings ...` to show where the warning was created)
+@studiocar/web:e2e: [16/16] ../../tests/e2e/profile-security.spec.ts:23:1 › updates a profile and revokes every active session
+@studiocar/web:e2e:   2) ../../tests/e2e/inventory.spec.ts:28:1 › renders authenticated inventory states at desktop and mobile widths
+@studiocar/web:e2e:
+@studiocar/web:e2e:     Error: expect(locator).toContainText(expected) failed
+@studiocar/web:e2e:
+@studiocar/web:e2e:     Locator: getByRole('button', { name: 'Image processing activity' })
+@studiocar/web:e2e:     Expected substring: "needs attention"
+@studiocar/web:e2e:     Received string:    "1 image processing"
+@studiocar/web:e2e:     Timeout: 5000ms
+@studiocar/web:e2e:
+@studiocar/web:e2e:     Call log:
+@studiocar/web:e2e:       - Expect "toContainText" getByRole('button', { name: 'Image processing activity' }) with timeout 5000ms
+@studiocar/web:e2e:       - waiting for getByRole('button', { name: 'Image processing activity' })
+@studiocar/web:e2e:         14 × locator resolved to <button type="button" aria-expanded="false" class="processing-indicator__trigger" aria-label="Image processing activity">…</button>
+@studiocar/web:e2e:            - unexpected value "1 image processing"
+@studiocar/web:e2e:
+@studiocar/web:e2e:
+@studiocar/web:e2e:       489 |         name: "Image processing activity",
+@studiocar/web:e2e:       490 |       });
+@studiocar/web:e2e:     > 491 |       await expect(processingActivity).toContainText("needs attention");
+@studiocar/web:e2e:           |                                        ^
+@studiocar/web:e2e:       492 |       await processingActivity.click();
+@studiocar/web:e2e:       493 |       const processingPanel = page.getByRole("region", {
+@studiocar/web:e2e:       494 |         name: "Processing activity",
+@studiocar/web:e2e:         at <repository>/tests/e2e/inventory.spec.ts:491:40
+@studiocar/web:e2e:
+@studiocar/web:e2e:     Error Context: test-results/inventory-renders-authenti-1a3f3-t-desktop-and-mobile-widths/error-context.md
+@studiocar/web:e2e:
+@studiocar/web:e2e:
+@studiocar/web:e2e:   2 failed
+@studiocar/web:e2e:     ../../tests/e2e/admin-authorization.spec.ts:173:1 › lets an administrator change a plan and shows it to everybody
+@studiocar/web:e2e:     ../../tests/e2e/inventory.spec.ts:28:1 › renders authenticated inventory states at desktop and mobile widths
+@studiocar/web:e2e:   1 did not run
+@studiocar/web:e2e:   13 passed (20.2s)
+@studiocar/web:e2e: [ELIFECYCLE] Command failed with exit code 1.
+@studiocar/web#e2e:  ERROR  command (<repository>/apps/web) /Users/shashikiran/.nvm/versions/node/v24.18.0/bin/pnpm run e2e exited (1)
+
+ Tasks:    10 successful, 11 total
+Cached:    10 cached, 11 total
+  Time:    20.834s
+Failed:    @studiocar/web#e2e
+
+ ERROR  run failed: command  exited (1)
+[ELIFECYCLE] Command failed with exit code 1.
