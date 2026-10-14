@@ -211,7 +211,7 @@ export class ProcessingJobExecutor implements ProcessingJobExecutorPort {
         vehicleId: job.vehicleId,
       },
       jobId: job.id,
-      qualityTier: resolveProcessingQualityTier(job.subscriptionPlanKey),
+      qualityTier: resolveProcessingQualityTier(job.ownedPlanKey),
       sourceObjectKey: job.originalObjectKey,
     });
     if (!result.ok) {

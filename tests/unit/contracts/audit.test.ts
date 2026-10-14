@@ -16,6 +16,7 @@ describe("AdministrativeActionSchema", () => {
       "ADMIN_INVITATION_REVOKED",
       "PLAN_CONFIG_UPDATED",
       "SUBSCRIPTION_ASSIGNED",
+      "ADMIN_CREDIT_GRANTED",
       "SUBSCRIPTION_REVOKED",
       "SOCIAL_LINK_SAVED",
       "SOCIAL_LINK_REMOVED",

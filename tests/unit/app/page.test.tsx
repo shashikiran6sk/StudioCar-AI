@@ -47,7 +47,7 @@ describe("HomePage", () => {
     getPublicEnabledSocialLinks.mockResolvedValue([]);
     getPublicPlanCatalog.mockResolvedValue(
       DEFAULT_PLAN_CATALOG.map((plan) =>
-        plan.planKey === "STUDIO_PRO"
+        plan.planKey === "FREE"
           ? { ...plan, priceMinorUnits: 449_900 }
           : plan,
       ),

@@ -14,16 +14,7 @@ export const ADMIN_OVERVIEW_STATS: readonly AdminOverviewStat[] = [
   },
   { key: "userCount", label: "Accounts", detail: "registered" },
   { key: "activePlanCount", label: "Active plans", detail: "offered" },
-  {
-    key: "activeSubscriptionCount",
-    label: "Active subscriptions",
-    detail: "across all sources",
-  },
-  {
-    key: "manualSubscriptionCount",
-    label: "Assigned by an admin",
-    detail: "of those subscriptions",
-  },
+  { key: "paidAccountCount", label: "Plus accounts", detail: "with lifetime credit purchases" },
   {
     key: "enabledSocialLinkCount",
     label: "Social links",

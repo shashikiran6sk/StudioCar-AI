@@ -8,11 +8,11 @@ import {
 
 const entry = {
   active: true,
-  allowanceScope: "BILLING_PERIOD",
-  billingInterval: "MONTHLY",
+  allowanceScope: "LIFETIME",
+  billingInterval: "ONE_TIME",
   currency: "INR",
   description: "For marketplaces and large dealer groups.",
-  displayName: "Studio Plus",
+  displayName: "StudioCar Plus",
   displayOrder: 3,
   featured: false,
   features: ["1,500 images each month"],

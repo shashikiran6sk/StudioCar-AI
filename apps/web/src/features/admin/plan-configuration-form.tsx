@@ -51,6 +51,7 @@ export function PlanConfigurationForm({ plan }: PlanConfigurationFormProps) {
           id={fieldId("name")}
           label={ADMIN_PLAN_NAME_LABEL}
           name="displayName"
+          readOnly={plan.planKey === "STUDIO_PLUS"}
           required
         />
         <Field
@@ -76,6 +77,7 @@ export function PlanConfigurationForm({ plan }: PlanConfigurationFormProps) {
           label={ADMIN_PLAN_PRICE_LABEL}
           min={0}
           name="priceRupees"
+          readOnly
           required
           type="number"
         />
@@ -89,7 +91,7 @@ export function PlanConfigurationForm({ plan }: PlanConfigurationFormProps) {
             id={intervalId}
             name="billingInterval"
           >
-            {PLAN_BILLING_INTERVAL_OPTIONS.map((option) => (
+            {PLAN_BILLING_INTERVAL_OPTIONS.filter((option) => option.value === plan.billingInterval).map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
@@ -103,6 +105,7 @@ export function PlanConfigurationForm({ plan }: PlanConfigurationFormProps) {
           label={ADMIN_PLAN_INCLUDED_IMAGES_LABEL}
           min={1}
           name="includedImages"
+          readOnly={plan.planKey === "STUDIO_PLUS"}
           required
           type="number"
         />

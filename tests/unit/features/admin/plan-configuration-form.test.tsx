@@ -47,7 +47,7 @@ describe("PlanConfigurationForm", () => {
       <>
         <PlanConfigurationForm plan={fields} />
         <PlanConfigurationForm
-          plan={{ ...fields, planKey: "STUDIO_PRO", displayName: "Studio Pro" }}
+          plan={{ ...fields, planKey: "STUDIO_PLUS", displayName: "StudioCar Plus" }}
         />
       </>,
     );

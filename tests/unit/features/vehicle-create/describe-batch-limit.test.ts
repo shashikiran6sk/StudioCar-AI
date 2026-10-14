@@ -33,9 +33,9 @@ describe("describeBatchLimit", () => {
       describeBatchLimit({
         largestAvailableBatch: 20,
         maxImagesPerBatch: 20,
-        planName: "Studio Plus",
+        planName: "StudioCar Plus",
       }),
-    ).toBe("Studio Plus plan · Up to 20 images per batch.");
+    ).toBe("StudioCar Plus plan · Up to 20 images per batch.");
   });
 
   it("offers no upgrade when no plan is on offer", () => {

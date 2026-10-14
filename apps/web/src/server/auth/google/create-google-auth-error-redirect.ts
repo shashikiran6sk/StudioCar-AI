@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import type { NextResponse } from "next/server";
+import { createGoogleAuthRedirect } from "./create-google-auth-redirect";
 
 import {
   GOOGLE_AUTH_ERROR_PATH,
@@ -15,7 +16,7 @@ export function createGoogleAuthErrorRedirect(
 ): NextResponse {
   const destination = new URL(GOOGLE_AUTH_ERROR_PATH, requestUrl.origin);
   destination.searchParams.set(GOOGLE_AUTH_ERROR_QUERY_KEY, code);
-  const response = NextResponse.redirect(destination, OAUTH_REDIRECT_STATUS);
+  const response = createGoogleAuthRedirect(destination, OAUTH_REDIRECT_STATUS);
   const cookie = clearGoogleOAuthCookie(isProduction);
   response.cookies.set(cookie.name, cookie.value, cookie.options);
   return response;

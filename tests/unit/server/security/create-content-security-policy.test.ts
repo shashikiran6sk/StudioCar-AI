@@ -31,4 +31,20 @@ describe("createContentSecurityPolicy", () => {
   it("adds no storage origin beyond AWS when none is given", () => {
     expect(createContentSecurityPolicy("production")).not.toContain("localhost");
   });
+
+  it("allows hosted Razorpay Checkout without granting arbitrary script or frame origins", () => {
+    const policy = createContentSecurityPolicy("production");
+    const directives = policy.split("; ");
+    const scripts = directives.find((directive) => directive.startsWith("script-src "));
+    const connections = directives.find((directive) => directive.startsWith("connect-src "));
+    const frames = directives.find((directive) => directive.startsWith("frame-src "));
+
+    expect(scripts).toContain("https://checkout.razorpay.com");
+    expect(scripts).not.toContain("https://api.razorpay.com");
+    expect(scripts).not.toContain("*");
+    expect(connections).toContain("https://api.razorpay.com");
+    expect(frames).toBe("frame-src https://checkout.razorpay.com https://api.razorpay.com");
+    expect(policy).toContain("frame-ancestors 'none'");
+    expect(policy).not.toContain("'unsafe-eval'");
+  });
 });

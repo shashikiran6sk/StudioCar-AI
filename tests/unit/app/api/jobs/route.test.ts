@@ -57,7 +57,7 @@ describe("POST /api/jobs", () => {
       { reserveBatchOwned: vi.fn() },
       { schedule: vi.fn() },
       ProcessingProvider.LEONARDO,
-      { resolve: vi.fn().mockResolvedValue({ imageCapacity: 100, maxImagesPerBatch: 20, allowanceBillingPeriodKey: null }) },
+      { resolve: vi.fn().mockResolvedValue({ imageCapacity: 100, maxImagesPerBatch: 20 }) },
     );
     const statusService = new ProcessingStatusService({ findOwned: vi.fn() });
     const rateLimiter = new CommandRateLimiter(
@@ -143,7 +143,7 @@ describe("POST /api/jobs", () => {
         { reserveBatchOwned: vi.fn() },
         { schedule: vi.fn() },
         ProcessingProvider.LEONARDO,
-        { resolve: vi.fn().mockResolvedValue({ imageCapacity: 100, maxImagesPerBatch: 20, allowanceBillingPeriodKey: null }) },
+        { resolve: vi.fn().mockResolvedValue({ imageCapacity: 100, maxImagesPerBatch: 20 }) },
       ),
       statusService,
     });

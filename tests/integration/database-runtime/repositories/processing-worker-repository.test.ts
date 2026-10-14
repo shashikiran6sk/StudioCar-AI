@@ -44,6 +44,7 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
   });
 
   afterEach(async () => {
+    await database.creditLedger.deleteMany({ where: { user: { primaryEmail: { in: [OWNER_EMAIL] } } } });
     await database.user.deleteMany({ where: { primaryEmail: OWNER_EMAIL } });
   });
 
@@ -90,7 +91,6 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
       allowance: {
         imageCapacity: 100,
         maxImagesPerBatch: 20,
-        allowanceBillingPeriodKey: null,
       },
       userId: ownerId,
       vehicleId: vehicle.id,
@@ -245,75 +245,18 @@ databaseDescribe("PrismaProcessingWorkerRepository", () => {
     });
   });
 
-  describe("server-side plan resolution", () => {
-    async function claimWithSubscription(
-      batchKey: string,
-      subscription: {
-        currentPeriodEnd: Date;
-        planKey: string;
-        status: "ACTIVE" | "CANCELLED" | "EXPIRED" | "TRIALING";
-      } | null,
-    ) {
-      const record = await createQueuedJob(batchKey);
-      if (subscription) {
-        await database.planSubscription.create({
-          data: {
-            currentPeriodEnd: subscription.currentPeriodEnd,
-            currentPeriodStart: new Date("2099-01-01T00:00:00.000Z"),
-            planKey: subscription.planKey,
-            source: "MANUAL_ADMIN",
-            status: subscription.status,
-            userId: record.ownerId,
-          },
-        });
-      }
-      const claim = await workers.claimJob({
-        claimExpiresAt: CLAIM_EXPIRES_AT,
-        jobId: record.jobId,
-        now: NOW,
-        provider: "LEONARDO",
-        workerId: `${batchKey}-worker`,
-      });
+  describe("server-side paid entitlement resolution", () => {
+    it.each([false, true])("uses durable purchase history (paid=%s)", async (paid) => {
+      const record = await createQueuedJob(`plan-${String(paid)}-batch`);
+      if (paid) await database.creditLedger.create({ data: {
+        userId: record.ownerId, type: "PURCHASE_GRANT", amount: 100, referenceId: record.jobId,
+        createdAt: new Date("2026-01-01"),
+      } });
+      const claim = await workers.claimJob({ claimExpiresAt: CLAIM_EXPIRES_AT, jobId: record.jobId,
+        now: NOW, provider: "LEONARDO", workerId: `plan-${String(paid)}-worker` });
       if (claim.kind !== "CLAIMED") throw new Error("Expected a processing claim.");
-      return claim.job.subscriptionPlanKey;
-    }
-
-    it.each([
-      ["STUDIO_PRO", "ACTIVE"],
-      ["STUDIO_PLUS", "TRIALING"],
-    ] as const)(
-      "reads the owner's current %s plan (%s) in the claim transaction",
-      async (planKey, status) => {
-        await expect(
-          claimWithSubscription(`plan-${planKey}-batch`, {
-            currentPeriodEnd: new Date("2099-12-31T00:00:00.000Z"),
-            planKey,
-            status,
-          }),
-        ).resolves.toBe(planKey);
-      },
-    );
-
-    it("gives no paid plan to an account that never subscribed", async () => {
-      await expect(claimWithSubscription("plan-none-batch", null)).resolves.toBeNull();
+      expect(claim.job.ownedPlanKey).toBe(paid ? "STUDIO_PLUS" : null);
     });
-
-    it.each([
-      ["an expired period", "ACTIVE", "2099-09-19T00:00:00.000Z"],
-      ["a cancelled subscription", "CANCELLED", "2099-12-31T00:00:00.000Z"],
-      ["an expired subscription", "EXPIRED", "2099-12-31T00:00:00.000Z"],
-    ] as const)(
-      "gives no paid plan for %s",
-      async (_case, status, currentPeriodEnd) => {
-        await expect(
-          claimWithSubscription(`plan-lapsed-${status}-batch`, {
-            currentPeriodEnd: new Date(currentPeriodEnd),
-            planKey: "STUDIO_PRO",
-            status,
-          }),
-        ).resolves.toBeNull();
-      },
-    );
   });
 
   it("reports a job whose message arrived before it was queued, then claims it once queued", async () => {

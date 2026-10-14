@@ -23,14 +23,14 @@ describe("usePlanLimits", () => {
         limits={{
           largestAvailableBatch: 20,
           maxImagesPerBatch: 20,
-          planName: "Studio Pro",
+          planName: "StudioCar Plus",
         }}
       >
         <Limits />
       </PlanLimitsProvider>,
     );
 
-    expect(screen.getByText("Studio Pro:20:20")).toBeInTheDocument();
+    expect(screen.getByText("StudioCar Plus:20:20")).toBeInTheDocument();
   });
 
   it("falls back to the smallest allowance outside a provider", () => {

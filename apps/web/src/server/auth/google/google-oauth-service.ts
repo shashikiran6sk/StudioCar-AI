@@ -83,6 +83,7 @@ export class GoogleOAuthService implements GoogleOAuthApplication {
     verifiedPhone?: { challengeId: string; browserBinding: string };
   }): Promise<{
     authorizationUrl: URL;
+    sameOriginRedirect?: true;
     state: string;
     expiresAt: Date;
   }> {
@@ -127,6 +128,9 @@ export class GoogleOAuthService implements GoogleOAuthApplication {
 
     return {
       authorizationUrl: authorizationRequest.authorizationUrl,
+      ...(authorizationRequest.sameOriginRedirect
+        ? { sameOriginRedirect: authorizationRequest.sameOriginRedirect }
+        : {}),
       state: authorizationRequest.state,
       expiresAt,
     };

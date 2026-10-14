@@ -180,8 +180,7 @@ mutation.
 | Destination | What it changes |
 | --- | --- |
 | `/admin` | Bounded counts, accounts by plan, and the recent administrative changes |
-| `/admin/pricing` | Plan prices, allowances, batch limits, storage, and copy |
-| `/admin/subscriptions` | A paid plan assigned by hand, until a billing provider exists |
+| `/admin/pricing` | Free and Plus copy/limits; Plus remains ₹1,999 for 100 credits |
 | `/admin/content` | The public footer's social links |
 | `/admin/admins` | Who has administrator access |
 
@@ -191,7 +190,7 @@ Authorization is a row in `UserRole`, never an environment value.
 recorded in `AppConfig`, so the value is inert afterwards and cannot re-grant a
 revoked administrator. Everyone else is granted from inside the product.
 
-Every grant, revocation, plan edit, subscription assignment, and footer-link
+Every grant, revocation, plan edit, and footer-link
 change writes an `AuditLog` entry naming the administrator who made it.
 
 See [`docs/security.md`](./docs/security.md) for the full secret-ownership and
@@ -206,3 +205,7 @@ Next.js uses Vercel JSON logs and server-side Sentry; image workers use CloudWat
 logs/metrics and Sentry. Request and existing batch IDs follow durable SQS
 publication, the Leonardo.Ai provider call and private S3 output. See [the observability guide](docs/observability.md)
 for metrics, dashboards, alarms, deployment variables and correlation queries.
+
+## Billing
+
+StudioCar Plus is ₹1,999 for 100 cumulative, non-expiring image credits. Purchases use Razorpay Orders, captured-payment webhooks and an immutable credit ledger. Repeated purchases add to the balance. Free remains 15 lifetime images. Configuration, staged migration, recovery and merchant testing: [billing runbook](docs/razorpay-billing.md).

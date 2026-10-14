@@ -7,8 +7,7 @@ const overview = {
   administratorCount: 2,
   userCount: 1_240,
   activePlanCount: 4,
-  activeSubscriptionCount: 3,
-  manualSubscriptionCount: 1,
+  paidAccountCount: 3,
   enabledSocialLinkCount: 0,
 };
 

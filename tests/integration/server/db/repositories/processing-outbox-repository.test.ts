@@ -112,7 +112,6 @@ databaseDescribe("PrismaProcessingOutboxRepository", () => {
       allowance: {
         imageCapacity: 100,
         maxImagesPerBatch: 20,
-        allowanceBillingPeriodKey: null,
       },
       userId: owner.id,
       vehicleId: vehicle.id,

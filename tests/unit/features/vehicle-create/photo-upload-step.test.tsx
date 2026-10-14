@@ -280,7 +280,7 @@ describe("PhotoUploadStep", () => {
   it("shows the limit sentence it is given rather than a stored one", () => {
     render(
       <PhotoUploadStep
-        limitLabel="Studio Plus plan · Up to 20 images per batch."
+        limitLabel="StudioCar Plus plan · Up to 20 images per batch."
         maximumPhotos={20}
         onBack={vi.fn()}
         onContinue={vi.fn()}
@@ -289,7 +289,7 @@ describe("PhotoUploadStep", () => {
     );
 
     expect(
-      screen.getByText("Studio Plus plan · Up to 20 images per batch."),
+      screen.getByText("StudioCar Plus plan · Up to 20 images per batch."),
     ).toBeInTheDocument();
     expect(screen.queryByText(/Up to 3 images/)).not.toBeInTheDocument();
   });

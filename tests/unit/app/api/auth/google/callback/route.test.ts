@@ -48,7 +48,7 @@ describe("GET /api/auth/google/callback", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe(
-      "https://app.studiocar.test/dashboard",
+      "/dashboard",
     );
   });
 });

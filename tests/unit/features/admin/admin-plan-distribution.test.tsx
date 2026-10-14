@@ -8,13 +8,13 @@ describe("AdminPlanDistribution", () => {
     render(
       <AdminPlanDistribution
         plans={[
-          { accountCount: 1_200, planName: "Studio Pro" },
-          { accountCount: 4, planName: "Studio Plus" },
+          { accountCount: 1_200, planName: "Free" },
+          { accountCount: 4, planName: "StudioCar Plus" },
         ]}
       />,
     );
 
-    expect(screen.getByText("Studio Pro")).toBeInTheDocument();
+    expect(screen.getByText("Free")).toBeInTheDocument();
     expect(screen.getByText("1,200")).toBeInTheDocument();
     expect(screen.getByText("4")).toBeInTheDocument();
   });

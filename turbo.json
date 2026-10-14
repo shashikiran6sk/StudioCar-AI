@@ -4,7 +4,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": ["APP_ENV", "S3_ENDPOINT", "SENTRY_DSN", "SENTRY_RELEASE", "HTTP_CLOUDWATCH_METRICS_ENABLED", "AWS_REGION"],
+      "env": ["APP_ENV", "S3_ENDPOINT", "SENTRY_DSN", "SENTRY_RELEASE", "HTTP_CLOUDWATCH_METRICS_ENABLED", "AWS_REGION", "RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "RAZORPAY_WEBHOOK_SECRET"],
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/.env.local"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
@@ -15,7 +15,7 @@
     "e2e": {
       "dependsOn": ["build"],
       "cache": false,
-      "env": ["APP_ENV", "DATABASE_URL"],
+      "env": ["APP_ENV", "DATABASE_URL", "RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "RAZORPAY_WEBHOOK_SECRET"],
       "outputs": ["playwright-report/**", "test-results/**"]
     },
     "lint": {

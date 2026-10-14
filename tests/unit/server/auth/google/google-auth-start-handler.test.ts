@@ -15,6 +15,30 @@ function application(): GoogleOAuthApplication {
 }
 
 describe("handleGoogleAuthStart", () => {
+  it.each([
+    "http://localhost:3000",
+    "https://studiocar-local.trycloudflare.com",
+  ])("keeps a fake callback on the browser origin %s", async (browserOrigin) => {
+    const auth = application();
+    vi.mocked(auth.start).mockResolvedValue({
+      authorizationUrl: new URL("http://localhost:3000/api/auth/google/callback?code=synthetic&state=synthetic"),
+      sameOriginRedirect: true,
+      state: "s".repeat(43),
+      expiresAt: new Date("2030-01-01T00:00:00.000Z"),
+    });
+    const response = await handleGoogleAuthStart(
+      new Request("http://localhost:3000/api/auth/google/start", {
+        headers: { "x-forwarded-host": "attacker.example", "x-forwarded-proto": "https" },
+      }),
+      auth,
+      false,
+    );
+    const location = response.headers.get("location");
+    expect(location).toBe("/api/auth/google/callback?code=synthetic&state=synthetic");
+    expect(new URL(location ?? "", browserOrigin).origin).toBe(browserOrigin);
+    expect(response.headers.get("set-cookie")).toContain("studiocar_google_oauth=");
+  });
+
   it("validates the return path before starting authentication", async () => {
     const auth = application();
     const response = await handleGoogleAuthStart(

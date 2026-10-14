@@ -1,7 +1,7 @@
 import type { PlanCatalogEntry } from "@studiocar/contracts";
 import { Button } from "@studiocar/ui";
 
-import { BillingUnavailableAction } from "./billing-unavailable-action";
+import { BillingCheckoutAction } from "./billing-checkout-action";
 import { USAGE_BILLING_CURRENT_PLAN_LABEL } from "./usage-billing.constants";
 import { describePlanAction } from "../../server/plans/describe-plan-action";
 import { formatPlanCadence } from "../../server/plans/format-plan-cadence";
@@ -31,13 +31,14 @@ export function BillingPlanCard({ current, plan }: BillingPlanCardProps) {
           <li key={feature}>✓ {feature}</li>
         ))}
       </ul>
-      {current ? (
-        <Button disabled>{USAGE_BILLING_CURRENT_PLAN_LABEL}</Button>
+      {plan.billingInterval === "NONE" ? (
+        <Button disabled>{current ? USAGE_BILLING_CURRENT_PLAN_LABEL : "Free plan"}</Button>
+      ) : !plan.active || !plan.purchasable ? (
+        <Button disabled>Purchases temporarily unavailable</Button>
       ) : (
-        <BillingUnavailableAction
-          label={describePlanAction(plan)}
-          planName={plan.displayName}
-          variant={plan.billingInterval === "MONTHLY" ? "blue" : "secondary"}
+        <BillingCheckoutAction
+          label={current ? "Buy 100 More Credits" : describePlanAction(plan)}
+          variant="secondary"
         />
       )}
     </article>

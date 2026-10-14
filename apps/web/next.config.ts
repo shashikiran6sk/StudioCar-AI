@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { parseDevServerEnvironment } from "@studiocar/config";
 
 import { loadRepositoryEnvironment } from "./src/server/environment/load-repository-environment";
 import { createSecurityHeaders } from "./src/server/security/create-security-headers";
@@ -10,6 +11,7 @@ import { SECURITY_HEADERS_SOURCE } from "./src/server/security/security-headers.
 loadRepositoryEnvironment(process.cwd());
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: parseDevServerEnvironment(process.env).DEV_ALLOWED_ORIGINS,
   headers: () =>
     Promise.resolve([
       {

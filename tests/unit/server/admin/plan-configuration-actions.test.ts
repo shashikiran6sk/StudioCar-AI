@@ -28,15 +28,15 @@ function form(overrides: Record<string, string> = {}): FormData {
   const data = new FormData();
   const fields: Record<string, string> = {
     active: "on",
-    billingInterval: "MONTHLY",
+    billingInterval: "ONE_TIME",
     description: "For high-volume teams.",
-    displayName: "Studio Pro",
+    displayName: "StudioCar Plus",
     displayOrder: "2",
-    features: "500 images each month",
-    includedImages: "500",
+    features: "100 non-expiring credits",
+    includedImages: "100",
     maxImagesPerBatch: "20",
-    planKey: "STUDIO_PRO",
-    priceRupees: "4999",
+    planKey: "STUDIO_PLUS",
+    priceRupees: "1999",
     segment: "Teams",
     storageGigabytes: "",
     ...overrides,
@@ -64,8 +64,8 @@ describe("savePlanConfigurationAction", () => {
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({
         actorUserId: ADMIN_ID,
-        planKey: "STUDIO_PRO",
-        update: expect.objectContaining({ priceMinorUnits: 499_900 }),
+        planKey: "STUDIO_PLUS",
+        update: expect.objectContaining({ priceMinorUnits: 199_900 }),
       }),
     );
   });

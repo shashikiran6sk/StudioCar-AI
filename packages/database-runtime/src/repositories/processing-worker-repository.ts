@@ -19,8 +19,10 @@ import {
   UsageEventType,
   VehicleStatus,
 } from "../../generated/prisma/client";
-import { findCurrentSubscriptionPlanKey } from "./find-current-subscription-plan-key";
+import { findOwnedPlanKey } from "./find-owned-plan-key";
 import { toOutputFormat } from "./to-output-format";
+import { releaseCreditAllocation } from "./release-credit-allocation";
+import { settleCreditAllocation } from "./settle-credit-allocation";
 
 const VEHICLE_COMPLETION_LOCK_PREFIX = "vehicle-processing-completion:";
 
@@ -137,6 +139,7 @@ export class PrismaProcessingWorkerRepository
             workerId: null,
           },
         });
+        await releaseCreditAllocation(transaction, job.id);
         await this.updateVehicleStatus(transaction, job.vehicleId);
         return { kind: "TERMINAL" };
       }
@@ -197,10 +200,9 @@ export class PrismaProcessingWorkerRepository
           status: ProcessingAttemptStatus.STARTED,
         },
       });
-      const subscriptionPlanKey = await findCurrentSubscriptionPlanKey(
+      const ownedPlanKey = await findOwnedPlanKey(
         transaction,
         job.userId,
-        input.now,
       );
 
       return {
@@ -214,7 +216,7 @@ export class PrismaProcessingWorkerRepository
           options: StoredProcessingOptionsSchema.parse(job.options),
           originalObjectKey: job.imageAsset.originalObjectKey,
           sizeBytes: job.imageAsset.sizeBytes,
-          subscriptionPlanKey,
+          ownedPlanKey,
           userId: job.userId,
           vehicleId: job.vehicleId,
         },
@@ -278,6 +280,7 @@ export class PrismaProcessingWorkerRepository
           userId: job.userId,
         },
       });
+      await settleCreditAllocation(transaction, job.id);
       await transaction.processingAttempt.updateMany({
         where: {
           attemptNumber: input.attemptNumber,
@@ -397,6 +400,7 @@ export class PrismaProcessingWorkerRepository
           workerId: null,
         },
       });
+      await releaseCreditAllocation(transaction, job.id);
       if (
         input.errorCode === PROCESSING_FAILURE_CODES.INVALID_IMAGE ||
         input.errorCode === PROCESSING_FAILURE_CODES.NON_CAR_IMAGE ||

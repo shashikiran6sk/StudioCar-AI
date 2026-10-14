@@ -5,7 +5,6 @@ import { formatPlanCadence } from "../../../../apps/web/src/server/plans/format-
 describe("formatPlanCadence", () => {
   it("names each interval the way a plan card reads it", () => {
     expect(formatPlanCadence("NONE")).toBe("forever");
-    expect(formatPlanCadence("ONE_TIME")).toBe("one-time");
-    expect(formatPlanCadence("MONTHLY")).toBe("/ month");
+    expect(formatPlanCadence("ONE_TIME")).toBe("One-time payment");
   });
 });

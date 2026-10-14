@@ -3,7 +3,6 @@ import {
   UsageBillingSummarySchema,
   type UsageBillingSummary,
 } from "@studiocar/contracts";
-import { createUsageBillingPeriodKey } from "@studiocar/processing";
 
 import type {
   PlanCatalogPort,
@@ -52,9 +51,7 @@ export class UsageBillingService {
     const currentPlan = await this.getCurrentPlan(userId, now);
     const record = await this.repository.getOwnedSummary(
       userId,
-      currentPlan.allowanceScope === "LIFETIME"
-        ? null
-        : createUsageBillingPeriodKey(now),
+      null,
       now,
     );
 

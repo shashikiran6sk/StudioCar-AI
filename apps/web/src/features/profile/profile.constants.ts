@@ -36,3 +36,16 @@ export const PROFILE_LINK_TAKEN_MESSAGE =
 export const PROFILE_LINK_GENERIC_ERROR =
   "That sign-in method could not be connected. Please try again.";
 export const PROFILE_PATH_FOR_RETURN = "/settings/profile";
+
+export const PROFILE_PAYMENT_HISTORY_ID = "payment-history";
+export const PROFILE_PAYMENT_HISTORY_LINK = `${PROFILE_PATH_FOR_RETURN}#${PROFILE_PAYMENT_HISTORY_ID}`;
+export const PROFILE_PAYMENT_HISTORY_TITLE = "Payment history";
+export const PROFILE_PAYMENT_HISTORY_EMPTY = "No payments yet. Your purchases will appear here.";
+export const PROFILE_PAYMENT_HISTORY_DESCRIPTION = "Your latest 100 purchases, including pending and failed payments.";
+export const PROFILE_HISTORICAL_PURCHASE_LABEL = "Previous purchase";
+export const PROFILE_PAYMENT_HISTORY_COLUMNS = {
+  date: "Date", purchase: "Purchase", amount: "Amount", status: "Status", reference: "Reference",
+};
+export const PROFILE_PAYMENT_ORDER_PREFIX = "Order:";
+export const PROFILE_PAYMENT_PROVIDER_PREFIX = "Payment:";
+export const PROFILE_PAYMENT_PURCHASE_PREFIX = "Purchase:";

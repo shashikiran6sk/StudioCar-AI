@@ -13,6 +13,7 @@ import type { ActiveSession, PreparedSession } from "../session-service";
 
 export interface GoogleAuthorizationRequest {
   authorizationUrl: URL;
+  sameOriginRedirect?: true;
   state: string;
   codeVerifier: string;
   nonce: string;
@@ -111,6 +112,7 @@ export interface GoogleOAuthApplication {
     },
   ): Promise<{
     authorizationUrl: URL;
+    sameOriginRedirect?: true;
     state: string;
     expiresAt: Date;
   }>;

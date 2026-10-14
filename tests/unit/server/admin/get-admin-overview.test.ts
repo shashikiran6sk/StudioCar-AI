@@ -25,8 +25,7 @@ describe("getAdminOverview", () => {
       administratorCount: 2,
       userCount: 40,
       activePlanCount: 4,
-      activeSubscriptionCount: 3,
-      manualSubscriptionCount: 1,
+      paidAccountCount: 3,
       enabledSocialLinkCount: 0,
     };
     summarise.mockResolvedValue(overview);

@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { describe, expect, it, vi } from "vitest";
 
 import ProfilePage from "../../../../../../apps/web/src/app/(app)/settings/profile/page";
+import { getPaymentHistory } from "../../../../../../apps/web/src/server/billing/get-payment-history";
 import { getCurrentSession } from "../../../../../../apps/web/src/server/auth/get-current-session";
 import { getProfileService } from "../../../../../../apps/web/src/server/profile/profile-runtime";
 import { ProfileService } from "../../../../../../apps/web/src/server/profile/profile-service";
@@ -25,6 +26,10 @@ vi.mock("../../../../../../apps/web/src/server/auth/get-current-session", () => 
 
 vi.mock("../../../../../../apps/web/src/server/profile/profile-runtime", () => ({
   getProfileService: vi.fn(),
+}));
+
+vi.mock("../../../../../../apps/web/src/server/billing/get-payment-history", () => ({
+  getPaymentHistory: vi.fn(async () => []),
 }));
 
 describe("ProfilePage", () => {
@@ -70,6 +75,8 @@ describe("ProfilePage", () => {
     expect(
       screen.getByRole("heading", { name: "Profile & security" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Payment history" })).toBeInTheDocument();
+    expect(getPaymentHistory).toHaveBeenCalledWith("user-1");
     expect(screen.getAllByText("priya@example.com")).toHaveLength(2);
     expect(
       screen.getByRole("button", { name: "Log out all devices" }),

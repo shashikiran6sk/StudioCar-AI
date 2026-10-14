@@ -19,16 +19,11 @@ export const UsageQuerySchema = CursorPaginationSchema.extend({
 export const PlanKeySchema = z.enum([
   "FREE",
   "STUDIO_PLUS",
-  "STUDIO_PRO",
 ]);
 
-/**
- * `LIFETIME` allowances never refill; `BILLING_PERIOD` allowances refill each
- * calendar month.
- */
+/** Lifetime allowances never expire or refill. */
 export const PlanAllowanceScopeSchema = z.enum([
   "LIFETIME",
-  "BILLING_PERIOD",
 ]);
 
 export const UsageBillingSummarySchema = z

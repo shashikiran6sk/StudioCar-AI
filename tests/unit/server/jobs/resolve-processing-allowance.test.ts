@@ -14,7 +14,7 @@ const { resolveProcessingAllowance } = await import(
 const now = new Date("2026-09-22T10:00:00.000Z");
 
 function summary(
-  allowanceScope: "LIFETIME" | "BILLING_PERIOD",
+  allowanceScope: "LIFETIME",
   imageCapacity: number,
   maxImagesPerBatch: number,
 ) {
@@ -34,7 +34,6 @@ describe("resolveProcessingAllowance", () => {
     await expect(resolveProcessingAllowance("user-1", now)).resolves.toEqual({
       imageCapacity: 15,
       maxImagesPerBatch: 5,
-      allowanceBillingPeriodKey: null,
     });
   });
 
@@ -43,19 +42,18 @@ describe("resolveProcessingAllowance", () => {
 
     await expect(
       resolveProcessingAllowance("user-1", now),
-    ).resolves.toMatchObject({ allowanceBillingPeriodKey: null });
+    ).resolves.toMatchObject({ imageCapacity: 15, maxImagesPerBatch: 5 });
   });
 
-  it("scopes a billing-period allowance to the current month, so it refills", async () => {
+  it("keeps paid credit packs independent of calendar months", async () => {
     getCurrentPlan.mockResolvedValue(
-      summary("BILLING_PERIOD", 500, 20),
+      summary("LIFETIME", 100, 20),
     );
 
     await expect(
       resolveProcessingAllowance("user-1", now),
     ).resolves.toMatchObject({
-      allowanceBillingPeriodKey: "2026-09",
-      imageCapacity: 500,
+      imageCapacity: 100,
       maxImagesPerBatch: 20,
     });
   });

@@ -45,6 +45,8 @@ const billing = new UsageBillingService(new PrismaUsageBillingRepository(databas
 const ownerIds: string[] = [];
 beforeAll(() => vi.spyOn(logger, "log").mockReturnValue(true));
 afterAll(async () => {
+  await database.creditAllocation.deleteMany({ where: { userId: { in: ownerIds } } });
+  await database.creditLedger.deleteMany({ where: { userId: { in: ownerIds } } });
   await database.user.deleteMany({ where: { id: { in: ownerIds } } });
   await database.$disconnect();
   vi.restoreAllMocks();
@@ -55,10 +57,7 @@ it.each([1, 5, 20])("records %i-image acceptance separately from last queue ackn
     const owner = await database.user.create({ data: {} });
     ownerIds.push(owner.id);
     const now = new Date();
-    await database.planSubscription.create({ data: {
-      userId: owner.id, planKey: "STUDIO_PRO", status: "ACTIVE", source: "MANUAL_ADMIN",
-      currentPeriodStart: new Date(now.getTime() - 60_000), currentPeriodEnd: new Date(now.getTime() + 86_400_000),
-    } });
+    await database.creditLedger.create({ data: { userId: owner.id, type: "PURCHASE_GRANT", amount: 100, referenceId: owner.id } });
     const issued = await sessions.issue(owner.id);
     const vehicle = await database.vehicle.create({ data: { userId: owner.id, name: "Local performance fixture" } });
     const assetIds = Array.from({ length: size }, () => randomUUID());
@@ -99,7 +98,7 @@ it.each([1, 5, 20])("records %i-image acceptance separately from last queue ackn
       resolve: async (userId) => {
         const plan = await billing.getCurrentPlan(userId, now);
         return { imageCapacity: plan.imageCapacity, maxImagesPerBatch: plan.maxImagesPerBatch,
-          allowanceBillingPeriodKey: plan.allowanceScope === "LIFETIME" ? null : now.toISOString().slice(0, 7) };
+        };
       },
     });
     const limiter = new CommandRateLimiter(new PrismaCommandRateLimitRepository(database), {

@@ -42,6 +42,33 @@ function application(): GoogleOAuthApplication {
 }
 
 describe("handleGoogleAuthCallback", () => {
+  it("stays on the public tunnel after a successful callback handled on localhost", async () => {
+    const auth = application();
+    const response = await handleGoogleAuthCallback(
+      callbackRequest(`http://localhost:3000/api/auth/google/callback?code=code&state=${state}`),
+      auth,
+      false,
+    );
+    const location = response.headers.get("location");
+    expect(location).toBe("/inventory");
+    expect(new URL(location ?? "", "https://studiocar-local.trycloudflare.com").origin).toBe(
+      "https://studiocar-local.trycloudflare.com",
+    );
+    expect(response.headers.get("set-cookie")).toContain("studiocar_session=");
+    expect(auth.complete).toHaveBeenCalledOnce();
+  });
+
+  it("rejects missing state cookies without leaving the tunnel or exchanging a code", async () => {
+    const auth = application();
+    const response = await handleGoogleAuthCallback(
+      new Request(`http://localhost:3000/api/auth/google/callback?code=code&state=${state}`),
+      auth,
+      false,
+    );
+    expect(response.headers.get("location")).toBe("/auth/error?code=invalid_callback");
+    expect(auth.complete).not.toHaveBeenCalled();
+  });
+
   it("clears temporary phone proof after successful Google onboarding", async () => {
     const auth = application();
     vi.mocked(auth.complete).mockResolvedValue({
@@ -93,7 +120,7 @@ describe("handleGoogleAuthCallback", () => {
       false,
     );
     expect(response.headers.get("location")).toBe(
-      "https://app.studiocar.test/login?phoneSetup=cancelled",
+      "/login?phoneSetup=cancelled",
     );
     expect(auth.complete).not.toHaveBeenCalled();
   });
@@ -128,7 +155,7 @@ describe("handleGoogleAuthCallback", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe(
-      "https://app.studiocar.test/inventory",
+      "/inventory",
     );
     expect(response.headers.get("set-cookie")).toContain(
       "__Host-studiocar_session=tttt",

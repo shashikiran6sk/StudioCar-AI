@@ -1,8 +1,7 @@
 import type { PrismaClient } from "@studiocar/database-runtime";
 import {
-  findCurrentSubscriptionPlanKey,
+  findOwnedPlanKey,
   ImageAssetStatus,
-  SubscriptionStatus,
   UsageEventType,
 } from "@studiocar/database-runtime";
 
@@ -17,33 +16,32 @@ export class PrismaUsageBillingRepository {
   public constructor(private readonly database: PrismaClient) {}
 
   /**
-   * The active subscription's plan, or null when the tenant is on the default
+   * The lifetime purchase entitlement's plan, or null when the tenant is on the default
    * plan. Resolved separately because the plan decides how its own allowance
    * is counted.
    */
-  public findOwnedPlanKey(userId: string, now: Date): Promise<string | null> {
-    return findCurrentSubscriptionPlanKey(this.database, userId, now);
+  public findOwnedPlanKey(userId: string): Promise<string | null> {
+    return findOwnedPlanKey(this.database, userId);
   }
 
   /**
-   * A lifetime allowance counts every charged image the tenant has ever had,
-   * so it deliberately ignores the billing period. A billing-period allowance
-   * refills monthly and is scoped to the current one.
+   * Free lifetime usage remains separate from purchased jobs. Optional period
+   * filtering is reporting only; it never renews an allowance.
    */
   public async getOwnedSummary(
     userId: string,
     billingPeriodKey: string | null,
-    now: Date,
   ): Promise<UsageBillingRepositoryRecord> {
     const period =
       billingPeriodKey === null ? {} : { billingPeriodKey };
 
-    const [images, sessions, originals, processed, subscription] =
+    const [images, sessions, originals, processed, ownedPlanKey] =
       await Promise.all([
         this.database.usageEvent.aggregate({
           where: {
             ...period,
             type: UsageEventType.BACKGROUND_REMOVAL_COMPLETED,
+            OR: [{ jobId: null }, { job: { creditAllocation: null } }],
             userId,
           },
           _sum: { quantity: true },
@@ -64,22 +62,12 @@ export class PrismaUsageBillingRepository {
           where: { userId },
           _sum: { sizeBytes: true },
         }),
-        this.database.planSubscription.findFirst({
-          where: {
-            currentPeriodEnd: { gt: now },
-            status: {
-              in: [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING],
-            },
-            userId,
-          },
-          orderBy: [{ currentPeriodEnd: "desc" }, { id: "desc" }],
-          select: { planKey: true },
-        }),
+        findOwnedPlanKey(this.database, userId),
       ]);
 
     return {
       imageUsage: images._sum.quantity ?? 0,
-      planKey: subscription?.planKey ?? null,
+      planKey: ownedPlanKey,
       storageUsedBytes:
         (originals._sum.sizeBytes ?? 0n) +
         (processed._sum.sizeBytes ?? 0n),

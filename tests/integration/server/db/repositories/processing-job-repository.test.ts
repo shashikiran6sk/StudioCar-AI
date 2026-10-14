@@ -76,7 +76,6 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
       allowance: {
         imageCapacity: 100,
         maxImagesPerBatch: 20,
-        allowanceBillingPeriodKey: null,
       },
       userId: owner.id,
       vehicleId: vehicle.id,
@@ -173,7 +172,6 @@ databaseDescribe("PrismaProcessingJobRepository", () => {
         allowance: {
           imageCapacity: 100,
           maxImagesPerBatch: 20,
-          allowanceBillingPeriodKey: null,
         },
         userId: owner.id,
         vehicleId: vehicle.id,
@@ -266,7 +264,6 @@ databaseDescribe("PrismaProcessingJobRepository plan limits", () => {
     allowance: {
       imageCapacity: number;
       maxImagesPerBatch: number;
-      allowanceBillingPeriodKey: string | null;
     },
     batchKey: string,
   ) {
@@ -297,7 +294,6 @@ databaseDescribe("PrismaProcessingJobRepository plan limits", () => {
   const freeAllowance = {
     imageCapacity: 15,
     maxImagesPerBatch: 5,
-    allowanceBillingPeriodKey: null,
   };
 
   it("serializes quota consumption across different vehicles of one tenant", async () => {
@@ -503,7 +499,6 @@ databaseDescribe("PrismaProcessingJobRepository studio versions", () => {
   const allowance = {
     imageCapacity: 100,
     maxImagesPerBatch: 20,
-    allowanceBillingPeriodKey: null,
   };
 
   beforeAll(() => {

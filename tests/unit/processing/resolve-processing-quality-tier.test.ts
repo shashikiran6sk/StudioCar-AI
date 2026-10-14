@@ -9,7 +9,7 @@ describe("resolveProcessingQualityTier", () => {
     expect(resolveProcessingQualityTier("FREE")).toBe("STANDARD");
   });
 
-  it.each(["STUDIO_PLUS", "STUDIO_PRO"])(
+  it.each(["STUDIO_PLUS"])(
     "gives the paid plan %s the high (full resolution) tier",
     (planKey) => {
       expect(resolveProcessingQualityTier(planKey)).toBe("HIGH");
@@ -17,7 +17,7 @@ describe("resolveProcessingQualityTier", () => {
   );
 
   it.each<[string | null, string]>([
-    [null, "no current subscription"],
+    [null, "no purchase history"],
     ["RETIRED_STUDIO_PLUS", "a retired plan"],
     ["studio_pro", "a key in the wrong case"],
     ["", "an empty key"],

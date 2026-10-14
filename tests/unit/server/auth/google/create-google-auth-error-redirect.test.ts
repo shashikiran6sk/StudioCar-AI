@@ -13,7 +13,7 @@ describe("createGoogleAuthErrorRedirect", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe(
-      "https://app.studiocar.test/auth/error?code=provider_failed",
+      "/auth/error?code=provider_failed",
     );
     expect(response.headers.get("set-cookie")).toContain(
       "__Host-studiocar_google_oauth=",

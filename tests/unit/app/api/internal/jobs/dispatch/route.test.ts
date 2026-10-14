@@ -47,7 +47,7 @@ describe("POST /api/internal/jobs/dispatch", () => {
       { reserveBatchOwned: vi.fn() },
       { schedule: vi.fn() },
       ProcessingProvider.LEONARDO,
-      { resolve: vi.fn().mockResolvedValue({ imageCapacity: 100, maxImagesPerBatch: 20, allowanceBillingPeriodKey: null }) },
+      { resolve: vi.fn().mockResolvedValue({ imageCapacity: 100, maxImagesPerBatch: 20 }) },
     );
     const dispatchToken = "processing-dispatch-token-at-least-32-characters";
     const rateLimiter = new CommandRateLimiter(
