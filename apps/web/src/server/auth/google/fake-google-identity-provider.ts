@@ -52,7 +52,7 @@ export class FakeGoogleIdentityProvider implements GoogleIdentityProvider {
     );
     authorizationUrl.searchParams.set(GOOGLE_OAUTH_STATE_QUERY_KEY, state);
 
-    return { authorizationUrl, state, nonce, codeVerifier };
+    return { authorizationUrl, sameOriginRedirect: true, state, nonce, codeVerifier };
   }
 
   public async exchangeAuthorizationCode(

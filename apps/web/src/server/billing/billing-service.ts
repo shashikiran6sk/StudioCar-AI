@@ -6,7 +6,6 @@ import type { VerifyBillingOrder } from "@studiocar/contracts";
 
 import { RazorpayClient } from "./providers/razorpay/razorpay-client";
 import { verifyRazorpaySignature } from "./providers/razorpay/verify-signature";
-import { getBillingBusiness } from "./billing-business";
 
 export class BillingService {
   private readonly provider: RazorpayClient;
@@ -19,8 +18,6 @@ export class BillingService {
   }
 
   public async createOrder(userId: string) {
-    const business = await this.database.$transaction(getBillingBusiness);
-    if (business.gstRegistered) throw new Error("GST invoicing must be configured before checkout.");
     const plan = await this.database.planConfig.findUnique({ where: { planKey: "STUDIO_PLUS" } });
     if (!plan || !plan.active || !plan.purchasable || plan.billingInterval !== "ONE_TIME" || plan.currency !== "INR" || plan.priceMinorUnits !== PLUS_PRODUCT.amountPaise || plan.includedImages !== PLUS_PRODUCT.credits) {
       throw new Error("Studio Plus is unavailable.");

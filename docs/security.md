@@ -108,7 +108,7 @@ work, never over-grant it.
 
 ## One-time purchase security
 
-Plus order creation and verification require authentication, same-origin validation and durable per-tenant rate limits. All financial effects require a verified captured payment matching the authoritative order, ₹1,999 INR and 100 credits. Webhooks verify raw bytes with timing-safe HMAC comparison before parsing. Grants, payment finalization and immutable receipts commit atomically; event, payment, ledger and receipt uniqueness plus order/tenant locks prevent duplicate grants. Failed financial events remain retryable. Refunds retain receipts and require explicit credit reconciliation. See [the billing runbook](razorpay-billing.md).
+Plus order creation and verification require authentication, same-origin validation and durable per-tenant rate limits. All financial effects require a verified captured payment matching the authoritative order, ₹1,999 INR and 100 credits. Webhooks verify raw bytes with timing-safe HMAC comparison before parsing. Grants and payment finalization commit atomically; event, payment, ledger and receipt uniqueness plus order/tenant locks prevent duplicate grants. Failed financial events remain retryable. No new receipts are generated. Owner-only payment history appears on Profile; historical receipts remain preserved. Refunds require explicit credit reconciliation. See [the billing runbook](razorpay-billing.md).
 
 ## Public footer links
 

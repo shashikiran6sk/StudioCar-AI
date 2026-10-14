@@ -18,23 +18,7 @@ databaseDescribe("Razorpay webhook effects", () => {
     database = createDatabaseClient({ connectionString: databaseUrl, log: [] });
     const user = await database.user.create({ data: { primaryEmail: `billing-${suffix}@example.test`, displayName: "Billing Customer" } });
     userId = user.id;
-    await database.appConfig.upsert({
-      where: { key: "billing-business" },
-      create: { key: "billing-business", value: {
-        businessType: "SOLE_PROPRIETORSHIP", legalProprietorName: "Example Proprietor",
-        legalBusinessName: "Example Business", tradingName: "Example Trade",
-        productBrandName: "StudioCar AI", businessAddress: "Example address",
-        billingEmail: "billing@example.test", supportEmail: "support@example.test",
-        gstRegistered: false, gstin: null,
-      } },
-      update: { value: {
-        businessType: "SOLE_PROPRIETORSHIP", legalProprietorName: "Example Proprietor",
-        legalBusinessName: "Example Business", tradingName: "Example Trade",
-        productBrandName: "StudioCar AI", businessAddress: "Example address",
-        billingEmail: "billing@example.test", supportEmail: "support@example.test",
-        gstRegistered: false, gstin: null,
-      } },
-    });
+
   });
 
   afterAll(async () => {
@@ -50,7 +34,7 @@ databaseDescribe("Razorpay webhook effects", () => {
     await database.$disconnect();
   });
 
-  it("grants exactly one Plus purchase and receipt for duplicate captured events", async () => {
+  it("grants one Plus purchase without receipts for duplicate captured events", async () => {
     const orderId = `order_${suffix}`;
     const paymentId = `pay_${suffix}`;
     const payment = await database.payment.create({
@@ -63,7 +47,7 @@ databaseDescribe("Razorpay webhook effects", () => {
     await Promise.all([`event_plus_${suffix}`, `event_plus_${suffix}`, `event_plus_retry_${suffix}`].map((id) => processRazorpayWebhook(database, id, event)));
     expect(await database.creditLedger.count({ where: { userId, type: "PURCHASE_GRANT" } })).toBe(1);
     expect(await database.creditLedger.aggregate({ where: { userId }, _sum: { amount: true } })).toMatchObject({ _sum: { amount: 100 } });
-    expect(await database.receipt.count({ where: { paymentId: payment.id } })).toBe(1);
+    expect(await database.receipt.count({ where: { paymentId: payment.id } })).toBe(0);
     expect((await database.payment.findUniqueOrThrow({ where: { id: payment.id } })).status).toBe("PAID");
   });
 
@@ -125,7 +109,7 @@ databaseDescribe("Razorpay webhook effects", () => {
     await processRazorpayWebhook(database, `lateFailed${suffix}`, failed);
     expect((await database.payment.findUniqueOrThrow({ where: { id: payment.id } })).status).toBe("PAID");
   });
-  it("retains receipts and spent credits on refunds and cannot re-grant a refunded payment", async () => {
+  it("retains financial history and spent credits on refunds and cannot re-grant a refunded payment", async () => {
     const payment = await order("refund"); if (!payment.razorpayOrderId) throw new Error("Expected order");
     const capture = captured(payment.razorpayOrderId, "refund");
     await processRazorpayWebhook(database, `captureRefund${suffix}`, capture);
@@ -136,7 +120,7 @@ databaseDescribe("Razorpay webhook effects", () => {
     await Promise.all([0, 1].map((n) => processRazorpayWebhook(database, `refund${String(n)}${suffix}`, refund)));
     await processRazorpayWebhook(database, `captureRefundAgain${suffix}`, capture);
     expect((await database.payment.findUniqueOrThrow({ where: { id: payment.id } })).status).toBe("REFUNDED");
-    expect(await database.receipt.count({ where: { paymentId: payment.id } })).toBe(1);
+    expect(await database.receipt.count({ where: { paymentId: payment.id } })).toBe(0);
     expect(await database.auditLog.count({ where: { resourceId: payment.id, action: "BILLING_REFUND_RECONCILIATION_REQUIRED" } })).toBe(1);
     expect((await database.creditLedger.aggregate({ where: { userId }, _sum: { amount: true } }))._sum.amount).toBe(before);
     expect(await database.creditLedger.count({ where: { referenceId: payment.id } })).toBe(1);

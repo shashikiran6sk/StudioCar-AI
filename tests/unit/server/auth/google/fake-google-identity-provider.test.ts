@@ -41,6 +41,7 @@ describe("FakeGoogleIdentityProvider", () => {
     expect(request.authorizationUrl.searchParams.get("state")).toBe(request.state);
     expect(request.authorizationUrl.searchParams.get("code")).toBeTruthy();
     expect(request.authorizationUrl.hostname).not.toContain("google");
+    expect(request.sameOriginRedirect).toBe(true);
   });
 
   it("resolves the fixed local identity for its own authorization code", async () => {
@@ -142,6 +143,7 @@ describe("FakeGoogleIdentityProvider", () => {
     );
 
     const started = await service.start({ returnTo: "/dashboard" });
+    expect(started.sameOriginRedirect).toBe(true);
     const completion = await service.complete({
       callbackUrl: started.authorizationUrl,
       state: started.state,

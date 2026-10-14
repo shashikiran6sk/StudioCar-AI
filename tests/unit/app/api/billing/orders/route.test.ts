@@ -10,6 +10,24 @@ const url = "https://app.example.test/api/billing/orders";
 afterEach(() => { vi.clearAllMocks(); });
 
 describe("POST billing orders", () => {
+  it("keeps authentication required for a matching HTTPS tunnel origin", async () => {
+    vi.mocked(getCurrentSession).mockResolvedValue(null);
+    const response = await POST(new Request("http://localhost:3000/api/billing/orders", {
+      method: "POST", body: "{}",
+      headers: { origin: "https://studiocar-local.trycloudflare.com", host: "studiocar-local.trycloudflare.com", "x-forwarded-proto": "https" },
+    }));
+    expect(response.status).toBe(401);
+  });
+
+  it("rejects a forged forwarded host before looking up a session", async () => {
+    const response = await POST(new Request("http://localhost:3000/api/billing/orders", {
+      method: "POST", body: "{}",
+      headers: { origin: "https://attacker.example", host: "studiocar-local.trycloudflare.com", "x-forwarded-host": "attacker.example", "x-forwarded-proto": "https" },
+    }));
+    expect(response.status).toBe(403);
+    expect(getCurrentSession).not.toHaveBeenCalled();
+  });
+
   it("rejects an unauthenticated request", async () => {
     vi.mocked(getCurrentSession).mockResolvedValue(null);
     const response = await POST(new Request(url, { method: "POST", headers: { origin: "https://app.example.test" }, body: "{}" }));

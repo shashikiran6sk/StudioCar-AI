@@ -17,19 +17,7 @@ databaseDescribe("BillingService", () => {
     if (!databaseUrl) throw new Error("DATABASE_URL is required.");
     database = createDatabaseClient({ connectionString: databaseUrl, log: [] });
     userId = (await database.user.create({ data: { primaryEmail: `service-${suffix}@example.test` } })).id;
-    await database.appConfig.upsert({
-      where: { key: "billing-business" },
-      create: { key: "billing-business", value: {
-        businessType: "SOLE_PROPRIETORSHIP", legalProprietorName: "Example Proprietor", legalBusinessName: "Example Business",
-        tradingName: "Example Trade", productBrandName: "StudioCar AI", businessAddress: "Example Address",
-        billingEmail: "billing@example.test", supportEmail: "support@example.test", gstRegistered: false, gstin: null,
-      } },
-      update: { value: {
-        businessType: "SOLE_PROPRIETORSHIP", legalProprietorName: "Example Proprietor", legalBusinessName: "Example Business",
-        tradingName: "Example Trade", productBrandName: "StudioCar AI", businessAddress: "Example Address",
-        billingEmail: "billing@example.test", supportEmail: "support@example.test", gstRegistered: false, gstin: null,
-      } },
-    });
+
     await database.planConfig.upsert({
       where: { planKey: "STUDIO_PLUS" },
       create: { planKey: "STUDIO_PLUS", displayName: "Studio Plus", description: "Credits", segment: "Popular",

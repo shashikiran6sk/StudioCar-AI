@@ -17,6 +17,7 @@ import {
   StorageCleanupEnvironmentSchema,
   UploadEnvironmentSchema,
 } from "../../../packages/config/src/environment";
+import { DevServerEnvironmentSchema } from "../../../packages/config/src/dev-server-environment";
 import { RazorpayEnvironmentSchema } from "../../../packages/config/src/razorpay-environment";
 import {
   APPLICATION_PARSERS,
@@ -55,6 +56,7 @@ const KNOWN_VARIABLES = new Set([
     ImageWorkerQueueEnvironmentSchema,
     ImageWorkerEnvironmentSchema,
     RazorpayEnvironmentSchema,
+    DevServerEnvironmentSchema,
   ].flatMap((schema) => Object.keys(schema.shape)),
 ]);
 
@@ -113,7 +115,7 @@ const EXAMPLES: Record<string, ExampleCase> = {
       ...LOCAL_CONSUMER_PARSERS,
       ["Razorpay", (environment) => RazorpayEnvironmentSchema.parse(environment)],
     ],
-    optional: [],
+    optional: ["DEV_ALLOWED_ORIGINS"],
   },
   ".env.example.development": {
     appEnvironment: "development",
@@ -125,6 +127,7 @@ const EXAMPLES: Record<string, ExampleCase> = {
       ["Razorpay", (environment) => RazorpayEnvironmentSchema.parse(environment)],
     ],
     optional: [
+      "DEV_ALLOWED_ORIGINS",
       "GOOGLE_REDIRECT_URI",
       "S3_ACCESS_KEY_ID",
       "S3_SECRET_ACCESS_KEY",
@@ -237,6 +240,7 @@ describe("environment example files", () => {
   it("asks a Local developer for Leonardo and Razorpay Test Mode credentials", () => {
     expect(Object.keys(readExample(".env.example.local")).sort()).toEqual([
       "APP_ENV",
+      "DEV_ALLOWED_ORIGINS",
       "LEONARDO_API_KEY",
       "RAZORPAY_KEY_ID",
       "RAZORPAY_KEY_SECRET",

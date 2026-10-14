@@ -6,3 +6,4 @@ export const CHECKOUT_DELAYED_MESSAGE = "Confirmation is delayed. Check again wi
 export const CHECKOUT_ERROR_MESSAGE = "Payment could not be completed. Check payment history before trying again.";
 export const CHECKOUT_SCRIPT_ERROR_MESSAGE = "Checkout could not load. Refresh the page and try again.";
 export const CHECKOUT_REQUEST_TIMEOUT_MS = 10_000;
+export const CHECKOUT_CONFIRMED_MESSAGE = "Payment confirmed. Your credits are updated. View payment history in Profile.";

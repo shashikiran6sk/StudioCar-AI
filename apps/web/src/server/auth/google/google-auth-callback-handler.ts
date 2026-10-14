@@ -3,7 +3,7 @@ import {
   reportUnexpectedError,
 } from "@studiocar/observability";
 import { GoogleOAuthCallbackSchema } from "@studiocar/contracts";
-import { NextResponse } from "next/server";
+import { createGoogleAuthRedirect } from "./create-google-auth-redirect";
 
 import { readRequestCookie } from "../read-request-cookie";
 import {
@@ -99,7 +99,7 @@ export async function handleGoogleAuthCallback(
         GOOGLE_PHONE_SETUP_QUERY_KEY,
         GOOGLE_PHONE_SETUP_CANCELLED_VALUE,
       );
-      const response = NextResponse.redirect(
+      const response = createGoogleAuthRedirect(
         destination,
         OAUTH_REDIRECT_STATUS,
       );
@@ -138,7 +138,7 @@ export async function handleGoogleAuthCallback(
         GOOGLE_AUTH_LINKED_QUERY_KEY,
         GOOGLE_AUTH_LINKED_VALUE,
       );
-      const linked = NextResponse.redirect(destination, OAUTH_REDIRECT_STATUS);
+      const linked = createGoogleAuthRedirect(destination, OAUTH_REDIRECT_STATUS);
       linked.cookies.set(
         oauthCookie.name,
         oauthCookie.value,
@@ -147,7 +147,7 @@ export async function handleGoogleAuthCallback(
       return linked;
     }
 
-    const response = NextResponse.redirect(destination, OAUTH_REDIRECT_STATUS);
+    const response = createGoogleAuthRedirect(destination, OAUTH_REDIRECT_STATUS);
     const cookie = createSessionCookie(
       completed.issuedSession.token,
       completed.issuedSession.expiresAt,

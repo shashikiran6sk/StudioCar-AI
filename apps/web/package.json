@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "billing:business:setup": "esbuild prisma/billing-business-setup.ts --bundle --platform=node --target=node24 --format=esm --external:@prisma/adapter-pg --external:@prisma/client --external:pg --outfile=.billing-business-setup.mjs && node --env-file-if-exists=../../.env.local .billing-business-setup.mjs",
     "build": "next build",
     "db:generate": "prisma generate",
     "db:migrate:deploy": "prisma migrate deploy",

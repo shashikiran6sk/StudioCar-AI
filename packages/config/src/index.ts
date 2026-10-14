@@ -12,3 +12,4 @@ export * from "./seo-environment";
 export * from "./observability-environment";
 export { QueueTarget, StorageTarget, WorkerRuntime } from "./provider-drivers";
 export * from "./web-database-environment";
+export * from "./dev-server-environment";

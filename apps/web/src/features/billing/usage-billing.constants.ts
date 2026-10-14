@@ -1,7 +1,7 @@
 export const USAGE_BILLING_EYEBROW = "Plan overview";
 export const USAGE_BILLING_TITLE = "Usage & Billing";
 export const USAGE_BILLING_DESCRIPTION =
-  "Track your available credits, purchases, receipts, and storage.";
+  "Track your available credits and storage. View purchases in Profile.";
 export const USAGE_BILLING_UPGRADE_LABEL = "Buy 100 More Credits";
 export const USAGE_BILLING_CURRENT_PLAN_LABEL = "Current plan";
 export const USAGE_BILLING_IMAGES_USED_LABEL = "images used";

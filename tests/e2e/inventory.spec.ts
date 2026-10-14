@@ -202,11 +202,13 @@ inventoryTest(
         page.getByRole("progressbar", { name: /of 15 images used/ }),
       ).toBeVisible();
       await expect(page.getByRole("link", { name: "Buy 100 More Credits" })).toHaveAttribute("href", "#packs");
-      await expect(page.getByRole("heading", { name: "Payment History" })).toBeVisible();
+      await expect(page.getByRole("link", { name: "View payment history in Profile" })).toHaveAttribute("href", "/settings/profile#payment-history");
       await page.screenshot({
         fullPage: true,
         path: testInfo.outputPath("desktop-usage-billing.png"),
       });
+      await page.getByRole("link", { name: "View payment history in Profile" }).click();
+      await expect(page.getByRole("heading", { name: "Payment history" })).toBeVisible();
 
       await page.goto("/inventory");
       await expect(page.getByRole("heading", { name: "2026 Audi Q5" }))

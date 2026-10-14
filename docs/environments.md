@@ -112,6 +112,18 @@ pnpm dev                           # http://localhost:3000
   identity, account, and session path. Set
   `BOOTSTRAP_ADMIN_EMAIL=developer@studiocar.local` to make it the first local
   administrator.
+- **HTTPS tunnels for local billing tests.** Open the app through one browser
+  origin for the whole session. Set `DEV_ALLOWED_ORIGINS` to the exact current
+  tunnel hostname in `.env.local` and restart `pnpm dev` so development assets
+  and HMR are allowed; wildcards, schemes and paths are rejected. The fake Google driver's callback and all
+  application-side Google redirects are relative paths, so they remain on
+  localhost or the tunnel even when Next.js sees an internal localhost URL.
+  A Razorpay webhook URL is independent: configure
+  `https://<tunnel-host>/api/webhooks/razorpay` in Test Mode without changing
+  the fake Google callback host. Restart the app after changing `.env.local`;
+  OAuth runtime configuration is cached. When selecting the real Google driver,
+  register and configure the exact public callback in `GOOGLE_REDIRECT_URI`
+  and start sign-in from that same origin.
 - **Phone sign-in** is the `fake` driver: any valid Indian mobile number and the
   code `1234`. The challenge, browser binding, rate limits, normalisation,
   identity, linking, and session issuance all run.
@@ -321,4 +333,4 @@ Reference: [Neon Prisma connection guidance](https://github.com/neondatabase/web
 
 ## Plus billing settings
 
-The web application and operator reconciliation command require `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` and `RAZORPAY_WEBHOOK_SECRET`. Local/Development accept Test keys; Production requires Live keys. Keys remain server-side, apart from the public Checkout key ID. No Razorpay plan ID, recurring setup script or subscription configuration is used. Configure only payment and refund events; the [billing runbook](razorpay-billing.md) covers Dashboard capture, staged schema rollout, merchant identity and recovery. The image worker needs no Razorpay credential.
+The web application and operator reconciliation command require `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` and `RAZORPAY_WEBHOOK_SECRET`. Local/Development accept Test keys; Production requires Live keys. Keys remain server-side, apart from the public Checkout key ID. No Razorpay plan ID, recurring setup script or subscription configuration is used. Configure only payment and refund events; the [billing runbook](razorpay-billing.md) covers Dashboard capture, staged schema rollout, payment history and recovery. The image worker needs no Razorpay credential.

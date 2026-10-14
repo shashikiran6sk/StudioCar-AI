@@ -11,5 +11,5 @@ if (!databaseUrl) throw new Error("DATABASE_URL is required.");
 const database = createDatabaseClient({ connectionString: databaseUrl });
 try {
   const count = await reconcilePlusOrder(database, parseRazorpayEnvironment(settings), input.orderId);
-  process.stdout.write(count > 0 ? "Captured order reconciled. Check payment, credits and receipt in billing.\n" : "No captured payment found. No credits were added.\n");
+  process.stdout.write(count > 0 ? "Captured order reconciled. Check credits in billing and payment history in Profile.\n" : "No captured payment found. No credits were added.\n");
 } finally { await database.$disconnect(); }

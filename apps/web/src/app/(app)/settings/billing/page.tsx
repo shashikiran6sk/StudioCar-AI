@@ -23,15 +23,11 @@ export default async function UsageBillingPage() {
   if (!session) redirect(LOGIN_PATH);
 
   const database = getBillingRuntime().database;
-  const [summary, plans, billingStatus, payments] = await Promise.all([
+  const [summary, plans, billingStatus] = await Promise.all([
     getUsageBillingSummary(session.userId),
     getPlanCatalog(),
     getBillingStatus(database, session.userId),
-    database.payment.findMany({
-      where: { userId: session.userId },
-      orderBy: { createdAt: "desc" }, take: 100,
-      select: { id: true, createdAt: true, productCode: true, amountPaise: true, currency: true, status: true, razorpayOrderId: true, receipt: { select: { id: true } } },
-    }),
+
   ]);
 
   return (
@@ -45,7 +41,7 @@ export default async function UsageBillingPage() {
         <a className="sc-button sc-button--blue" href="#packs">{USAGE_BILLING_UPGRADE_LABEL}</a>
       </header>
       <UsageOverview summary={summary} />
-      <BillingAccountDetails status={billingStatus} payments={payments} />
+      <BillingAccountDetails status={billingStatus} />
       <BillingPlanGrid currentPlanKey={summary.currentPlan.key} plans={plans} />
     </div>
   );

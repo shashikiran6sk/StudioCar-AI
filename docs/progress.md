@@ -1,6 +1,22 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-10-08
+Last updated: 2026-10-14
+
+## 2026-10-08 — Tunnel checkout and Profile payment history
+
+- Reproduced tunnel billing POST rejection (403 versus localhost 401) and Next development asset rejection (403). Origin validation now compares the browser Origin with the real Host/forwarded protocol behind a proxy, rejecting spoofed forwarded hosts, protocol/port mismatches and malformed origins. Valid unauthenticated tunnel requests now reach authentication (401).
+- Added validated exact `DEV_ALLOWED_ORIGINS` host configuration, without wildcard access. Set the current tunnel host only in the ignored private settings file; tunnel development assets now return 200. Restored the missing local Free/Plus catalog with the idempotent seed command, leaving existing settings untouched.
+- At the user's explicit request, removed new receipt generation for both Test and Live: deleted receipt creation/business-identity services and setup scripts, removed merchant setup gates, and retained existing receipt tables/relations/read-only access as historical financial data. No schema migration or financial-history deletion. Payment finalization and +100 credits remain atomic, captured-only and idempotent.
+- Payment history moves to Profile with canonical DTOs, tenant filtering, bounded latest-first queries, pending/failed/refunded status and provider/local recovery references. History reads do not require Razorpay keys. Billing retains cumulative balances and a Profile-history link. No real payment or authenticated tunnel probe was performed.
+- Final verification on 2026-10-14: 2,162 unit/component passes plus the existing expected-failure processing test; 167 real PostgreSQL integration passes against a new disposable database; lint, strict typecheck, source mapping, Prisma validation and all 29 migrations applied there. Normal production build passed in an isolated copy, followed by all 16 browser tests with one worker/no retries, including desktop/mobile Profile history and overflow checks. An old inventory-suite assertion still expected history on Billing; it now verifies the Profile link and destination. Reviewed both Profile screenshots against existing profile-card styling. Actual Razorpay Test/Live payments and authenticated tunnel verification remain manual. The user authorized committing and pushing this previously staged work to PR #73 on 2026-10-14. Required CI must pass; the PR remains open for merchant testing, without a production deployment or merge.
+
+
+## 2026-10-08 — Local Google sign-in through an HTTPS tunnel
+
+- The Local fake Google provider used an absolute configured callback. A tunnel browser was redirected to localhost, where its host-only OAuth state cookie was absent; the callback returned `invalid_callback`. Application success/error redirects also used Next's internal request origin.
+- The fake adapter now marks its callback as same-origin, carried through the application service and rendered as a relative redirect. Google callback success, linking, onboarding cancellation and errors also use relative application paths. The browser keeps its own host and cookies without trusting forwarded-host headers. Real Google authorization URLs remain absolute; state/PKCE/challenge/session protections remain in place.
+- Added tunnel/localhost, internal-origin, forwarded-host spoofing, callback/session, missing-state and network-path redirect regression coverage. All 56 focused Google/route tests, repository lint, strict typecheck, source mapping and whitespace checks pass. Unauthenticated checks of the running localhost and tunnel endpoints confirm relative callbacks with state cookies. An authenticated tunnel probe was blocked by automatic approval review pending explicit authorization for session-cookie egress; live browser verification remains with the user. Documented separate Razorpay webhook routing and cached OAuth settings. This was initially staged only at the user's request; the user subsequently authorized including it in the PR #73 push on 2026-10-14.
+
 
 ## 2026-10-08 — Separate evidence archive (draft PR #99)
 

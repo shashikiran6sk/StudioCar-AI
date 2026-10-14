@@ -90,7 +90,7 @@ billingTest("loads repeatable Plus Checkout through the browser security policy"
     expect(scriptsLoaded).toBeGreaterThan(0);
     await page.getByRole("button", { name: "Choose StudioCar Plus" }).click();
     await expect(page.frameLocator('iframe[title="Synthetic Razorpay Checkout"]').getByText("Synthetic hosted Checkout")).toBeVisible();
-    await expect(page.getByText("Payment confirmed. View your credits and receipt in billing.")).toBeVisible();
+    await expect(page.getByText("Payment confirmed. Your credits are updated. View payment history in Profile.")).toBeVisible();
     expect(ordersVerified).toBe(1);
     await page.locator('iframe[title="Synthetic Razorpay Checkout"]').evaluate((frame) => frame.remove());
 
@@ -100,7 +100,25 @@ billingTest("loads repeatable Plus Checkout through the browser security policy"
       expect(removed.status()).toBe(404);
     }
     await page.screenshot({ fullPage: true, path: testInfo.outputPath("billing-checkout-confirmed.png") });
+    // History presentation uses an explicit synthetic fixture, not a real capture.
+    await database.query(
+      'INSERT INTO "Payment" ("id", "userId", "productCode", "billingType", "amountPaise", "currency", "includedImages", "status", "razorpayOrderId", "razorpayPaymentId", "paidAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+      [randomUUID(), userId, "STUDIO_PLUS", "ONE_TIME", 199900, "INR", 100, "PAID", "order_synthetic", "pay_synthetic"],
+    );
+    await page.goto("/settings/profile");
+    await expect(page.getByRole("heading", { name: "Payment history" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Paid", exact: true })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "₹1,999", exact: true })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Receipt" })).toHaveCount(0);
+    await page.screenshot({ fullPage: true, path: testInfo.outputPath("profile-payment-history.png") });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator("#payment-history").scrollIntoViewIfNeeded();
+    await expect(page.getByRole("heading", { name: "Payment history" })).toBeInViewport();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath("mobile-profile-payment-history.png") });
+
   } finally {
+    await database.query('DELETE FROM "Payment" WHERE "userId" = $1', [userId]);
     await database.query('DELETE FROM "User" WHERE "id" = $1', [userId]);
     await database.end();
   }

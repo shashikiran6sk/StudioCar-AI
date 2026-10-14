@@ -10,23 +10,7 @@ const url = process.env["DATABASE_URL"];
  beforeAll(async () => {
   if (!url) throw new Error("Database required"); database = createDatabaseClient({ connectionString: url, log: [] });
   userId = (await database.user.create({ data: { primaryEmail: `${suffix}@recovery.test` } })).id;
-    await database.appConfig.upsert({
-      where: { key: "billing-business" },
-      create: { key: "billing-business", value: {
-        businessType: "SOLE_PROPRIETORSHIP", legalProprietorName: "Example Proprietor",
-        legalBusinessName: "Example Business", tradingName: "Example Trade",
-        productBrandName: "StudioCar AI", businessAddress: "Example address",
-        billingEmail: "billing@example.test", supportEmail: "support@example.test",
-        gstRegistered: false, gstin: null,
-      } },
-      update: { value: {
-        businessType: "SOLE_PROPRIETORSHIP", legalProprietorName: "Example Proprietor",
-        legalBusinessName: "Example Business", tradingName: "Example Trade",
-        productBrandName: "StudioCar AI", businessAddress: "Example address",
-        billingEmail: "billing@example.test", supportEmail: "support@example.test",
-        gstRegistered: false, gstin: null,
-      } },
-    });
+
  });
  afterEach(() => vi.unstubAllGlobals());
  afterAll(async () => {
@@ -44,7 +28,7 @@ const url = process.env["DATABASE_URL"];
   await expect(reconcilePlusOrder(database, environment, orderId)).resolves.toBe(1);
   await reconcilePlusOrder(database, environment, orderId);
   expect(await database.creditLedger.count({ where: { userId } })).toBe(1);
-  expect(await database.receipt.count({ where: { userId } })).toBe(1);
+  expect(await database.receipt.count({ where: { userId } })).toBe(0);
  });
  it("never grants credits for provider payments that are merely authorized", async () => {
   const local = await database.payment.create({ data: { userId, productCode: "STUDIO_PLUS", billingType: "ONE_TIME", amountPaise: 199900, currency: "INR", includedImages: 100 } });

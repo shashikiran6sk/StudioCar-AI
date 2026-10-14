@@ -17,10 +17,11 @@ export const BillingOrderResponseSchema = z.object({
   orderId: RazorpayIdentifierSchema, keyId: z.string(), amount: z.number().int().positive(),
   currency: z.literal(PLUS_PRODUCT.currency), name: z.string(),
 });
+export const BillingPaymentStatusSchema = z.enum(["CREATED", "VERIFIED", "PAID", "FAILED", "REFUNDED", "PARTIALLY_REFUNDED"]);
 export const BillingStatusSchema = z.object({
   purchasedCredits: z.number().int().nonnegative(),
   purchasedCreditsGranted: z.number().int().nonnegative(),
-  checkoutPaymentStatus: z.enum(["CREATED", "VERIFIED", "PAID", "FAILED", "REFUNDED", "PARTIALLY_REFUNDED"]).nullable(),
+  checkoutPaymentStatus: BillingPaymentStatusSchema.nullable(),
 });
 export const BillingStatusQuerySchema = z.object({ orderId: z.string().regex(/^order_[A-Za-z0-9]+$/).max(255).optional() }).strict();
 export const RazorpayPaymentEntitySchema = z.object({
@@ -41,3 +42,16 @@ export const RazorpayWebhookSchema = z.discriminatedUnion("event", [
 export type CreateBillingOrder = z.infer<typeof CreateBillingOrderSchema>;
 export type VerifyBillingOrder = z.infer<typeof VerifyBillingOrderSchema>;
 export type RazorpayWebhook = z.infer<typeof RazorpayWebhookSchema>;
+
+export const PaymentHistoryEntrySchema = z.object({
+  id: z.uuid(),
+  createdAt: z.iso.datetime(),
+  paidAt: z.iso.datetime().nullable(),
+  productCode: z.string().min(1),
+  amountPaise: z.number().int().positive(),
+  currency: z.string().length(3),
+  status: BillingPaymentStatusSchema,
+  razorpayOrderId: z.string().nullable(),
+  razorpayPaymentId: z.string().nullable(),
+}).strict();
+export type PaymentHistoryEntry = z.infer<typeof PaymentHistoryEntrySchema>;

@@ -430,6 +430,7 @@ Header with title, explanatory copy, and blue Upgrade plan action. Content grid 
 - Available Packs appears immediately below current usage and reuses the homepage two-card pricing system: Free and StudioCar Plus. Free is marked Current plan and disabled; Plus keeps the dark Most Popular treatment and always supports another purchase.
 - Pack cards retain the same names, prices, limits, and benefits as the homepage. Do not maintain separate marketing and application pricing copy.
 - The content area scrolls independently so all pack details and actions remain accessible within the application shell.
+- Billing links to owner-only payment history on Profile. Profile shows date, purchase, amount, status and provider/local references in the existing responsive table style. New app receipts are not generated.
 
 If a limit is reached, open a friendly upgrade modal. Never block access to existing inventory or downloads.
 

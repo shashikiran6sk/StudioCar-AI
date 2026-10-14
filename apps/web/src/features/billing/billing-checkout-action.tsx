@@ -5,7 +5,7 @@ import { Button, type ButtonVariant } from "@studiocar/ui";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
-import { CHECKOUT_REQUEST_TIMEOUT_MS, CHECKOUT_SCRIPT_URL, CHECKOUT_POLL_INTERVAL_MS, CHECKOUT_POLL_ATTEMPTS, CHECKOUT_PENDING_MESSAGE, CHECKOUT_DELAYED_MESSAGE, CHECKOUT_ERROR_MESSAGE, CHECKOUT_SCRIPT_ERROR_MESSAGE } from "./billing-checkout.constants";
+import { CHECKOUT_CONFIRMED_MESSAGE, CHECKOUT_REQUEST_TIMEOUT_MS, CHECKOUT_SCRIPT_URL, CHECKOUT_POLL_INTERVAL_MS, CHECKOUT_POLL_ATTEMPTS, CHECKOUT_PENDING_MESSAGE, CHECKOUT_DELAYED_MESSAGE, CHECKOUT_ERROR_MESSAGE, CHECKOUT_SCRIPT_ERROR_MESSAGE } from "./billing-checkout.constants";
 
 interface CheckoutOptions {
   key: string; name: string; description: string; order_id: string;
@@ -93,7 +93,7 @@ export function BillingCheckoutAction({ label, variant }: BillingCheckoutActionP
     </Button>
     <span aria-live="polite" className="billing-checkout-status">
       {state === "confirming" || state === "verifying" ? CHECKOUT_PENDING_MESSAGE : null}
-      {state === "confirmed" ? "Payment confirmed. View your credits and receipt in billing." : null}
+      {state === "confirmed" ? CHECKOUT_CONFIRMED_MESSAGE : null}
       {state === "delayed" ? `${CHECKOUT_DELAYED_MESSAGE} Order: ${orderId ?? "unavailable"}` : null}
       {state === "error" ? CHECKOUT_ERROR_MESSAGE : null}
       {state === "script-error" ? CHECKOUT_SCRIPT_ERROR_MESSAGE : null}

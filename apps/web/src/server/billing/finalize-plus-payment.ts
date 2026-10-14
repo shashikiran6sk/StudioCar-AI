@@ -1,6 +1,5 @@
 import { PLUS_PRODUCT, type RazorpayWebhook } from "@studiocar/contracts";
 import type { Prisma } from "@studiocar/database-runtime";
-import { createReceipt } from "./create-receipt";
 
 type CapturedPayment = Extract<RazorpayWebhook, { event: "payment.captured" }>["payload"]["payment"]["entity"];
 
@@ -24,8 +23,5 @@ export async function finalizePlusPayment(transaction: Prisma.TransactionClient,
   await transaction.creditLedger.create({
     data: { userId: payment.userId, amount: PLUS_PRODUCT.credits, type: "PURCHASE_GRANT", referenceId: payment.id },
   });
-  await createReceipt(transaction, {
-    paymentId: payment.id, userId: payment.userId, productCode: payment.productCode,
-    amountPaise: payment.amountPaise, currency: payment.currency, paidAt, paymentMethod: captured.method ?? null,
-  });
+
 }

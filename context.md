@@ -78,7 +78,7 @@ Important invariants:
 - Administrator authorization is a row in `UserRole`, never an environment value, and every administration page and server action re-checks it against the database for itself.
 - Plans, prices, allowances, batch limits, and footer links are configuration rows, not constants. The application carries no second copy of a plan.
 - `planKey`, `allowanceScope`, and `currency` are not editable: the key identifies Free and Plus, and the scope decides how usage already charged is counted.
-- StudioCar Plus is the only paid product: ₹1,999 INR, 100 cumulative non-expiring credits per captured payment. Checkout signatures alone never grant credits. No subscription or monthly allowance exists. Payment finalization, ledger grants and immutable receipt creation commit atomically.
+- StudioCar Plus is the only paid product: ₹1,999 INR, 100 cumulative non-expiring credits per captured payment. Checkout signatures alone never grant credits. No subscription or monthly allowance exists. Payment finalization and ledger grants commit atomically. New receipts are not generated in Test or Live; Profile shows owner-scoped payment history and historical receipts remain preserved.
 - `AuditLog` is append-only and read bounded. Its `metadata` is `Json` and must be validated before any field is read; a null `userId` means the system acted or the actor's account was deleted, which are different facts.
 
 ## Code conventions

@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { CreateBillingOrderSchema, VerifyBillingOrderSchema, RazorpayWebhookSchema } from "../../../packages/contracts/src/billing";
+import { PaymentHistoryEntrySchema, CreateBillingOrderSchema, VerifyBillingOrderSchema, RazorpayWebhookSchema } from "../../../packages/contracts/src/billing";
 describe("Plus-only billing contracts", () => {
+  it("rejects malformed or expanded payment history DTOs", () => {
+    const payment = { id: "0f600bc6-7c7f-44c8-91ed-4b5b90c9c789", createdAt: "2026-10-08T00:00:00.000Z", paidAt: null,
+      productCode: "STUDIO_PLUS", amountPaise: 199900, currency: "INR", status: "CREATED", razorpayOrderId: null, razorpayPaymentId: null };
+    expect(PaymentHistoryEntrySchema.safeParse(payment).success).toBe(true);
+    expect(PaymentHistoryEntrySchema.safeParse({ ...payment, amountPaise: -1 }).success).toBe(false);
+    expect(PaymentHistoryEntrySchema.safeParse({ ...payment, status: "unknown" }).success).toBe(false);
+    expect(PaymentHistoryEntrySchema.safeParse({ ...payment, userId: "private-owner" }).success).toBe(false);
+  });
   it("accepts only the server-selected product without client pricing", () => {
     expect(CreateBillingOrderSchema.safeParse({ productCode: "STUDIO_PLUS" }).success).toBe(true);
     expect(CreateBillingOrderSchema.safeParse({ productCode: "STUDIO_PLUS", amount: 1, credits: 999 }).success).toBe(false);

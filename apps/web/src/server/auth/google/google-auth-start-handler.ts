@@ -26,6 +26,7 @@ import {
 import type { GoogleOAuthApplication } from "./google-auth.types";
 import { createGoogleOAuthCookie } from "./google-oauth-cookie";
 import { NextResponse } from "next/server";
+import { createGoogleAuthRedirect } from "./create-google-auth-redirect";
 import { readRequestCookie } from "../read-request-cookie";
 import { phoneOtpCookieName } from "../phone/phone-otp-cookie";
 import {
@@ -140,10 +141,9 @@ export async function handleGoogleAuthStart(
         ? { verifiedPhone: { challengeId, browserBinding } }
         : {}),
     });
-    const response = NextResponse.redirect(
-      started.authorizationUrl,
-      OAUTH_START_REDIRECT_STATUS,
-    );
+    const response = started.sameOriginRedirect
+      ? createGoogleAuthRedirect(started.authorizationUrl, OAUTH_START_REDIRECT_STATUS)
+      : NextResponse.redirect(started.authorizationUrl, OAUTH_START_REDIRECT_STATUS);
     const cookie = createGoogleOAuthCookie(
       started.state,
       started.expiresAt,

@@ -19,4 +19,3 @@ next-env.d.ts
 
 apps/web/.billing-expand-migrations/
 apps/web/.billing-reconcile.mjs
-apps/web/.billing-business-setup.mjs
