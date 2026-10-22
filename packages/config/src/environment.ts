@@ -63,6 +63,8 @@ const DEFAULT_PROVIDER_INPUT_BYTES = 22 * 1024 * 1024;
 const DEFAULT_PROVIDER_OUTPUT_BYTES = 100 * 1024 * 1024;
 const DEFAULT_WORKER_IMAGE_PIXELS = 50_000_000;
 const DEFAULT_PREVIEW_MAX_WIDTH = 720;
+const DEFAULT_PLATE_DETECTION_TIMEOUT_MS = 10_000;
+export const MINIMUM_PLATE_BRANDING_MEMORY_MEGABYTES = 2048;
 const DEFAULT_COMMAND_RATE_LIMIT_WINDOW_SECONDS = 60;
 const DEFAULT_UPLOAD_PRESIGN_MAX_PER_WINDOW = 120;
 const DEFAULT_PROCESSING_BATCH_MAX_PER_WINDOW = 20;
@@ -558,10 +560,15 @@ export const ImageWorkerQueueEnvironmentSchema = z
 export const ImageWorkerEnvironmentSchema = z
   .object({
     APP_ENV: AppEnvironmentSchema,
+    // AWS supplies this reserved variable. A smaller existing worker must
+    // keep processing normally instead of loading an unverified native model.
+    AWS_LAMBDA_FUNCTION_MEMORY_SIZE: z.coerce.number().int().min(128).max(10_240).optional(),
     DATABASE_URL: PostgresUrlSchema,
     ...S3ConnectionSchema.shape,
     S3_BUCKET: z.string().trim().min(3).max(63),
     LEONARDO_API_KEY: z.string().trim().min(1),
+    PLATE_BRANDING_ENABLED: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
+    PLATE_DETECTION_TIMEOUT_MS: z.coerce.number().int().min(500).max(15_000).default(DEFAULT_PLATE_DETECTION_TIMEOUT_MS),
     LEONARDO_TIMEOUT_MS: emptyAsUnset(
       z.coerce
         .number()
@@ -626,11 +633,15 @@ export const ImageWorkerEnvironmentSchema = z
     if (
       value.IMAGE_WORKER_CLAIM_TTL_MS <
       value.LEONARDO_TIMEOUT_MS + IMAGE_WORKER_POST_PROVIDER_BUDGET_MS
+        + (value.PLATE_BRANDING_ENABLED &&
+          (value.AWS_LAMBDA_FUNCTION_MEMORY_SIZE === undefined ||
+            value.AWS_LAMBDA_FUNCTION_MEMORY_SIZE >= MINIMUM_PLATE_BRANDING_MEMORY_MEGABYTES)
+          ? value.PLATE_DETECTION_TIMEOUT_MS : 0)
     ) {
       context.addIssue({
         code: "custom",
         message:
-          "IMAGE_WORKER_CLAIM_TTL_MS must cover LEONARDO_TIMEOUT_MS plus the time to compose and store the result.",
+          "IMAGE_WORKER_CLAIM_TTL_MS must cover LEONARDO_TIMEOUT_MS, enabled plate detection, and the time to compose and store the result.",
         path: ["IMAGE_WORKER_CLAIM_TTL_MS"],
       });
     }

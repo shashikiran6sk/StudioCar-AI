@@ -7,6 +7,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "onnxruntime-node": "1.30.0",
     "sharp": "catalog:"
   },
   "scripts": {
@@ -16,6 +17,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "evidence:processing": "node scripts/processing-evidence.mjs",
+    "evidence:plates": "node scripts/plate-branding-evidence.mjs",
     "package:lambda": "node scripts/package-lambda.mjs"
   },
   "devDependencies": {

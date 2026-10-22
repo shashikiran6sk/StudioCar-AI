@@ -1,9 +1,12 @@
 // Builds the image-processing Lambda archive reproducibly:
 //
 //   handler.mjs                  one esbuild bundle of src/handler.ts
+//   plate-detector.mjs           disposable native inference entry
 //   node_modules/sharp, @img/…   sharp and its Linux arm64 (glibc) binaries,
 //                                exactly as pinned by pnpm-lock.yaml
+//   node_modules/onnxruntime-…   pinned ONNX Runtime CPU binding and library
 //   assets/backgrounds/*.png     the six studio backgrounds
+//   assets/plate-branding/*      pinned model, supplied wordmark and notices
 //
 // The archive is written with sorted entries, one fixed timestamp and fixed
 // permissions, so its SHA-256 identifies its contents. A manifest beside it
@@ -38,7 +41,7 @@ const PACKAGE_NAME = "@studiocar/image-processing-worker";
 const ARCHIVE_NAME = "image-processing-worker.zip";
 const MANIFEST_NAME = "image-processing-worker.manifest.json";
 const TARGET = { os: "linux", cpu: "arm64", libc: "glibc" };
-const ASSET_DIRECTORY = "assets/backgrounds";
+const ASSET_DIRECTORY = "assets";
 /** Lambda's limit for an unzipped deployment package. */
 const LAMBDA_UNZIPPED_LIMIT_BYTES = 250 * 1024 * 1024;
 /** ELF e_machine for AArch64. */
@@ -130,8 +133,11 @@ async function main() {
       bundlePath,
     );
     files.push({ path: "handler.mjs", bytes: await readFile(bundlePath) });
+    const detectorPath = path.join(temporary, "plate-detector.mjs");
+    await bundleEntry(path.join(WORKER_DIRECTORY, "src/plate-branding/plate-detector-child.ts"), detectorPath);
+    files.push({ path: "plate-detector.mjs", bytes: await readFile(detectorPath) });
 
-    // `pnpm deploy` installs the production dependencies (sharp alone) for
+    // `pnpm deploy` installs the production dependencies (sharp and ONNX) for
     // the Lambda platform from the lockfile, into a directory outside the
     // workspace; the workspace's own install is untouched.
     const deployDirectory = path.join(temporary, "deploy");
@@ -155,6 +161,10 @@ async function main() {
     for (const [name, { directory }] of nativePackages) {
       for (const file of await listFiles(directory)) {
         if (EXCLUDED_FILE.test(file.relative)) continue;
+        // ONNX ships several platforms together. Keep only Lambda's CPU
+        // runtime; Windows/macOS/x64 binaries are not deployable on arm64.
+        if (name === "onnxruntime-node" && file.relative.startsWith("bin/") &&
+            !file.relative.startsWith("bin/napi-v6/linux/arm64/")) continue;
         const bytes = await readFile(file.absolute);
         const machine = readElfMachine(bytes);
         if (machine !== null) {

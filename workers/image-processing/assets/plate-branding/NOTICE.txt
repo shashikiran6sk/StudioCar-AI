@@ -1,0 +1,14 @@
+Plate detector: Topurrra/rtdetr-license-plate-detection-onnx
+Revision: aecb24a78e31cea03f59b83156d55dde84f20d94
+Source: https://huggingface.co/Topurrra/rtdetr-license-plate-detection-onnx
+File: plate_rtdetr.onnx (unmodified; renamed plate-rtdetr.onnx)
+SHA-256: 50f9bf9d7eaa97ade59063ba608107203d0575a84c0fb27e0ebf3bab6f594366
+License declared by publisher: Apache-2.0; see LICENSE-APACHE-2.0.txt.
+Base model: PekingU/rtdetr_v2_r18vd, Apache-2.0.
+Training data reported by publisher: Open Images V7 registration plates.
+The model reports compressed ranking scores, not calibrated probabilities.
+
+DealersDrive wordmark: supplied by the repository owner on 2026-10-22.
+dealersdrive-logo.png is the supplied screenshot without modification.
+SHA-256: ca042b68b3cfc7f78e1f211c18fab5fc19feecae1ab1d0e2a14e1991355c7a80
+The runtime fits this artwork inside a black plate without stretching it.

@@ -199,6 +199,8 @@ describe("environment validation", () => {
       S3_FORCE_PATH_STYLE: false,
       LEONARDO_API_KEY: validEnvironment.LEONARDO_API_KEY,
       LEONARDO_TIMEOUT_MS: 90_000,
+      PLATE_BRANDING_ENABLED: false,
+      PLATE_DETECTION_TIMEOUT_MS: 10_000,
       IMAGE_WORKER_CLAIM_TTL_MS: 180_000,
       PROCESSING_RETRY_BASE_MS: 5_000,
       PROCESSING_RETRY_MAX_MS: 300_000,
@@ -215,6 +217,19 @@ describe("environment validation", () => {
         PROCESSING_RETRY_MAX_MS: "1000",
       }),
     ).toThrow();
+  });
+
+  it("keeps branding opt-in, validates its deadline, and reserves that deadline in the claim lease", () => {
+    expect(parseImageWorkerEnvironment({ ...validEnvironment, PLATE_BRANDING_ENABLED: "true" }).PLATE_BRANDING_ENABLED).toBe(true);
+    for (const settings of [
+      { PLATE_BRANDING_ENABLED: "yes" }, { PLATE_DETECTION_TIMEOUT_MS: "0" },
+      { PLATE_DETECTION_TIMEOUT_MS: "15001" },
+      { PLATE_BRANDING_ENABLED: "true", IMAGE_WORKER_CLAIM_TTL_MS: "120000" },
+      { AWS_LAMBDA_FUNCTION_MEMORY_SIZE: "invalid" },
+      { AWS_LAMBDA_FUNCTION_MEMORY_SIZE: "10241" },
+    ]) expect(() => parseImageWorkerEnvironment({ ...validEnvironment, ...settings })).toThrow();
+    expect(parseImageWorkerEnvironment({ ...validEnvironment, IMAGE_WORKER_CLAIM_TTL_MS: "120000" }).PLATE_BRANDING_ENABLED).toBe(false);
+    expect(parseImageWorkerEnvironment({ ...validEnvironment, PLATE_BRANDING_ENABLED: "true", AWS_LAMBDA_FUNCTION_MEMORY_SIZE: "1024", IMAGE_WORKER_CLAIM_TTL_MS: "120000" }).IMAGE_WORKER_CLAIM_TTL_MS).toBe(120000);
   });
 
   it("validates focused lifecycle cleanup retention bounds", () => {

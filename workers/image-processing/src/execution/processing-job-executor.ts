@@ -15,6 +15,9 @@ import {
 } from "@studiocar/processing";
 
 import type { ProcessingObjectStoragePort } from "../storage/processing-object-storage.types";
+import type { PlateBrandingPort } from "../plate-branding/plate-branding.types";
+import { preparePlateOverlay } from "../plate-branding/prepare-plate-overlay";
+import { safeApplyPlateOverlay } from "../plate-branding/safe-apply-plate-overlay";
 import { buildProcessingObjectKeys } from "./build-processing-object-keys";
 import { calculateSha256 } from "./calculate-sha256";
 import { composeStudioImage } from "./compose-studio-image";
@@ -76,6 +79,7 @@ export class ProcessingJobExecutor implements ProcessingJobExecutorPort {
     private readonly provider: ImageProcessingProvider,
     private readonly backgrounds: StudioBackgroundSource,
     private readonly options: ProcessingJobExecutorOptions,
+    private readonly plateBranding?: PlateBrandingPort,
   ) {
     this.providerKey = provider.key;
   }
@@ -244,12 +248,15 @@ export class ProcessingJobExecutor implements ProcessingJobExecutorPort {
   ): Promise<RenderedProcessedImage> {
     try {
       const asset = STUDIO_BACKGROUND_ASSETS[background][options.floor];
+      const decoded = await decodeCutout(cutout.bytes);
+      const plateOverlay = await preparePlateOverlay(this.plateBranding, decoded);
       const composed = await composeStudioImage({
         background,
         backgroundBytes: await this.backgrounds.read(asset.file),
-        cutout: await decodeCutout(cutout.bytes),
+        cutout: decoded,
         floor: options.floor,
         options,
+        plateOverlay,
       });
       return await encodeProcessedImage(
         composed,
@@ -276,8 +283,13 @@ export class ProcessingJobExecutor implements ProcessingJobExecutorPort {
     options: ProcessingOptions,
   ): Promise<RenderedProcessedImage> {
     try {
+      const rendered = await renderOriginalPhoto(photo, options.enhancement);
+      const overlay = await preparePlateOverlay(this.plateBranding, rendered);
       return await encodeProcessedImage(
-        await renderOriginalPhoto(photo, options.enhancement),
+        safeApplyPlateOverlay(rendered, overlay, {
+          canvasHeight: rendered.height, canvasWidth: rendered.width,
+          offsetX: 0, offsetY: 0, scale: 1,
+        }),
         options.quality,
         this.options.previewMaximumWidth,
       );

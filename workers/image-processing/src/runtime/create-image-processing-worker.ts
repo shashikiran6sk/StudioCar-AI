@@ -19,6 +19,7 @@ import { LEONARDO_SOURCE_URL_TTL_SECONDS } from "../providers/leonardo-provider.
 import { S3ProcessingObjectStorage } from "../storage/s3-processing-object-storage";
 import { createImageProcessingProvider } from "./create-image-processing-provider";
 import { resolveStudioBackgroundDirectory } from "./resolve-studio-background-directory";
+import { createPlateBranding } from "./create-plate-branding";
 
 export function createImageProcessingWorker(
   environmentValues: Record<string, string | undefined>,
@@ -55,6 +56,7 @@ export function createImageProcessingWorker(
       maximumPixels: environment.MAX_WORKER_IMAGE_PIXELS,
       previewMaximumWidth: environment.PREVIEW_MAX_WIDTH,
     },
+    createPlateBranding(environment, moduleUrl),
   );
 
   return new ProcessingWorker(jobs, executor, {

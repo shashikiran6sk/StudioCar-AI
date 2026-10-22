@@ -51,6 +51,15 @@ function parameterDefault(template: string, name: string): number {
 }
 
 describe("Leonardo worker deployment", () => {
+  it("keeps local plate branding opt-in and gives it an independent bounded deadline", () => {
+    expect(workerTemplate).toContain('Default: "false"');
+    expect(workerTemplate).toContain("PLATE_BRANDING_ENABLED: !Ref PlateBrandingEnabled");
+    expect(workerTemplate).toContain("PLATE_DETECTION_TIMEOUT_MS: !Ref PlateDetectionTimeoutMilliseconds");
+    expect(parameterDefault(workerTemplate, "PlateDetectionTimeoutMilliseconds")).toBe(10_000);
+    expect(parameterDefault(workerTemplate, "LeonardoTimeoutMilliseconds") +
+      parameterDefault(workerTemplate, "PlateDetectionTimeoutMilliseconds") + 30_000)
+      .toBeLessThanOrEqual(parameterDefault(workerTemplate, "ClaimLeaseMilliseconds"));
+  });
   it("has one provider credential and no provider selection", () => {
     expect(workerTemplate).toContain(
       "LEONARDO_API_KEY: !Sub '{{resolve:secretsmanager:${LeonardoSecretArn}:SecretString:LEONARDO_API_KEY}}'",

@@ -207,7 +207,7 @@ from the rows above them, where the floor is a smooth gradient. A clean
 re-export from the designer should replace it.
 
 The original-background option keeps the photo itself and makes no provider
-call.
+call. Optional local plate branding also works on this path.
 
 ## Compositor
 
@@ -235,12 +235,78 @@ It runs in this order:
    pixels between its 1st and 99th percentiles, with gain capped at 1.5. It
    then sharpens with the vehicle's alpha as a mask, inside the content box.
    Background pixels are byte-identical with enhancement on or off.
-6. **Encode once** as WebP: quality from the option, effort 4,
+6. **Brand a reliably visible plate** when the worker-only feature is enabled
+   (see below). Detection uses the pristine cutout before composition; its
+   disposable native process exits before the compositor allocates its image
+   layers. The fitted polygon follows the existing crop scale and offsets.
+   The opaque wordmark is drawn after enhancement, without altering the
+   provider cutout or its shadow.
+7. **Encode once** as WebP: quality from the option, effort 4,
    `smartSubsample`, metadata stripped. The preview is derived from the same
    render, so there is no second provider call.
 
 The intermediate cutout stays RGBA end to end. Only the final opaque
 composite drops alpha.
+
+## Optional DealersDrive plate branding
+
+`PLATE_BRANDING_ENABLED=true` enables a local, offline detector and perspective
+renderer inside the image-processing Lambda. Nothing calls another inference
+API, reads registration characters, or downloads a model during an invocation.
+The model and the owner's unmodified white-on-black wordmark are in the ZIP at
+`assets/plate-branding/`, with attribution, license, revision and SHA-256.
+
+The detector is the pinned Apache-2.0 RT-DETRv2 R18 plate fine-tune documented
+in `assets/plate-branding/NOTICE.txt`. Input is bounded to a 640×640 RGB tensor.
+It runs on CPU in a separate Node process with one inference thread, no
+application environment or credentials, no stdout/stderr collection, a small
+V8 heap, and a hard wall-clock deadline. `ORT_DISABLE_TELEMETRY=1` is set in
+that process before native import, disabling the SDK uploader, device ID and
+disk queue. Each process handles one image and
+exits; native model memory is released before composition. A hang is killed
+and a crash or malformed response becomes a branding skip.
+The opt-out is defined by the runtime's
+[pinned native source](https://github.com/microsoft/onnxruntime/blob/v1.30.0/onnxruntime/core/platform/telemetry_environment.h).
+
+Its scores are compressed rankings, not calibrated probabilities. A score of
+at least 0.08 is only the first filter. Size, aspect, frame share, opacity and
+duplicate/ambiguous candidate checks are followed by a connected physical
+surface check. White, yellow and green plate surfaces are supported. A convex
+four-corner fit supplies the perspective; letter holes do not define the
+outline. Dark, dim, very small, clipped, body-connected, heavily obscured or
+ambiguous plates are conservatively skipped. Multiple distinct plate
+candidates are skipped rather than guessing which vehicle the dealer meant.
+
+The original photo or staged provider cutout is never overwritten. The
+wordmark is prefiltered to the plate's pixel scale and fitted with black
+padding, then projected into the plate surface using an inverse homography.
+The surrounding plate frame/country band is retained when outside that
+surface. Raw pixels outside the polygon are exact; final WebP compression may
+change nearby pixels. Output and preview come from the same branded render.
+An `ORIGINAL` treatment uses the already-rendered original photo as the
+detection input and requires no Leonardo call.
+
+Branding is best effort, not a guarantee that a plate has been anonymized.
+Detection, loading or rendering failures retain the normal processed result
+and do not retry Leonardo, change usage charging, or fail an otherwise
+successful job. `plate_branding_result` logs only a bounded outcome and
+duration; no pixels, registration text, URLs or error payloads are logged.
+
+The flag defaults to **false**, including when absent on an existing Lambda.
+When enabled on a Lambda smaller than the tested 2048 MB budget, branding
+remains disabled and logs `skipped_memory_budget`; background processing
+continues normally. The memory value comes from AWS's reserved runtime variable,
+not a setting the user must add.
+Deploy the reviewed ZIP first, then set the flag to true (CloudFormation
+`PlateBrandingEnabled=true`). Existing completed assets are not rewritten;
+submit a new processing batch to brand them. Set the flag back to false to
+restore the previous path without changing the artifact.
+
+Offline visual evidence and its reproducible command are in
+[`evidence/plate-branding/README.md`](./evidence/plate-branding/README.md).
+That real-photo evidence exercises detection and rendering, not a live
+Leonardo request. Real Indian dealer-photo detection accuracy and production
+latency are not inferred from a single public example or synthetic geometry.
 
 ## Options
 
@@ -264,7 +330,9 @@ and normalizes an ORIGINAL background to Maintain Composition.
 | --- | --- | --- | --- |
 | `LEONARDO_API_KEY` | Worker only | — | Required; from Secrets Manager in AWS |
 | `LEONARDO_TIMEOUT_MS` | Worker | 90000 | 1000–150000; covers generation and download |
-| `IMAGE_WORKER_CLAIM_TTL_MS` | Worker | 180000 | Must be at least the Leonardo timeout plus 30 s (validated) |
+| `PLATE_BRANDING_ENABLED` | Worker | false | `true` enables offline plate branding; no client option |
+| `PLATE_DETECTION_TIMEOUT_MS` | Worker | 10000 | 500–15000; kills a stalled child process |
+| `IMAGE_WORKER_CLAIM_TTL_MS` | Worker | 180000 | Must cover Leonardo timeout + enabled detection deadline + 30 s (validated) |
 
 Lambda timing (`infrastructure/aws/image-processing-worker.yml`):
 
