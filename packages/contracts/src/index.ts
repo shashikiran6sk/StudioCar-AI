@@ -9,6 +9,7 @@ export * from "./leonardo";
 export * from "./processing";
 export * from "./phone-number";
 export * from "./plans";
+export * from "./plate-detection";
 export * from "./portfolio";
 export * from "./profile";
 export * from "./social-links";

@@ -2,6 +2,59 @@
 
 Last updated: 2026-10-22
 
+## Optional local DealersDrive plate branding
+
+- Added worker-only plate detection and perspective logo placement after
+  Leonardo removal and before final encoding. The ORIGINAL path also brands
+  locally without calling Leonardo. Provider requests, stored originals,
+  pristine staged cutouts, durable retries, usage charging, job contracts,
+  polling and UI controls retain their existing behavior.
+- The ZIP includes a revision/checksum-pinned Apache-2.0 RT-DETRv2 R18 plate
+  detector, ONNX Runtime 1.30.0 CPU binaries for Linux ARM64, the owner's
+  unchanged wordmark, license and attribution. No model download, new
+  credential, external detection API, migration or IAM permission is needed.
+- Native inference handles one image in a disposable process without the
+  application's environment, under a hard deadline. The SDK's telemetry is
+  disabled before import so it creates no uploader, device ID or local
+  telemetry queue. The child exits before composition to release native
+  memory. A low-ranked, absent, tiny,
+  transparent, clipped, obscured or ambiguous plate is skipped. Physical
+  white/yellow/green surfaces must also pass a convex four-corner fit.
+- The wordmark is prefiltered for small plates, fitted without stretching,
+  and warped into the registration surface after enhancement. Both output
+  and preview derive from those pixels. Failures retain the ordinary result;
+  no plate stage re-invokes Leonardo or changes usage. This is best-effort
+  branding, not a guarantee of anonymization.
+- Default is disabled, including on an existing Lambda with no new env var.
+  Deploy the new ZIP and enable `PLATE_BRANDING_ENABLED=true` (stack parameter
+  `PlateBrandingEnabled=true`). Default detection deadline is 10 s. The
+  existing 2 GB / 180 s defaults are retained. Smaller existing Lambdas skip
+  branding using AWS's reserved memory-size variable and retain ordinary
+  processing (`skipped_memory_budget`); the claim validator includes
+  the enabled detection budget. Rollback is setting the flag false.
+- Local verification: lint, strict types, source mapping, 2,192 unit passes
+  (one existing expected failure), 189 real-PostgreSQL integration tests,
+  Prisma validation, normal production build, 16 browser tests and production
+  dependency audit (no known vulnerabilities). Coverage includes exact
+  fallback bytes, stage ordering, cutout reuse, process hangs/crashes, geometry,
+  preview branding and exactly-once completion/usage with branding on or failed.
+- A clean ARM64 Node 24 Lambda archive ran actual positive/negative inference
+  offline under 2 GB and one CPU: about 0.84 s positive and 1.20 s negative on
+  this Docker host. These are diagnostic samples, not production percentiles.
+  Reproducible real-photo visuals and the measured zero changes outside the
+  raw polygon are in `docs/evidence/plate-branding/`. The example is public;
+  live Leonardo and representative Indian dealer-photo accuracy remain
+  deployment validation, not inferred from the fixture or synthetic tests.
+- The prerequisite dependency-security change is PR #100. Required PR CI and
+  the repository's code-owner review gate still apply before merging and S3
+  publishing. The worker's existing publisher then uploads the tested ZIP;
+  the user performs the Lambda code/configuration update.
+- The final archive is about 107 MiB compressed / 154 MiB unpacked and is
+  byte-identical across independent builds. Local AWS CLI login is expired,
+  so live Lambda settings were not read or changed; the existing publisher
+  uses GitHub OIDC independently. Use the tested 2048 MB / 180 s settings and
+  the worker flag when activating the artifact.
+
 ## Patch dependencies required by the production security audit
 
 - The October 22 audit rejects existing Next.js 16.3.6, Sharp 0.35.4 and

@@ -133,6 +133,33 @@ CI runs on `main` are never cancelled by a newer push, so every merged commit
 publishes its archive. Turn on bucket versioning and a lifecycle rule for old
 archives as retention requires; the role never deletes them.
 
+### Enabling DealersDrive plate branding
+
+The image-worker ZIP also includes the pinned CPU plate detector, its native
+ARM64 runtime, the supplied DealersDrive wordmark and their notices. There is
+no external detection API, extra credential, runtime download or database
+migration. The archive is larger than the 50 MB direct-upload limit; deploy
+from its existing S3 artifact key.
+
+After deploying that artifact, set the worker stack's
+`PlateBrandingEnabled=true` (Lambda environment `PLATE_BRANDING_ENABLED=true`).
+The default is false, preserving the existing path on an unchanged
+configuration. `PlateDetectionTimeoutMilliseconds` defaults to 10000; its
+Lambda environment equivalent is `PLATE_DETECTION_TIMEOUT_MS`. The ordinary
+180-second timeout and claim lease cover the default Leonardo deadline,
+detection deadline and composition budget. If any deadline is increased,
+update the lease/Lambda/queue timing together. No new IAM permission is needed.
+
+ARM64 packaging smoke tests run actual inference with 2048 MB and one CPU.
+Set the function memory to at least 2048 MB before enabling. Lower-memory
+Lambdas skip branding using AWS's reserved memory-size variable, retaining
+ordinary processing and logging `skipped_memory_budget`.
+Review representative new images after activation. Completed assets require a
+new processing batch. Roll back by setting the flag false; detector failures
+already preserve successful background processing automatically. See
+[`docs/image-processing.md`](../../docs/image-processing.md) for visibility
+rules, skip outcomes and limitations.
+
 The stack resolves database and Leonardo.Ai credentials from
 Secrets Manager, grants only tenant-prefix object access, caps both reserved and
 SQS event-source concurrency, and enables `ReportBatchItemFailures`. Configure

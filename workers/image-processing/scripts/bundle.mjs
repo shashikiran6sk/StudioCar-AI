@@ -1,15 +1,16 @@
 // Bundles a worker entry point into one ES module. Everything is inlined
-// except `sharp`, whose native libvips binary must ship beside the bundle for
-// the target platform. Used by `build`, `build:local` and `package:lambda`, so
+// except sharp and ONNX Runtime, whose native CPU binaries ship beside the
+// bundle for the target platform. Used by build, build:local and package:lambda, so
 // local containers run exactly what the Lambda runs.
 //
 // Usage: node scripts/bundle.mjs <entry.ts> <outfile.mjs>
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import path from "node:path";
 import { build } from "esbuild";
 
 /** Native packages that must stay outside the bundle. */
-export const NATIVE_EXTERNALS = ["sharp"];
+export const NATIVE_EXTERNALS = ["sharp", "onnxruntime-node"];
 
 /**
  * Bundled CommonJS dependencies still call `require` for Node built-ins; an
@@ -42,4 +43,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     throw new Error("Usage: node scripts/bundle.mjs <entry.ts> <outfile.mjs>");
   }
   await bundleEntry(entryPoint, outfile);
+  await bundleEntry(
+    "src/plate-branding/plate-detector-child.ts",
+    path.join(path.dirname(outfile), "plate-detector.mjs"),
+  );
 }

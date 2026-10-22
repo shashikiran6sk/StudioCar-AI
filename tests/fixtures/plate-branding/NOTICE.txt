@@ -1,0 +1,5 @@
+vehicle-with-plate.png: assets/test_image.png from ankandrew/fast-alpr.
+Source: https://github.com/ankandrew/fast-alpr/blob/master/assets/test_image.png
+Distributed with the upstream repository's MIT license (LICENSE.txt).
+This public sample is used only for offline detector validation; it is never
+sent to Leonardo or another external inference service by the tests.

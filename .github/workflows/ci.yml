@@ -116,11 +116,13 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/task"
           unzip -q workers/image-processing/dist/lambda/image-processing-worker.zip -d "$RUNNER_TEMP/task"
-          docker run --rm --platform linux/arm64 \
+          docker run --rm --platform linux/arm64 --memory=2048m --cpus=1 \
+            --network=none --read-only --tmpfs /tmp:rw,nosuid,size=128m \
             --volume "$RUNNER_TEMP/task:/var/task:ro" \
             --volume "$PWD/workers/image-processing/scripts:/smoke:ro" \
+            --volume "$PWD/tests/fixtures/plate-branding:/fixtures:ro" \
             --entrypoint /var/lang/bin/node \
-            public.ecr.aws/lambda/nodejs:24 /smoke/smoke-lambda.mjs /var/task
+            public.ecr.aws/lambda/nodejs:24 /smoke/smoke-lambda.mjs /var/task /fixtures/vehicle-with-plate.png
 
       - name: Summarize the archive
         run: |

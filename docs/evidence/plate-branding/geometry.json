@@ -1,0 +1,25 @@
+{
+  "corners": {
+    "topLeft": {
+      "x": 315,
+      "y": 192
+    },
+    "topRight": {
+      "x": 383,
+      "y": 191
+    },
+    "bottomRight": {
+      "x": 386,
+      "y": 205
+    },
+    "bottomLeft": {
+      "x": 317,
+      "y": 206
+    }
+  },
+  "source": {
+    "width": 518,
+    "height": 331
+  },
+  "outsidePolygonPixelsChanged": 0
+}

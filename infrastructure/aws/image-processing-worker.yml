@@ -85,6 +85,17 @@ Parameters:
     Default: 50000000
     MinValue: 1000000
     MaxValue: 50000000
+  PlateBrandingEnabled:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+    Description: Enable local DealersDrive plate replacement; false preserves the existing pipeline
+  PlateDetectionTimeoutMilliseconds:
+    Type: Number
+    Default: 10000
+    MinValue: 500
+    MaxValue: 15000
+    Description: Hard deadline for the disposable local plate-detector process
   LogRetentionDays:
     Type: Number
     Default: 30
@@ -189,6 +200,8 @@ Resources:
           PROCESSING_RETRY_MAX_MS: "300000"
           LEONARDO_API_KEY: !Sub '{{resolve:secretsmanager:${LeonardoSecretArn}:SecretString:LEONARDO_API_KEY}}'
           LEONARDO_TIMEOUT_MS: !Ref LeonardoTimeoutMilliseconds
+          PLATE_BRANDING_ENABLED: !Ref PlateBrandingEnabled
+          PLATE_DETECTION_TIMEOUT_MS: !Ref PlateDetectionTimeoutMilliseconds
           S3_BUCKET: !Ref ImageBucketName
       Handler: handler.handler
       MemorySize: !Ref MemorySize

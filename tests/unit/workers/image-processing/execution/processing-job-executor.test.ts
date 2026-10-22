@@ -23,6 +23,7 @@ import type {
 import { createClaimedJob } from "../test-support/create-claimed-job";
 import { createCutout, encodeCutout } from "../test-support/create-cutout";
 import { STUDIO_BACKGROUND_DIRECTORY } from "../test-support/load-studio-background";
+import type { PlateBrandingPort } from "../../../../../workers/image-processing/src/plate-branding/plate-branding.types";
 
 const OPTIONS = {
   maximumInputBytes: 5 * 1024 * 1024,
@@ -95,6 +96,7 @@ async function setup(
   job: Partial<ClaimedProcessingJob> = {},
   provider?: RecordingProvider,
   backgroundSource: StudioBackgroundSource = backgrounds,
+  plateBranding?: PlateBrandingPort,
 ) {
   const cutout = createCutout();
   const cutoutBytes = await encodeCutout(cutout);
@@ -119,7 +121,7 @@ async function setup(
     new RecordingProvider({ bytes: cutoutBytes, height: cutout.height, width: cutout.width });
   return {
     cutoutBytes,
-    executor: new ProcessingJobExecutor(storage, recording, backgroundSource, OPTIONS),
+    executor: new ProcessingJobExecutor(storage, recording, backgroundSource, OPTIONS, plateBranding),
     job: claimed,
     keys: buildProcessingObjectKeys(claimed),
     provider: recording,
@@ -129,6 +131,45 @@ async function setup(
 }
 
 describe("ProcessingJobExecutor", () => {
+  it.each(["ORIGINAL", "PREMIUM_WHITE"] satisfies readonly ClaimedProcessingJob["options"]["background"][])(
+    "keeps %s output and preview byte-identical when branding is absent or fails, without another provider call",
+    async (background) => {
+      const state = await setup({ options: { ...createClaimedJob().options, background } });
+      const first = await state.executor.execute(state.job);
+      expect(first.ok).toBe(true);
+      const output = state.storage.objects.get(state.keys.output)?.bytes;
+      const preview = state.storage.objects.get(state.keys.preview)?.bytes;
+      for (const branding of [
+        { prepare: () => Promise.resolve(null) },
+        { prepare: () => Promise.reject(new Error("detector failed")) },
+      ] satisfies PlateBrandingPort[]) {
+        const result = await new ProcessingJobExecutor(state.storage, state.provider, backgrounds, OPTIONS, branding).execute(state.job);
+        expect(result.ok).toBe(true);
+        expect(state.storage.objects.get(state.keys.output)?.bytes).toEqual(output);
+        expect(state.storage.objects.get(state.keys.preview)?.bytes).toEqual(preview);
+      }
+      expect(state.provider.requests).toHaveLength(background === "ORIGINAL" ? 0 : 1);
+      expect(state.storage.objects.get(state.job.originalObjectKey)?.bytes).toEqual(state.source);
+    },
+  );
+
+  it("brands the output and preview, while retaining the pristine paid cutout for retries", async () => {
+    const state = await setup();
+    await state.executor.execute(state.job);
+    const before = state.storage.objects.get(state.keys.output)?.bytes;
+    const beforePreview = state.storage.objects.get(state.keys.preview)?.bytes;
+    const branding: PlateBrandingPort = { prepare: () => Promise.resolve({
+      artwork: { channels: 3, data: Buffer.alloc(12, 0), height: 2, width: 2 },
+      corners: { topLeft: { x: 250, y: 200 }, topRight: { x: 350, y: 200 }, bottomRight: { x: 350, y: 225 }, bottomLeft: { x: 250, y: 225 } },
+    }) };
+    const executor = new ProcessingJobExecutor(state.storage, state.provider, backgrounds, OPTIONS, branding);
+    expect((await executor.execute({ ...state.job, attemptNumber: 2 })).ok).toBe(true);
+    expect(state.storage.objects.get(state.keys.output)?.bytes).not.toEqual(before);
+    expect(state.storage.objects.get(state.keys.preview)?.bytes).not.toEqual(beforePreview);
+    expect(state.storage.objects.get(state.keys.providerCutout)?.bytes).toEqual(state.cutoutBytes);
+    expect(state.provider.requests).toHaveLength(1);
+  });
+
   it("runs on the provider it was given", async () => {
     const { executor } = await setup();
     expect(executor.providerKey).toBe("LEONARDO");

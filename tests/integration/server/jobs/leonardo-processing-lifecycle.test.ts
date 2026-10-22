@@ -14,6 +14,7 @@ import { PrismaProcessingOutboxRepository } from "../../../../apps/web/src/serve
 import { ProcessingStatusService } from "../../../../apps/web/src/server/jobs/processing-status-service";
 import { FileStudioBackgroundSource } from "../../../../workers/image-processing/src/execution/file-studio-background-source";
 import { ProcessingJobExecutor } from "../../../../workers/image-processing/src/execution/processing-job-executor";
+import type { PlateBrandingPort } from "../../../../workers/image-processing/src/plate-branding/plate-branding.types";
 import { handleProcessingQueueEvent } from "../../../../workers/image-processing/src/handle-processing-queue-event";
 import { LeonardoProvider } from "../../../../workers/image-processing/src/providers/leonardo-provider";
 import type { ProcessingObjectStoragePort } from "../../../../workers/image-processing/src/storage/processing-object-storage.types";
@@ -156,7 +157,7 @@ databaseDescribe("Leonardo processing lifecycle against PostgreSQL", () => {
         `https://studiocar-prod.s3.amazonaws.com/${key}?X-Amz-Signature=${SIGNATURE}`,
       ),
     );
-    const run = (fetcher: typeof fetch) => {
+    const run = (fetcher: typeof fetch, branding?: PlateBrandingPort) => {
       const provider = new LeonardoProvider(
         {
           apiKey: API_KEY,
@@ -172,6 +173,7 @@ databaseDescribe("Leonardo processing lifecycle against PostgreSQL", () => {
         provider,
         new FileStudioBackgroundSource(BACKGROUND_DIRECTORY),
         { maximumInputBytes: 1024 * 1024, maximumPixels: 4_000_000, previewMaximumWidth: 320 },
+        branding,
       );
       const worker = new ProcessingWorker(
         new PrismaProcessingWorkerRepository(database),
@@ -195,7 +197,7 @@ databaseDescribe("Leonardo processing lifecycle against PostgreSQL", () => {
     return parsed;
   }
 
-  it("composes a studio image, stores it privately and charges usage exactly once", async () => {
+  it.each(["disabled", "applied", "failed"])("composes privately and charges exactly once with plate branding %s", async (mode) => {
     const { job, objects, owner, run } = await arrange("completed");
     const cutout = await encodeCutout(createCutout());
     const fetcher = vi.fn<typeof fetch>((input) =>
@@ -224,10 +226,16 @@ databaseDescribe("Leonardo processing lifecycle against PostgreSQL", () => {
       ),
     );
     const log = vi.spyOn(logger, "log");
+    const branding: PlateBrandingPort | undefined = mode === "disabled" ? undefined : {
+      prepare: () => mode === "failed" ? Promise.reject(new Error("private-detector-error")) : Promise.resolve({
+        artwork: { channels: 3, data: Buffer.alloc(12), height: 2, width: 2 },
+        corners: { topLeft: { x: 250, y: 200 }, topRight: { x: 350, y: 200 }, bottomRight: { x: 350, y: 225 }, bottomLeft: { x: 250, y: 225 } },
+      }),
+    };
 
-    expect(await run(fetcher)).toEqual({ batchItemFailures: [] });
+    expect(await run(fetcher, branding)).toEqual({ batchItemFailures: [] });
     // A duplicate SQS delivery of a completed job is acknowledged untouched.
-    expect(await run(fetcher)).toEqual({ batchItemFailures: [] });
+    expect(await run(fetcher, branding)).toEqual({ batchItemFailures: [] });
 
     expect(fetcher).toHaveBeenCalledTimes(2);
     // A free account (no subscription) receives Leonardo's preview size.

@@ -16,6 +16,8 @@ import {
 } from "./studio-background.constants";
 import type { StudioBackground } from "./studio-background.types";
 import type { RawImage } from "./vehicle-alpha.types";
+import type { PlateOverlay } from "../plate-branding/plate-branding.types";
+import { safeApplyPlateOverlay } from "../plate-branding/safe-apply-plate-overlay";
 
 export interface ComposeStudioImageInput {
   background: StudioBackground;
@@ -25,6 +27,7 @@ export interface ComposeStudioImageInput {
   cutout: RawImage;
   floor: FloorStyle;
   options: Pick<ProcessingOptions, "crop" | "enhancement" | "paddingPercent">;
+  plateOverlay?: PlateOverlay | null;
 }
 
 /**
@@ -101,11 +104,11 @@ export async function composeStudioImage(
     height: framing.canvasHeight,
     width: framing.canvasWidth,
   };
-  if (!input.options.enhancement) return composed;
+  if (!input.options.enhancement) return safeApplyPlateOverlay(composed, input.plateOverlay ?? null, framing);
   const { content } = measurement;
   const contentLeft = Math.floor(framing.offsetX + content.left * framing.scale);
   const contentTop = Math.floor(framing.offsetY + content.top * framing.scale);
-  return sharpenWithinLayer(composed, vehicleLayer, {
+  const enhanced = await sharpenWithinLayer(composed, vehicleLayer, {
     height:
       Math.ceil(
         framing.offsetY + (content.top + content.height) * framing.scale,
@@ -117,4 +120,5 @@ export async function composeStudioImage(
         framing.offsetX + (content.left + content.width) * framing.scale,
       ) - contentLeft,
   });
+  return safeApplyPlateOverlay(enhanced, input.plateOverlay ?? null, framing);
 }

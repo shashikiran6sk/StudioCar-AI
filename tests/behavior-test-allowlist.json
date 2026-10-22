@@ -1,5 +1,13 @@
 [
   {
+    "source": "workers/image-processing/src/plate-branding/plate-branding.types.ts",
+    "reason": "Type-only provider-neutral plate geometry, detector and branding ports."
+  },
+  {
+    "source": "workers/image-processing/src/plate-branding/plate-detector-child.ts",
+    "reason": "Disposable native-process entry: real positive/negative inference is required by the ARM64 Lambda archive smoke test; numeric parsing and IPC contracts have dedicated unit tests."
+  },
+  {
     "source": "apps/web/src/lib/private-robots.ts",
     "reason": "Static noindex policy asserted through the authenticated, admin, and auth layout tests."
   },
