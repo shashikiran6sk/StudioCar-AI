@@ -2,6 +2,32 @@
 
 Last updated: 2026-10-22
 
+## White plate surfaces split by shadows and colour casts
+
+- Reproduced an ORIGINAL job completing while plate branding logged
+  `skipped_no_reliable_plate`. The detector found the owner's clearly visible
+  plate, but the fixed bright-white mask fragmented its physical surface.
+- Preserve the existing reliable bright fit first. Only when no fit exists,
+  lower the neutral-white threshold from 185 to 135 in five-channel steps,
+  stopping at the first reliable fit before bodywork joins the surface. At
+  least 50% of the component must remain at or above the shaded-white seed
+  threshold (155). Geometry, ambiguity, opacity, border, area and solidity
+  checks remain in force; a dim gray surface with a small highlight is rejected.
+- Added six synthetic regressions covering three shadow intensities, a gray
+  surface with a small highlight, cool-white colour cast, and a surrounding
+  gray body that must not join the fitted plate. All nine private images
+  supplied for local diagnosis now render the wordmark within a fitted plate,
+  with zero changed raw pixels outside the polygon. The first photo was also
+  checked with enhancement off. Private images are not committed; the existing
+  public real-photo evidence is unchanged.
+- Local verification passed: lint, strict types, source mapping, all unit
+  suites uncached, 189 isolated PostgreSQL integration tests, Prisma
+  validation, the normal production build, all 16 browser tests and Lambda
+  ZIP packaging. The archive also passed actual positive/negative inference
+  offline in the read-only ARM64 Lambda runtime under 2 GB / one CPU.
+  Required PR CI must also pass before merge. No provider
+  request, job state, usage, storage, UI, environment contract or migration changes.
+
 ## Optional local DealersDrive plate branding
 
 - Added worker-only plate detection and perspective logo placement after
