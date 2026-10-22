@@ -1,6 +1,20 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-10-02
+Last updated: 2026-10-22
+
+## Patch dependencies required by the production security audit
+
+- The October 22 audit rejects existing Next.js 16.3.6, Sharp 0.35.4 and
+  source-map-js 1.2.1. Updated Next.js and its ESLint configuration to 16.3.8,
+  Sharp to 0.35.5 and the lockfile's source-map-js to 1.2.2. No application,
+  provider, processing, database or UI behavior is changed intentionally.
+- This is isolated from the DealersDrive plate-branding feature so the
+  existing security gate remains enforced and the changes can be reviewed
+  independently.
+- Local verification passed: production audit (no known vulnerabilities),
+  lint, strict types, source mapping, 2,149 unit passes (one existing expected
+  failure), real-PostgreSQL integration, Prisma validation, normal production
+  build and all 16 browser tests. Required PR CI must pass before merge.
 
 ## Search-result favicon discovery
 
