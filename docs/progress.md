@@ -2,6 +2,26 @@
 
 Last updated: 2026-10-22
 
+## Next.js security audit after the plate-surface merge
+
+- Main run `39827807189` failed the production dependency audit after PR
+  #102 merged. The package and build/browser jobs passed, but publication
+  correctly stayed blocked. The audit now flags Next.js 16.3.8 for
+  GHSA-2464-fhr4-w9xw and GHSA-p3m5-59mp-jv5r, both requiring 16.4.1.
+- Updated Next.js, eslint-config-next and their matching locked Next tooling
+  to 16.4.1. The production audit reports no known vulnerabilities. The audit
+  threshold and every CI check remain enforced. No application, provider,
+  image-processing, database or deployment logic changes.
+- References: [security release](https://github.com/vercel/next.js/releases/tag/v16.4.1),
+  [image optimization advisory](https://github.com/advisories/GHSA-2464-fhr4-w9xw),
+  [Server Actions advisory](https://github.com/advisories/GHSA-p3m5-59mp-jv5r).
+- Local verification passed: production audit, lint, strict types, source
+  mapping, all unit suites uncached, 189 isolated PostgreSQL integration
+  tests, Prisma validation, the normal production build and all 16 browser
+  tests. An initial inventory-navigation timeout did not recur in either the
+  targeted trace run or the full traced browser suite; test and application
+  code were unchanged. Required PR CI must pass before merge.
+
 ## White plate surfaces split by shadows and colour casts
 
 - Reproduced an ORIGINAL job completing while plate branding logged
