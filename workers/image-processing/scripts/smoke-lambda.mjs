@@ -1,6 +1,6 @@
 // Smoke-tests an extracted Lambda archive on its target platform. Run it with
-// the archive's own Node.js runtime (for example inside the arm64 Lambda image
-// under QEMU). It loads nothing from outside the archive.
+// the archive's own Node.js runtime inside the arm64 Lambda image on native
+// ARM64 hardware. It loads nothing from outside the archive.
 //
 // 1. Imports `handler.mjs` and builds the real worker (configuration, Prisma,
 //    S3, Leonardo provider, background directory) by invoking the handler
@@ -27,6 +27,7 @@ if (!archiveArgument) {
   throw new Error("Usage: node smoke-lambda.mjs <extracted-archive-directory>");
 }
 const archive = path.resolve(archiveArgument);
+assert.equal(process.arch, "arm64");
 
 // Synthetic production configuration. Nothing here is a credential, and the
 // malformed message never reaches the database, S3 or the provider.
@@ -75,12 +76,15 @@ async function detect(pixels) {
       serialization: "advanced", stdio: ["ignore", "ignore", "ignore", "ipc"],
     });
     let result;
-    const timeout = setTimeout(() => child.kill("SIGKILL"), 15000);
+    let timedOut = false;
+    const timeout = setTimeout(() => { timedOut = true; child.kill("SIGKILL"); }, 15000);
     child.once("message", (message) => { result = message; });
     child.once("error", reject);
-    child.once("close", (code) => {
+    child.once("close", (code, signal) => {
       clearTimeout(timeout);
-      if (code !== 0 || result?.ok !== true) reject(new Error("Packaged plate inference failed."));
+      if (code !== 0 || result?.ok !== true) reject(new Error(
+        `Packaged plate inference failed: ${JSON.stringify({ code, signal, timedOut })}`,
+      ));
       else resolve({ detections: result.detections, durationMs: performance.now() - started });
     });
     child.send({ pixels });
@@ -93,7 +97,8 @@ if (!fixtureArgument) throw new Error("A real-photo plate fixture is required.")
 const pixels = await sharp(path.resolve(fixtureArgument)).removeAlpha()
   .resize(640, 640, { fit: "fill" }).raw().toBuffer();
 const plate = await detect(pixels);
-assert.ok(plate.detections.some((box) => box.left > 0.57 && box.left < 0.62 && box.top > 0.55 && box.top < 0.6));
+assert.ok(plate.detections.some((box) => box.left > 0.57 && box.left < 0.62 && box.top > 0.55 && box.top < 0.6 &&
+  box.width > 0.12 && box.width < 0.2 && box.height > 0.04 && box.height < 0.09));
 const logo = await sharp(path.join(archive, "assets/plate-branding/dealersdrive-logo.png")).metadata();
 assert.ok(logo.width > logo.height);
 

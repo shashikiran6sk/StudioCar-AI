@@ -54,6 +54,11 @@ Last updated: 2026-10-22
   so live Lambda settings were not read or changed; the existing publisher
   uses GitHub OIDC independently. Use the tested 2048 MB / 180 s settings and
   the worker flag when activating the artifact.
+- The first GitHub package run failed during inference under x64→ARM64 QEMU.
+  The package job now runs on GitHub's native `ubuntu-24.04-arm` hardware,
+  retaining the same inference watchdog, 2 GB / one-CPU container limits,
+  positive/negative assertions, read-only filesystem and disabled networking.
+  Failure diagnostics expose only exit code, signal and timeout state.
 
 ## Patch dependencies required by the production security audit
 

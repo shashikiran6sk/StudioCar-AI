@@ -79,7 +79,8 @@ jobs:
 
   worker-package:
     name: Image worker Lambda package
-    runs-on: ubuntu-latest
+    # The inference deadline is a native ARM64 budget, matching Lambda's CPU.
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
@@ -106,11 +107,6 @@ jobs:
           pnpm --filter @studiocar/image-processing-worker package:lambda "$RUNNER_TEMP/rebuild" > /dev/null
           sha256sum workers/image-processing/dist/lambda/image-processing-worker.zip "$RUNNER_TEMP/rebuild/image-processing-worker.zip"
           cmp workers/image-processing/dist/lambda/image-processing-worker.zip "$RUNNER_TEMP/rebuild/image-processing-worker.zip"
-
-      - name: Set up arm64 emulation
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
 
       - name: Smoke-test the archive in the arm64 Lambda runtime
         run: |
