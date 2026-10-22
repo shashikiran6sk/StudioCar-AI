@@ -276,6 +276,13 @@ four-corner fit supplies the perspective; letter holes do not define the
 outline. Dark, dim, very small, clipped, body-connected, heavily obscured or
 ambiguous plates are conservatively skipped. Multiple distinct plate
 candidates are skipped rather than guessing which vehicle the dealer meant.
+For white plates, a reliable bright-surface fit is retained first. If no fit
+exists, the neutral surface threshold drops in bounded steps to connect
+shadows and antialiased edges, stopping at the first reliable fit before the
+surface joins surrounding bodywork. At least half its sampled pixels must
+remain above the shaded-white seed threshold; every existing geometry,
+coverage, solidity and boundary check still applies. This also accommodates
+moderately shaded, cool-white plates without changing the image's colours.
 
 The original photo or staged provider cutout is never overwritten. The
 wordmark is prefiltered to the plate's pixel scale and fitted with black
