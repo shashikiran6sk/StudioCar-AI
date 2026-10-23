@@ -1,3 +1,5 @@
+import type { PlateSurfacePass } from "./plate-branding.types";
+
 export const PLATE_BRANDING_DIRECTORY = "assets/plate-branding";
 export const PLATE_MODEL_FILE = "plate-rtdetr.onnx";
 export const PLATE_MODEL_SHA256 = "50f9bf9d7eaa97ade59063ba608107203d0575a84c0fb27e0ebf3bab6f594366";
@@ -21,22 +23,38 @@ export const PLATE_MINIMUM_ASPECT = 1;
 export const PLATE_MAXIMUM_ASPECT = 6.5;
 export const PLATE_MAXIMUM_FRAME_SHARE = 0.08;
 export const PLATE_DUPLICATE_OVERLAP = 0.5;
+export const PLATE_DOMINANT_AREA_RATIO = 4;
+export const PLATE_DOMINANT_SCORE_MARGIN = 0.02;
 export const PLATE_OPAQUE_ALPHA = 240;
+export const PLATE_OPAQUE_SAMPLE_CENTER = 0.5;
+export const PLATE_STRONG_MAXIMUM_NONOPAQUE_BOX_SAMPLES = 1;
 export const PLATE_SURFACE_SAMPLE_EDGE = 320;
 export const PLATE_SURFACE_MARGIN = 0.2;
 export const PLATE_SURFACE_MINIMUM_COVERAGE = 0.55;
 export const PLATE_SURFACE_MINIMUM_SOLIDITY = 0.45;
 export const PLATE_SURFACE_MAXIMUM_BOX_AREA_RATIO = 1.6;
 export const PLATE_SURFACE_MINIMUM_QUAD_FIT = 0.9;
+export const PLATE_SURFACE_MINIMUM_EDGE_COVERAGE = 0.75;
+export const PLATE_SURFACE_STRONG_MINIMUM_EDGE_COVERAGE = 0.7;
+export const PLATE_SURFACE_EDGE_TOLERANCE_PIXELS = 4;
+export const PLATE_SURFACE_MAXIMUM_EXPANSION_RATIO = 1.5;
+export const PLATE_SURFACE_NESTING_TOLERANCE = 0.05;
 export const PLATE_SURFACE_MAXIMUM_CENTER_X_OFFSET = 0.2;
 export const PLATE_SURFACE_MAXIMUM_CENTER_Y_OFFSET = 0.25;
 export const PLATE_SURFACE_NEIGHBORS = [[-1, 0], [1, 0], [0, -1], [0, 1]] satisfies readonly [number, number][];
-export const PLATE_OPAQUE_SAMPLE_POSITIONS = [0.1, 0.5, 0.9] satisfies readonly number[];
+export const PLATE_OPAQUE_SAMPLE_POSITIONS = [0.1, PLATE_OPAQUE_SAMPLE_CENTER, 0.9] satisfies readonly number[];
+export const PLATE_SURFACE_OPAQUE_SAMPLE_POSITIONS = [0, PLATE_OPAQUE_SAMPLE_CENTER, 1] satisfies readonly number[];
 export const PLATE_WHITE_MINIMUM_CHANNEL = 185;
 export const PLATE_WHITE_SHADOW_MINIMUM_CHANNEL = 135;
 export const PLATE_WHITE_SHADOW_BRIGHT_MINIMUM_CHANNEL = 155;
+export const PLATE_STRONG_MODEL_SCORE = 0.13;
+export const PLATE_WHITE_DEEP_SHADOW_MINIMUM_CHANNEL = 125;
 export const PLATE_WHITE_MINIMUM_BRIGHT_SHARE = 0.5;
 export const PLATE_WHITE_SURFACE_THRESHOLD_STEP = 5;
+export const PLATE_WHITE_SURFACE_PASSES: readonly PlateSurfacePass[] = [
+  { minimumModelScore: PLATE_MINIMUM_MODEL_SCORE, minimumChannel: PLATE_WHITE_SHADOW_MINIMUM_CHANNEL, seedChannel: PLATE_WHITE_SHADOW_BRIGHT_MINIMUM_CHANNEL },
+  { minimumModelScore: PLATE_STRONG_MODEL_SCORE, minimumChannel: PLATE_WHITE_DEEP_SHADOW_MINIMUM_CHANNEL, seedChannel: PLATE_WHITE_SHADOW_MINIMUM_CHANNEL },
+];
 export const PLATE_WHITE_MAXIMUM_CHANNEL_SPREAD = 75;
 export const PLATE_YELLOW_MINIMUM_RED = 140;
 export const PLATE_YELLOW_MINIMUM_GREEN = 115;

@@ -1,6 +1,49 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-10-22
+Last updated: 2026-10-23
+
+## Foreground selection and complete shaded plate surfaces
+
+- Inspected 102 private local photos: 47 have a suitable visible plate and 55
+  are interiors, side views or lack a suitable plate. Eight visible cases
+  failed the prior fitter: five shaded surfaces and three images with smaller
+  secondary candidates. Twenty photos are unsubmitted drafts and were only
+  inspected offline. Private photos and diagnostic artifacts are not committed.
+- Preserve ambiguity for comparable candidates; accept a dominant foreground
+  plate only with at least 4x area and a 0.02 ranking margin. A separate deeper
+  shadow pass requires a stronger model ranking and retains the existing
+  opacity, area, solidity, convexity and boundary checks.
+- Prevent partial bright strips from being accepted as a complete plate.
+  Stronger-ranked fits seek bounded, containing expansions of observed
+  physical surfaces; unrelated components, excessive expansion and detector
+  area overflow are rejected. Polygon area and expansion rules have focused
+  utilities and tests. No axis-aligned-box overlay or extra inference call.
+- Offline checks accept all 47 labeled visible plates and reject all 55
+  negatives. All 47 were rendered and visually inspected; raw pixels outside
+  each fitted polygon are unchanged. Existing public evidence remains unchanged.
+- Inspected two real, already-paid production cutouts for post-activation
+  skips. One had a smaller secondary detection; the other had one transparent
+  detector-box sample outside an angled plate. Both now fit offline. Only a
+  stronger-ranked box may tolerate one nonopaque sample, its center must be
+  opaque, and the actual fitted corners/edge centers/interior all require
+  opacity. No additional Leonardo generations were requested.
+- Diagnosed the deployed Lambda separately: its checksum matched the tested
+  `d838b9171279` archive, but the opt-in flag was absent and timeout was 120 s.
+  With explicit user approval, enabled `PLATE_BRANDING_ENABLED=true` and set
+  timeout to 180 s. Verified successful update, unchanged code/memory and
+  preservation of all other environment variables. Queue visibility is 900 s.
+  No IAM, queue, image-storage or Lambda-code changes were made through AWS.
+- Reran all 82 submitted photos through the normal authenticated local app
+  with ORIGINAL backgrounds: 82 completed on their first attempt, 40 applied
+  branding and 42 correctly skipped; zero provider requests or processing
+  failures. Verified every output checksum, preview and exactly-once image
+  usage record. Draft uploads remain unsubmitted.
+- Local gates passed: lint, strict types, source mapping, uncached unit and
+  189 PostgreSQL integration tests, Prisma validation, production build and
+  all 16 browser tests. The packaged archive passed offline read-only ARM64
+  Lambda smoke tests under 2 GB / one CPU; both exact production cutouts also
+  passed native detection and fitted-surface preparation in that runtime.
+  Required PR CI and reviewed code rollout remain before production deployment.
 
 ## Next.js security audit after the plate-surface merge
 

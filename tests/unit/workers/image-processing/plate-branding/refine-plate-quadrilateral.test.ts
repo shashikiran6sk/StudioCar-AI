@@ -72,6 +72,50 @@ describe("physical plate surface refinement", () => {
     expect(corners?.topLeft.x).toBeCloseTo(PHOTO_CORNERS.topLeft.x, 0);
     expect(corners?.bottomRight.y).toBeCloseTo(PHOTO_CORNERS.bottomRight.y, 0);
   });
+  it("requires a stronger model ranking to recover a deeply shaded white surface", () => {
+    const image = createPlatePhoto();
+    for (let offset = 0; offset < image.data.length; offset += 3) {
+      if (image.data[offset] === 240) image.data.fill(145, offset, offset + 3);
+    }
+    expect(refinePlateQuadrilateral(image, PHOTO_PLATE)).toBeNull();
+    const corners = refinePlateQuadrilateral(image, { ...PHOTO_PLATE, score: 0.14 });
+    expect(corners).not.toBeNull();
+    expect(corners?.topLeft.x).toBeCloseTo(PHOTO_CORNERS.topLeft.x, 0);
+    expect(corners?.bottomRight.y).toBeCloseTo(PHOTO_CORNERS.bottomRight.y, 0);
+  });
+  it("recovers the full plate instead of accepting only a bright lower strip", () => {
+    const image = createPlatePhoto();
+    for (let y = 0; y < 186; y++) for (let x = 0; x < image.width; x++) {
+      const offset = (y * image.width + x) * 3;
+      if (image.data[offset] === 240) image.data.fill(145, offset, offset + 3);
+    }
+    const corners = refinePlateQuadrilateral(image, PHOTO_PLATE);
+    expect(corners).not.toBeNull();
+    if (!corners) throw new Error("Expected complete plate surface.");
+    expect(Math.abs(corners.topRight.y - PHOTO_CORNERS.topRight.y)).toBeLessThanOrEqual(3);
+    expect(Math.abs(corners.topLeft.y - PHOTO_CORNERS.topLeft.y)).toBeLessThanOrEqual(3);
+  });
+  it("connects a narrow deeper shadow only for a strongly ranked plate", () => {
+    const image = createPlatePhoto();
+    for (let y = 0; y < image.height; y++) for (let x = 0; x < image.width; x++) {
+      const offset = (y * image.width + x) * 3;
+      if (image.data[offset] === 240) image.data.fill(x >= 225 && x <= 246 ? 125 : 145, offset, offset + 3);
+    }
+    expect(refinePlateQuadrilateral(image, PHOTO_PLATE)).toBeNull();
+    expect(refinePlateQuadrilateral(image, { ...PHOTO_PLATE, score: 0.14 })).not.toBeNull();
+  });
+  it("keeps a strong ranking from overriding missing, obscured, transparent or body-connected surface checks", async () => {
+    const detection = { ...PHOTO_PLATE, score: 0.15 };
+    const image = createPlatePhoto();
+    for (const intensity of [70, 145, 240]) {
+      expect(refinePlateQuadrilateral({ ...image, data: Buffer.alloc(image.data.length, intensity) }, detection)).toBeNull();
+    }
+    const transparent = await sharp(image.data, { raw: { channels: 3, height: image.height, width: image.width } })
+      .ensureAlpha(0).raw().toBuffer();
+    expect(refinePlateQuadrilateral({ ...image, channels: 4, data: transparent }, detection)).toBeNull();
+    for (let y = 195; y < image.height; y++) image.data.fill(70, y * image.width * 3, (y + 1) * image.width * 3);
+    expect(refinePlateQuadrilateral(image, detection)).toBeNull();
+  });
   it("refines the real-photo detector box to the visible plate", async () => {
     const bytes = await readFile(path.resolve(process.cwd(), "../../tests/fixtures/plate-branding/vehicle-with-plate.png"));
     const { data, info } = await sharp(bytes).removeAlpha().raw().toBuffer({ resolveWithObject: true });
