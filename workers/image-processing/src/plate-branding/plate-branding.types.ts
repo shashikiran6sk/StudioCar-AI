@@ -8,6 +8,11 @@ export interface PlateSurfacePass {
   readonly minimumChannel: number;
   readonly seedChannel: number;
 }
+export interface PlateSurfaceFitPass {
+  readonly minimumCoverage: number;
+  readonly minimumQuadFit: number;
+  readonly requireTilt: boolean;
+}
 export interface PlateQuadrilateral {
   topLeft: PlatePoint;
   topRight: PlatePoint;

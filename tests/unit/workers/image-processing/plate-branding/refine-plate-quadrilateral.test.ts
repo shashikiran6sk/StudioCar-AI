@@ -5,8 +5,40 @@ import { describe, expect, it } from "vitest";
 
 import { refinePlateQuadrilateral } from "../../../../../workers/image-processing/src/plate-branding/refine-plate-quadrilateral";
 import { createPlatePhoto, PHOTO_CORNERS, PHOTO_PLATE } from "../test-support/create-plate-photo";
+import { createTiltedPlatePhoto } from "../test-support/create-tilted-plate-photo";
 
 describe("physical plate surface refinement", () => {
+  it.each(["left", "right"] satisfies readonly ("left" | "right")[])("recovers a complete %s-facing tilted plate with a smaller rectangular coverage share", (direction) => {
+    const { image, detection, corners: expected } = createTiltedPlatePhoto(direction);
+    for (const score of [0.12, 0.15]) {
+      const corners = refinePlateQuadrilateral(image, { ...detection, score });
+      expect(corners).not.toBeNull();
+      if (!corners) throw new Error("Expected complete tilted surface.");
+      for (const name of ["topLeft", "topRight", "bottomRight", "bottomLeft"] satisfies readonly (keyof typeof expected)[]) {
+        expect(Math.abs(corners[name].x - expected[name].x)).toBeLessThanOrEqual(2);
+        expect(Math.abs(corners[name].y - expected[name].y)).toBeLessThanOrEqual(2);
+      }
+    }
+  });
+  it("does not apply tilted coverage to an equally sized flat partial surface", () => {
+    const { image, detection } = createTiltedPlatePhoto("right", false);
+    expect(refinePlateQuadrilateral(image, detection)).toBeNull();
+  });
+  it("keeps multiple reliable connected surfaces ambiguous without a fallback", () => {
+    const image = createPlatePhoto();
+    image.data.fill(70);
+    const rectangles = [
+      { left: 167, top: 162, width: 166, height: 66, rgb: [240, 240, 240] },
+      { left: 188, top: 174, width: 124, height: 44, rgb: [70, 70, 70] },
+      { left: 190, top: 176, width: 120, height: 40, rgb: [240, 205, 20] },
+    ];
+    for (const rectangle of rectangles) for (let y = rectangle.top; y < rectangle.top + rectangle.height; y++) {
+      for (let x = rectangle.left; x < rectangle.left + rectangle.width; x++) {
+        rectangle.rgb.forEach((value, channel) => { image.data[(y * image.width + x) * 3 + channel] = value; });
+      }
+    }
+    expect(refinePlateQuadrilateral(image, PHOTO_PLATE)).toBeNull();
+  });
   it.each(["white", "yellow", "green"] satisfies readonly ("white" | "yellow" | "green")[])("recovers the perspective of a %s plate without following character holes", (color) => {
     const corners = refinePlateQuadrilateral(createPlatePhoto(color), PHOTO_PLATE);
     expect(corners).not.toBeNull();

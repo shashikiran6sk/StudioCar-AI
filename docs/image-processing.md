@@ -302,6 +302,16 @@ surfaces only through bounded, containing polygons within the model box's
 area. This avoids accepting a bright lower strip as the entire plate or
 jumping to a neighboring component; overlays are never drawn from a guessed
 axis-aligned detector rectangle.
+Existing successful fits are retained exactly. Only when the standard fit
+finds no surface, a tilted-outline fallback permits a 50% hull-to-box area
+share instead of 55%: empty corners of a slanted plate's rectangular detector
+box can otherwise reject a complete surface. This fallback requires a
+stricter four-corner fit, broad top and bottom edges, sufficient height on
+both sides and consistent nonzero tilt in either direction. Rounded corners
+are recovered by intersecting lines fitted to supported hull edges, with
+bounded residuals, corner movement and area growth. Flat patches, narrow
+strips, unsupported edges and ambiguous surfaces remain ineligible. Every
+existing color, connected-pixel, opacity, boundary and solidity check applies.
 On RGBA provider cutouts, a stronger-ranked candidate may have one transparent
 detector-box sample, since an angled bounding rectangle can extend off the
 vehicle. The box center must remain opaque. The actual fitted plate's corners,

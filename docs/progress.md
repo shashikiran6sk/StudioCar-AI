@@ -2,6 +2,41 @@
 
 Last updated: 2026-10-23
 
+## Complete tilted plate surfaces with rounded corners
+
+- Reproduced both reported Ertiga/Eeco production misses from their saved,
+  already-paid cutouts. Detection and the deployed branding flag were
+  correct. Connected white surfaces covered about 54% of their detector
+  rectangles, narrowly failing the 55% hull-area check. Slanted plate edges
+  leave empty triangles inside those rectangles; this is a surface-fit issue,
+  not a missing detection or a direction-specific detector limitation.
+- Preserve every existing successful standard fit, including its geometry.
+  Only if that fit has no result, allow 50% coverage with stricter quadrilateral
+  fit, full-width edges, sufficient side heights and consistent tilt in
+  either direction. Ambiguity still exits immediately without a fallback.
+- A visual review caught a shortened right edge on the initial Ertiga fit.
+  Recover the rounded physical corners from supported hull-edge lines, with
+  bounded residual, corner movement and area growth. No rectangular-box
+  overlay, unbounded extrapolation, new model or detector threshold change.
+- Added synthetic coverage for mirrored angles, rounded corners, flat and
+  narrow patches, inconsistent slopes, insufficient edge evidence, excessive
+  extrapolation and competing physical surfaces. Private photos and diagnostic
+  artifacts are not committed. Provider, job, usage and storage paths are
+  unchanged; production inspection was read-only with zero provider requests.
+- Fresh inference covered all 256 current local images (236 submitted plus
+  20 drafts inspected offline). The standard baseline accepted 130; the
+  proposed fallback retained all 130 exact polygons and the same 126 skips.
+  Render checks found zero changed raw pixels outside each plate polygon.
+  The exact two production cutouts now render complete branded plates.
+- The comparison was repeated after the outline correction with the same
+  zero-regression result. Local lint, strict types, source mapping, uncached
+  unit and 189 isolated PostgreSQL integration tests, Prisma validation,
+  production build and all 16 browser tests passed. The final ZIP passed
+  offline ARM64 Lambda smoke tests under 2 GB / one CPU. All five saved
+  production cutouts and three original photos also prepared branding in
+  that native runtime. Required PR CI remains before publication; the user
+  retains responsibility for updating Lambda code.
+
 ## Secondary badge detections after background removal
 
 - Reproduced the reported production Thar job using its saved, already-paid
