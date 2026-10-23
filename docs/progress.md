@@ -2,6 +2,37 @@
 
 Last updated: 2026-10-23
 
+## Secondary badge detections after background removal
+
+- Reproduced the reported production Thar job using its saved, already-paid
+  Leonardo cutout. The deployed ZIP and opt-in flag were correct. Its true
+  plate ranked 0.09596, while a spurious fender-badge box ranked 0.08852;
+  their close rankings caused `skipped_no_reliable_plate`. The original-photo
+  path detected only the real plate. Both candidates passed the preliminary
+  box checks, but only the real plate had a valid physical surface.
+- Added focused surface selection: retain the highest-ranked eligible box
+  only if its physical surface is reliable, then check otherwise ambiguous
+  secondary surfaces. A badge without a plate surface cannot block it.
+  Genuine competing plates retain existing dominance/ambiguity checks; an
+  unreliable primary never promotes a background candidate. Additional
+  fitting is bounded to three secondary checks and fails closed beyond that.
+- Regression coverage includes badge ambiguity, two genuine plate surfaces,
+  unreliable primaries, duplicate boxes, invalid boxes and bounded work. No
+  provider, background-removal, job, storage, usage, migration, dependency or
+  environment changes. Production inspection was read-only; no new provider
+  request or production image rewrite was performed.
+- The exact cutout now renders the supplied logo in its full fitted plate
+  with its studio background. Zero raw pixels change outside that polygon;
+  all 102 prior private-image classifications and accepted geometry remain
+  unchanged. Private inputs and diagnostics are not committed.
+- Local lint, strict types, source mapping, uncached unit and 189 isolated
+  PostgreSQL integration tests, Prisma validation, production build and all
+  16 browser tests passed. The final ZIP passed offline ARM64 Lambda smoke
+  tests under 2 GB / one CPU. All three exact production cutouts and the
+  supplied original photo also prepared branding in that native runtime.
+  Required PR CI remains before merge and publication. The user retains
+  responsibility for the Lambda code update.
+
 ## Foreground selection and complete shaded plate surfaces
 
 - Inspected 102 private local photos: 47 have a suitable visible plate and 55

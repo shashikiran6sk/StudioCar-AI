@@ -274,10 +274,18 @@ duplicate/ambiguous candidate checks are followed by a connected physical
 surface check. White, yellow and green plate surfaces are supported. A convex
 four-corner fit supplies the perspective; letter holes do not define the
 outline. Black, very dim, very small, clipped, body-connected, heavily obscured
-or ambiguous plates are conservatively skipped. A foreground candidate can
-survive smaller secondary detections only when its area is at least four
-times every distinct secondary candidate and its model ranking exceeds each
-by at least 0.02. Comparable candidates remain ambiguous.
+or ambiguous plates are conservatively skipped. Among valid physical plate
+surfaces, a foreground candidate can survive smaller secondary detections
+only when its area is at least four times every distinct secondary candidate
+and its model ranking exceeds each by at least 0.02. Comparable candidates
+remain ambiguous.
+When a secondary detection would make the primary ambiguous, check whether
+that secondary has a physical plate surface. A dark badge without one cannot
+block a reliable primary plate. At most three such secondary surfaces are
+checked; excessive ambiguity remains a skip. The highest-ranked eligible
+candidate must itself have a valid surface: a lower-ranked background plate
+is never promoted when the primary surface fails. Comparable valid plate
+surfaces retain the existing ambiguity rule.
 For white plates, a reliable bright-surface fit is retained first. If no fit
 exists, the neutral surface threshold drops in bounded steps to connect
 shadows and antialiased edges, stopping at the first reliable fit before the

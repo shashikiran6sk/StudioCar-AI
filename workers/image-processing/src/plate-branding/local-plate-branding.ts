@@ -5,8 +5,7 @@ import sharp from "sharp";
 import type { RawImage } from "../execution/vehicle-alpha.types";
 import { PLATE_ARTWORK_WIDTH, PLATE_ARTWORK_INNER_SHARE, PLATE_ARTWORK_MATTE, PLATE_LOGO_FILE } from "./plate-branding.constants";
 import type { PlateBrandingPort, PlateDetector, PlateOverlay } from "./plate-branding.types";
-import { refinePlateQuadrilateral } from "./refine-plate-quadrilateral";
-import { selectVisiblePlate } from "./select-visible-plate";
+import { findVisiblePlateSurface } from "./find-visible-plate-surface";
 
 export class LocalPlateBranding implements PlateBrandingPort {
   private artwork: Promise<RawImage> | undefined;
@@ -14,9 +13,7 @@ export class LocalPlateBranding implements PlateBrandingPort {
   public constructor(private readonly detector: PlateDetector, private readonly assetDirectory: string) {}
 
   public async prepare(image: RawImage): Promise<PlateOverlay | null> {
-    const detection = selectVisiblePlate(image, await this.detector.detect(image));
-    if (!detection) return null;
-    const corners = refinePlateQuadrilateral(image, detection);
+    const corners = findVisiblePlateSurface(image, await this.detector.detect(image));
     if (!corners) return null;
     this.artwork ??= this.readArtwork();
     const original = await this.artwork;
