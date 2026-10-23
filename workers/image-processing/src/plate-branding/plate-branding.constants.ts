@@ -1,4 +1,4 @@
-import type { PlateSurfacePass } from "./plate-branding.types";
+import type { PlateSurfaceFitPass, PlateSurfacePass } from "./plate-branding.types";
 
 export const PLATE_BRANDING_DIRECTORY = "assets/plate-branding";
 export const PLATE_MODEL_FILE = "plate-rtdetr.onnx";
@@ -35,6 +35,22 @@ export const PLATE_SURFACE_MINIMUM_COVERAGE = 0.55;
 export const PLATE_SURFACE_MINIMUM_SOLIDITY = 0.45;
 export const PLATE_SURFACE_MAXIMUM_BOX_AREA_RATIO = 1.6;
 export const PLATE_SURFACE_MINIMUM_QUAD_FIT = 0.9;
+export const PLATE_TILTED_MINIMUM_COVERAGE = 0.5;
+export const PLATE_TILTED_MINIMUM_QUAD_FIT = 0.93;
+export const PLATE_TILTED_MINIMUM_WIDTH_SHARE = 0.85;
+export const PLATE_TILTED_MINIMUM_SIDE_SHARE = 0.45;
+export const PLATE_TILTED_MINIMUM_RISE_SHARE = 0.2;
+export const PLATE_TILTED_MAXIMUM_RISE_DIFFERENCE_SHARE = 0.15;
+export const PLATE_OUTLINE_MINIMUM_DIRECTION_DOT = 0.98;
+export const PLATE_OUTLINE_MINIMUM_SEGMENT_SHARE = 0.1;
+export const PLATE_OUTLINE_MINIMUM_SUPPORT_SHARE = 0.4;
+export const PLATE_OUTLINE_MAXIMUM_RESIDUAL_SHARE = 0.02;
+export const PLATE_OUTLINE_MAXIMUM_AREA_RATIO = 1.1;
+export const PLATE_OUTLINE_MAXIMUM_CORNER_SHIFT_SHARE = 0.08;
+export const PLATE_SURFACE_FIT_PASSES: readonly PlateSurfaceFitPass[] = [
+  { minimumCoverage: PLATE_SURFACE_MINIMUM_COVERAGE, minimumQuadFit: PLATE_SURFACE_MINIMUM_QUAD_FIT, requireTilt: false },
+  { minimumCoverage: PLATE_TILTED_MINIMUM_COVERAGE, minimumQuadFit: PLATE_TILTED_MINIMUM_QUAD_FIT, requireTilt: true },
+];
 export const PLATE_SURFACE_MINIMUM_EDGE_COVERAGE = 0.75;
 export const PLATE_SURFACE_STRONG_MINIMUM_EDGE_COVERAGE = 0.7;
 export const PLATE_SURFACE_EDGE_TOLERANCE_PIXELS = 4;
