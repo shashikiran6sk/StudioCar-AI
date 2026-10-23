@@ -3,6 +3,11 @@ import type { PlateDetection } from "@studiocar/contracts";
 import type { RawImage } from "../execution/vehicle-alpha.types";
 
 export interface PlatePoint { x: number; y: number }
+export interface PlateSurfacePass {
+  readonly minimumModelScore: number;
+  readonly minimumChannel: number;
+  readonly seedChannel: number;
+}
 export interface PlateQuadrilateral {
   topLeft: PlatePoint;
   topRight: PlatePoint;

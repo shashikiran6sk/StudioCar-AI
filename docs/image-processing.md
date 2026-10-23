@@ -273,9 +273,11 @@ at least 0.08 is only the first filter. Size, aspect, frame share, opacity and
 duplicate/ambiguous candidate checks are followed by a connected physical
 surface check. White, yellow and green plate surfaces are supported. A convex
 four-corner fit supplies the perspective; letter holes do not define the
-outline. Dark, dim, very small, clipped, body-connected, heavily obscured or
-ambiguous plates are conservatively skipped. Multiple distinct plate
-candidates are skipped rather than guessing which vehicle the dealer meant.
+outline. Black, very dim, very small, clipped, body-connected, heavily obscured
+or ambiguous plates are conservatively skipped. A foreground candidate can
+survive smaller secondary detections only when its area is at least four
+times every distinct secondary candidate and its model ranking exceeds each
+by at least 0.02. Comparable candidates remain ambiguous.
 For white plates, a reliable bright-surface fit is retained first. If no fit
 exists, the neutral surface threshold drops in bounded steps to connect
 shadows and antialiased edges, stopping at the first reliable fit before the
@@ -283,6 +285,20 @@ surface joins surrounding bodywork. At least half its sampled pixels must
 remain above the shaded-white seed threshold; every existing geometry,
 coverage, solidity and boundary check still applies. This also accommodates
 moderately shaded, cool-white plates without changing the image's colours.
+If that pass fails, a ranking of at least 0.13 permits a deeper neutral-shadow
+pass, still requiring a majority of sufficiently light pixels and every
+physical-surface check. These rankings are not calibrated probabilities.
+The fit must span the detected plate sufficiently, with a small pixel
+tolerance for frames. Strongly ranked fits may expand to larger observed
+surfaces only through bounded, containing polygons within the model box's
+area. This avoids accepting a bright lower strip as the entire plate or
+jumping to a neighboring component; overlays are never drawn from a guessed
+axis-aligned detector rectangle.
+On RGBA provider cutouts, a stronger-ranked candidate may have one transparent
+detector-box sample, since an angled bounding rectangle can extend off the
+vehicle. The box center must remain opaque. The actual fitted plate's corners,
+edge centers and interior must all pass their own opacity check; shadows and
+transparent plate surfaces remain ineligible.
 
 The original photo or staged provider cutout is never overwritten. The
 wordmark is prefiltered to the plate's pixel scale and fitted with black
@@ -308,6 +324,12 @@ Deploy the reviewed ZIP first, then set the flag to true (CloudFormation
 `PlateBrandingEnabled=true`). Existing completed assets are not rewritten;
 submit a new processing batch to brand them. Set the flag back to false to
 restore the previous path without changing the artifact.
+Updating the ZIP alone does not enable the feature. If ordinary jobs complete
+without any `plate_branding_result` events, check the function's
+`PLATE_BRANDING_ENABLED` setting. The tested Lambda settings are 2048 MB and
+180 seconds; preserve the existing environment variables when updating a
+function's configuration. Keep `PlateBrandingEnabled=true` and
+`TimeoutSeconds=180` in subsequent CloudFormation deployments as well.
 
 Offline visual evidence and its reproducible command are in
 [`evidence/plate-branding/README.md`](./evidence/plate-branding/README.md).
