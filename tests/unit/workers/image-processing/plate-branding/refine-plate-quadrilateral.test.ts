@@ -6,8 +6,20 @@ import { describe, expect, it } from "vitest";
 import { refinePlateQuadrilateral } from "../../../../../workers/image-processing/src/plate-branding/refine-plate-quadrilateral";
 import { createPlatePhoto, PHOTO_CORNERS, PHOTO_PLATE } from "../test-support/create-plate-photo";
 import { createTiltedPlatePhoto } from "../test-support/create-tilted-plate-photo";
+import { PLATE_STANDARD_SURFACE_FIT_PASSES } from "../../../../../workers/image-processing/src/plate-branding/plate-branding.constants";
 
 describe("physical plate surface refinement", () => {
+  it.each(["left", "right"] satisfies readonly ("left" | "right")[])("recovers a complete steep %s-facing plate after standard coverage fails", (direction) => {
+    const { image, detection, corners: expected } = createTiltedPlatePhoto(direction, true, 50);
+    expect(refinePlateQuadrilateral(image, detection, PLATE_STANDARD_SURFACE_FIT_PASSES)).toBeNull();
+    const corners = refinePlateQuadrilateral(image, detection);
+    expect(corners).not.toBeNull();
+    if (!corners) throw new Error("Expected steep plate outline.");
+    for (const name of ["topLeft", "topRight", "bottomRight", "bottomLeft"] satisfies readonly (keyof typeof expected)[]) {
+      expect(Math.abs(corners[name].x - expected[name].x)).toBeLessThanOrEqual(2);
+      expect(Math.abs(corners[name].y - expected[name].y)).toBeLessThanOrEqual(2);
+    }
+  });
   it.each(["left", "right"] satisfies readonly ("left" | "right")[])("recovers a complete %s-facing tilted plate with a smaller rectangular coverage share", (direction) => {
     const { image, detection, corners: expected } = createTiltedPlatePhoto(direction);
     for (const score of [0.12, 0.15]) {

@@ -14,20 +14,21 @@ import {
   PLATE_SURFACE_STRONG_MINIMUM_EDGE_COVERAGE, PLATE_STRONG_MODEL_SCORE,
   PLATE_SURFACE_MAXIMUM_CENTER_X_OFFSET, PLATE_SURFACE_MAXIMUM_CENTER_Y_OFFSET, PLATE_SURFACE_NEIGHBORS,
 } from "./plate-branding.constants";
-import type { PlatePoint, PlateQuadrilateral } from "./plate-branding.types";
+import type { PlatePoint, PlateQuadrilateral, PlateSurfaceFitPass } from "./plate-branding.types";
 import { validatePlateQuadrilateral } from "./validate-plate-quadrilateral";
 import { polygonArea } from "./polygon-area";
 import { selectPlateSurfaceExpansion } from "./select-plate-surface-expansion";
 import { isPlateSurfaceOpaque } from "./is-plate-surface-opaque";
 import { hasTiltedPlateCoverage } from "./has-tilted-plate-coverage";
 import { fitTiltedPlateOutline } from "./fit-tilted-plate-outline";
+import { hasProjectedPlateCoverage } from "./has-projected-plate-coverage";
 
 /**
  * Refine an ML box to the connected white/yellow/green physical plate surface.
  * Black plates and surfaces joined to the body are deliberately skipped.
  * Work is capped at a 320-pixel sampling edge, independent of source size.
  */
-export function refinePlateQuadrilateral(image: RawImage, detection: PlateDetection): PlateQuadrilateral | null {
+export function refinePlateQuadrilateral(image: RawImage, detection: PlateDetection, passes: readonly PlateSurfaceFitPass[] = PLATE_SURFACE_FIT_PASSES): PlateQuadrilateral | null {
   const box = { left: detection.left * image.width, top: detection.top * image.height,
     width: detection.width * image.width, height: detection.height * image.height };
   const left = Math.max(0, Math.floor(box.left - box.width * PLATE_SURFACE_MARGIN));
@@ -40,7 +41,7 @@ export function refinePlateQuadrilateral(image: RawImage, detection: PlateDetect
   const strong = detection.score >= PLATE_STRONG_MODEL_SCORE;
   const minimumEdgeCoverage = strong ? PLATE_SURFACE_STRONG_MINIMUM_EDGE_COVERAGE : PLATE_SURFACE_MINIMUM_EDGE_COVERAGE;
   // Retain every successful standard fit before considering tilted coverage.
-  for (const fit of PLATE_SURFACE_FIT_PASSES) {
+  for (const fit of passes) {
     let best: PlateQuadrilateral | null = null;
     // Retain a reliable bright-surface fit before attempting shadow growth.
     // A deeper-shadow pass requires a stronger model ranking as well as all
@@ -136,7 +137,11 @@ export function refinePlateQuadrilateral(image: RawImage, detection: PlateDetect
           let corners = { topLeft, topRight, bottomRight, bottomLeft };
           if (fit.requireTilt) {
             const outline = fitTiltedPlateOutline(outlineHull, corners, box.width, box.height);
-            if (!outline || !hasTiltedPlateCoverage(outline, box.width, box.height)) continue;
+            if (!outline) continue;
+            const complete = fit.requireProjectedCoverage
+              ? hasProjectedPlateCoverage(outline, box.width, box.height, hullArea)
+              : hasTiltedPlateCoverage(outline, box.width, box.height);
+            if (!complete) continue;
             corners = outline;
           }
           const points = [corners.topLeft, corners.topRight, corners.bottomRight, corners.bottomLeft];

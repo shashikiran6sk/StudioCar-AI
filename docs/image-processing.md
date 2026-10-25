@@ -312,6 +312,16 @@ are recovered by intersecting lines fitted to supported hull edges, with
 bounded residuals, corner movement and area growth. Flat patches, narrow
 strips, unsupported edges and ambiguous surfaces remain ineligible. Every
 existing color, connected-pixel, opacity, boundary and solidity check applies.
+A steeper-perspective fallback runs only after those existing passes fail on
+the highest-ranked eligible plate. It removes the smaller observed top/bottom
+rise from detector-box height before checking side height and surface area.
+Both sides must be complete in that rectified frame, the outline must cover
+at least 75% of its rectified detector area, and the observed hull must support
+at least 93% of the recovered outline. The lower raw-box search floor alone
+cannot qualify a surface. Rounded corners still require supported edge lines
+and bounded extrapolation. Existing successful primary/secondary selection
+uses its original passes; new projected rivals cannot invalidate it. When the
+primary needs projected coverage, competing plates receive that check too.
 On RGBA provider cutouts, a stronger-ranked candidate may have one transparent
 detector-box sample, since an angled bounding rectangle can extend off the
 vehicle. The box center must remain opaque. The actual fitted plate's corners,

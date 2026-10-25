@@ -12,6 +12,7 @@ export interface PlateSurfaceFitPass {
   readonly minimumCoverage: number;
   readonly minimumQuadFit: number;
   readonly requireTilt: boolean;
+  readonly requireProjectedCoverage: boolean;
 }
 export interface PlateQuadrilateral {
   topLeft: PlatePoint;
