@@ -1,6 +1,24 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-10-23
+Last updated: 2026-10-25
+
+## October 25 dependency audit prerequisite
+
+- The production dependency audit now reports Zod below 4.6.6 and fast-uri
+  3.x below 3.1.9. These pre-existing findings block required CI for the plate
+  coverage correction. Keep the audit threshold and every CI gate enforced.
+- Update the shared Zod catalog from 4.6.5 to 4.6.6 and restrict the fast-uri
+  override to affected 3.x versions, resolving them to 3.1.9. Other direct
+  package versions and application behavior are unchanged. Remove the
+  temporary transitive override once the parent dependency pins a safe version.
+- Advisories: [Zod collection validation](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5),
+  [URI schemes](https://github.com/advisories/GHSA-w74x-v6f9-j3xg),
+  [URI hosts](https://github.com/advisories/GHSA-wjr9-j795-jxcr).
+- Frozen installation, production audit, lint, strict types, source mapping,
+  uncached unit and 189 PostgreSQL integration tests, Prisma validation,
+  production build and all 16 browser tests passed. Lambda packaging and
+  offline read-only ARM64 smoke checks passed under 2 GB / one CPU. Required
+  PR CI remains before merge. This prerequisite changes no plate logic.
 
 ## Complete tilted plate surfaces with rounded corners
 
