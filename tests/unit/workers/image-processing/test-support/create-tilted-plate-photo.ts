@@ -12,9 +12,9 @@ const BOTTOM = 175;
 const RISE = 30;
 
 /** A full slanted plate occupies less of its axis-aligned detector rectangle. */
-export function createTiltedPlatePhoto(direction: "left" | "right", tilted = true) {
+export function createTiltedPlatePhoto(direction: "left" | "right", tilted = true, tiltRise = RISE) {
   const data = Buffer.alloc(WIDTH * HEIGHT * 3, 70);
-  const rise = tilted ? RISE : 0;
+  const rise = tilted ? tiltRise : 0;
   for (let x = LEFT; x <= RIGHT; x++) for (let y = TOP - rise; y <= BOTTOM; y++) {
     const shift = rise * (x - LEFT) / (RIGHT - LEFT);
     if (y < TOP - shift || y > BOTTOM - shift) continue;
@@ -31,7 +31,7 @@ export function createTiltedPlatePhoto(direction: "left" | "right", tilted = tru
     topLeft: { x: WIDTH - 1 - RIGHT, y: TOP - rise }, topRight: { x: WIDTH - 1 - LEFT, y: TOP },
     bottomRight: { x: WIDTH - 1 - LEFT, y: BOTTOM }, bottomLeft: { x: WIDTH - 1 - RIGHT, y: BOTTOM - rise },
   };
-  const detection = { left: (direction === "right" ? 170 : 169) / WIDTH, top: 100 / HEIGHT,
-    width: TILTED_BOX_WIDTH / WIDTH, height: TILTED_BOX_HEIGHT / HEIGHT, score: 0.12 };
+  const detection = { left: (direction === "right" ? 170 : 169) / WIDTH, top: (TOP - tiltRise - 2) / HEIGHT,
+    width: TILTED_BOX_WIDTH / WIDTH, height: (BOTTOM - TOP + tiltRise + 2) / HEIGHT, score: 0.12 };
   return { image, corners, detection };
 }

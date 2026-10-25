@@ -2,10 +2,32 @@ import { describe, expect, it } from "vitest";
 
 import { findVisiblePlateSurface } from "../../../../../workers/image-processing/src/plate-branding/find-visible-plate-surface";
 import { createPlatePhoto, PHOTO_PLATE, PHOTO_WIDTH } from "../test-support/create-plate-photo";
+import { createTiltedPlatePhoto } from "../test-support/create-tilted-plate-photo";
+import { createPlatePair } from "../test-support/create-plate-pair";
+import { refinePlateQuadrilateral } from "../../../../../workers/image-processing/src/plate-branding/refine-plate-quadrilateral";
+import { PLATE_STANDARD_SURFACE_FIT_PASSES } from "../../../../../workers/image-processing/src/plate-branding/plate-branding.constants";
 
 const BADGE = { left: 0.1, top: 0.2, width: 0.08, height: 0.04, score: 0.115 };
 
 describe("visible plate surface selection", () => {
+  it("retains an existing success when only a secondary surface needs projected coverage", () => {
+    const secondary = createTiltedPlatePhoto("right", true, 50);
+    const pair = createPlatePair({ image: createPlatePhoto(), detection: PHOTO_PLATE },
+      { image: secondary.image, detection: { ...secondary.detection, score: 0.115 } });
+    expect(refinePlateQuadrilateral(pair.image, pair.second, PLATE_STANDARD_SURFACE_FIT_PASSES)).toBeNull();
+    expect(refinePlateQuadrilateral(pair.image, pair.second)).not.toBeNull();
+    expect(findVisiblePlateSurface(pair.image, [pair.first, pair.second]))
+      .toEqual(refinePlateQuadrilateral(pair.image, pair.first, PLATE_STANDARD_SURFACE_FIT_PASSES));
+    expect(findVisiblePlateSurface(pair.image, [pair.first, pair.second])).not.toBeNull();
+  });
+  it("retains ambiguity when both competing plates need projected coverage", () => {
+    const first = createTiltedPlatePhoto("right", true, 50);
+    const second = createTiltedPlatePhoto("left", true, 50);
+    const pair = createPlatePair(first, { image: second.image, detection: { ...second.detection, score: 0.115 } });
+    expect(findVisiblePlateSurface(pair.image, [pair.first])).not.toBeNull();
+    expect(findVisiblePlateSurface(pair.image, [pair.second])).not.toBeNull();
+    expect(findVisiblePlateSurface(pair.image, [pair.first, pair.second])).toBeNull();
+  });
   it("rejects a secondary badge surface before treating its close model ranking as ambiguous", () => {
     const image = createPlatePhoto();
     expect(findVisiblePlateSurface(image, [BADGE, PHOTO_PLATE]))

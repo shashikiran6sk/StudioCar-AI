@@ -2,6 +2,48 @@
 
 Last updated: 2026-10-25
 
+## Steep projected plate coverage for Polo and Seltos
+
+- Verified the latest `7286c128a553` archive and branding flag in production.
+  Both reported jobs completed with `skipped_no_reliable_plate`. They used
+  ORIGINAL backgrounds, with no provider cutouts or new Leonardo charges.
+  The exact stored source hashes match the two supplied screenshots.
+- Both plates are detected. Their complete surfaces occupy roughly 40–49%
+  of axis-aligned detector rectangles, below the earlier tilted coverage
+  floor. The Seltos also has rounded corners whose initial simplified hull
+  falls below the prior 93% approximation fit, despite supported full edges.
+- Keep both existing passes unchanged. Only when the highest-ranked eligible
+  plate still has no surface, test projected coverage in a rectified vertical
+  frame using the observed edge rise. Require broad consistent tilt, complete
+  side heights, 75% rectified area and 93% hull support of the recovered outline.
+  Supported edge-line fitting, bounded corner movement, opacity, brightness,
+  connectivity, solidity, boundary and ambiguity rules remain enforced.
+- Existing successful selections retain their prior secondary-candidate
+  behavior. Projected rivals are tested when the primary needs that fallback;
+  the new surface mode cannot invalidate an existing success. Added mirrored
+  steep-angle, strip/flat rejection, hull support, impossible-height and
+  primary/secondary selection regressions. No model, provider, job, storage,
+  usage, migration or environment change.
+- Fresh inference against a snapshot of main and the proposed change covered
+  the full 256-image local regression corpus: all 130 prior successes retained
+  exact geometry and all 126 skips remained unchanged. Final render checks
+  also found zero changed raw pixels outside fitted polygons. The two reported
+  images now render complete replacements with enhancement both on and off.
+  Private photos and diagnostic artifacts are not committed.
+- Local lint, strict types, source mapping, uncached unit and 189 isolated
+  PostgreSQL integration tests, Prisma validation, production build and all
+  16 browser tests passed. The ZIP passed offline ARM64 Lambda smoke tests
+  under 2 GB / one CPU, along with all five previous production cutouts,
+  three previous originals and four reported enhancement-on/off cases.
+- Dependency prerequisite PR #107 patched Zod and fast-uri without weakening
+  the production audit. Repeated validation against those merged patches
+  passed, including native inference and all browser tests. One local inventory
+  navigation timeout did not recur in its targeted trace or the full traced
+  browser suite; application and browser-test code were unchanged. Required
+  PR CI remains before publication. Production inspection has been read-only;
+  Lambda deployment remains with the user. Their stopped local app services
+  remain stopped; tests use a separate disposable database.
+
 ## October 25 dependency audit prerequisite
 
 - The production dependency audit now reports Zod below 4.6.6 and fast-uri
