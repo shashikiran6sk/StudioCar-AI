@@ -30,6 +30,7 @@
     "@studiocar/observability": "workspace:*",
     "@studiocar/processing": "workspace:*",
     "@studiocar/ui": "workspace:*",
+    "@vercel/analytics": "^2.0.1",
     "fflate": "0.8.3",
     "next": "16.4.1",
     "openid-client": "catalog:",
