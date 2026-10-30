@@ -25,7 +25,8 @@ export const DashboardSummarySchema = z
     planName: z.string().min(1).max(80),
     processingSuccessRate: z.number().min(0).max(100).nullable(),
     recentVehicles: z.array(InventoryItemSchema).max(3),
-    storageCapacityBytes: z.number().int().nonnegative(),
+    /** Null when the plan sets no storage capacity, which is the default. */
+    storageCapacityBytes: z.number().int().positive().nullable(),
     storageUsedBytes: z.number().int().nonnegative(),
     vehiclesProcessed: z.number().int().nonnegative(),
     vehiclesProcessedThisPeriod: z.number().int().nonnegative(),

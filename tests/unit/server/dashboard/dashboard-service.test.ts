@@ -111,4 +111,36 @@ describe("DashboardService", () => {
       processingSuccessRate: null,
     });
   });
+
+  it("reports no storage capacity, rather than zero, for a plan without one", async () => {
+    const service = new DashboardService(
+      {
+        getOwnedMetrics: vi.fn().mockResolvedValue({
+          activeImageCount: 0,
+          completedJobCount: 0,
+          imagesProcessed: 0,
+          imagesProcessedThisPeriod: 0,
+          storageUsedBytes: 4_000_000n,
+          unsuccessfulJobCount: 0,
+          vehiclesProcessed: 0,
+          vehiclesProcessedThisPeriod: 0,
+          vehiclesProcessing: 0,
+        }),
+        getOwnedAttention: vi.fn().mockResolvedValue({
+          vehicleCount: 0,
+          vehicleId: null,
+        }),
+      },
+      {
+        list: vi.fn(),
+        listRecent: vi.fn().mockResolvedValue([]),
+      },
+      planUsage({ storageCapacityBytes: null }),
+    );
+
+    await expect(service.getSummary("user-1")).resolves.toMatchObject({
+      storageCapacityBytes: null,
+      storageUsedBytes: 4_000_000,
+    });
+  });
 });

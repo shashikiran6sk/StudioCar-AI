@@ -29,5 +29,31 @@ describe("DashboardStats", () => {
     expect(screen.getByText("96% successful")).toBeInTheDocument();
     expect(screen.getByText("1.2 GB")).toBeInTheDocument();
     expect(screen.getByText("4 images active")).toBeInTheDocument();
+    expect(screen.getByText("of 3.0 GB")).toBeInTheDocument();
+  });
+
+  it("states what storage counts instead of a capacity the plan does not set", () => {
+    render(
+      <DashboardStats
+        summary={{
+          activeImageCount: 0,
+          attention: { vehicleCount: 0, vehicleId: null },
+          imagesProcessed: 0,
+          imagesProcessedThisPeriod: 0,
+          imagesRemaining: 15,
+          planName: "Free",
+          processingSuccessRate: null,
+          recentVehicles: [],
+          storageCapacityBytes: null,
+          storageUsedBytes: 4_000_000,
+          vehiclesProcessed: 0,
+          vehiclesProcessedThisPeriod: 0,
+          vehiclesProcessing: 0,
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Originals and studio results")).toBeInTheDocument();
+    expect(screen.queryByText(/^of /)).not.toBeInTheDocument();
   });
 });

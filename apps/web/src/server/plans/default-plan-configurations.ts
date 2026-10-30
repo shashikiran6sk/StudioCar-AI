@@ -44,7 +44,8 @@ export const FREE_PLAN_DEFAULT: DefaultPlanConfiguration = {
   allowanceScope: "LIFETIME",
   includedImages: 15,
   maxImagesPerBatch: 5,
-  storageBytes: 3_221_225_472,
+  // Storage is not enforced, so no plan advertises a capacity it never applies.
+  storageBytes: null,
   features: [
     "15 images in total",
     "Up to 5 images per batch",

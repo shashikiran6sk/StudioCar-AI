@@ -7,6 +7,7 @@ import {
   DASHBOARD_IMAGES_LABEL,
   DASHBOARD_IMAGES_PROCESSED_LABEL,
   DASHBOARD_NO_TERMINAL_JOBS_LABEL,
+  DASHBOARD_STORAGE_SCOPE_LABEL,
   DASHBOARD_STORAGE_USED_LABEL,
   DASHBOARD_SUCCESSFUL_LABEL,
   DASHBOARD_THIS_MONTH_LABEL,
@@ -56,7 +57,11 @@ export function DashboardStats({ summary }: DashboardStatsProps) {
       />
       <DashboardStatCard
         label={DASHBOARD_STORAGE_USED_LABEL}
-        supportingText={`of ${formatStorageSize(summary.storageCapacityBytes)}`}
+        supportingText={
+          summary.storageCapacityBytes === null
+            ? DASHBOARD_STORAGE_SCOPE_LABEL
+            : `of ${formatStorageSize(summary.storageCapacityBytes)}`
+        }
         value={formatStorageSize(summary.storageUsedBytes)}
       />
     </section>

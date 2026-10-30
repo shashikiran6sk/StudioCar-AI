@@ -16,9 +16,12 @@ describe("toPlanConfigurationFields", () => {
   });
 
   it("shows stored bytes as gigabytes", () => {
-    expect(toPlanConfigurationFields(FALLBACK_PLAN_ENTRY).storageGigabytes).toBe(
-      "3",
-    );
+    expect(
+      toPlanConfigurationFields({
+        ...FALLBACK_PLAN_ENTRY,
+        storageBytes: 3_221_225_472,
+      }).storageGigabytes,
+    ).toBe("3");
   });
 
   it("leaves unlimited storage blank rather than showing a zero", () => {

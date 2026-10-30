@@ -16,7 +16,11 @@ const { FALLBACK_PLAN_ENTRY } = await import(
   "../../../../apps/web/src/server/plans/default-plan-catalog"
 );
 
-const fields = toPlanConfigurationFields(FALLBACK_PLAN_ENTRY);
+// A capacity is set explicitly: the shipped plans set none.
+const fields = toPlanConfigurationFields({
+  ...FALLBACK_PLAN_ENTRY,
+  storageBytes: 3_221_225_472,
+});
 
 describe("PlanConfigurationForm", () => {
   it("shows every value in the units an administrator enters them in", () => {
