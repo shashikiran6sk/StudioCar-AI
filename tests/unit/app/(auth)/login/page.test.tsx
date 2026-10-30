@@ -57,22 +57,30 @@ describe("LoginPage", () => {
     expect(screen.queryByRole("link", { name: "Continue with Google" })).toBeNull();
   });
 
-  it("redirects an authenticated user to the dashboard", async () => {
-    vi.mocked(getCurrentSession).mockResolvedValue({
-      id: "session-1",
-      userId: "user-1",
-      expiresAt: new Date("2026-10-19T00:00:00.000Z"),
-      user: {
-        id: "user-1",
-        displayName: "Priya Sharma",
-        primaryEmail: "priya@example.com",
-        primaryPhone: null,
-      },
-    });
+  it.each([
+    [{}, "/dashboard"],
+    [{ returnTo: "/settings/billing#packs" }, "/settings/billing#packs"],
+    [{ returnTo: "https://attacker.example/" }, "/dashboard"],
+    [{ returnTo: "//attacker.example/" }, "/dashboard"],
+  ])(
+    "redirects an authenticated user from %j to %s",
+    async (query, destination) => {
+      vi.mocked(getCurrentSession).mockResolvedValue({
+        id: "session-1",
+        userId: "user-1",
+        expiresAt: new Date("2026-10-19T00:00:00.000Z"),
+        user: {
+          id: "user-1",
+          displayName: "Priya Sharma",
+          primaryEmail: "priya@example.com",
+          primaryPhone: null,
+        },
+      });
 
-    await expect(
-      LoginPage({ searchParams: Promise.resolve({}) }),
-    ).rejects.toThrow("NEXT_REDIRECT");
-    expect(redirect).toHaveBeenCalledWith("/dashboard");
-  });
+      await expect(
+        LoginPage({ searchParams: Promise.resolve(query) }),
+      ).rejects.toThrow("NEXT_REDIRECT");
+      expect(redirect).toHaveBeenCalledWith(destination);
+    },
+  );
 });

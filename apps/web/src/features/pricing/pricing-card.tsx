@@ -1,7 +1,7 @@
 import type { PlanCatalogEntry } from "@studiocar/contracts";
 import { ButtonLink } from "@studiocar/ui";
 
-import { MARKETING_START_PATH } from "../marketing/marketing.constants";
+import { getPlanActionHref } from "./get-plan-action-href";
 import { describePlanAction } from "../../server/plans/describe-plan-action";
 import { formatPlanCadence } from "../../server/plans/format-plan-cadence";
 import { formatPlanPrice } from "../../server/plans/format-plan-price";
@@ -30,7 +30,7 @@ export function PricingCard({ plan }: PricingCardProps) {
         ))}
       </ul>
       <ButtonLink
-        href={MARKETING_START_PATH}
+        href={getPlanActionHref(plan)}
         size="marketing"
         variant={plan.featured ? "secondary" : "primary"}
       >
