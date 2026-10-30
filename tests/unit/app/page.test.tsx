@@ -40,7 +40,7 @@ describe("HomePage", () => {
       .toBeVisible();
     expect(screen.getByRole("heading", { name: /Start free. Add capacity/ }))
       .toBeVisible();
-    expect(screen.getByText("© 2026 StudioCar AI. All rights reserved.")).toBeVisible();
+    expect(screen.getByText("© 2026 DealersDrive. StudioCar AI is a DealersDrive product.")).toBeVisible();
   });
 
   it("quotes the prices an administrator configured", async () => {
