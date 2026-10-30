@@ -47,9 +47,8 @@ export const FREE_PLAN_DEFAULT: DefaultPlanConfiguration = {
   storageBytes: 3_221_225_472,
   features: [
     "15 images in total",
-    "Maximum 5 images per batch",
-    "Standard background processing",
-    "Originals always preserved",
+    "Up to 5 images per batch",
+    "Preview-resolution results",
   ],
   displayOrder: 0,
 };
@@ -71,10 +70,9 @@ const STUDIO_PLUS_PLAN_DEFAULT: DefaultPlanConfiguration = {
   maxImagesPerBatch: 20,
   storageBytes: null,
   features: [
-    "100 image credits",
+    "100 images in total",
     "Up to 20 images per batch",
-    "Premium studio backgrounds",
-    "Re-processing included",
+    "High-resolution results",
   ],
   displayOrder: 1,
 };
@@ -97,9 +95,8 @@ const STUDIO_PRO_PLAN_DEFAULT: DefaultPlanConfiguration = {
   storageBytes: null,
   features: [
     "500 images each month",
-    "Priority batch processing",
-    "High-resolution output",
-    "Team-ready inventory workflow",
+    "Up to 20 images per batch",
+    "High-resolution results",
   ],
   displayOrder: 2,
 };
@@ -111,6 +108,10 @@ const STUDIO_PRO_PLAN_DEFAULT: DefaultPlanConfiguration = {
  * are authoritative and administrators change them without a deployment. They
  * remain here so a missing row can never take the application down, and so a
  * fresh database has something correct to start from.
+ *
+ * Features list only what the product delivers. Every plan has the same
+ * backgrounds and processing; plans differ by allowance, batch size, and the
+ * output resolution in `PLAN_PROCESSING_QUALITY_TIERS`.
  *
  * No plan is purchasable while `BillingPort` is unimplemented. Advertising a
  * checkout that cannot complete would be a lie.
