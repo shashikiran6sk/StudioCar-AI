@@ -2049,3 +2049,10 @@ Update this document in every meaningful PR with:
 - The dashboard contract turned a missing capacity into `0`, so plans without one read "of 0 B". `storageCapacityBytes` is now nullable (and positive when present) in `DashboardSummarySchema`; the card then says what storage counts, "Originals and studio results", instead of a capacity. The sidebar and Usage & Billing already handled `null`.
 - Storage used is still shown everywhere, since it is a real measurement of originals and processed results.
 - Tests: contract (null accepted, zero rejected), dashboard service and stats for a plan without capacity, the defaults carrying no capacity, and a real-PostgreSQL migration test for the seeded and administrator-chosen values.
+
+## 2026-10-30 — Squircle logo replaces the SC initials
+
+- The brand mark is now the Split frame squircle chosen from the logo options: a photo frame split by the before-and-after chevron, echoing the DealersDrive mark. `BrandMark` in `packages/ui` draws it as one even-odd SVG path, so the split is transparent on every surface, and every place the logo appears (marketing header and footer, sign-in card, workspace sidebar and mobile drawer) picks it up through that one component. The wordmark now pairs a 500-weight "Studio" with an 800-weight "Car" and a blue "AI".
+- Raster assets were regenerated from the same geometry with the bundled Manrope: `public/favicon.ico` (16, 32, 48), `public/icon.png` (192), `app/apple-icon.png` (180, full-bleed for iOS masking) and the brand block of `app/opengraph-image.png`. The 16px and 32px favicons use a wider chevron gap so the split survives at that size.
+- Declared icon and Open Graph URLs carry `?v=2` (`BRAND_ASSET_VERSION` in `site-config.ts`), so browsers and Google fetch the new files rather than a cached old icon. Bump it only when the logo files change again; Google prefers favicon URLs that stay stable otherwise. Requesting re-indexing of the homepage in Search Console speeds up the change in search results.
+- The workspace avatar still falls back to the letters "SC" for a user without a name; that is user initials, not the logo.
