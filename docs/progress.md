@@ -2020,3 +2020,11 @@ Update this document in every meaningful PR with:
 - `summarizeBatchLimits` reads the free plan's batch and the largest paid batch from the active catalog the homepage already loads; `describeUploadLimits` words it. A missing plan drops its figure rather than inventing one, and the hero hides the paid-batch proof when no paid plan is offered.
 - `docs/design.md` §3.6 and §4.11 no longer quote 3 images or 3 upload sessions; they point at plan configuration and record the seeded defaults (15 total, 5 per batch on Free; 20 per batch on paid plans). The stale implementation note that named a non-existent `pricing-plans.ts` now describes the `PlanConfig` catalog.
 - Tests: unit coverage for both functions (seeded values, an administrator's edit, withdrawn plans, singular wording, empty catalog) and for the hero and workflow rendering.
+
+## 2026-10-30 — Packs no longer advertise storage
+
+- Free advertised "3 GB storage" and Studio Pro "Increased storage". Neither is a limit a customer works against (Free allows 15 images in total), and storage is never enforced. Free now lists "Originals always preserved"; Studio Pro lists "High-resolution output", which its `HIGH` processing tier delivers.
+- Plans are configuration rows, so changing the defaults alone would not reach an existing database. Migration `20261030120000_remove_storage_pack_features` rewrites the Free and Studio Pro feature lists only where they still exactly match the old seed; a list an administrator has edited is left alone.
+- `storageBytes` itself is unchanged. The sidebar, dashboard and Usage & Billing still show storage used against the configured capacity; removing those, and the dashboard's `?? 0` that shows "of 0 B" for unlimited plans, is a separate decision.
+- The public pricing section reads through Next's cross-request data cache, tagged `public-plan-catalog`. If a deployment still serves the old lines, saving any plan in the administration area revalidates that tag.
+- Tests: the defaults carry no storage line, and a real-PostgreSQL integration test runs the migration against seeded and administrator-edited rows inside a rolled-back transaction, asserting the result matches the shipped defaults.
