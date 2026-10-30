@@ -166,6 +166,20 @@ html {
   box-shadow: var(--sc-shadow-hero);
 }
 
+.marketing-hero-photo {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--sc-neutral-200);
+}
+
+/* Both photos crop identically, keeping the car's wheels and shadow in view. */
+.marketing-hero-photo img {
+  object-fit: cover;
+  object-position: center 62%;
+}
+
 .marketing-car-stage {
   position: relative;
   width: 100%;
