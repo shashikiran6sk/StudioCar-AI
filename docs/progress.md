@@ -2028,3 +2028,9 @@ Update this document in every meaningful PR with:
 - `storageBytes` itself is unchanged. The sidebar, dashboard and Usage & Billing still show storage used against the configured capacity; removing those, and the dashboard's `?? 0` that shows "of 0 B" for unlimited plans, is a separate decision.
 - The public pricing section reads through Next's cross-request data cache, tagged `public-plan-catalog`. If a deployment still serves the old lines, saving any plan in the administration area revalidates that tag.
 - Tests: the defaults carry no storage line, and a real-PostgreSQL integration test runs the migration against seeded and administrator-edited rows inside a rolled-back transaction, asserting the result matches the shipped defaults.
+
+## 2026-10-30 — Hero comparison shows a real background being removed
+
+- The hero slider drew the transparent `silver-sedan.png` over a grey CSS fill on both sides, so dragging revealed nothing being removed. It now compares two photographs of the same sedan in the same position: `hero-original.webp` (a street with buildings) and `hero-studio.webp` (the street removed, Premium White studio, contact and ambient shadow). `MarketingHeroPhoto` renders either side; the existing `ComparisonSlider` keeps its keyboard, label and reduced-motion behaviour. The Studio backgrounds gallery still uses `MarketingCarStage`.
+- Provenance: both images were composed from the repository's own `silver-sedan.png` (an original generated asset with no brand marks or readable plate). Its baked glow alpha was thresholded away, then the car was placed on a drawn street scene and on a drawn studio backdrop at 1600×1000. They contain no user-provided content. They are illustrative composites, not a recorded StudioCar processing result.
+- Tests: unit coverage for the photo component and for the hero naming both photographs and both labels; desktop and mobile screenshots were compared with `docs/screens/Home_Page`.

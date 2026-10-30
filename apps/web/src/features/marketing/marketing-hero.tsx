@@ -1,11 +1,12 @@
 import { ButtonLink, ComparisonSlider } from "@studiocar/ui";
 
-import { MarketingCarStage } from "./marketing-car-stage";
+import { MarketingHeroPhoto } from "./marketing-hero-photo";
 import type { MarketingBatchLimits } from "./marketing-batch-limits.types";
 import {
   MARKETING_COPY,
   MARKETING_FEATURES_ID,
   MARKETING_HERO_BATCH_PROOF,
+  MARKETING_HERO_IMAGES,
   MARKETING_HERO_PROOF,
   MARKETING_START_PATH,
 } from "./marketing.constants";
@@ -50,9 +51,9 @@ export function MarketingHero({ batchLimits }: MarketingHeroProps) {
       </div>
       <div className="marketing-hero__visual">
         <ComparisonSlider
-          after={<MarketingCarStage priority treatment="premium" />}
+          after={<MarketingHeroPhoto {...MARKETING_HERO_IMAGES.studio} />}
           afterLabel="Studio processed"
-          before={<MarketingCarStage priority treatment="original" />}
+          before={<MarketingHeroPhoto {...MARKETING_HERO_IMAGES.original} />}
           label={MARKETING_COPY.hero.comparisonLabel}
           summary={MARKETING_COPY.hero.treatmentSummary}
         />

@@ -340,7 +340,7 @@ Left: brand. Centre: Features, Workflow, Studio backgrounds, Pricing with 30px g
 
 The homepage is a scrollable product site, never a one-screen landing page.
 
-1. **Hero** — `padding:58px 54px 48px`; grid `.82fr 1.18fr`; 48px gap. Left: processing eyebrow, display headline, 15px body, primary/secondary CTA pair, three proof values. Right: ComparisonSlider at 452px.
+1. **Hero** — `padding:58px 54px 48px`; grid `.82fr 1.18fr`; 48px gap. Left: processing eyebrow, display headline, 15px body, primary/secondary CTA pair, three proof values. Right: ComparisonSlider at 452px comparing the same sedan before and after: Original shows it on a street with buildings, Studio processed shows the street removed and the car on Premium White with a grounded shadow. Both photographs share size and framing so dragging changes only the background; they crop with `object-fit: cover`, and the mobile comparison keeps a 4:3 ratio.
 2. **Feature selector** — `padding:24px 54px 54px`; heading row then four equal cards with 12px gap. Selected feature is dark and lifts 3px.
 3. **Audience strip** — 54px dark band listing Dealerships, Sellers, Photographers, Marketplaces.
 4. **Workflow** — `padding:96px 54px`; white field; two-column introduction followed by four step cards and the dark “After you click Process Photos” note.

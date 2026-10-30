@@ -17,6 +17,19 @@ describe("MarketingHero", () => {
     expect(screen.getByText("20×")).toBeVisible();
   });
 
+  it("compares a photo with its background against the same car in the studio", () => {
+    render(<MarketingHero batchLimits={{ free: 5, paid: 20 }} />);
+
+    expect(
+      screen.getByRole("img", { name: /parked on a city street/ }),
+    ).toHaveAttribute("src", expect.stringContaining("hero-original.webp"));
+    expect(
+      screen.getByRole("img", { name: /street removed, on a Premium White/ }),
+    ).toHaveAttribute("src", expect.stringContaining("hero-studio.webp"));
+    expect(screen.getByText("Original")).toBeVisible();
+    expect(screen.getByText("Studio processed")).toBeVisible();
+  });
+
   it("drops the paid batch proof when no paid plan is on offer", () => {
     render(<MarketingHero batchLimits={{ free: 5, paid: null }} />);
 

@@ -8,6 +8,20 @@ export const MARKETING_CAR_IMAGE_PATH = "/images/marketing/silver-sedan.png";
 export const MARKETING_CAR_HERO_SIZES = "(max-width: 899px) 100vw, 60vw";
 export const MARKETING_CAR_GALLERY_MAIN_SIZES = "(max-width: 899px) 100vw, 34vw";
 export const MARKETING_CAR_GALLERY_SMALL_SIZES = "(max-width: 899px) 50vw, 25vw";
+/**
+ * The hero pair: the same sedan photographed on a street, and after StudioCar
+ * removed that background and placed it on Premium White with a shadow.
+ */
+export const MARKETING_HERO_IMAGES = {
+  original: {
+    alt: "Silver sedan parked on a city street in front of office buildings",
+    src: "/images/marketing/hero-original.webp",
+  },
+  studio: {
+    alt: "The same silver sedan with the street removed, on a Premium White studio background",
+    src: "/images/marketing/hero-studio.webp",
+  },
+} as const;
 export const MARKETING_CAR_IMAGE_ALT = {
   original: "Silver sedan in the original comparison view",
   premium: "Silver sedan on a Premium White studio background",
