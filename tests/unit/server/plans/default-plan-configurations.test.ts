@@ -64,6 +64,20 @@ describe("default plan configurations", () => {
     }
   });
 
+  it("advertises no storage figure, because storage is not what a pack limits", () => {
+    for (const configuration of DEFAULT_PLAN_CONFIGURATIONS) {
+      expect(
+        configuration.features.filter((feature) => /storage/i.test(feature)),
+      ).toEqual([]);
+    }
+    expect(plan("FREE").features).toEqual([
+      "15 images in total",
+      "Maximum 5 images per batch",
+      "Standard background processing",
+      "Originals always preserved",
+    ]);
+  });
+
   it("gives every plan a distinct key and position", () => {
     const keys = DEFAULT_PLAN_CONFIGURATIONS.map((plan) => plan.planKey);
     const orders = DEFAULT_PLAN_CONFIGURATIONS.map((plan) => plan.displayOrder);

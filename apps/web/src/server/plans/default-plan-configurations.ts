@@ -49,7 +49,7 @@ export const FREE_PLAN_DEFAULT: DefaultPlanConfiguration = {
     "15 images in total",
     "Maximum 5 images per batch",
     "Standard background processing",
-    "3 GB storage",
+    "Originals always preserved",
   ],
   displayOrder: 0,
 };
@@ -98,7 +98,7 @@ const STUDIO_PRO_PLAN_DEFAULT: DefaultPlanConfiguration = {
   features: [
     "500 images each month",
     "Priority batch processing",
-    "Increased storage",
+    "High-resolution output",
     "Team-ready inventory workflow",
   ],
   displayOrder: 2,
