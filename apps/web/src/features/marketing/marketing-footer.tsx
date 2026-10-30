@@ -30,6 +30,13 @@ export function MarketingFooter({ socialLinks }: MarketingFooterProps) {
       <section className="marketing-footer__brand" id={MARKETING_ABOUT_ID}>
         <h2 className="sc-visually-hidden">About StudioCar AI</h2>
         <BrandMark inverted withName />
+        <p className="marketing-footer__parent">
+          {MARKETING_COPY.footer.parentPrefix}{" "}
+          <span className="marketing-footer__parent-name">
+            <span>{MARKETING_COPY.footer.parentNameLight}</span>
+            <strong>{MARKETING_COPY.footer.parentNameBold}</strong>
+          </span>
+        </p>
         <p>{MARKETING_COPY.footer.description}</p>
       </section>
       <nav aria-label="Product footer links">

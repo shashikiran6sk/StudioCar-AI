@@ -50,7 +50,11 @@ export const MARKETING_COPY = {
   },
   footer: {
     companyLabel: "Company",
-    copyright: "© 2026 StudioCar AI. All rights reserved.",
+    copyright: "© 2026 DealersDrive. StudioCar AI is a DealersDrive product.",
+    // DealersDrive's own wordmark pairs a light "Dealers" with a bold "Drive".
+    parentNameBold: "Drive",
+    parentNameLight: "Dealers",
+    parentPrefix: "A product of",
     description: "Professional vehicle imagery for dealerships, sellers, photographers, and marketplaces—from upload to organized portfolio.",
     productLabel: "Product",
     signature: "Vehicle → Images → Portfolio",

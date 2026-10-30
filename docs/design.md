@@ -190,7 +190,7 @@ Marketing CTA override: 48px high with `padding-inline:20px`. One primary button
 
 ### 2.2 Brand mark (`.brand-mark`)
 
-30×30px, 9px radius, black fill, white `SC`, 13px/800. Pair with “StudioCar AI” at 18px/800 and a 10px gap. On the dark footer, reverse to a white tile with black initials. Do not use the mark as a generic icon.
+30×30px squircle in `--neutral-950` with the Split frame cut out of it: a photo frame split by the before-and-after chevron, the move that links StudioCar to the DealersDrive mark. The split is a transparent even-odd cut, never a painted colour, so it works on any surface. It contains no letters. Pair it with the wordmark at 18px and a 10px gap: “Studio” at 500, “Car” at 800, then “AI” at 800 in `--blue-500`, the light-then-bold pairing DealersDrive uses. On the dark footer the mark turns white and “AI” uses `--blue-400`. Favicons at 16px and 32px use a variant with a wider chevron gap so the split stays visible; the 180px Apple icon is a full-bleed black square with the white split, which iOS rounds itself. Do not use the mark as a generic icon.
 
 ### 2.3 Input (`.input`)
 

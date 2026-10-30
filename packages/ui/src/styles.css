@@ -139,20 +139,27 @@
 }
 
 .sc-brand__mark {
-  display: grid;
+  display: block;
+  flex: none;
   width: 30px;
   height: 30px;
-  place-content: center;
-  border-radius: 9px;
-  background: var(--sc-neutral-950);
-  color: var(--sc-neutral-0);
-  font-size: 13px;
-  font-weight: 800;
+  color: var(--sc-neutral-950);
 }
 
+/* Light-then-bold, the pairing the DealersDrive wordmark uses. */
 .sc-brand__name {
   font-size: 18px;
   font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.sc-brand__name-light {
+  font-weight: 500;
+}
+
+.sc-brand__name-suffix {
+  color: var(--sc-blue-500);
 }
 
 .sc-brand--inverted {
@@ -160,8 +167,11 @@
 }
 
 .sc-brand--inverted .sc-brand__mark {
-  background: var(--sc-neutral-0);
-  color: var(--sc-neutral-950);
+  color: var(--sc-neutral-0);
+}
+
+.sc-brand--inverted .sc-brand__name-suffix {
+  color: var(--sc-blue-400);
 }
 
 .sc-field {

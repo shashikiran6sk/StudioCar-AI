@@ -10,13 +10,15 @@ describe("root metadata", () => {
     expect(metadata.robots).toEqual({ index: false, follow: false });
   });
 
-  it("advertises stable square favicon URLs with their actual resolutions", () => {
+  it("advertises versioned square favicon URLs with their actual resolutions", () => {
+    // The version changes only with the logo, so Google and browsers refetch
+    // the new icons instead of keeping a cached copy of the old ones.
     expect(metadata.icons).toEqual({
       icon: [
-        { url: "/icon.png", type: "image/png", sizes: "192x192" },
-        { url: "/favicon.ico", type: "image/x-icon", sizes: "16x16 32x32 48x48" },
+        { url: "/icon.png?v=2", type: "image/png", sizes: "192x192" },
+        { url: "/favicon.ico?v=2", type: "image/x-icon", sizes: "16x16 32x32 48x48" },
       ],
-      apple: [{ url: "/apple-icon.png", type: "image/png", sizes: "180x180" }],
+      apple: [{ url: "/apple-icon.png?v=2", type: "image/png", sizes: "180x180" }],
     });
   });
 });

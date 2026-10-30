@@ -14,12 +14,12 @@ test("serves canonical homepage metadata, navigation, and SEO assets", async ({ 
     .toBe("https://studiocarai.com/");
   await expect(page.locator('meta[property="og:type"]')).toHaveAttribute("content", "website");
   await expect(page.locator('meta[property="og:site_name"]')).toHaveAttribute("content", "StudioCar AI");
-  await expect(page.locator('meta[property="og:image"]').first()).toHaveAttribute("content", "https://studiocarai.com/opengraph-image.png");
+  await expect(page.locator('meta[property="og:image"]').first()).toHaveAttribute("content", "https://studiocarai.com/opengraph-image.png?v=2");
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute("content", "summary_large_image");
-  await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute("content", "https://studiocarai.com/opengraph-image.png");
-  await expect(page.locator('link[rel="icon"]').first()).toHaveAttribute("href", "/icon.png");
+  await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute("content", "https://studiocarai.com/opengraph-image.png?v=2");
+  await expect(page.locator('link[rel="icon"]').first()).toHaveAttribute("href", "/icon.png?v=2");
   await expect(page.locator('link[rel="icon"]').first()).toHaveAttribute("sizes", "192x192");
-  await expect(page.locator('link[rel="icon"][href="/favicon.ico"]')).toHaveAttribute("sizes", "16x16 32x32 48x48");
+  await expect(page.locator('link[rel="icon"][href="/favicon.ico?v=2"]')).toHaveAttribute("sizes", "16x16 32x32 48x48");
   expect(await page.locator("h1").count()).toBe(1);
 
   const structuredData = page.locator('script[type="application/ld+json"]');
@@ -64,8 +64,8 @@ test("serves declared favicon files to Google crawlers without authentication", 
   expect(homepage.status()).toBe(200);
   const document = await homepage.text();
   const head = document.slice(0, document.indexOf("</head>"));
-  expect(head).toContain('rel="icon" href="/icon.png" type="image/png" sizes="192x192"');
-  expect(head).toContain('rel="icon" href="/favicon.ico" type="image/x-icon" sizes="16x16 32x32 48x48"');
+  expect(head).toContain('rel="icon" href="/icon.png?v=2" type="image/png" sizes="192x192"');
+  expect(head).toContain('rel="icon" href="/favicon.ico?v=2" type="image/x-icon" sizes="16x16 32x32 48x48"');
 
   for (const userAgent of [googlebot["User-Agent"], "Googlebot-Image/1.0"]) {
     const icon = await request.get("/icon.png", { headers: { "User-Agent": userAgent } });

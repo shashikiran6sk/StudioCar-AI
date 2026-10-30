@@ -25,6 +25,19 @@ describe("MarketingFooter", () => {
     expect(screen.getByRole("heading", { name: "About StudioCar AI" })).toBeInTheDocument();
   });
 
+  it("names DealersDrive as the company behind StudioCar AI", () => {
+    const { container } = render(<MarketingFooter socialLinks={[]} />);
+
+    expect(container.querySelector(".marketing-footer__parent")).toHaveTextContent(
+      "A product of DealersDrive",
+    );
+    // "Drive" is the bold half, as in the DealersDrive wordmark.
+    expect(screen.getByText("Drive").tagName).toBe("STRONG");
+    expect(
+      screen.getByText("© 2026 DealersDrive. StudioCar AI is a DealersDrive product."),
+    ).toBeInTheDocument();
+  });
+
   it("shows nothing at all when no social link is configured", () => {
     render(<MarketingFooter socialLinks={[]} />);
 

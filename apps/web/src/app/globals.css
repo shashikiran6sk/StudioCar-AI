@@ -708,6 +708,22 @@ html {
   line-height: 1.7;
 }
 
+/* The parent-company endorsement sits directly under the logo. */
+.marketing-footer__brand .marketing-footer__parent {
+  margin-top: -8px;
+  color: var(--sc-neutral-400);
+  font-size: 13px;
+}
+
+.marketing-footer__parent-name {
+  color: var(--sc-neutral-0);
+  font-weight: 500;
+}
+
+.marketing-footer__parent-name strong {
+  font-weight: 800;
+}
+
 .marketing-footer nav {
   display: grid;
   align-content: start;
