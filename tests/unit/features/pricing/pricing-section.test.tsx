@@ -13,8 +13,15 @@ describe("PricingSection", () => {
     ).toBeVisible();
     expect(screen.getByText("₹1,499")).toBeVisible();
     expect(screen.getByText(/billing provider is connected/)).toBeVisible();
-    for (const action of screen.getAllByRole("link")) {
-      expect(action).toHaveAttribute("href", "/login?returnTo=%2Fdashboard");
+    expect(screen.getByRole("link", { name: "Start free" })).toHaveAttribute(
+      "href",
+      "/login?returnTo=%2Fdashboard",
+    );
+    for (const name of ["Choose Studio Plus", "Choose Studio Pro"]) {
+      expect(screen.getByRole("link", { name })).toHaveAttribute(
+        "href",
+        "/login?returnTo=%2Fsettings%2Fbilling%23packs",
+      );
     }
   });
 

@@ -1,6 +1,7 @@
 import type { PlanCatalogEntry, PlanKey } from "@studiocar/contracts";
 
 import { BillingPlanCard } from "./billing-plan-card";
+import { BILLING_PACKS_ANCHOR } from "../../app/app-routes";
 import {
   USAGE_BILLING_PACKS_DESCRIPTION,
   USAGE_BILLING_PACKS_EYEBROW,
@@ -17,7 +18,7 @@ export function BillingPlanGrid({
   plans,
 }: BillingPlanGridProps) {
   return (
-    <section className="billing-packs" id="packs">
+    <section className="billing-packs" id={BILLING_PACKS_ANCHOR}>
       <div className="billing-packs__heading">
         <div>
           <p className="eyebrow">{USAGE_BILLING_PACKS_EYEBROW}</p>

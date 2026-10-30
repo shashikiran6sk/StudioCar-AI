@@ -2004,3 +2004,12 @@ Update this document in every meaningful PR with:
 - Exact supplied 45° image validation remains pending because no fixture path/image was provided. Reviewed the repository marketing sedan as a diagnostic proxy; it contains baked floor alpha, so it is not evidence of a clean live provider result.
 - User confirmed Leonardo credentials are not configured. Live preview/full/50MP cost measurements, staging E2E, production cutover, and later remove.bg cleanup remain gated on those prerequisites. Do not change production provider or assume equal pricing.
 - Local verification: lint, strict typecheck, behavior-source mapping, 2,163 unit passes (five pre-existing expected failures), 155 PostgreSQL integration passes, schema validation, worker build, webpack production web build, and all 14 browser tests passed. Root build/e2e commands attempted Turbopack and hit the existing local process/port EPERM restriction; CI must pass the normal build before merge.
+
+## 2026-10-30 — Paid pricing actions open the Billing packs
+
+- Homepage pricing cards used one sign-in link that returned to `/dashboard`, so Choose Studio Plus and Choose Studio Pro never reached Billing. `getPlanActionHref` now sends a paid plan to `/login?returnTo=/settings/billing#packs`; the free plan still starts at the dashboard. The decision uses the same `priceMinorUnits === 0` rule as `describePlanAction`.
+- The login page also sent signed-in visitors to `/dashboard` regardless of `returnTo`. It now redirects them to the validated return path, which `GoogleAuthStartSchema` keeps application-relative, so an absolute or protocol-relative value still falls back to `/dashboard`.
+- `BILLING_PACKS_PATH` and `BILLING_PACKS_ANCHOR` name the Available Packs section once, and the Billing grid uses the anchor constant.
+- Tests: unit coverage for the link builders, the pricing card and section, and the signed-in login redirect (including unsafe return paths); a Playwright spec covers the signed-out sign-in hand-off and the signed-in jump straight to the packs.
+- Verification: lint, typecheck, test mapping, all unit suites, PostgreSQL integration suites, schema validation, migration status, web production build, and all 18 browser tests passed locally.
+- Caveat: Billing still opens the checkout-unavailable dialog until the billing provider work in PR #73 lands.

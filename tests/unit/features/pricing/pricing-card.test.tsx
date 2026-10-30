@@ -11,9 +11,13 @@ describe("PricingCard", () => {
     expect(screen.getByText("₹0")).toBeVisible();
     expect(screen.getByText("forever")).toBeVisible();
     expect(screen.getByText("✓ 15 images in total")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Start free" })).toHaveAttribute(
+      "href",
+      "/login?returnTo=%2Fdashboard",
+    );
   });
 
-  it("sends every action to sign-in, because no checkout exists yet", () => {
+  it("sends a paid plan through sign-in to the Billing packs", () => {
     render(
       <PricingCard
         plan={{
@@ -27,7 +31,10 @@ describe("PricingCard", () => {
     );
 
     const action = screen.getByRole("link", { name: "Choose Studio Plus" });
-    expect(action).toHaveAttribute("href", "/login?returnTo=%2Fdashboard");
+    expect(action).toHaveAttribute(
+      "href",
+      "/login?returnTo=%2Fsettings%2Fbilling%23packs",
+    );
     expect(screen.getByText("₹7,999")).toBeVisible();
     expect(screen.getByText("/ month")).toBeVisible();
   });

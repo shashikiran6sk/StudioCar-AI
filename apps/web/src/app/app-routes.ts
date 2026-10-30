@@ -3,6 +3,9 @@ export const LOGIN_PATH = "/login";
 export const DASHBOARD_PATH = "/dashboard";
 export const INVENTORY_PATH = "/inventory";
 export const BILLING_PATH = "/settings/billing";
+/** The Available Packs section of Usage & Billing. */
+export const BILLING_PACKS_ANCHOR = "packs";
+export const BILLING_PACKS_PATH = `${BILLING_PATH}#${BILLING_PACKS_ANCHOR}`;
 export const PROFILE_PATH = "/settings/profile";
 export const ADMIN_PATH = "/admin";
 export const GOOGLE_AUTH_START_PATH = "/api/auth/google/start";
