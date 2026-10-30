@@ -383,8 +383,7 @@ Validation occurs on Continue and returns focus to the first invalid field. Draf
 
 Dropzone first, then ordered upload items. Each item exposes thumbnail, filename, upload status, remove, and reorder.
 
-- Free: maximum 3 images per batch.
-- Paid: maximum 20 images per batch.
+- Batch limits come from the subscription's plan configuration, never from copy. The seeded defaults are 5 images per batch on Free and 20 on the paid plans.
 - Formats: JPG, JPEG, PNG, WEBP.
 
 Limit messaging is visible before a limit is reached. Reject unsupported files individually without discarding valid selections.
@@ -514,7 +513,7 @@ Use one primary forward action per decision group. Secondary buttons are alterna
 
 ### 4.11 Upload limits
 
-Free users receive 3 upload sessions and a maximum of 3 images per batch. Paid users may upload up to 20 images per batch. Validate limits before transmission, show the remaining allowance, and never remove already uploaded valid work when rejecting excess files.
+Allowances and batch limits are plan configuration rows. The seeded Free plan allows 15 images in total and 5 per batch; the seeded paid plans allow up to 20 per batch. Marketing copy that quotes a limit derives it from the plan catalog rather than repeating the number. Validate limits before transmission, show the remaining allowance, and never remove already uploaded valid work when rejecting excess files.
 
 ### 4.12 Counts are derived
 

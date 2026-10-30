@@ -6,6 +6,7 @@ import { MarketingHeader } from "../features/marketing/marketing-header";
 import { MarketingHero } from "../features/marketing/marketing-hero";
 import { MarketingStudioBackgrounds } from "../features/marketing/marketing-studio-backgrounds";
 import { MarketingWorkflow } from "../features/marketing/marketing-workflow";
+import { summarizeBatchLimits } from "../features/marketing/summarize-batch-limits";
 import { PricingSection } from "../features/pricing/pricing-section";
 import { getCurrentSession } from "../server/auth/get-current-session";
 import { getPublicEnabledSocialLinks } from "../server/content/get-social-links";
@@ -60,6 +61,7 @@ export default async function HomePage() {
     getPublicEnabledSocialLinks(),
     getCurrentSession(),
   ]);
+  const batchLimits = summarizeBatchLimits(plans);
 
   return (
     <div className="marketing-page">
@@ -67,10 +69,10 @@ export default async function HomePage() {
       <MarketingHeader user={session?.user ?? null} />
       <SoftwareApplicationJsonLd />
       <main>
-        <MarketingHero />
+        <MarketingHero batchLimits={batchLimits} />
         <MarketingFeatureSelector />
         <MarketingAudienceStrip />
-        <MarketingWorkflow />
+        <MarketingWorkflow batchLimits={batchLimits} />
         <MarketingStudioBackgrounds />
         <PricingSection plans={plans} />
         <MarketingFinalCta />
