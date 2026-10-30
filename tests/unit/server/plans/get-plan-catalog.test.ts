@@ -2,12 +2,25 @@ import { describe, expect, it, vi } from "vitest";
 
 const findActive = vi.fn();
 const findAll = vi.fn();
+const { cacheOptions } = vi.hoisted(() => {
+  const recorded: unknown[] = [];
+  return { cacheOptions: recorded };
+});
+
+vi.mock("next/cache", () => ({
+  // Runs the wrapped read directly, so each test sees the repository it set,
+  // and records how it was cached: the call happens once, at import.
+  unstable_cache: <T,>(read: T, ...options: unknown[]): T => {
+    cacheOptions.push(options);
+    return read;
+  },
+}));
 
 vi.mock("../../../../apps/web/src/server/plans/plan-config-runtime", () => ({
   getPlanConfigRepository: () => ({ findActive, findAll }),
 }));
 
-const { getFullPlanCatalog, getPlanCatalog } = await import(
+const { getFullPlanCatalog, getPlanCatalog, getPublicPlanCatalog } = await import(
   "../../../../apps/web/src/server/plans/get-plan-catalog"
 );
 const { DEFAULT_PLAN_CATALOG } = await import(
@@ -59,6 +72,21 @@ describe("getFullPlanCatalog", () => {
 
     await expect(getFullPlanCatalog()).resolves.toMatchObject([
       { planKey: "FREE", active: false },
+    ]);
+  });
+});
+
+describe("getPublicPlanCatalog", () => {
+  it("caches the public catalog for at most five minutes under the current key", async () => {
+    findActive.mockResolvedValue([row]);
+
+    await expect(getPublicPlanCatalog()).resolves.toMatchObject([
+      { planKey: "FREE" },
+    ]);
+    // A migration rewrites plans without an administrator's save, so the
+    // cached copy must expire on its own rather than wait for one.
+    expect(cacheOptions).toEqual([
+      [["public-plan-catalog-2026-10-30"], { revalidate: 300, tags: ["public-plan-catalog"] }],
     ]);
   });
 });

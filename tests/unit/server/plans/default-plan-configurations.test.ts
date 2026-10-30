@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { DEFAULT_PLAN_CONFIGURATIONS } from "../../../../apps/web/src/server/plans/default-plan-configurations";
+import { PLAN_PROCESSING_QUALITY_TIERS } from "../../../../packages/processing/src/processing-quality-tier.constants";
 
 function plan(planKey: string) {
   const found = DEFAULT_PLAN_CONFIGURATIONS.find(
@@ -70,12 +71,45 @@ describe("default plan configurations", () => {
         configuration.features.filter((feature) => /storage/i.test(feature)),
       ).toEqual([]);
     }
+  });
+
+  it("lists only what each plan delivers", () => {
     expect(plan("FREE").features).toEqual([
       "15 images in total",
-      "Maximum 5 images per batch",
-      "Standard background processing",
-      "Originals always preserved",
+      "Up to 5 images per batch",
+      "Preview-resolution results",
     ]);
+    expect(plan("STUDIO_PLUS").features).toEqual([
+      "100 images in total",
+      "Up to 20 images per batch",
+      "High-resolution results",
+    ]);
+    expect(plan("STUDIO_PRO").features).toEqual([
+      "500 images each month",
+      "Up to 20 images per batch",
+      "High-resolution results",
+    ]);
+  });
+
+  it("advertises the output resolution the worker actually processes at", () => {
+    const resolutionFeature = {
+      HIGH: "High-resolution results",
+      STANDARD: "Preview-resolution results",
+    } as const;
+    for (const [planKey, tier] of Object.entries(PLAN_PROCESSING_QUALITY_TIERS)) {
+      expect(plan(planKey).features).toContain(resolutionFeature[tier]);
+    }
+  });
+
+  it("names each plan's real allowance and batch size in its features", () => {
+    for (const configuration of DEFAULT_PLAN_CONFIGURATIONS) {
+      expect(configuration.features).toContain(
+        `Up to ${String(configuration.maxImagesPerBatch)} images per batch`,
+      );
+      expect(configuration.features.join(" ")).toContain(
+        String(configuration.includedImages),
+      );
+    }
   });
 
   it("gives every plan a distinct key and position", () => {

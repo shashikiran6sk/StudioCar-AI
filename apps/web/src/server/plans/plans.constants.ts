@@ -7,6 +7,16 @@ export const PLAN_CONFIG_LOCK_KEY = "plan-configuration";
 
 /** Cache tag for the public pricing catalog. Entitlement reads stay uncached. */
 export const PUBLIC_PLAN_CATALOG_CACHE_TAG = "public-plan-catalog";
+/**
+ * Key for the cached public catalog. It changed when plan features were
+ * rewritten by migration, so a deployment cannot keep serving the old list.
+ */
+export const PUBLIC_PLAN_CATALOG_CACHE_KEY = "public-plan-catalog-2026-10-30";
+/**
+ * An administrator's save refreshes the cache at once; this bounds how long a
+ * change made any other way, such as a migration, can stay hidden.
+ */
+export const PUBLIC_PLAN_CATALOG_REVALIDATE_SECONDS = 300;
 
 export const AUDIT_RESOURCE_PLAN_CONFIG = "PlanConfig";
 export const AUDIT_ACTION_PLAN_CONFIG_UPDATED = "PLAN_CONFIG_UPDATED";

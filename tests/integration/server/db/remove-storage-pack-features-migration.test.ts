@@ -3,7 +3,6 @@ import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createDatabaseClient } from "../../../../packages/database-runtime/src/client";
-import { DEFAULT_PLAN_CONFIGURATIONS } from "../../../../apps/web/src/server/plans/default-plan-configurations";
 
 const databaseUrl = process.env["DATABASE_URL"];
 const databaseDescribe = databaseUrl ? describe : describe.skip;
@@ -34,13 +33,19 @@ const EDITED_PRO_FEATURES = ["An administrator's own wording", "Increased storag
 /** Thrown to roll the transaction back once its assertions have run. */
 class RollBack extends Error {}
 
-function defaultFeatures(planKey: string): readonly string[] {
-  const found = DEFAULT_PLAN_CONFIGURATIONS.find(
-    (configuration) => configuration.planKey === planKey,
-  );
-  if (!found) throw new Error(`Expected a ${planKey} default.`);
-  return found.features;
-}
+/** What this migration writes; later migrations may rewrite it again. */
+const MIGRATED_FREE_FEATURES = [
+  "15 images in total",
+  "Maximum 5 images per batch",
+  "Standard background processing",
+  "Originals always preserved",
+];
+const MIGRATED_PRO_FEATURES = [
+  "500 images each month",
+  "Priority batch processing",
+  "High-resolution output",
+  "Team-ready inventory workflow",
+];
 
 databaseDescribe("remove_storage_pack_features migration", () => {
   let database: ReturnType<typeof createDatabaseClient>;
@@ -112,18 +117,17 @@ databaseDescribe("remove_storage_pack_features migration", () => {
     return result;
   }
 
-  it("replaces seeded storage lines with the shipped defaults", async () => {
+  it("replaces seeded storage lines", async () => {
     const { free, pro } = await runScenario(SEEDED_PRO_FEATURES);
 
-    // The migration and the defaults a fresh database is seeded with agree.
-    expect(free).toEqual(defaultFeatures("FREE"));
-    expect(pro).toEqual(defaultFeatures("STUDIO_PRO"));
+    expect(free).toEqual(MIGRATED_FREE_FEATURES);
+    expect(pro).toEqual(MIGRATED_PRO_FEATURES);
   });
 
   it("leaves a feature list an administrator has edited alone", async () => {
     const { free, pro } = await runScenario(EDITED_PRO_FEATURES);
 
-    expect(free).toEqual(defaultFeatures("FREE"));
+    expect(free).toEqual(MIGRATED_FREE_FEATURES);
     expect(pro).toEqual(EDITED_PRO_FEATURES);
   });
 });

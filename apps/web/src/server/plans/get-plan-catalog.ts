@@ -4,7 +4,11 @@ import { cache } from "react";
 
 import { DEFAULT_PLAN_CATALOG } from "./default-plan-catalog";
 import { getPlanConfigRepository } from "./plan-config-runtime";
-import { PUBLIC_PLAN_CATALOG_CACHE_TAG } from "./plans.constants";
+import {
+  PUBLIC_PLAN_CATALOG_CACHE_KEY,
+  PUBLIC_PLAN_CATALOG_CACHE_TAG,
+  PUBLIC_PLAN_CATALOG_REVALIDATE_SECONDS,
+} from "./plans.constants";
 import { toPlanCatalogEntry } from "./to-plan-catalog-entry";
 
 async function readActivePlanCatalog(): Promise<readonly PlanCatalogEntry[]> {
@@ -36,8 +40,11 @@ export const getPlanCatalog = cache(
  */
 const readCachedPublicPlanCatalog = unstable_cache(
   readActivePlanCatalog,
-  ["public-plan-catalog"],
-  { tags: [PUBLIC_PLAN_CATALOG_CACHE_TAG] },
+  [PUBLIC_PLAN_CATALOG_CACHE_KEY],
+  {
+    revalidate: PUBLIC_PLAN_CATALOG_REVALIDATE_SECONDS,
+    tags: [PUBLIC_PLAN_CATALOG_CACHE_TAG],
+  },
 );
 
 export const getPublicPlanCatalog = cache(
