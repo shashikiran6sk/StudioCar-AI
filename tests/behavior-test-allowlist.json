@@ -634,5 +634,9 @@
   {
     "source": "workers/image-processing/src/execution/no-vehicle-detected-error.ts",
     "reason": "Error carrier asserted through the compose studio image and executor tests."
+  },
+  {
+    "source": "apps/web/src/features/marketing/marketing-batch-limits.types.ts",
+    "reason": "Type-only shape of the homepage batch limits; summarizeBatchLimits and describeUploadLimits test its values."
   }
 ]

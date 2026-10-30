@@ -67,11 +67,25 @@ export const MARKETING_COPY = {
   },
 };
 
+/** The paid batch size is read from the plans; see `summarizeBatchLimits`. */
+export const MARKETING_HERO_BATCH_PROOF = {
+  label: "images per paid batch",
+  suffix: "×",
+};
+
 export const MARKETING_HERO_PROOF = [
-  { label: "images per paid batch", value: "20×" },
   { label: "controlled processing", value: "Async" },
   { label: "always preserved", value: "Originals" },
 ];
+
+export const MARKETING_UPLOAD_LIMIT_COPY = {
+  fallback: "Batch size follows your plan",
+  freeLabel: "Free",
+  imagePlural: "images",
+  imageSingular: "image",
+  paidLabel: "Paid",
+  separator: " · ",
+};
 
 export const MARKETING_STUDIO_BENEFITS = [
   "Premium White for clean marketplace listings",
@@ -120,7 +134,8 @@ export const MARKETING_WORKFLOW_STEPS = [
   },
   {
     description: "Drop in JPG, PNG, or WEBP images, check upload status, and drag to reorder.",
-    detail: "Free: 3 images · Paid: 20 images",
+    // Read from the plans on offer; see `describeUploadLimits`.
+    detail: null,
     title: "Upload photos",
   },
   {

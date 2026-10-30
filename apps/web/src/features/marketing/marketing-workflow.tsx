@@ -1,5 +1,7 @@
 import { ButtonLink } from "@studiocar/ui";
 
+import { describeUploadLimits } from "./describe-upload-limits";
+import type { MarketingBatchLimits } from "./marketing-batch-limits.types";
 import {
   MARKETING_COPY,
   MARKETING_START_PATH,
@@ -7,7 +9,11 @@ import {
   MARKETING_WORKFLOW_STEPS,
 } from "./marketing.constants";
 
-export function MarketingWorkflow() {
+export interface MarketingWorkflowProps {
+  batchLimits: MarketingBatchLimits;
+}
+
+export function MarketingWorkflow({ batchLimits }: MarketingWorkflowProps) {
   return (
     <section className="marketing-workflow" id={MARKETING_WORKFLOW_ID}>
       <div className="marketing-section-heading">
@@ -25,7 +31,7 @@ export function MarketingWorkflow() {
             <span>{String(index + 1).padStart(2, "0")}</span>
             <h3>{step.title}</h3>
             <p>{step.description}</p>
-            <strong>{step.detail}</strong>
+            <strong>{step.detail ?? describeUploadLimits(batchLimits)}</strong>
           </li>
         ))}
       </ol>

@@ -1,14 +1,31 @@
 import { ButtonLink, ComparisonSlider } from "@studiocar/ui";
 
 import { MarketingCarStage } from "./marketing-car-stage";
+import type { MarketingBatchLimits } from "./marketing-batch-limits.types";
 import {
   MARKETING_COPY,
   MARKETING_FEATURES_ID,
+  MARKETING_HERO_BATCH_PROOF,
   MARKETING_HERO_PROOF,
   MARKETING_START_PATH,
 } from "./marketing.constants";
 
-export function MarketingHero() {
+export interface MarketingHeroProps {
+  batchLimits: MarketingBatchLimits;
+}
+
+export function MarketingHero({ batchLimits }: MarketingHeroProps) {
+  const proofs =
+    batchLimits.paid === null
+      ? MARKETING_HERO_PROOF
+      : [
+          {
+            label: MARKETING_HERO_BATCH_PROOF.label,
+            value: `${String(batchLimits.paid)}${MARKETING_HERO_BATCH_PROOF.suffix}`,
+          },
+          ...MARKETING_HERO_PROOF,
+        ];
+
   return (
     <section className="marketing-hero" id="top">
       <div className="marketing-hero__copy">
@@ -26,7 +43,7 @@ export function MarketingHero() {
           </ButtonLink>
         </div>
         <dl className="marketing-proof">
-          {MARKETING_HERO_PROOF.map((proof) => (
+          {proofs.map((proof) => (
             <div key={proof.value}><dt>{proof.value}</dt><dd>{proof.label}</dd></div>
           ))}
         </dl>
