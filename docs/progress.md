@@ -2042,3 +2042,10 @@ Update this document in every meaningful PR with:
 - Features are now: Free — 15 images in total, up to 5 per batch, preview-resolution results; Studio Plus — 100 images in total, up to 20 per batch, high-resolution results; Studio Pro — 500 images each month, up to 20 per batch, high-resolution results. Migration `20261030180000_plan_features_match_delivery` rewrites rows still matching either earlier seed and leaves administrator-edited lists alone.
 - Studio Pro keeps its "Teams" segment label and "high-volume teams" description; neither is a feature claim, but both could be revisited.
 - Tests: unit tests pin each plan's features, tie every plan's resolution line to its processing tier and its allowance and batch numbers to its configuration, and pin the public cache key and expiry. A real-PostgreSQL test runs the migration from both earlier seeds and against an administrator's edit; the #112 migration test now asserts the literal lists that migration wrote instead of the moving defaults.
+
+## 2026-10-30 — Free plan sets no storage capacity
+
+- Storage has never been enforced, yet Free's seeded 3 GiB `storageBytes` produced "of 3.0 GB" in the sidebar, the dashboard storage card and Usage & Billing. Free now sets no capacity, like the paid plans: defaults use `null`, and migration `20261030190000_free_plan_storage_capacity` clears the value only where it is still the seeded 3 GiB, keeping any capacity an administrator chose.
+- The dashboard contract turned a missing capacity into `0`, so plans without one read "of 0 B". `storageCapacityBytes` is now nullable (and positive when present) in `DashboardSummarySchema`; the card then says what storage counts, "Originals and studio results", instead of a capacity. The sidebar and Usage & Billing already handled `null`.
+- Storage used is still shown everywhere, since it is a real measurement of originals and processed results.
+- Tests: contract (null accepted, zero rejected), dashboard service and stats for a plan without capacity, the defaults carrying no capacity, and a real-PostgreSQL migration test for the seeded and administrator-chosen values.

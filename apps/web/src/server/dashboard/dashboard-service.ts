@@ -49,7 +49,7 @@ export class DashboardService {
         metrics.unsuccessfulJobCount,
       ),
       recentVehicles: recent,
-      storageCapacityBytes: plan.storageCapacityBytes ?? 0,
+      storageCapacityBytes: plan.storageCapacityBytes,
       storageUsedBytes: safeBigIntToNumber(metrics.storageUsedBytes),
       vehiclesProcessed: metrics.vehiclesProcessed,
       vehiclesProcessedThisPeriod: metrics.vehiclesProcessedThisPeriod,

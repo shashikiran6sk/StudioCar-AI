@@ -112,6 +112,12 @@ describe("default plan configurations", () => {
     }
   });
 
+  it("sets no storage capacity, because storage is never enforced", () => {
+    for (const configuration of DEFAULT_PLAN_CONFIGURATIONS) {
+      expect(configuration.storageBytes).toBeNull();
+    }
+  });
+
   it("gives every plan a distinct key and position", () => {
     const keys = DEFAULT_PLAN_CONFIGURATIONS.map((plan) => plan.planKey);
     const orders = DEFAULT_PLAN_CONFIGURATIONS.map((plan) => plan.displayOrder);

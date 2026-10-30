@@ -45,4 +45,29 @@ describe("DashboardSummarySchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("represents a plan without a storage capacity as null, never zero", () => {
+    const summary = {
+      activeImageCount: 0,
+      attention: { vehicleCount: 0, vehicleId: null },
+      imagesProcessed: 0,
+      imagesProcessedThisPeriod: 0,
+      imagesRemaining: 15,
+      planName: "Free",
+      processingSuccessRate: null,
+      recentVehicles: [],
+      storageUsedBytes: 0,
+      vehiclesProcessed: 0,
+      vehiclesProcessedThisPeriod: 0,
+      vehiclesProcessing: 0,
+    };
+
+    expect(
+      DashboardSummarySchema.safeParse({ ...summary, storageCapacityBytes: null }).success,
+    ).toBe(true);
+    // Zero once stood in for "no capacity" and rendered as "of 0 B".
+    expect(
+      DashboardSummarySchema.safeParse({ ...summary, storageCapacityBytes: 0 }).success,
+    ).toBe(false);
+  });
 });

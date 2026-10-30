@@ -10,6 +10,8 @@ export const DASHBOARD_RECENT_EMPTY_DESCRIPTION =
   "Upload your first vehicle to begin a studio image batch.";
 export const DASHBOARD_VIEW_ALL_LABEL = "View all inventory";
 export const DASHBOARD_STORAGE_USED_LABEL = "Storage used";
+/** Shown under storage used when the plan sets no capacity. */
+export const DASHBOARD_STORAGE_SCOPE_LABEL = "Originals and studio results";
 export const DASHBOARD_VEHICLES_PROCESSED_LABEL = "Vehicles processed";
 export const DASHBOARD_IMAGES_PROCESSED_LABEL = "Images processed";
 export const DASHBOARD_VEHICLES_PROCESSING_LABEL = "Vehicles processing";
