@@ -28,14 +28,21 @@ describe("visible plate surface selection", () => {
       .toEqual(findVisiblePlateSurface(pair.image, [pair.first]));
   });
 
-  it("recovers shaded primaries while retaining ambiguity and never promoting a background plate", () => {
-    const first = { image: createShadedPlatePhoto(), detection: { ...PHOTO_PLATE, score: 0.14 } };
-    const second = { image: createShadedPlatePhoto(), detection: { ...PHOTO_PLATE, score: 0.13 } };
-    const pair = createPlatePair(first, second);
-    expect(findVisiblePlateSurface(pair.image, [pair.first])).not.toBeNull();
-    expect(findVisiblePlateSurface(pair.image, [pair.second])).not.toBeNull();
-    expect(findVisiblePlateSurface(pair.image, [pair.first, pair.second])).toBeNull();
-    expect(findVisiblePlateSurface(first.image, [first.detection, { ...BADGE, score: 0.15 }])).toBeNull();
+  const shadedFirst = { image: createShadedPlatePhoto(), detection: { ...PHOTO_PLATE, score: 0.14 } };
+  const shadedSecond = { image: createShadedPlatePhoto(), detection: { ...PHOTO_PLATE, score: 0.13 } };
+  const shadedPair = createPlatePair(shadedFirst, shadedSecond);
+
+  it("recovers each independently visible shaded plate", () => {
+    expect(findVisiblePlateSurface(shadedPair.image, [shadedPair.first])).not.toBeNull();
+    expect(findVisiblePlateSurface(shadedPair.image, [shadedPair.second])).not.toBeNull();
+  });
+
+  it("retains ambiguity between comparable shaded plate surfaces", () => {
+    expect(findVisiblePlateSurface(shadedPair.image, [shadedPair.first, shadedPair.second])).toBeNull();
+  });
+
+  it("never promotes a shaded background plate when the higher-ranked surface is unreliable", () => {
+    expect(findVisiblePlateSurface(shadedFirst.image, [shadedFirst.detection, { ...BADGE, score: 0.15 }])).toBeNull();
   });
   it("retains an existing success when only a secondary surface needs projected coverage", () => {
     const secondary = createTiltedPlatePhoto("right", true, 50);

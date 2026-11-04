@@ -41,6 +41,9 @@ Last updated: 2026-11-04
   18 browser tests passed. The reproducible ZIP and its actual native model
   passed offline Linux ARM64 smoke checks with 2 GB and one CPU; all nine
   selected production cutouts prepared/skipped as expected in that runtime.
+  Initial PR CI timed out in a new test combining independent shaded-plate
+  behaviors. Those checks now run as focused cases with the same assertions
+  and unchanged timeouts; CI must pass again on the updated head.
   Required PR checks must pass before merge. The user retains
   responsibility for deploying the reviewed Lambda archive after merge.
 
