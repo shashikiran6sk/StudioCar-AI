@@ -9,6 +9,85 @@ import { createTiltedPlatePhoto } from "../test-support/create-tilted-plate-phot
 import { PLATE_STANDARD_SURFACE_FIT_PASSES } from "../../../../../workers/image-processing/src/plate-branding/plate-branding.constants";
 
 describe("physical plate surface refinement", () => {
+  it("rejects a diagonal shadow wedge even when its convex outline covers enough of the detector box", () => {
+    const image = createPlatePhoto();
+    image.data.fill(70);
+    for (let y = 170; y <= 215; y++) for (let x = 180; x <= 320; x++) {
+      if (x < 260 - (y - 170) * 80 / 45) continue;
+      const offset = (y * image.width + x) * 3;
+      image.data.fill(240, offset, offset + 3);
+    }
+    expect(refinePlateQuadrilateral(image, { ...PHOTO_PLATE, score: 0.15 })).toBeNull();
+  });
+  it("retains the exact corners of a complete rectangular face", () => {
+    const image = createPlatePhoto();
+    image.data.fill(70);
+    for (let y = 170; y <= 215; y++) for (let x = 180; x <= 320; x++) {
+      const offset = (y * image.width + x) * 3;
+      image.data.fill(240, offset, offset + 3);
+    }
+    const corners = refinePlateQuadrilateral(image, PHOTO_PLATE);
+    expect(corners).toEqual({ topLeft: { x: 180, y: 170 }, topRight: { x: 320, y: 170 },
+      bottomRight: { x: 320, y: 215 }, bottomLeft: { x: 180, y: 215 } });
+  });
+  it.each(["left", "right"])("does not grow through a deep gray %s surround beyond the physical plate edge", (direction) => {
+    const image = createPlatePhoto();
+    image.data.fill(70);
+    for (let y = 170; y <= 215; y++) for (let x = 180; x <= 320; x++) {
+      const offset = (y * image.width + x) * 3;
+      image.data.fill(240, offset, offset + 3);
+    }
+    const left = direction === "left" ? 160 : 321;
+    const right = direction === "left" ? 179 : 340;
+    for (let y = 180; y <= 215; y++) for (let x = left; x <= right; x++) {
+      const offset = (y * image.width + x) * 3;
+      image.data.fill(110, offset, offset + 3);
+    }
+    const corners = refinePlateQuadrilateral(image, { ...PHOTO_PLATE, score: 0.15 });
+    expect(corners?.topLeft.x).toBeCloseTo(180, 0);
+    expect(corners?.bottomLeft.x).toBeCloseTo(180, 0);
+    expect(corners?.topRight.x).toBeCloseTo(320, 0);
+    expect(corners?.bottomRight.x).toBeCloseTo(320, 0);
+  });
+  it("recovers a complete side edge beside a notch instead of shearing the wordmark", () => {
+    const image = createPlatePhoto();
+    image.data.fill(70);
+    for (let y = 170; y <= 215; y++) for (let x = 180; x <= 320; x++) {
+      if (x < 189 && y < 179) continue;
+      const offset = (y * image.width + x) * 3;
+      image.data.fill(240, offset, offset + 3);
+    }
+    const corners = refinePlateQuadrilateral(image, PHOTO_PLATE);
+    expect(corners?.topLeft.x).toBeCloseTo(180, 0);
+    expect(corners?.topLeft.y).toBeCloseTo(170, 0);
+    expect(corners?.bottomLeft.x).toBeCloseTo(180, 0);
+  });
+
+  it("grows a weak bright diagonal boundary into the complete containing plate surface", () => {
+    const image = createPlatePhoto();
+    for (let y = 0; y < image.height; y++) for (let x = 0; x < image.width; x++) {
+      const offset = (y * image.width + x) * 3;
+      if (image.data[offset] === 240 && y < 194 - (x - 180) / 7) image.data.fill(160, offset, offset + 3);
+    }
+    const corners = refinePlateQuadrilateral(image, PHOTO_PLATE);
+    expect(corners?.topLeft.x).toBeCloseTo(PHOTO_CORNERS.topLeft.x, 0);
+    expect(corners?.topLeft.y).toBeCloseTo(PHOTO_CORNERS.topLeft.y, 0);
+  });
+
+  it("recovers a narrow deep top shadow without admitting a uniformly dim gray surface", () => {
+    const image = createPlatePhoto();
+    for (let y = 0; y < 189; y++) for (let x = 0; x < image.width; x++) {
+      const offset = (y * image.width + x) * 3;
+      if (image.data[offset] === 240) image.data.fill(110, offset, offset + 3);
+    }
+    const detection = { ...PHOTO_PLATE, score: 0.15 };
+    const corners = refinePlateQuadrilateral(image, detection);
+    expect(corners?.topLeft.y).toBeCloseTo(PHOTO_CORNERS.topLeft.y, 0);
+    for (let offset = 0; offset < image.data.length; offset += 3) {
+      if (image.data[offset] === 240) image.data.fill(110, offset, offset + 3);
+    }
+    expect(refinePlateQuadrilateral(image, detection)).toBeNull();
+  });
   it.each(["left", "right"] satisfies readonly ("left" | "right")[])("recovers a complete steep %s-facing plate after standard coverage fails", (direction) => {
     const { image, detection, corners: expected } = createTiltedPlatePhoto(direction, true, 50);
     expect(refinePlateQuadrilateral(image, detection, PLATE_STANDARD_SURFACE_FIT_PASSES)).toBeNull();

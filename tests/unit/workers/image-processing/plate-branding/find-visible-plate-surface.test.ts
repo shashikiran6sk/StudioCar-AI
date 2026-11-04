@@ -6,10 +6,44 @@ import { createTiltedPlatePhoto } from "../test-support/create-tilted-plate-phot
 import { createPlatePair } from "../test-support/create-plate-pair";
 import { refinePlateQuadrilateral } from "../../../../../workers/image-processing/src/plate-branding/refine-plate-quadrilateral";
 import { PLATE_STANDARD_SURFACE_FIT_PASSES } from "../../../../../workers/image-processing/src/plate-branding/plate-branding.constants";
+import { createShadedPlatePhoto } from "../test-support/create-shaded-plate-photo";
 
 const BADGE = { left: 0.1, top: 0.2, width: 0.08, height: 0.04, score: 0.115 };
 
 describe("visible plate surface selection", () => {
+  it("skips a weak compact door-label detection while retaining stronger compact plates", () => {
+    const image = createPlatePhoto();
+    image.data.fill(70);
+    for (let y = 150; y <= 220; y++) for (let x = 200; x <= 300; x++) {
+      const offset = (y * image.width + x) * 3;
+      image.data.fill(240, offset, offset + 3);
+    }
+    const label = { left: 194 / image.width, top: 144 / image.height, width: 112 / image.width, height: 82 / image.height, score: 0.084 };
+    expect(refinePlateQuadrilateral(image, label)).not.toBeNull();
+    expect(findVisiblePlateSurface(image, [label])).toBeNull();
+    expect(findVisiblePlateSurface(image, [{ ...label, score: 0.14 }])).not.toBeNull();
+    expect(findVisiblePlateSurface(createPlatePhoto(), [{ ...PHOTO_PLATE, score: 0.09 }])).not.toBeNull();
+    const pair = createPlatePair({ image: createPlatePhoto(), detection: { ...PHOTO_PLATE, score: 0.095 } }, { image, detection: label });
+    expect(findVisiblePlateSurface(pair.image, [pair.first, pair.second]))
+      .toEqual(findVisiblePlateSurface(pair.image, [pair.first]));
+  });
+
+  const shadedFirst = { image: createShadedPlatePhoto(), detection: { ...PHOTO_PLATE, score: 0.14 } };
+  const shadedSecond = { image: createShadedPlatePhoto(), detection: { ...PHOTO_PLATE, score: 0.13 } };
+  const shadedPair = createPlatePair(shadedFirst, shadedSecond);
+
+  it("recovers each independently visible shaded plate", () => {
+    expect(findVisiblePlateSurface(shadedPair.image, [shadedPair.first])).not.toBeNull();
+    expect(findVisiblePlateSurface(shadedPair.image, [shadedPair.second])).not.toBeNull();
+  });
+
+  it("retains ambiguity between comparable shaded plate surfaces", () => {
+    expect(findVisiblePlateSurface(shadedPair.image, [shadedPair.first, shadedPair.second])).toBeNull();
+  });
+
+  it("never promotes a shaded background plate when the higher-ranked surface is unreliable", () => {
+    expect(findVisiblePlateSurface(shadedFirst.image, [shadedFirst.detection, { ...BADGE, score: 0.15 }])).toBeNull();
+  });
   it("retains an existing success when only a secondary surface needs projected coverage", () => {
     const secondary = createTiltedPlatePhoto("right", true, 50);
     const pair = createPlatePair({ image: createPlatePhoto(), detection: PHOTO_PLATE },
