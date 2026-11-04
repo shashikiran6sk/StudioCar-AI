@@ -15,6 +15,7 @@ overrides:
   deepmerge-ts: 8.0.0
   mysql2: 3.23.1
   'fast-uri@>=3.0.0 <3.1.9': 3.1.9
+  '@sentry/bundler-plugins>glob': 14.0.2
 
 catalog:
   '@aws-sdk/client-cloudwatch': 3.1140.0
