@@ -2,8 +2,35 @@ import { describe, expect, it } from "vitest";
 
 import { fitTiltedPlateOutline } from "../../../../../workers/image-processing/src/plate-branding/fit-tilted-plate-outline";
 import { createTiltedPlatePhoto, TILTED_BOX_HEIGHT, TILTED_BOX_WIDTH } from "../test-support/create-tilted-plate-photo";
+import { PLATE_STANDARD_OUTLINE_LIMITS } from "../../../../../workers/image-processing/src/plate-branding/plate-branding.constants";
 
 describe("supported tilted plate outlines", () => {
+  it("excludes a short rounded shoulder from a well-supported side line", () => {
+    const hull = [{ x: 20, y: 30 }, { x: 140, y: 30 }, { x: 148, y: 32 },
+      { x: 150, y: 36 }, { x: 150, y: 70 }, { x: 20, y: 70 }];
+    const initial = { topLeft: { x: 20, y: 30 }, topRight: { x: 140, y: 30 },
+      bottomRight: { x: 150, y: 70 }, bottomLeft: { x: 20, y: 70 } };
+    const corners = fitTiltedPlateOutline(hull, initial, 140, 50, PLATE_STANDARD_OUTLINE_LIMITS);
+    expect(corners?.topRight.x).toBeCloseTo(150, 8);
+    expect(corners?.topRight.y).toBeCloseTo(30, 8);
+    expect(fitTiltedPlateOutline(hull, initial, 140, 50, {
+      ...PLATE_STANDARD_OUTLINE_LIMITS, minimumSideSegmentShare: 0.1,
+    })).toBeNull();
+  });
+  it("recovers a simplified side corner without treating a rounded shoulder as its edge", () => {
+    const hull = [{ x: 20, y: 41 }, { x: 21, y: 40 }, { x: 63, y: 40 }, { x: 213, y: 44 },
+      { x: 229, y: 45 }, { x: 231, y: 46 }, { x: 232, y: 50 }, { x: 233, y: 61 },
+      { x: 235, y: 85 }, { x: 235, y: 98 }, { x: 229, y: 98 }, { x: 185, y: 96 },
+      { x: 64, y: 90 }, { x: 32, y: 88 }, { x: 25, y: 87 }, { x: 24, y: 86 },
+      { x: 23, y: 78 }, { x: 22, y: 67 }, { x: 20, y: 42 }];
+    const initial = { topLeft: { x: 21, y: 40 }, topRight: { x: 213, y: 44 },
+      bottomRight: { x: 235, y: 98 }, bottomLeft: { x: 24, y: 86 } };
+    const corners = fitTiltedPlateOutline(hull, initial, 223, 72, PLATE_STANDARD_OUTLINE_LIMITS);
+    expect(corners?.topRight.x).toBeGreaterThan(230);
+    expect(corners?.topRight.x).toBeLessThan(234);
+    expect(corners?.bottomRight.x).toBeCloseTo(235, -1);
+    expect(fitTiltedPlateOutline(hull, initial, 223, 72)).toBeNull();
+  });
   it.each(["left", "right"] satisfies readonly ("left" | "right")[])("retains a complete %s-facing polygon", (direction) => {
     const { corners } = createTiltedPlatePhoto(direction);
     const hull = [corners.topLeft, corners.topRight, corners.bottomRight, corners.bottomLeft];

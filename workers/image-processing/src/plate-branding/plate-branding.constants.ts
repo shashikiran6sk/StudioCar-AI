@@ -1,4 +1,4 @@
-import type { PlateSurfaceFitPass, PlateSurfacePass } from "./plate-branding.types";
+import type { PlateOutlineLimits, PlateSurfaceFitPass, PlateSurfacePass } from "./plate-branding.types";
 
 export const PLATE_BRANDING_DIRECTORY = "assets/plate-branding";
 export const PLATE_MODEL_FILE = "plate-rtdetr.onnx";
@@ -52,6 +52,28 @@ export const PLATE_OUTLINE_MINIMUM_SUPPORT_SHARE = 0.4;
 export const PLATE_OUTLINE_MAXIMUM_RESIDUAL_SHARE = 0.02;
 export const PLATE_OUTLINE_MAXIMUM_AREA_RATIO = 1.1;
 export const PLATE_OUTLINE_MAXIMUM_CORNER_SHIFT_SHARE = 0.08;
+export const PLATE_TILTED_OUTLINE_LIMITS: PlateOutlineLimits = {
+  minimumSideDirectionDot: PLATE_OUTLINE_MINIMUM_DIRECTION_DOT,
+  minimumSideSegmentShare: PLATE_OUTLINE_MINIMUM_SEGMENT_SHARE,
+  maximumHorizontalCornerShiftShare: PLATE_OUTLINE_MAXIMUM_CORNER_SHIFT_SHARE,
+};
+export const PLATE_STANDARD_OUTLINE_LIMITS: PlateOutlineLimits = {
+  minimumSideDirectionDot: 0.95,
+  minimumSideSegmentShare: 0.2,
+  maximumHorizontalCornerShiftShare: 0.1,
+};
+export const PLATE_STANDARD_MINIMUM_SIDE_SHEAR = 0.1;
+export const PLATE_MAXIMUM_SIDE_SHEAR = 0.5;
+export const PLATE_WEAK_MODEL_SCORE_CEILING = 0.1;
+export const PLATE_WEAK_MINIMUM_SURFACE_ASPECT = 2;
+export const PLATE_WEAK_MINIMUM_SURFACE_FRAME_SHARE = 0.001;
+export const PLATE_SHADED_MINIMUM_MODEL_SCORE = 0.11;
+export const PLATE_SHADED_MINIMUM_CONTRAST = 70;
+export const PLATE_SHADED_DARK_QUANTILE = 0.05;
+export const PLATE_SHADED_BRIGHT_QUANTILE = 0.9;
+export const PLATE_SHADED_MINIMUM_NEUTRAL_SHARE = 0.75;
+export const PLATE_SHADED_MINIMUM_SURFACE_ASPECT = 2;
+export const PLATE_CHANNEL_MAXIMUM = 255;
 export const PLATE_STANDARD_SURFACE_FIT_PASSES: readonly PlateSurfaceFitPass[] = [
   { minimumCoverage: PLATE_SURFACE_MINIMUM_COVERAGE, minimumQuadFit: PLATE_SURFACE_MINIMUM_QUAD_FIT, requireTilt: false, requireProjectedCoverage: false },
   { minimumCoverage: PLATE_TILTED_MINIMUM_COVERAGE, minimumQuadFit: PLATE_TILTED_MINIMUM_QUAD_FIT, requireTilt: true, requireProjectedCoverage: false },
@@ -77,12 +99,17 @@ export const PLATE_WHITE_SHADOW_MINIMUM_CHANNEL = 135;
 export const PLATE_WHITE_SHADOW_BRIGHT_MINIMUM_CHANNEL = 155;
 export const PLATE_STRONG_MODEL_SCORE = 0.13;
 export const PLATE_WHITE_DEEP_SHADOW_MINIMUM_CHANNEL = 125;
+export const PLATE_WHITE_NARROW_SHADOW_MINIMUM_CHANNEL = 100;
+export const PLATE_NARROW_SHADOW_MAXIMUM_HORIZONTAL_SHIFT_SHARE = 0.02;
 export const PLATE_WHITE_MINIMUM_BRIGHT_SHARE = 0.5;
 export const PLATE_WHITE_SURFACE_THRESHOLD_STEP = 5;
 export const PLATE_WHITE_SURFACE_PASSES: readonly PlateSurfacePass[] = [
   { minimumModelScore: PLATE_MINIMUM_MODEL_SCORE, minimumChannel: PLATE_WHITE_SHADOW_MINIMUM_CHANNEL, seedChannel: PLATE_WHITE_SHADOW_BRIGHT_MINIMUM_CHANNEL },
-  { minimumModelScore: PLATE_STRONG_MODEL_SCORE, minimumChannel: PLATE_WHITE_DEEP_SHADOW_MINIMUM_CHANNEL, seedChannel: PLATE_WHITE_SHADOW_MINIMUM_CHANNEL },
+  { minimumModelScore: PLATE_STRONG_MODEL_SCORE, minimumChannel: PLATE_WHITE_NARROW_SHADOW_MINIMUM_CHANNEL, seedChannel: PLATE_WHITE_SHADOW_MINIMUM_CHANNEL },
 ];
+export const PLATE_SHADED_MINIMUM_BRIGHTNESS = PLATE_WHITE_NARROW_SHADOW_MINIMUM_CHANNEL;
+export const PLATE_SHADED_MAXIMUM_BRIGHTNESS = PLATE_WHITE_SHADOW_BRIGHT_MINIMUM_CHANNEL;
+export const PLATE_SHADED_TARGET_BRIGHTNESS = PLATE_WHITE_MINIMUM_CHANNEL;
 export const PLATE_WHITE_MAXIMUM_CHANNEL_SPREAD = 75;
 export const PLATE_YELLOW_MINIMUM_RED = 140;
 export const PLATE_YELLOW_MINIMUM_GREEN = 115;

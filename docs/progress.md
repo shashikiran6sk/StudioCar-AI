@@ -2,6 +2,48 @@
 
 Last updated: 2026-11-04
 
+## Missed, skewed and falsely branded plates in the November 4 runs
+
+- Reproduced four missed exterior plates, eleven skewed/incomplete overlays
+  and a false door-label detection from 89 existing production cutouts. All
+  provider results were already saved; this code change uses offline inputs
+  and makes no Leonardo request or production storage/database change.
+- Recover standard-fit corners from supported hull-edge lines, excluding
+  short rounded shoulders. Retain already consistent sides, require supported
+  recovery for sheared sides and reject severe side-direction disagreement.
+  Keep residual, movement, area and opacity limits.
+  Let weaker fits seek bounded containing expansions too, so an early bright
+  shadow boundary cannot freeze a diagonal or incomplete plate polygon.
+- Stronger-ranked surfaces may connect deeper narrow shadows while retaining
+  the existing light-pixel majority. A fixed earlier fit bounds horizontal
+  growth, preventing deeper thresholds from creeping onto the plate surround.
+  If ordinary fitting still fails, use a
+  bounded neutral/contrast-checked exposure crop, run the existing fitter,
+  and restore coordinates without changing source colours. An uncertain
+  primary never promotes a background plate; comparable shaded rivals retain
+  ambiguity and the existing bound on additional surface checks.
+- Weak compact or tiny surfaces require additional shape evidence. Apply
+  that rule to primaries and competitors, preserving stronger compact plates
+  and weak elongated foreground plates. No model, provider, job, storage,
+  usage, environment, migration or UI change.
+- Added synthetic regressions for notches, rounded shoulders, diagonal shadow
+  boundaries, deep narrow shadows, dim/cool plates, exposure limits, mutation,
+  sampling/coordinate restoration, clipping, opacity, ambiguity, compact
+  labels and distant faces. Private photos and repair artifacts stay outside
+  Git. Fresh native inference covered 89 cutouts and 89 enhanced originals;
+  candidate replay fits all 40 visible cutout plates and skips all 49 other
+  cutouts. The original-photo check fits 39 plates, skips all 49 negatives
+  and safely skips one formerly skewed face with unsupported side evidence.
+  Both the door label and an interior-view background plate are rejected.
+  All 79 positive renders have zero changed raw pixels outside their polygon.
+- Full uncached local lint, strict types, source mapping, unit and isolated
+  PostgreSQL integration suites, Prisma validation, production build and all
+  18 browser tests passed. The reproducible ZIP and its actual native model
+  passed offline Linux ARM64 smoke checks with 2 GB and one CPU; all nine
+  selected production cutouts prepared/skipped as expected in that runtime.
+  Required PR checks must pass before merge. The user retains
+  responsibility for deploying the reviewed Lambda archive after merge.
+
 ## November 4 dependency audit prerequisite
 
 - Required production audit flags glob 13.0.6 and its minimatch 10.2.6

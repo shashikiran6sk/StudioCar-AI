@@ -286,24 +286,36 @@ checked; excessive ambiguity remains a skip. The highest-ranked eligible
 candidate must itself have a valid surface: a lower-ranked background plate
 is never promoted when the primary surface fails. Comparable valid plate
 surfaces retain the existing ambiguity rule.
-For white plates, a reliable bright-surface fit is retained first. If no fit
-exists, the neutral surface threshold drops in bounded steps to connect
-shadows and antialiased edges, stopping at the first reliable fit before the
-surface joins surrounding bodywork. At least half its sampled pixels must
+For white plates, the neutral surface threshold drops in bounded steps to
+connect shadows and antialiased edges. Later fits can replace the first
+only through bounded, containing expansions of the same observed surface;
+this also applies to weaker rankings, since an early bright boundary can
+cut diagonally across a real plate. At least half its sampled pixels must
 remain above the shaded-white seed threshold; every existing geometry,
 coverage, solidity and boundary check still applies. This also accommodates
 moderately shaded, cool-white plates without changing the image's colours.
-If that pass fails, a ranking of at least 0.13 permits a deeper neutral-shadow
-pass, still requiring a majority of sufficiently light pixels and every
+With a ranking of at least 0.13, the deeper neutral-shadow pass can connect
+channels down to 100, while still requiring a majority at or above 135 and every
 physical-surface check. These rankings are not calibrated probabilities.
+Below 125, horizontal corner movement is limited to 2% of detector width
+against one fixed earlier fit, so successive darker thresholds cannot creep
+sideways onto the plate surround. Top/bottom shadow recovery still uses the
+existing bounded area and containment checks.
 The fit must span the detected plate sufficiently, with a small pixel
-tolerance for frames. Strongly ranked fits may expand to larger observed
+tolerance for frames. Fits may expand to larger observed
 surfaces only through bounded, containing polygons within the model box's
 area. This avoids accepting a bright lower strip as the entire plate or
 jumping to a neighboring component; overlays are never drawn from a guessed
 axis-aligned detector rectangle.
-Existing successful fits are retained exactly. Only when the standard fit
-finds no surface, a tilted-outline fallback permits a 50% hull-to-box area
+Standard fits retain consistent side slopes. If simplification shears one
+side, recover corners from supported hull-edge lines instead of trusting
+the four remaining points. Longer side
+segments exclude rounded shoulders, while bounded direction, residual,
+corner movement and area checks prevent unsupported extrapolation.
+Sheared sides require supported recovery rather than falling back to the
+approximate polygon. Severe disagreement between the recovered side directions
+is rejected, with the comparison independent of camera rotation and scale.
+Only when the standard fit finds no surface, a tilted-outline fallback permits a 50% hull-to-box area
 share instead of 55%: empty corners of a slanted plate's rectangular detector
 box can otherwise reject a complete surface. This fallback requires a
 stricter four-corner fit, broad top and bottom edges, sufficient height on
@@ -322,6 +334,21 @@ cannot qualify a surface. Rounded corners still require supported edge lines
 and bounded extrapolation. Existing successful primary/secondary selection
 uses its original passes; new projected rivals cannot invalidate it. When the
 primary needs projected coverage, competing plates receive that check too.
+When ordinary fitting fails, a model ranking of at least 0.11 permits one
+bounded exposure fallback on a crop sampled at at most a 320-pixel edge.
+It requires a mostly neutral detector region, a 90th-percentile channel
+brightness between 100 and 155, and at least 70 levels of contrast against
+the 5th percentile. Only that temporary crop is brightened, then the same
+surface, ambiguity, geometry and opacity checks run again. The recovered
+physical face must be at least twice as wide as it is tall. Coordinates map
+back to the pristine image; its colours and pixels are never changed by
+this fallback. Existing successful selections do not gain new shaded rivals;
+when the primary needs exposure recovery, competitors receive it too.
+Rankings below 0.1 additionally require an elongated physical face and at
+least 0.1% of frame area. This rejects weak compact door-label detections and
+tiny distant faces while retaining stronger compact plate candidates. The
+same shape rule applies to competing surfaces, so an ineligible label cannot
+make a real foreground plate ambiguous.
 On RGBA provider cutouts, a stronger-ranked candidate may have one transparent
 detector-box sample, since an angled bounding rectangle can extend off the
 vehicle. The box center must remain opaque. The actual fitted plate's corners,

@@ -13,6 +13,8 @@ import {
   PLATE_SURFACE_MINIMUM_EDGE_COVERAGE, PLATE_SURFACE_EDGE_TOLERANCE_PIXELS,
   PLATE_SURFACE_STRONG_MINIMUM_EDGE_COVERAGE, PLATE_STRONG_MODEL_SCORE,
   PLATE_SURFACE_MAXIMUM_CENTER_X_OFFSET, PLATE_SURFACE_MAXIMUM_CENTER_Y_OFFSET, PLATE_SURFACE_NEIGHBORS,
+  PLATE_STANDARD_OUTLINE_LIMITS, PLATE_STANDARD_MINIMUM_SIDE_SHEAR, PLATE_MAXIMUM_SIDE_SHEAR,
+  PLATE_NARROW_SHADOW_MAXIMUM_HORIZONTAL_SHIFT_SHARE, PLATE_WHITE_DEEP_SHADOW_MINIMUM_CHANNEL,
 } from "./plate-branding.constants";
 import type { PlatePoint, PlateQuadrilateral, PlateSurfaceFitPass } from "./plate-branding.types";
 import { validatePlateQuadrilateral } from "./validate-plate-quadrilateral";
@@ -22,6 +24,7 @@ import { isPlateSurfaceOpaque } from "./is-plate-surface-opaque";
 import { hasTiltedPlateCoverage } from "./has-tilted-plate-coverage";
 import { fitTiltedPlateOutline } from "./fit-tilted-plate-outline";
 import { hasProjectedPlateCoverage } from "./has-projected-plate-coverage";
+import { plateSideShear } from "./plate-side-shear";
 
 /**
  * Refine an ML box to the connected white/yellow/green physical plate surface.
@@ -43,6 +46,7 @@ export function refinePlateQuadrilateral(image: RawImage, detection: PlateDetect
   // Retain every successful standard fit before considering tilted coverage.
   for (const fit of passes) {
     let best: PlateQuadrilateral | null = null;
+    let shadowAnchor: PlateQuadrilateral | null = null;
     // Retain a reliable bright-surface fit before attempting shadow growth.
     // A deeper-shadow pass requires a stronger model ranking as well as all
     // the same physical surface checks; model scores are not probabilities.
@@ -51,6 +55,7 @@ export function refinePlateQuadrilateral(image: RawImage, detection: PlateDetect
       for (let minimumWhiteChannel = PLATE_WHITE_MINIMUM_CHANNEL;
         minimumWhiteChannel >= pass.minimumChannel;
         minimumWhiteChannel -= PLATE_WHITE_SURFACE_THRESHOLD_STEP) {
+        if (minimumWhiteChannel < PLATE_WHITE_DEEP_SHADOW_MINIMUM_CHANNEL) shadowAnchor ??= best;
         const mask = new Uint8Array(width * height);
         const brightWhite = new Uint8Array(mask.length);
         for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
@@ -102,7 +107,7 @@ export function refinePlateQuadrilateral(image: RawImage, detection: PlateDetect
           if (hullArea < box.width * box.height * fit.minimumCoverage ||
               hullArea > box.width * box.height * PLATE_SURFACE_MAXIMUM_BOX_AREA_RATIO ||
               queue.length * step ** 2 / hullArea < PLATE_SURFACE_MINIMUM_SOLIDITY) continue;
-          const outlineHull = fit.requireTilt ? [...hull] : hull;
+          const outlineHull = [...hull];
           // Remove the least significant hull corner until the four plate edges remain.
           while (hull.length > 4) {
             let minimum = Infinity;
@@ -143,7 +148,16 @@ export function refinePlateQuadrilateral(image: RawImage, detection: PlateDetect
               : hasTiltedPlateCoverage(outline, box.width, box.height);
             if (!complete) continue;
             corners = outline;
+          } else {
+            // Keep consistent sides; simplification can otherwise delete a
+            // true corner beside a notch and shear just one side of the face.
+            if (plateSideShear(corners) > PLATE_STANDARD_MINIMUM_SIDE_SHEAR) {
+              const outline = fitTiltedPlateOutline(outlineHull, corners, box.width, box.height, PLATE_STANDARD_OUTLINE_LIMITS);
+              if (!outline) continue;
+              corners = outline;
+            }
           }
+          if (plateSideShear(corners) > PLATE_MAXIMUM_SIDE_SHEAR) continue;
           const points = [corners.topLeft, corners.topRight, corners.bottomRight, corners.bottomLeft];
           const centerX = points.reduce((sum, p) => sum + p.x, 0) / 4;
           const centerY = points.reduce((sum, p) => sum + p.y, 0) / 4;
@@ -154,7 +168,16 @@ export function refinePlateQuadrilateral(image: RawImage, detection: PlateDetect
         if (quadrilaterals.length > 1) return null;
         const candidate = quadrilaterals[0];
         if (!candidate) continue;
-        if (!strong) return candidate;
+        // Deeper top/bottom shadows may complete a face, but must not creep
+        // sideways onto its frame or body. Compare to one fixed earlier fit.
+        if (shadowAnchor && minimumWhiteChannel < PLATE_WHITE_DEEP_SHADOW_MINIMUM_CHANNEL &&
+            Math.max(Math.abs(candidate.topLeft.x - shadowAnchor.topLeft.x),
+              Math.abs(candidate.topRight.x - shadowAnchor.topRight.x),
+              Math.abs(candidate.bottomRight.x - shadowAnchor.bottomRight.x),
+              Math.abs(candidate.bottomLeft.x - shadowAnchor.bottomLeft.x)) >
+              box.width * PLATE_NARROW_SHADOW_MAXIMUM_HORIZONTAL_SHIFT_SHARE) continue;
+        // A first bright fit may be a diagonal shadow boundary. Continue
+        // only through bounded, containing expansions of that same surface.
         best = selectPlateSurfaceExpansion(best, candidate, box.width * box.height);
       }
     }

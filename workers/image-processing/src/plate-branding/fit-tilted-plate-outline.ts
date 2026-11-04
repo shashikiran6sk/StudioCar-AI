@@ -3,12 +3,13 @@ import {
   PLATE_OUTLINE_MAXIMUM_CORNER_SHIFT_SHARE, PLATE_OUTLINE_MAXIMUM_RESIDUAL_SHARE,
   PLATE_OUTLINE_MINIMUM_DIRECTION_DOT, PLATE_OUTLINE_MINIMUM_SEGMENT_SHARE,
   PLATE_OUTLINE_MINIMUM_SUPPORT_SHARE,
+  PLATE_TILTED_OUTLINE_LIMITS,
 } from "./plate-branding.constants";
-import type { PlatePoint, PlateQuadrilateral } from "./plate-branding.types";
+import type { PlateOutlineLimits, PlatePoint, PlateQuadrilateral } from "./plate-branding.types";
 import { polygonArea } from "./polygon-area";
 
 /** Recover rounded plate corners from supported hull edges, without a box overlay. */
-export function fitTiltedPlateOutline(hull: readonly PlatePoint[], initial: PlateQuadrilateral, width: number, height: number): PlateQuadrilateral | null {
+export function fitTiltedPlateOutline(hull: readonly PlatePoint[], initial: PlateQuadrilateral, width: number, height: number, limits: PlateOutlineLimits = PLATE_TILTED_OUTLINE_LIMITS): PlateQuadrilateral | null {
   const points = [initial.topLeft, initial.topRight, initial.bottomRight, initial.bottomLeft];
   const fitLine = (a: PlatePoint, b: PlatePoint) => {
     const dx = b.x - a.x;
@@ -24,8 +25,9 @@ export function fitTiltedPlateOutline(hull: readonly PlatePoint[], initial: Plat
       const sx = end.x - start.x;
       const sy = end.y - start.y;
       const segment = Math.hypot(sx, sy);
-      if (segment < length * PLATE_OUTLINE_MINIMUM_SEGMENT_SHARE ||
-          (sx * dx + sy * dy) / (segment * length) < PLATE_OUTLINE_MINIMUM_DIRECTION_DOT) continue;
+      if (segment < length * (Math.abs(dy) > Math.abs(dx) ? limits.minimumSideSegmentShare : PLATE_OUTLINE_MINIMUM_SEGMENT_SHARE) ||
+          (sx * dx + sy * dy) / (segment * length) <
+          (Math.abs(dy) > Math.abs(dx) ? limits.minimumSideDirectionDot : PLATE_OUTLINE_MINIMUM_DIRECTION_DOT)) continue;
       samples.push({ point: start, weight: segment }, { point: end, weight: segment });
       support += segment;
     }
@@ -62,7 +64,7 @@ export function fitTiltedPlateOutline(hull: readonly PlatePoint[], initial: Plat
     const t = ((b.x - a.x) * b.dy - (b.y - a.y) * b.dx) / cross;
     const point = { x: a.x + t * a.dx, y: a.y + t * a.dy };
     const original = points[i];
-    if (!original || Math.abs(point.x - original.x) > width * PLATE_OUTLINE_MAXIMUM_CORNER_SHIFT_SHARE ||
+    if (!original || Math.abs(point.x - original.x) > width * limits.maximumHorizontalCornerShiftShare ||
         Math.abs(point.y - original.y) > height * PLATE_OUTLINE_MAXIMUM_CORNER_SHIFT_SHARE) return null;
     intersections.push(point);
   }
