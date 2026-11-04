@@ -1,6 +1,23 @@
 # StudioCar AI Implementation Progress
 
-Last updated: 2026-10-25
+Last updated: 2026-11-04
+
+## November 4 dependency audit prerequisite
+
+- Required production audit flags glob 13.0.6 and its minimatch 10.2.6
+  beneath Sentry's bundler plugins. Keep the audit threshold and CI gates.
+- Override only `@sentry/bundler-plugins>glob` to 14.0.2, whose dependency
+  resolves the patched minimatch. Leave the older development-only minimatch
+  API consumers and direct application packages unchanged. Remove this
+  temporary override when Sentry adopts a patched glob itself.
+- Advisories: [glob cancellation](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4),
+  [minimatch amplification](https://github.com/advisories/GHSA-g3hv-75wg-m249).
+- This prerequisite is independent of the plate-geometry change. No provider,
+  model, job, storage, billing, schema, environment or UI changes. Frozen
+  installation, production audit, lint, strict types, source mapping, all
+  unit and PostgreSQL integration suites, Prisma validation, production build
+  and all 18 browser tests passed locally. Required PR checks and reviewer
+  approval remain before merge.
 
 ## Steep projected plate coverage for Polo and Seltos
 
